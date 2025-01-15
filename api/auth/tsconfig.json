@@ -1,0 +1,13 @@
+{
+  "extends": "@incmix-api/config/hono.json",
+  "compilerOptions": {
+    "types": ["@cloudflare/workers-types", "@cloudflare/vitest-pool-workers"],
+    "paths": {
+      "@": ["./src/index.ts"],
+      "@/*": ["./src/*"],
+      "@test/*": ["./test/*"],
+      "@e2e/*": ["./e2e/*"]
+    }
+  },
+  "include": ["./**/*.ts", "vitest.config.mts"]
+}

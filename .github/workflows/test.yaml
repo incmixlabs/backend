@@ -1,0 +1,26 @@
+name: Run Tests
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "backend/auth/**"
+      - "backend/files-api/**"
+      - "backend/tasks-api/**"
+      - "backend/users-api/**"
+      - "backend/org-api/**"
+      - ".github/workflows/test.yaml"
+jobs:
+  unit_test:
+    runs-on: ubuntu-latest
+    name: Unit Test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - name: Install Dependencies
+        run: pnpm install
+      - name: Run tests
+        run: pnpm run test
+
+

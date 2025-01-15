@@ -1,0 +1,21 @@
+{
+  "name": "@incmix-api/bff-web",
+  "scripts": {
+    "dev": "wrangler dev src/index.ts --env dev --inspector-port 9230",
+    "deploy": "wrangler deploy --minify",
+    "test": "vitest --run"
+  },
+  "dependencies": {
+    "@hono/zod-openapi": "0.18.3",
+    "@hono/zod-validator": "0.4.1",
+    "@incmix-api/utils": "workspace: *",
+    "@incmix/shared": "0.1.2",
+    "hono": "4.6.16",
+    "zod": "3.23.8"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "4.20250109.0",
+    "@incmix-api/config": "workspace: *",
+    "wrangler": "3.102.0"
+  }
+}

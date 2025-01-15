@@ -1,0 +1,4 @@
+# These environment variables are used by google oauth.
+
+GOOGLE_CLIENT_ID=
+GOOGLE_CLIENT_SECRET=

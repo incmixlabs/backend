@@ -1,0 +1,31 @@
+{
+  "name": "@incmix-api/email",
+  "version": "0.0.0",
+  "scripts": {
+    "dev": "wrangler dev src/index.ts --env dev --inspector-port 9231",
+    "dev:email": "email dev --dir src/emails",
+    "deploy": "wrangler deploy dist/index.js --no-bundle",
+    "build": "wrangler deploy --minify --dry-run --outdir=dist",
+    "migrate:local": "wrangler d1 migrations apply email-api-dev --env dev",
+    "export": "email export"
+  },
+  "dependencies": {
+    "@hono/zod-openapi": "0.18.3",
+    "@hono/zod-validator": "0.4.1",
+    "@incmix-api/utils": "workspace: *",
+    "@react-email/components": "0.0.29",
+    "@incmix/shared": "0.1.2",
+    "@sendgrid/eventwebhook": "8.0.0",
+    "hono": "4.6.16",
+    "react": "18.3.1",
+    "react-email": "3.0.3",
+    "zod": "3.23.8"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "4.20250109.0",
+    "@incmix-api/config": "workspace: *",
+    "@types/node": "22.10.1",
+    "@types/react": "18.3.1",
+    "wrangler": "3.102.0"
+  }
+}

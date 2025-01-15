@@ -1,0 +1,29 @@
+{
+  "name": "@incmix-api/users-api",
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev src/index.ts --env dev --inspector-port 9237",
+    "deploy": "wrangler deploy dist/index.js --no-bundle",
+    "build": "wrangler deploy --minify --dry-run --outdir=dist",
+    "migrate:local": "wrangler d1 migrations apply users-api-dev --env dev",
+    "test": "vitest --run"
+  },
+  "dependencies": {
+    "@hono/zod-openapi": "0.18.3",
+    "@hono/zod-validator": "0.4.1",
+    "@incmix-api/utils": "workspace: *",
+    "@noxharmonium/kysely-d1": "0.4.0",
+    "@incmix/shared": "0.1.2",
+    "hono": "4.6.16",
+    "kysely": "0.27.5"
+  },
+  "devDependencies": {
+    "@cloudflare/vitest-pool-workers": "0.4.3",
+    "@cloudflare/workers-types": "4.20250109.0",
+    "@incmix-api/config": "workspace: *",
+    "miniflare": "3.20240610.1",
+    "vite-tsconfig-paths": "5.1.4",
+    "vitest": "1.5.0",
+    "wrangler": "3.102.0"
+  }
+}

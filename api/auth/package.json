@@ -1,0 +1,35 @@
+{
+  "name": "@incmix-api/auth",
+  "scripts": {
+    "dev": "wrangler dev src/index.ts --env dev --inspector-port 9229",
+    "deploy": "wrangler deploy dist/index.js --no-bundle",
+    "build": "wrangler deploy --minify --dry-run --outdir=dist",
+    "migrate:local": "wrangler d1 migrations apply lucia-auth-dev --env dev",
+    "test": "vitest --run",
+    "test:e2e": "playwright test"
+  },
+  "dependencies": {
+    "@hono/zod-openapi": "0.18.3",
+    "@hono/zod-validator": "0.4.1",
+    "@incmix-api/utils": "workspace: *",
+    "@lucia-auth/adapter-sqlite": "3.0.2",
+    "@noxharmonium/kysely-d1": "0.4.0",
+    "@playwright/test": "1.49.0",
+    "@incmix/shared": "0.1.2",
+    "arctic": "2.3.0",
+    "hono": "4.6.16",
+    "kysely": "0.27.5",
+    "lucia": "3.2.2",
+    "mailslurp-client": "15.20.2",
+    "oslo": "1.2.1",
+    "zod": "3.23.8"
+  },
+  "devDependencies": {
+    "@cloudflare/vitest-pool-workers": "0.4.3",
+    "@cloudflare/workers-types": "4.20250109.0",
+    "@incmix-api/config": "workspace: *",
+    "miniflare": "3.20240610.1",
+    "vitest": "1.5.0",
+    "wrangler": "3.102.0"
+  }
+}

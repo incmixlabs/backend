@@ -1,0 +1,28 @@
+{
+  "name": "@incmix-api/file-storage",
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev src/index.ts --env dev --inspector-port 9232",
+    "deploy": "wrangler deploy dist/index.js --no-bundle",
+    "build": "wrangler deploy --minify --dry-run --outdir=dist",
+    "test": "vitest --run",
+    "test:e2e": "playwright test"
+  },
+  "dependencies": {
+    "@aws-sdk/client-s3": "3.705.0",
+    "@aws-sdk/s3-request-presigner": "3.705.0",
+    "@hono/zod-openapi": "0.18.3",
+    "@hono/zod-validator": "0.4.1",
+    "@incmix-api/utils": "workspace: *",
+    "@incmix/shared": "0.1.2",
+    "hono": "4.6.16",
+    "zod": "3.23.8"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "4.20250109.0",
+    "@incmix-api/config": "workspace: *",
+    "@types/node": "22.10.1",
+    "wrangler": "3.102.0"
+  }
+}

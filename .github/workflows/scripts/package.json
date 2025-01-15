@@ -1,0 +1,7 @@
+{
+  "name": "workflows",
+  "type": "commonjs",
+  "devDependencies": {
+    "@types/github-script": "github:actions/github-script"
+  }
+}

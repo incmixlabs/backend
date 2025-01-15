@@ -1,0 +1,124 @@
+name = "auth-api-prod"
+compatibility_date = "2024-05-11"
+main = "src/index.ts"
+compatibility_flags = ["nodejs_compat"]
+account_id = "337b73d40247ca97f4eaa7ea3dfc96df"
+
+durable_objects = { bindings = [{ name = "CLIENTS", class_name = "Clients" }] }
+migrations = [{ tag = "v1", new_classes = ["Clients"] }]
+# Default Options for Production env
+services = [
+  { binding = "EMAIL", service = "email-api-prod" },
+  { binding = "USERS_API", service = "users-api-prod" },
+  { binding = "INTL", service = "intl-api-prod" },
+]
+vars = { FRONTEND_URL = "https://turbo-mix.pages.dev", EMAIL_URL = "https://email-api-prod.uincmix.workers.dev/api/email", INTL_URL = "https://intl-api-prod.uincmix.workers.dev/api/intl", USERS_API_URL = "https://users-api-prod.uincmix.workers.dev/api/users", COOKIE_NAME = "incmix_session", GOOGLE_REDIRECT_URL = "https://turbo-mix.pages.dev/auth/google", DOMAIN = ".uincmix.workers.dev" }
+
+d1_databases = [
+  { binding = "DB", database_name = "lucia-auth", database_id = "6d35b211-10ad-4c19-8e15-2db2f7fc1107", migrations_dir = "./migrations/d1" },
+]
+
+[dev]
+port = 8787
+
+[env.dev]
+name = "auth-api-dev"
+d1_databases = [
+  { binding = "DB", database_name = "lucia-auth-dev", database_id = "71197778-151c-4de6-840f-1f279bbb429f", migrations_dir = "./migrations/d1" },
+]
+durable_objects = { bindings = [{ name = "CLIENTS", class_name = "Clients" }] }
+services = [
+  { binding = "EMAIL", service = "email-api-dev" },
+  { binding = "USERS_API", service = "users-api-dev" },
+  { binding = "INTL", service = "intl-api-dev" },
+]
+vars = { FRONTEND_URL = "http://localhost:1420", EMAIL_URL = "http://localhost:8989/api/email", INTL_URL = "http://localhost:9090/api/intl", TODO_API = "http://localhost:8888/api/tasks", USERS_API_URL = "http://localhost:9191/api/users", COOKIE_NAME = "incmix_session_dev", GOOGLE_REDIRECT_URL = "http://localhost:1420/auth/google", DOMAIN = "localhost" }
+
+migrations = [{ tag = "v1", new_classes = ["Clients"] }]
+
+
+[env.prev]
+name = "auth-api-dev-prev"
+d1_databases = [
+  { binding = "DB", database_name = "lucia-auth-prev", database_id = "4a8ee9fd-29bf-4e1a-a293-640c2d9a2ab9", migrations_dir = "./migrations/d1" },
+]
+durable_objects = { bindings = [{ name = "CLIENTS", class_name = "Clients" }] }
+migrations = [{ tag = "v1", new_classes = ["Clients"] }]
+services = [
+  { binding = "EMAIL", service = "email-api-dev-prev" },
+  { binding = "USERS_API", service = "users-api-dev-prev" },
+  { binding = "INTL", service = "intl-api-dev-prev" },
+]
+vars = { FRONTEND_URL = "https://turbo-mix.pages.dev", EMAIL_URL = "https://email-api-dev-prev.uincmix.workers.dev/api/email", INTL_URL = "https://intl-api-dev-prev.uincmix.workers.dev/api/intl", TODO_API = "https://tasks-api-dev-prev.uincmix.workers.dev/api/tasks", USERS_API_URL = "https://users-api-dev-prev.uincmix.workers.dev/api/users", COOKIE_NAME = "incmix_session_prev", GOOGLE_REDIRECT_URL = "https://turbo-mix.pages.dev/auth/google", DOMAIN = ".uincmix.workers.dev" }
+
+[env.test]
+name = "auth-api-test"
+d1_databases = [
+  { binding = "DB", database_name = "lucia-auth-test", database_id = "00000000-0000-0000-0000-000000000000", migrations_dir = "./migrations/d1" },
+]
+services = [
+  { binding = "EMAIL", service = "email-api-test" },
+  { binding = "USERS_API", service = "users-api-test" },
+  { binding = "INTL", service = "intl-api-test" },
+]
+vars = { FRONTEND_URL = "https://turbo-mix-test.pages.dev", EMAIL_URL = "https://email-api-test.uincmix.workers.dev/api/email", INTL_URL = "https://intl-api-test.uincmix.workers.dev/api/intl", SENTRY_DSN = "", USERS_API_URL = "https://users-api-test.uincmix.workers.dev/api/users", COOKIE_NAME = "incmix_session_test", GOOGLE_REDIRECT_URL = "https://turbo-mix.pages.dev/auth/google", DOMAIN = "localhost" }
+
+[env.qa]
+name = "auth-api-qa"
+d1_databases = [
+  { binding = "DB", database_name = "lucia-auth-qa", database_id = "00000000-0000-0000-0000-000000000000", migrations_dir = "./migrations/d1" },
+]
+services = [
+  { binding = "EMAIL", service = "email-api-qa" },
+  { binding = "INTL", service = "intl-api-qa" },
+  { binding = "USERS_API", service = "users-api-qa" },
+]
+vars = { FRONTEND_URL = "https://turbo-mix.pages.dev", EMAIL_URL = "https://email-api-qa.uincmix.workers.dev/api/email", INTL_URL = "https://intl-api-qa.uincmix.workers.dev/api/intl", TODO_API = "https://tasks-api-qa.uincmix.workers.dev/api/tasks", USERS_API_URL = "https://users-api-qa.uincmix.workers.dev/api/users", COOKIE_NAME = "incmix_session_qa", GOOGLE_REDIRECT_URL = "https://turbo-mix.pages.dev/auth/google", DOMAIN = ".uincmix.workers.dev" }
+
+[env.qa-prev]
+name = "auth-api-qa-prev"
+d1_databases = [
+  { binding = "DB", database_name = "lucia-auth-qa-prev", database_id = "00000000-0000-0000-0000-000000000000", migrations_dir = "./migrations/d1" },
+]
+services = [
+  { binding = "EMAIL", service = "email-api-qa-prev" },
+  { binding = "INTL", service = "intl-api-qa-prev" },
+  { binding = "USERS_API", service = "users-api-qa-prev" },
+]
+vars = { FRONTEND_URL = "https://turbo-mix.pages.dev", EMAIL_URL = "https://email-api-qa-prev.uincmix.workers.dev/api/email", INTL_URL = "https://intl-api-qa-prev.uincmix.workers.dev/api/intl", TODO_API = "https://tasks-api-qa-prev.uincmix.workers.dev/api/tasks", USERS_API_URL = "https://users-api-qa-prev.uincmix.workers.dev/api/users", COOKIE_NAME = "incmix_session_qa_prev", GOOGLE_REDIRECT_URL = "https://turbo-mix.pages.dev/auth/google", DOMAIN = ".uincmix.workers.dev" }
+
+[env.uat]
+name = "auth-api-uat"
+d1_databases = [
+  { binding = "DB", database_name = "lucia-auth-uat", database_id = "00000000-0000-0000-0000-000000000000", migrations_dir = "./migrations/d1" },
+]
+services = [
+  { binding = "EMAIL", service = "email-api-uat" },
+  { binding = "INTL", service = "intl-api-uat" },
+  { binding = "USERS_API", service = "users-api-uat" },
+]
+vars = { FRONTEND_URL = "https://turbo-mix.pages.dev", EMAIL_URL = "https://email-api-uat.uincmix.workers.dev/api/email", INTL_URL = "https://intl-api-uat.uincmix.workers.dev/api/intl", TODO_API = "https://tasks-api-uat.uincmix.workers.dev/api/tasks", USERS_API_URL = "https://users-api-uat.uincmix.workers.dev/api/users", COOKIE_NAME = "incmix_session_uat", GOOGLE_REDIRECT_URL = "https://turbo-mix.pages.dev/auth/google", DOMAIN = ".uincmix.workers.dev" }
+
+[env.uat-prev]
+name = "auth-api-uat-prev"
+d1_databases = [
+  { binding = "DB", database_name = "lucia-auth-uat-prev", database_id = "00000000-0000-0000-0000-000000000000", migrations_dir = "./migrations/d1" },
+]
+services = [
+  { binding = "EMAIL", service = "email-api-uat-prev" },
+  { binding = "INTL", service = "intl-api-uat-prev" },
+  { binding = "USERS_API", service = "users-api-uat-prev" },
+]
+vars = { FRONTEND_URL = "https://turbo-mix.pages.dev", EMAIL_URL = "https://email-api-uat-prev.uincmix.workers.dev/api/email", INTL_URL = "https://intl-api-uat-prev.uincmix.workers.dev/api/intl", TODO_API = "https://tasks-api-uat-prev.uincmix.workers.dev/api/tasks", USERS_API_URL = "https://users-api-uat-prev.uincmix.workers.dev/api/users", COOKIE_NAME = "incmix_session_uat_prev", GOOGLE_REDIRECT_URL = "https://turbo-mix.pages.dev/auth/google", DOMAIN = ".uincmix.workers.dev" }
+
+[env.prod-prev]
+name = "auth-api-prod-prev"
+d1_databases = [
+  { binding = "DB", database_name = "lucia-auth-prod-prev", database_id = "00000000-0000-0000-0000-000000000000", migrations_dir = "./migrations/d1" },
+]
+services = [
+  { binding = "EMAIL", service = "email-api-prod-prev" },
+  { binding = "INTL", service = "intl-api-prod-prev" },
+  { binding = "USERS_API", service = "users-api-prod-prev" },
+]
+vars = { FRONTEND_URL = "https://turbo-mix.pages.dev", EMAIL_URL = "https://email-api-prod-prev.uincmix.workers.dev/api/email", INTL_URL = "https://intl-api-prod-prev.uincmix.workers.dev/api/intl", TODO_API = "https://tasks-api-prod-prev.uincmix.workers.dev/api/tasks", USERS_API_URL = "https://users-api-prod-prev.uincmix.workers.dev/api/users", COOKIE_NAME = "incmix_session_prod_prev", GOOGLE_REDIRECT_URL = "https://turbo-mix.pages.dev/auth/google", DOMAIN = ".uincmix.workers.dev" }

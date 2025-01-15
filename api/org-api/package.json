@@ -1,0 +1,31 @@
+{
+  "name": "@incmix-api/org-api",
+  "scripts": {
+    "dev": "wrangler dev src/index.ts --env dev --inspector-port 9235",
+    "deploy": "wrangler deploy dist/index.js --no-bundle",
+    "build": "wrangler deploy --minify --dry-run --outdir=dist",
+    "test": "vitest --run",
+    "migrate:local": "wrangler d1 migrations apply org-api-dev --env dev"
+  },
+  "dependencies": {
+    "@casl/ability": "6.7.2",
+    "@hono/zod-openapi": "0.18.3",
+    "@hono/zod-validator": "0.4.1",
+    "@incmix-api/utils": "workspace: *",
+    "@noxharmonium/kysely-d1": "0.4.0",
+    "@incmix/shared": "0.1.2",
+    "hono": "4.6.16",
+    "kysely": "0.27.5",
+    "lodash": "4.17.21",
+    "zod": "3.23.8"
+  },
+  "devDependencies": {
+    "@cloudflare/vitest-pool-workers": "0.4.3",
+    "@cloudflare/workers-types": "4.20250109.0",
+    "@incmix-api/config": "workspace: *",
+    "@types/lodash": "4.17.13",
+    "miniflare": "3.20240610.1",
+    "vitest": "1.5.0",
+    "wrangler": "3.102.0"
+  }
+}
