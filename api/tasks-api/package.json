@@ -26,6 +26,6 @@
     "@playwright/test": "1.49.0",
     "miniflare": "3.20240610.1",
     "vitest": "1.5.0",
-    "wrangler": "3.102.0"
+    "wrangler": "3.74.0"
   }
 }
