@@ -15,65 +15,70 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Migrate Auth
-        uses: cloudflare/wrangler-action@v3
+      - uses: pnpm/action-setup@v4
+      - uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_SECRET }}
           workingDirectory: "api/auth"
           wranglerVersion: "3.102.0"
           command: "d1 migrations apply lucia-auth --remote"
-          packageManager: "npm"
+          packageManager: "pnpm"
   migrate_users:
     runs-on: ubuntu-latest
     name: Migrate Users
     steps:
       - uses: actions/checkout@v4
       - name: Migrate Users
-        uses: cloudflare/wrangler-action@v3
+      - uses: pnpm/action-setup@v4
+      - uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_SECRET }}
           workingDirectory: "api/users-api"
           wranglerVersion: "3.102.0"
           command: "d1 migrations apply users-api --remote"
-          packageManager: "npm"
+          packageManager: "pnpm"
   migrate_org:
     runs-on: ubuntu-latest
     name: Migrate Org
     steps:
       - uses: actions/checkout@v4
       - name: Migrate Org
-        uses: cloudflare/wrangler-action@v3
+      - uses: pnpm/action-setup@v4
+      - uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_SECRET }}
           workingDirectory: "api/org-api"
           wranglerVersion: "3.102.0"
           command: "d1 migrations apply org-api --remote"
-          packageManager: "npm"
+          packageManager: "pnpm"
   migrate_intl:
     runs-on: ubuntu-latest
     name: Migrate Intl
     steps:
       - uses: actions/checkout@v4
       - name: Migrate Intl
-        uses: cloudflare/wrangler-action@v3
+      - uses: pnpm/action-setup@v4
+      - uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_SECRET }}
           workingDirectory: "api/intl-api"
           wranglerVersion: "3.102.0"
           command: "d1 migrations apply intl-api --remote"
-          packageManager: "npm"
+          packageManager: "pnpm"
   migrate_email:
     runs-on: ubuntu-latest
     name: Migrate Email
     steps:
       - uses: actions/checkout@v4
       - name: Migrate Email
-        uses: cloudflare/wrangler-action@v3
+      - uses: pnpm/action-setup@v4
+      - uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_SECRET }}
           workingDirectory: "api/email"
           wranglerVersion: "3.102.0"
           command: "d1 migrations apply email-api --remote"
-          packageManager: "npm"
+          packageManager: "pnpm"
   migrate_tasks:
     needs: [migrate_auth]
     runs-on: ubuntu-latest
@@ -81,10 +86,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Migrate Tasks
-        uses: cloudflare/wrangler-action@v3
+      - uses: pnpm/action-setup@v4
+      - uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_SECRET }}
           workingDirectory: "api/tasks-api"
           wranglerVersion: "3.102.0"
           command: "d1 migrations apply tasks-api-prod --remote"
-          packageManager: "npm"
+          packageManager: "pnpm"
