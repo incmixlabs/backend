@@ -31,6 +31,7 @@ import {
 } from "@/routes/auth/openapi"
 import type { HonoApp } from "@/types"
 import { OpenAPIHono } from "@hono/zod-openapi"
+import { ERROR_UNAUTHORIZED } from "@incmix-api/utils"
 import {
   ConflictError,
   ForbiddenError,
@@ -40,7 +41,6 @@ import {
   zodError,
 } from "@incmix-api/utils/errors"
 import { useTranslation } from "@incmix-api/utils/middleware"
-import { ERROR_UNAUTHORIZED } from "@incmix-api/utils"
 import { Scrypt, generateId } from "lucia"
 
 const authRoutes = new OpenAPIHono<HonoApp>({

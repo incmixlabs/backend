@@ -1,7 +1,7 @@
 import type { Database, UserRow } from "@/dbSchema"
 import type { Context } from "@/types"
-import { ServerError, UnauthorizedError } from "@incmix-api/utils/errors"
 import { generateSentryHeaders } from "@incmix-api/utils"
+import { ServerError, UnauthorizedError } from "@incmix-api/utils/errors"
 
 import { D1Dialect } from "@noxharmonium/kysely-d1"
 import { getCookie } from "hono/cookie"

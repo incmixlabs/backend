@@ -48,6 +48,7 @@ import {
 } from "@/routes/organisations/openapi"
 import type { HonoApp } from "@/types"
 import { OpenAPIHono } from "@hono/zod-openapi"
+import { ERROR_UNAUTHORIZED } from "@incmix-api/utils"
 import {
   ConflictError,
   ServerError,
@@ -57,7 +58,6 @@ import {
   zodError,
 } from "@incmix-api/utils/errors"
 import { useTranslation } from "@incmix-api/utils/middleware"
-import { ERROR_UNAUTHORIZED } from "@incmix-api/utils"
 import type { MemberRole } from "@jsprtmnn/utils/types"
 import { ROLE_OWNER } from "@jsprtmnn/utils/types"
 

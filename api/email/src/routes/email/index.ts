@@ -2,8 +2,8 @@ import { sendEmail } from "@/lib/helper"
 import type { HonoApp } from "@/types"
 import { OpenAPIHono, type RouteConfigToTypedResponse } from "@hono/zod-openapi"
 import { processError, zodError } from "@incmix-api/utils/errors"
-import { sendMail } from "./openapi"
 import type { ContentfulStatusCode } from "hono/utils/http-status"
+import { sendMail } from "./openapi"
 
 const emailRoutes = new OpenAPIHono<HonoApp>({
   defaultHook: zodError,

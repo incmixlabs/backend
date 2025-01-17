@@ -8,6 +8,7 @@ import { initializeGoogleAuth } from "@/lib/oauth"
 import { googleCallback, googleOAuth } from "@/routes/oauth/openapi"
 import type { HonoApp } from "@/types"
 import { OpenAPIHono } from "@hono/zod-openapi"
+import { ERROR_BAD_REQUEST } from "@incmix-api/utils"
 import {
   BadRequestError,
   ForbiddenError,
@@ -15,7 +16,6 @@ import {
   zodError,
 } from "@incmix-api/utils/errors"
 import { useTranslation } from "@incmix-api/utils/middleware"
-import { ERROR_BAD_REQUEST } from "@incmix-api/utils"
 import { generateCodeVerifier, generateState } from "arctic"
 import { getCookie, setCookie } from "hono/cookie"
 import type { CookieOptions } from "hono/utils/cookie"

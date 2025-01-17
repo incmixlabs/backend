@@ -11,6 +11,7 @@ import { generateBoard, getDatabase } from "@/lib/db"
 import { getOrganizationById } from "@/lib/services"
 import type { HonoApp } from "@/types"
 import { OpenAPIHono } from "@hono/zod-openapi"
+import { ERROR_UNAUTHORIZED } from "@incmix-api/utils"
 import {
   BadRequestError,
   ConflictError,
@@ -19,7 +20,6 @@ import {
   zodError,
 } from "@incmix-api/utils/errors"
 import { useTranslation } from "@incmix-api/utils/middleware"
-import { ERROR_UNAUTHORIZED } from "@incmix-api/utils"
 import { nanoid } from "nanoid"
 import {
   createColumn,
