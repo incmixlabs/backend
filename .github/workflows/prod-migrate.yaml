@@ -21,7 +21,7 @@ jobs:
           workingDirectory: "api/auth"
           wranglerVersion: "3.102.0"
           command: "d1 migrations apply lucia-auth --remote"
-          packageManager: "pnpm"
+          packageManager: "npm"
   migrate_users:
     runs-on: ubuntu-latest
     name: Migrate Users
@@ -34,7 +34,7 @@ jobs:
           workingDirectory: "api/users-api"
           wranglerVersion: "3.102.0"
           command: "d1 migrations apply users-api --remote"
-          packageManager: "pnpm"
+          packageManager: "npm"
   migrate_org:
     runs-on: ubuntu-latest
     name: Migrate Org
@@ -47,7 +47,7 @@ jobs:
           workingDirectory: "api/org-api"
           wranglerVersion: "3.102.0"
           command: "d1 migrations apply org-api --remote"
-          packageManager: "pnpm"
+          packageManager: "npm"
   migrate_intl:
     runs-on: ubuntu-latest
     name: Migrate Intl
@@ -60,7 +60,7 @@ jobs:
           workingDirectory: "api/intl-api"
           wranglerVersion: "3.102.0"
           command: "d1 migrations apply intl-api --remote"
-          packageManager: "pnpm"
+          packageManager: "npm"
   migrate_email:
     runs-on: ubuntu-latest
     name: Migrate Email
@@ -73,7 +73,7 @@ jobs:
           workingDirectory: "api/email"
           wranglerVersion: "3.102.0"
           command: "d1 migrations apply email-api --remote"
-          packageManager: "pnpm"
+          packageManager: "npm"
   migrate_tasks:
     needs: [migrate_auth]
     runs-on: ubuntu-latest
@@ -87,4 +87,4 @@ jobs:
           workingDirectory: "api/tasks-api"
           wranglerVersion: "3.102.0"
           command: "d1 migrations apply tasks-api-prod --remote"
-          packageManager: "pnpm"
+          packageManager: "npm"
