@@ -14,9 +14,9 @@ jobs:
     name: Migrate Auth
     steps:
       - uses: actions/checkout@v4
-      - name: Migrate Auth
       - uses: pnpm/action-setup@v4
-      - uses: cloudflare/wrangler-action@v3
+      - name: Migrate Auth
+        uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_SECRET }}
           workingDirectory: "api/auth"
@@ -28,9 +28,9 @@ jobs:
     name: Migrate Users
     steps:
       - uses: actions/checkout@v4
-      - name: Migrate Users
       - uses: pnpm/action-setup@v4
-      - uses: cloudflare/wrangler-action@v3
+      - name: Migrate Users
+        uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_SECRET }}
           workingDirectory: "api/users-api"
@@ -42,9 +42,9 @@ jobs:
     name: Migrate Org
     steps:
       - uses: actions/checkout@v4
-      - name: Migrate Org
       - uses: pnpm/action-setup@v4
-      - uses: cloudflare/wrangler-action@v3
+      - name: Migrate Org
+        uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_SECRET }}
           workingDirectory: "api/org-api"
@@ -56,9 +56,9 @@ jobs:
     name: Migrate Intl
     steps:
       - uses: actions/checkout@v4
-      - name: Migrate Intl
       - uses: pnpm/action-setup@v4
-      - uses: cloudflare/wrangler-action@v3
+      - name: Migrate Intl
+        uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_SECRET }}
           workingDirectory: "api/intl-api"
@@ -70,9 +70,9 @@ jobs:
     name: Migrate Email
     steps:
       - uses: actions/checkout@v4
-      - name: Migrate Email
       - uses: pnpm/action-setup@v4
-      - uses: cloudflare/wrangler-action@v3
+      - name: Migrate Email
+        uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_SECRET }}
           workingDirectory: "api/email"
@@ -85,9 +85,9 @@ jobs:
     name: Migrate Tasks
     steps:
       - uses: actions/checkout@v4
-      - name: Migrate Tasks
       - uses: pnpm/action-setup@v4
-      - uses: cloudflare/wrangler-action@v3
+      - name: Migrate Tasks
+        uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_SECRET }}
           workingDirectory: "api/tasks-api"
