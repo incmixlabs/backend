@@ -1,5 +1,5 @@
 import { ServerError } from "@incmix-api/utils/errors"
-import type { IntlMessage, Locale } from "@incmix/shared/types"
+import type { IntlMessage, Locale } from "@jsprtmnn/utils/types"
 import type { Context } from "hono"
 
 export async function getDefaultLocale(c: Context) {

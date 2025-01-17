@@ -38,6 +38,9 @@ importers:
       '@incmix-api/utils':
         specifier: 'workspace: *'
         version: link:../../shared/utils
+      '@jsprtmnn/utils':
+        specifier: 0.1.0
+        version: 0.1.0(@types/luxon@3.4.2)(hono@4.6.16)(luxon@3.5.0)(zod@3.23.8)
       '@lucia-auth/adapter-sqlite':
         specifier: 3.0.2
         version: 3.0.2(lucia@3.2.2)
@@ -47,9 +50,6 @@ importers:
       '@playwright/test':
         specifier: 1.49.0
         version: 1.49.0
-      '@incmix/shared':
-        specifier: 0.1.2
-        version: 0.1.2(@types/luxon@3.4.2)(hono@4.6.16)(luxon@3.5.0)(zod@3.23.8)
       arctic:
         specifier: 2.3.0
         version: 2.3.0
@@ -102,9 +102,9 @@ importers:
       '@incmix-api/utils':
         specifier: 'workspace: *'
         version: link:../../shared/utils
-      '@incmix/shared':
-        specifier: 0.1.2
-        version: 0.1.2(@types/luxon@3.4.2)(hono@4.6.16)(luxon@3.5.0)(zod@3.23.8)
+      '@jsprtmnn/utils':
+        specifier: 0.1.0
+        version: 0.1.0(@types/luxon@3.4.2)(hono@4.6.16)(luxon@3.5.0)(zod@3.23.8)
       hono:
         specifier: 4.6.16
         version: 4.6.16
@@ -133,12 +133,12 @@ importers:
       '@incmix-api/utils':
         specifier: 'workspace: *'
         version: link:../../shared/utils
+      '@jsprtmnn/utils':
+        specifier: 0.1.0
+        version: 0.1.0(@types/luxon@3.4.2)(hono@4.6.16)(luxon@3.5.0)(zod@3.23.8)
       '@react-email/components':
         specifier: 0.0.29
         version: 0.0.29(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
-      '@incmix/shared':
-        specifier: 0.1.2
-        version: 0.1.2(@types/luxon@3.4.2)(hono@4.6.16)(luxon@3.5.0)(zod@3.23.8)
       '@sendgrid/eventwebhook':
         specifier: 8.0.0
         version: 8.0.0
@@ -188,9 +188,9 @@ importers:
       '@incmix-api/utils':
         specifier: 'workspace: *'
         version: link:../../shared/utils
-      '@incmix/shared':
-        specifier: 0.1.2
-        version: 0.1.2(@types/luxon@3.4.2)(hono@4.6.16)(luxon@3.5.0)(zod@3.23.8)
+      '@jsprtmnn/utils':
+        specifier: 0.1.0
+        version: 0.1.0(@types/luxon@3.4.2)(hono@4.6.16)(luxon@3.5.0)(zod@3.23.8)
       hono:
         specifier: 4.6.16
         version: 4.6.16
@@ -222,9 +222,9 @@ importers:
       '@incmix-api/utils':
         specifier: 'workspace: *'
         version: link:../../shared/utils
-      '@incmix/shared':
-        specifier: 0.1.2
-        version: 0.1.2(@types/luxon@3.4.2)(hono@4.6.16)(luxon@3.5.0)(zod@3.23.8)
+      '@jsprtmnn/utils':
+        specifier: 0.1.0
+        version: 0.1.0(@types/luxon@3.4.2)(hono@4.6.16)(luxon@3.5.0)(zod@3.23.8)
       hono:
         specifier: 4.6.16
         version: 4.6.16
@@ -256,15 +256,15 @@ importers:
       '@incmix-api/utils':
         specifier: 'workspace: *'
         version: link:../../shared/utils
+      '@jsprtmnn/utils':
+        specifier: 0.1.0
+        version: 0.1.0(@types/luxon@3.4.2)(hono@4.6.16)(luxon@3.5.0)(zod@3.23.8)
       '@lucia-auth/adapter-sqlite':
         specifier: 3.0.2
         version: 3.0.2(lucia@3.2.2)
       '@playwright/test':
         specifier: 1.49.0
         version: 1.49.0
-      '@incmix/shared':
-        specifier: 0.1.2
-        version: 0.1.2(@types/luxon@3.4.2)(hono@4.6.16)(luxon@3.5.0)(zod@3.23.8)
       arctic:
         specifier: 2.3.0
         version: 2.3.0
@@ -317,12 +317,12 @@ importers:
       '@incmix-api/utils':
         specifier: 'workspace: *'
         version: link:../../shared/utils
+      '@jsprtmnn/utils':
+        specifier: 0.1.0
+        version: 0.1.0(@types/luxon@3.4.2)(hono@4.6.16)(luxon@3.5.0)(zod@3.23.8)
       '@noxharmonium/kysely-d1':
         specifier: 0.4.0
         version: 0.4.0(kysely@0.27.5)
-      '@incmix/shared':
-        specifier: 0.1.2
-        version: 0.1.2(@types/luxon@3.4.2)(hono@4.6.16)(luxon@3.5.0)(zod@3.23.8)
       hono:
         specifier: 4.6.16
         version: 4.6.16
@@ -369,12 +369,12 @@ importers:
       '@incmix-api/utils':
         specifier: 'workspace: *'
         version: link:../../shared/utils
+      '@jsprtmnn/utils':
+        specifier: 0.1.0
+        version: 0.1.0(@types/luxon@3.4.2)(hono@4.6.16)(luxon@3.5.0)(zod@3.23.8)
       '@noxharmonium/kysely-d1':
         specifier: 0.4.0
         version: 0.4.0(kysely@0.27.5)
-      '@incmix/shared':
-        specifier: 0.1.2
-        version: 0.1.2(@types/luxon@3.4.2)(hono@4.6.16)(luxon@3.5.0)(zod@3.23.8)
       hono:
         specifier: 4.6.16
         version: 4.6.16
@@ -424,12 +424,12 @@ importers:
       '@incmix-api/utils':
         specifier: 'workspace: *'
         version: link:../../shared/utils
+      '@jsprtmnn/utils':
+        specifier: 0.1.0
+        version: 0.1.0(@types/luxon@3.4.2)(hono@4.6.16)(luxon@3.5.0)(zod@3.23.8)
       '@noxharmonium/kysely-d1':
         specifier: 0.4.0
         version: 0.4.0(kysely@0.27.5)
-      '@incmix/shared':
-        specifier: 0.1.2
-        version: 0.1.2(@types/luxon@3.4.2)(hono@4.6.16)(luxon@3.5.0)(zod@3.23.8)
       hono:
         specifier: 4.6.16
         version: 4.6.16
@@ -473,9 +473,6 @@ importers:
       '@intlify/utils':
         specifier: 0.13.0
         version: 0.13.0
-      '@incmix/shared':
-        specifier: 0.1.2
-        version: 0.1.2(@types/luxon@3.4.2)(hono@4.6.16)(luxon@3.5.0)(zod@3.23.8)
       '@scalar/hono-api-reference':
         specifier: 0.5.163
         version: 0.5.163(hono@4.6.16)
@@ -498,9 +495,9 @@ importers:
       '@incmix-api/config':
         specifier: 'workspace: *'
         version: link:../config
-      '@incmix-api/utils':
-        specifier: 'workspace: *'
-        version: 'link:'
+      '@jsprtmnn/utils':
+        specifier: latest
+        version: 0.1.0(@types/luxon@3.4.2)(hono@4.6.16)(luxon@3.5.0)(zod@3.23.8)
       hono:
         specifier: 4.6.16
         version: 4.6.16
@@ -1490,6 +1487,13 @@ packages:
   '@jridgewell/trace-mapping@0.3.9':
     resolution: {integrity: sha512-3Belt6tdc8bPgAtbcmdtNJlirVoTmEb5e2gC94PnkwEW9jI6CAHUeoG85tjWP5WquqfavoMtMwiG4P926ZKKuQ==}
 
+  '@jsprtmnn/utils@0.1.0':
+    resolution: {integrity: sha512-3SIx4o/oymNpLXs1/JpjjvVlS5Xk3FHKY48AmDWIyJ/derIYWIRQstFah3F/LaWNXgjy6F9VjOr+jRc7MUYGYg==}
+    engines: {node: '>=22.13.0'}
+    peerDependencies:
+      '@types/luxon': '>=3.0'
+      luxon: '>=3.0'
+
   '@lucia-auth/adapter-sqlite@3.0.2':
     resolution: {integrity: sha512-UlXpF+2UoFEdm1AsriJii5BOARwqko6SX29rQ8T8Za7rnjj9KLXLaRVQUgBhGmggAyvzCtguJ2+XOZDsfWm6Sw==}
     peerDependencies:
@@ -1996,13 +2000,6 @@ packages:
     resolution: {integrity: sha512-D6qjsXGcvhTjv0kI4fU8tUuBDF/Ueee4SVX79VfNDXZa64TfCW1Slkb6Z7O1p7vflqZjcmOVdZlqf8gvJxc6og==}
     cpu: [x64]
     os: [win32]
-
-  '@incmix/shared@0.1.2':
-    resolution: {integrity: sha512-cWhz8RKS9B9P8fLfD1Cw6AyclqpO0xzS4N//JHIBAk/fFwJAiSvob4gvqOfTrwedzLq+GLQDg3ta7eyiujunWw==}
-    engines: {node: '>=22.13.0'}
-    peerDependencies:
-      '@types/luxon': '>=3.0'
-      luxon: '>=3.0'
 
   '@scalar/hono-api-reference@0.5.163':
     resolution: {integrity: sha512-kIZRMSIBT1Ac0PjWLuoIERZYTk0ZTp+B/zfK13lOjTQ8cgPnau34hsAT8Bydr9hOWENbmEPOumMBFJ1F81+PKw==}
@@ -5657,6 +5654,16 @@ snapshots:
       '@jridgewell/resolve-uri': 3.1.2
       '@jridgewell/sourcemap-codec': 1.5.0
 
+  '@jsprtmnn/utils@0.1.0(@types/luxon@3.4.2)(hono@4.6.16)(luxon@3.5.0)(zod@3.23.8)':
+    dependencies:
+      '@casl/ability': 6.7.2
+      '@hono/zod-openapi': 0.18.3(hono@4.6.16)(zod@3.23.8)
+      '@types/luxon': 3.4.2
+      luxon: 3.5.0
+    transitivePeerDependencies:
+      - hono
+      - zod
+
   '@lucia-auth/adapter-sqlite@3.0.2(lucia@3.2.2)':
     dependencies:
       lucia: 3.2.2
@@ -6028,16 +6035,6 @@ snapshots:
 
   '@rollup/rollup-win32-x64-msvc@4.30.1':
     optional: true
-
-  '@incmix/shared@0.1.2(@types/luxon@3.4.2)(hono@4.6.16)(luxon@3.5.0)(zod@3.23.8)':
-    dependencies:
-      '@casl/ability': 6.7.2
-      '@hono/zod-openapi': 0.18.3(hono@4.6.16)(zod@3.23.8)
-      '@types/luxon': 3.4.2
-      luxon: 3.5.0
-    transitivePeerDependencies:
-      - hono
-      - zod
 
   '@scalar/hono-api-reference@0.5.163(hono@4.6.16)':
     dependencies:

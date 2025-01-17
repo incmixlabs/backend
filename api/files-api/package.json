@@ -15,7 +15,7 @@
     "@hono/zod-openapi": "0.18.3",
     "@hono/zod-validator": "0.4.1",
     "@incmix-api/utils": "workspace: *",
-    "@incmix/shared": "0.1.2",
+    "@jsprtmnn/utils": "0.1.0",
     "hono": "4.6.16",
     "zod": "3.23.8"
   },

@@ -8,7 +8,7 @@ import {
   updateUser,
 } from "@/routes/users/openapi"
 import { defaultHeaders, insertUser } from "@/test/test-utils"
-import type { UserProfile } from "@incmix/shared/types"
+import type { UserProfile } from "@jsprtmnn/utils/types"
 import { beforeAll, describe, expect, test } from "vitest"
 
 const jsonDefaultHeaders = {

@@ -6,7 +6,7 @@ import {
   filterParser,
   kyselyQuerySchema,
   sortParser,
-} from "@incmix/shared/data-table"
+} from "@jsprtmnn/utils/data-table"
 
 import type {
   ExpressionBuilder,

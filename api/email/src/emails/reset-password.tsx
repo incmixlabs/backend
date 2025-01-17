@@ -1,5 +1,5 @@
 import { contents } from "@/emails/contents"
-import { config } from "@incmix/shared/env"
+import { config } from "@jsprtmnn/utils/env"
 import {
   Body,
   Button,

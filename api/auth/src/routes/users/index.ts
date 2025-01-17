@@ -17,7 +17,7 @@ import {
   createKyselyFilter,
   parseQueryParams,
 } from "@incmix-api/utils"
-import { ROLE_SUPER_ADMIN } from "@incmix/shared/types"
+import { ROLE_SUPER_ADMIN } from "@jsprtmnn/utils/types"
 import type { ExpressionWrapper, OrderByExpression, SqlBool } from "kysely"
 import { Scrypt } from "lucia"
 import { getAllUsers, setEnabled, setPassword, setVerified } from "./openapi"

@@ -1,5 +1,5 @@
 import { z } from "@hono/zod-openapi"
-import { ColumnSchema, ProjectSchema } from "@incmix/shared/types"
+import { ColumnSchema, ProjectSchema } from "@jsprtmnn/utils/types"
 
 export const ProjectIdSchema = z.object({
   projectId: z.string().openapi({ example: "2hek2bkjh" }),

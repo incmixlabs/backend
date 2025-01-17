@@ -1,4 +1,4 @@
-import type { IntlMessage, Locale } from "@incmix/shared/types"
+import type { IntlMessage, Locale } from "@jsprtmnn/utils/types"
 import { DEFAULT_LOCALE, DEFAULT_MESSAGES } from "@incmix-api/utils"
 import {
   getAllMessages,

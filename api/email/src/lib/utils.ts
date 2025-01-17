@@ -1,4 +1,4 @@
-import { config } from "@incmix/shared/env"
+import { config } from "@jsprtmnn/utils/env"
 
 export const emailSender = {
   send: async (apiKey: string, to: string, subject: string, html: string) => {

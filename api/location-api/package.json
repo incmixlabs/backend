@@ -14,7 +14,7 @@
     "@incmix-api/utils": "workspace: *",
     "@lucia-auth/adapter-sqlite": "3.0.2",
     "@playwright/test": "1.49.0",
-    "@incmix/shared": "0.1.2",
+    "@jsprtmnn/utils": "0.1.0",
     "arctic": "2.3.0",
     "hono": "4.6.16",
     "lucia": "3.2.2",

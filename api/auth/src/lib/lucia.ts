@@ -1,5 +1,5 @@
 import type { Context } from "@/types"
-import type { UserType } from "@incmix/shared/types"
+import type { UserType } from "@jsprtmnn/utils/types"
 import { D1Adapter } from "@lucia-auth/adapter-sqlite"
 import { setCookie } from "hono/cookie"
 import { Lucia, type SessionCookieAttributesOptions } from "lucia"

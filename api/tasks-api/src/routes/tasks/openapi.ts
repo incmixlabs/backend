@@ -5,7 +5,7 @@ import {
   UpdateTaskSchema,
 } from "@/routes/tasks/types"
 import { createRoute } from "@hono/zod-openapi"
-import { TaskSchema } from "@incmix/shared/types"
+import { TaskSchema } from "@jsprtmnn/utils/types"
 import { ResponseSchema } from "../types"
 
 export const listTasks = createRoute({

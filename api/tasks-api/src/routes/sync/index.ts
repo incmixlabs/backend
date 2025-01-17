@@ -13,7 +13,7 @@ import {
 } from "@incmix-api/utils/errors"
 import { useTranslation } from "@incmix-api/utils/middleware"
 import { ERROR_FORBIDDEN, ERROR_UNAUTHORIZED } from "@incmix-api/utils"
-import type { DdlSchema, DdlVersion } from "@incmix/shared/types"
+import type { DdlSchema, DdlVersion } from "@jsprtmnn/utils/types"
 import { DateTime } from "luxon"
 import { getSchema, pullChanges, pushChanges } from "./openapi"
 const syncRoutes = new OpenAPIHono<HonoApp>({

@@ -1,5 +1,5 @@
 import type { Context } from "@/types"
-import type { Organization } from "@incmix/shared/types"
+import type { Organization } from "@jsprtmnn/utils/types"
 
 export async function getOrganizationById(c: Context, id: string) {
   const url = `${c.env.ORG_URL}/id/${id}`

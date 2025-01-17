@@ -1,4 +1,4 @@
-import type { AuthUser as User } from "@incmix/shared/types"
+import type { AuthUser as User } from "@jsprtmnn/utils/types"
 import type { Context as HonoContext } from "hono"
 
 export type Bindings = {

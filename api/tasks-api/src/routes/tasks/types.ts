@@ -1,4 +1,4 @@
-import { TaskSchema } from "@incmix/shared/types"
+import { TaskSchema } from "@jsprtmnn/utils/types"
 
 import { z } from "@hono/zod-openapi"
 

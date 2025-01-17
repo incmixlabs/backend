@@ -58,8 +58,8 @@ import {
 } from "@incmix-api/utils/errors"
 import { useTranslation } from "@incmix-api/utils/middleware"
 import { ERROR_UNAUTHORIZED } from "@incmix-api/utils"
-import type { MemberRole } from "@incmix/shared/types"
-import { ROLE_OWNER } from "@incmix/shared/types"
+import type { MemberRole } from "@jsprtmnn/utils/types"
+import { ROLE_OWNER } from "@jsprtmnn/utils/types"
 
 import { generateId } from "lucia"
 

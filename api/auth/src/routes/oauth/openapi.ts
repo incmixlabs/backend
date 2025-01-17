@@ -1,7 +1,7 @@
 import { OAuthCallbackSchema, OAuthResponseSchema } from "@/routes/oauth/types"
 import { MessageResponseSchema } from "@/routes/types"
 import { createRoute } from "@hono/zod-openapi"
-import { AuthUserSessionSchema } from "@incmix/shared/types"
+import { AuthUserSessionSchema } from "@jsprtmnn/utils/types"
 
 export const googleOAuth = createRoute({
   method: "get",

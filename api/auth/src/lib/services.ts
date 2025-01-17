@@ -2,7 +2,7 @@ import type { MessageResponse } from "@/routes/types"
 import type { Context } from "@/types"
 import { BadRequestError, ServerError } from "@incmix-api/utils/errors"
 import { generateSentryHeaders } from "@incmix-api/utils"
-import type { UserProfile } from "@incmix/shared/types"
+import type { UserProfile } from "@jsprtmnn/utils/types"
 
 export async function getUserProfile(c: Context, id: string, cookie: string) {
   const sentryHeaders = generateSentryHeaders(c)

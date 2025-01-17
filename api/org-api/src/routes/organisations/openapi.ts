@@ -2,7 +2,7 @@ import { createRoute } from "@hono/zod-openapi"
 import {
   MembersResponseSchema,
   PermissionsResponseSchema,
-} from "@incmix/shared/types"
+} from "@jsprtmnn/utils/types"
 import {
   CreateOrgSchema,
   MemberEmailSchema,

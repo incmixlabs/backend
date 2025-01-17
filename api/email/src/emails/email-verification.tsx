@@ -14,7 +14,7 @@ import {
 import * as React from "react"
 
 import { contents } from "@/emails/contents"
-import { config } from "@incmix/shared/env"
+import { config } from "@jsprtmnn/utils/env"
 interface Props {
   verificationLink: string
 }

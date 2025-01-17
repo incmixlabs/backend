@@ -14,7 +14,7 @@
     "@hono/zod-validator": "0.4.1",
     "@incmix-api/utils": "workspace: *",
     "@react-email/components": "0.0.29",
-    "@incmix/shared": "0.1.2",
+    "@jsprtmnn/utils": "0.1.0",
     "@sendgrid/eventwebhook": "8.0.0",
     "hono": "4.6.16",
     "react": "18.3.1",

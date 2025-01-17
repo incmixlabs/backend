@@ -1,5 +1,5 @@
 import type { Clients } from "@/durable-objects/clients"
-import type { AuthUser } from "@incmix/shared/types"
+import type { AuthUser } from "@jsprtmnn/utils/types"
 import type { Context as HonoContext } from "hono"
 import type { Session } from "lucia"
 

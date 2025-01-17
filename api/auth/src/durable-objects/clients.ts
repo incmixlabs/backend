@@ -1,7 +1,7 @@
 import type { Bindings } from "@/types"
 
 import { DurableObject } from "cloudflare:workers"
-import type { WsMessage } from "@incmix/shared/types"
+import type { WsMessage } from "@jsprtmnn/utils/types"
 
 export class Clients extends DurableObject<Bindings> {
   connectedClients: Map<WebSocket, { userId: string }>

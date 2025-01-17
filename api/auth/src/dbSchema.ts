@@ -1,4 +1,4 @@
-import type { UserType } from "@incmix/shared/types"
+import type { UserType } from "@jsprtmnn/utils/types"
 import type { Generated, Insertable, Selectable, Updateable } from "kysely"
 export type Provider = "google" | "github"
 
