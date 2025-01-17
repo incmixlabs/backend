@@ -17,6 +17,6 @@
   "devDependencies": {
     "@cloudflare/workers-types": "4.20250109.0",
     "@incmix-api/config": "workspace: *",
-    "wrangler": "3.74.0"
+    "wrangler": "3.103.1"
   }
 }

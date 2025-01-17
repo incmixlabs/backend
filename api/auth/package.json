@@ -12,10 +12,10 @@
     "@hono/zod-openapi": "0.18.3",
     "@hono/zod-validator": "0.4.1",
     "@incmix-api/utils": "workspace: *",
+    "@jsprtmnn/utils": "0.1.0",
     "@lucia-auth/adapter-sqlite": "3.0.2",
     "@noxharmonium/kysely-d1": "0.4.0",
     "@playwright/test": "1.49.0",
-    "@jsprtmnn/utils": "0.1.0",
     "arctic": "2.3.0",
     "hono": "4.6.16",
     "kysely": "0.27.5",
@@ -30,6 +30,6 @@
     "@incmix-api/config": "workspace: *",
     "miniflare": "3.20240610.1",
     "vitest": "1.5.0",
-    "wrangler": "3.74.0"
+    "wrangler": "3.103.1"
   }
 }

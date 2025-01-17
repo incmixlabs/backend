@@ -18,19 +18,19 @@
     "add": "2.0.6"
   },
   "devDependencies": {
-    "@jsprtmnn/utils": "latest",
     "@casl/ability": "6.7.2",
     "@hono/zod-openapi": "0.18.3",
     "@incmix-api/config": "workspace: *",
+    "@jsprtmnn/utils": "latest",
     "hono": "4.6.16",
     "kysely": "0.27.5",
     "typescript": "5.7.3",
     "zod": "3.23.8"
   },
   "peerDependencies": {
-    "@jsprtmnn/utils": "latest",
     "@casl/ability": "6.7.2",
     "@hono/zod-openapi": "0.18.3",
+    "@jsprtmnn/utils": "latest",
     "hono": "4.6.12",
     "kysely": "0.27.5",
     "zod": "3.23.8"

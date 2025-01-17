@@ -13,8 +13,8 @@
     "@hono/zod-openapi": "0.18.3",
     "@hono/zod-validator": "0.4.1",
     "@incmix-api/utils": "workspace: *",
-    "@react-email/components": "0.0.29",
     "@jsprtmnn/utils": "0.1.0",
+    "@react-email/components": "0.0.29",
     "@sendgrid/eventwebhook": "8.0.0",
     "hono": "4.6.16",
     "react": "18.3.1",
@@ -26,6 +26,6 @@
     "@incmix-api/config": "workspace: *",
     "@types/node": "22.10.1",
     "@types/react": "18.3.1",
-    "wrangler": "3.74.0"
+    "wrangler": "3.103.1"
   }
 }

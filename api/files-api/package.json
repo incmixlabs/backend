@@ -23,6 +23,6 @@
     "@cloudflare/workers-types": "4.20250109.0",
     "@incmix-api/config": "workspace: *",
     "@types/node": "22.10.1",
-    "wrangler": "3.74.0"
+    "wrangler": "3.103.1"
   }
 }
