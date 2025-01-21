@@ -9,25 +9,24 @@
   },
   "dependencies": {
     "@hono-rate-limiter/cloudflare": "0.2.2",
-    "@hono/zod-openapi": "0.18.3",
+    "@hono/zod-openapi": "catalog:",
     "@hono/zod-validator": "0.4.1",
     "@incmix-api/utils": "workspace: *",
-    "@jsprtmnn/utils": "0.1.0",
+    "@jsprtmnn/utils": "catalog:",
     "@lucia-auth/adapter-sqlite": "3.0.2",
     "@playwright/test": "1.49.0",
     "arctic": "2.3.0",
-    "hono": "4.6.16",
+    "hono": "catalog:",
     "lucia": "3.2.2",
     "mailslurp-client": "15.20.2",
     "oslo": "1.2.1",
-    "zod": "3.23.8"
+    "zod": "catalog:"
   },
   "devDependencies": {
-    "@cloudflare/vitest-pool-workers": "0.4.3",
-    "@cloudflare/workers-types": "4.20250109.0",
+    "@cloudflare/vitest-pool-workers": "catalog:",
+    "@cloudflare/workers-types": "catalog:",
     "@incmix-api/config": "workspace: *",
-    "miniflare": "3.20240610.1",
-    "vitest": "1.5.0",
-    "wrangler": "3.103.1"
+    "vitest": "catalog:",
+    "wrangler": "catalog:"
   }
 }

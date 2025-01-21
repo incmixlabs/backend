@@ -4,7 +4,7 @@ import {
   readD1Migrations,
 } from "@cloudflare/vitest-pool-workers/config"
 import tsconfigPaths from "vite-tsconfig-paths"
-import { authService, intlService } from "./test/mocks"
+import { authService, intlService, orgService } from "./test/mocks"
 
 export default defineWorkersProject(async () => {
   // Read all migrations in the `migrations` directory
@@ -29,6 +29,7 @@ export default defineWorkersProject(async () => {
             serviceBindings: {
               INTL: intlService,
               AUTH: authService,
+              ORG: orgService,
             },
           },
         },
