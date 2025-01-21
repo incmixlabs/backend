@@ -36,6 +36,37 @@ export const authService = async (
   return Response.json({ message: "Unauthorized" }, { status: 401 })
 }
 
+export const orgService = async (
+  req: Request<RequestInitCfType>,
+  mf: Miniflare
+) => {
+  await mf.ready
+
+  const sessionId = req.headers.get("cookie")?.split("=")[1]
+  if (!sessionId)
+    return Response.json({ message: "Unauthorized" }, { status: 401 })
+
+  const url = new URL(req.url)
+  if (url.pathname.endsWith("/id/12345"))
+    return Response.json(
+      {
+        handle: "tets-organisation",
+        id: "12345",
+        members: [
+          {
+            orgId: "12345",
+            role: "owner",
+            userId: "user_1",
+          },
+        ],
+        name: "Test organisation",
+      },
+      { status: 200 }
+    )
+
+  return Response.json({ message: "Org not found" }, { status: 404 })
+}
+
 export const intlService = async (
   req: Request<RequestInitCfType>,
   mf: Miniflare

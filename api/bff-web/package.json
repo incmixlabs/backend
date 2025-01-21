@@ -6,16 +6,16 @@
     "test": "vitest --run"
   },
   "dependencies": {
-    "@hono/zod-openapi": "0.18.3",
+    "@hono/zod-openapi": "catalog:",
     "@hono/zod-validator": "0.4.1",
     "@incmix-api/utils": "workspace: *",
-    "@jsprtmnn/utils": "0.1.0",
-    "hono": "4.6.16",
-    "zod": "3.23.8"
+    "@jsprtmnn/utils": "catalog:",
+    "hono": "catalog:",
+    "zod": "catalog:"
   },
   "devDependencies": {
-    "@cloudflare/workers-types": "4.20250109.0",
+    "@cloudflare/workers-types": "catalog:",
     "@incmix-api/config": "workspace: *",
-    "wrangler": "3.103.1"
+    "wrangler": "catalog:"
   }
 }

@@ -7,7 +7,13 @@
     "defaultBranch": "main"
   },
   "files": {
-    "ignore": ["node_modules", "dist", ".wrangler", ".vscode"]
+    "ignore": [
+      "node_modules",
+      "dist",
+      ".wrangler",
+      ".vscode",
+      "vitest-pool-workers"
+    ]
   },
   "formatter": {
     "enabled": true,
