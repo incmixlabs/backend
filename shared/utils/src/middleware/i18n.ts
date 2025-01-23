@@ -4,8 +4,8 @@ import {
   getDefaultLocale,
   getDefaultMessages,
 } from "@incmix-api/utils"
+import type { IntlMessage, Locale } from "@incmix/utils/types"
 import { getHeaderLocale } from "@intlify/utils"
-import type { IntlMessage, Locale } from "@jsprtmnn/utils/types"
 import type { Context, MiddlewareHandler } from "hono"
 
 declare module "hono" {

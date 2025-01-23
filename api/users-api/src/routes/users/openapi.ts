@@ -1,11 +1,11 @@
 import { createRoute } from "@hono/zod-openapi"
 
-import { UserProfilePaginatedSchema } from "@jsprtmnn/utils/types"
+import { UserProfilePaginatedSchema } from "@incmix/utils/types"
 import {
   UserProfileSchema,
   optionalPresignedUrlSchema,
-} from "@jsprtmnn/utils/types"
-import { PermissionSchema } from "@jsprtmnn/utils/types"
+} from "@incmix/utils/types"
+import { PermissionSchema } from "@incmix/utils/types"
 import {
   FullNameSchema,
   IdOrEmailSchema,

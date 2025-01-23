@@ -1,6 +1,6 @@
 import type { Database } from "@/dbSchema"
 import type { Context } from "@/types"
-import type { Board, NestedColumns } from "@jsprtmnn/utils/types"
+import type { Board, NestedColumns } from "@incmix/utils/types"
 import { D1Dialect } from "@noxharmonium/kysely-d1"
 import { CamelCasePlugin, Kysely, ParseJSONResultsPlugin } from "kysely"
 import { jsonArrayFrom } from "kysely/helpers/sqlite"

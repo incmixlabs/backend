@@ -20,8 +20,8 @@
   "devDependencies": {
     "@casl/ability": "6.7.2",
     "@hono/zod-openapi": "catalog:",
-    "@incmix-api/config": "workspace: *",
-    "@jsprtmnn/utils": "latest",
+    "@incmix-api/config": "workspace:^",
+    "@incmix/utils": "latest",
     "hono": "catalog:",
     "kysely": "0.27.5",
     "typescript": "5.7.3",
@@ -30,7 +30,7 @@
   "peerDependencies": {
     "@casl/ability": "6.7.2",
     "@hono/zod-openapi": "catalog:",
-    "@jsprtmnn/utils": "latest",
+    "@incmix/utils": "latest",
     "hono": "4.6.12",
     "kysely": "0.27.5",
     "zod": "catalog:"

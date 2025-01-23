@@ -1,4 +1,4 @@
-import type { UserProfile } from "@jsprtmnn/utils/types"
+import type { UserProfile } from "@incmix/utils/types"
 
 export const defaultHeaders = {
   origin: "http://localhost:1420",

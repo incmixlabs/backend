@@ -1,6 +1,6 @@
 import { z } from "@hono/zod-openapi"
-import type { DdlSchema } from "@jsprtmnn/utils/types"
-import { ColumnSchema, TaskSchema } from "@jsprtmnn/utils/types"
+import type { DdlSchema } from "@incmix/utils/types"
+import { ColumnSchema, TaskSchema } from "@incmix/utils/types"
 
 export const VersionSchema = z.object({
   version: z.number(),

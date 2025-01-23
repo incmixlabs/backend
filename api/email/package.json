@@ -12,8 +12,8 @@
   "dependencies": {
     "@hono/zod-openapi": "catalog:",
     "@hono/zod-validator": "0.4.1",
-    "@incmix-api/utils": "workspace: *",
-    "@jsprtmnn/utils": "catalog:",
+    "@incmix-api/utils": "workspace:^",
+    "@incmix/utils": "catalog:",
     "@react-email/components": "0.0.29",
     "@sendgrid/eventwebhook": "8.0.0",
     "hono": "catalog:",
@@ -23,7 +23,7 @@
   },
   "devDependencies": {
     "@cloudflare/workers-types": "catalog:",
-    "@incmix-api/config": "workspace: *",
+    "@incmix-api/config": "workspace:^",
     "@types/node": "catalog:",
     "@types/react": "18.3.1",
     "wrangler": "catalog:"

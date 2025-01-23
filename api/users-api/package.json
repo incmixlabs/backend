@@ -11,8 +11,8 @@
   "dependencies": {
     "@hono/zod-openapi": "catalog:",
     "@hono/zod-validator": "0.4.1",
-    "@incmix-api/utils": "workspace: *",
-    "@jsprtmnn/utils": "catalog:",
+    "@incmix-api/utils": "workspace:^",
+    "@incmix/utils": "catalog:",
     "@noxharmonium/kysely-d1": "0.4.0",
     "hono": "catalog:",
     "kysely": "0.27.5"
@@ -20,7 +20,7 @@
   "devDependencies": {
     "@cloudflare/vitest-pool-workers": "catalog:",
     "@cloudflare/workers-types": "catalog:",
-    "@incmix-api/config": "workspace: *",
+    "@incmix-api/config": "workspace:^",
     "vite-tsconfig-paths": "5.1.4",
     "vitest": "catalog:",
     "wrangler": "catalog:"

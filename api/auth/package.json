@@ -11,8 +11,8 @@
   "dependencies": {
     "@hono/zod-openapi": "catalog:",
     "@hono/zod-validator": "0.4.1",
-    "@incmix-api/utils": "workspace: *",
-    "@jsprtmnn/utils": "catalog:",
+    "@incmix-api/utils": "workspace:^",
+    "@incmix/utils": "catalog:",
     "@lucia-auth/adapter-sqlite": "3.0.2",
     "@noxharmonium/kysely-d1": "0.4.0",
     "@playwright/test": "1.49.0",
@@ -27,7 +27,7 @@
   "devDependencies": {
     "@cloudflare/vitest-pool-workers": "catalog:",
     "@cloudflare/workers-types": "catalog:",
-    "@incmix-api/config": "workspace: *",
+    "@incmix-api/config": "workspace:^",
     "vitest": "catalog:",
     "wrangler": "catalog:"
   }

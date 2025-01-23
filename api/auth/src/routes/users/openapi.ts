@@ -1,5 +1,5 @@
 import { createRoute } from "@hono/zod-openapi"
-import { PaginatedUserSchema } from "@jsprtmnn/utils/types"
+import { PaginatedUserSchema } from "@incmix/utils/types"
 import { MessageResponseSchema } from "../types"
 import { PasswordValueSchema, ValueSchema } from "./types"
 

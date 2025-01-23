@@ -1,6 +1,6 @@
 import type { OpenAPIHono } from "@hono/zod-openapi"
 import { generateSentryHeaders } from "@incmix-api/utils"
-import type { AuthUser } from "@jsprtmnn/utils/types"
+import type { AuthUser } from "@incmix/utils/types"
 import type { Env as HonoEnv } from "hono"
 import { getCookie } from "hono/cookie"
 

@@ -1,4 +1,4 @@
-import type { Permission } from "@jsprtmnn/utils/types"
+import type { Permission } from "@incmix/utils/types"
 
 export const adminPermissions: Permission[] = [
   {

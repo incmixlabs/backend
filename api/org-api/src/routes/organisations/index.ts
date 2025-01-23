@@ -58,8 +58,8 @@ import {
   zodError,
 } from "@incmix-api/utils/errors"
 import { useTranslation } from "@incmix-api/utils/middleware"
-import type { MemberRole } from "@jsprtmnn/utils/types"
-import { ROLE_OWNER } from "@jsprtmnn/utils/types"
+import type { MemberRole } from "@incmix/utils/types"
+import { ROLE_OWNER } from "@incmix/utils/types"
 
 import { generateId } from "lucia"
 
