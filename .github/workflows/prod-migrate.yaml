@@ -5,7 +5,7 @@ on:
     branches:
       - main
     paths:
-      - "api/*/migrations/*.sql"
+      - "api/**"
       - ".github/workflows/prod-migrate.yaml"
 
 jobs:
@@ -14,53 +14,119 @@ jobs:
     name: Migrate Auth
     steps:
       - uses: actions/checkout@v4
-      - uses: ./.github/actions/migrate-d1
+      - name: Setup Pnpm
+        uses: pnpm/action-setup@v4
+      - name: Setup Node
+        uses: actions/setup-node@v2
         with:
+          node-version: '22'
+          cache: 'pnpm'
+      - name: Migrate Auth
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_SECRET }}
           workingDirectory: "api/auth"
-          dbName: "lucia-auth"
+          wranglerVersion: "3.103.1"
+          command: "d1 migrations apply lucia-auth --remote"
+          packageManager: "pnpm"
   migrate_users:
     runs-on: ubuntu-latest
     name: Migrate Users
     steps:
       - uses: actions/checkout@v4
-      - uses: ./.github/actions/migrate-d1
+      - name: Setup Pnpm
+        uses: pnpm/action-setup@v4
+      - name: Setup Node
+        uses: actions/setup-node@v2
         with:
+          node-version: '22'
+          cache: 'pnpm'
+      - name: Migrate Users
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_SECRET }}
           workingDirectory: "api/users-api"
-          dbName: "users-api"
+          wranglerVersion: "3.103.1"
+          command: "d1 migrations apply users-api --remote"
+          packageManager: "pnpm"
   migrate_org:
     runs-on: ubuntu-latest
     name: Migrate Org
     steps:
       - uses: actions/checkout@v4
-      - uses: ./.github/actions/migrate-d1
+      - name: Setup Pnpm
+        uses: pnpm/action-setup@v4
+      - name: Setup Node
+        uses: actions/setup-node@v2
         with:
+          node-version: '22'
+          cache: 'pnpm'
+      - name: Migrate Org
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_SECRET }}
           workingDirectory: "api/org-api"
-          dbName: "org-api"
+          wranglerVersion: "3.103.1"
+          command: "d1 migrations apply org-api --remote"
+          packageManager: "pnpm"
   migrate_intl:
     runs-on: ubuntu-latest
     name: Migrate Intl
     steps:
       - uses: actions/checkout@v4
-      - uses: ./.github/actions/migrate-d1
+      - name: Setup Pnpm
+        uses: pnpm/action-setup@v4
+      - name: Setup Node
+        uses: actions/setup-node@v2
         with:
+          node-version: '22'
+          cache: 'pnpm'
+      - name: Migrate Intl
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_SECRET }}
           workingDirectory: "api/intl-api"
-          dbName: "intl-api"
+          wranglerVersion: "3.103.1"
+          command: "d1 migrations apply intl-api --remote"
+          packageManager: "pnpm"
   migrate_email:
     runs-on: ubuntu-latest
     name: Migrate Email
     steps:
       - uses: actions/checkout@v4
-      - uses: ./.github/actions/migrate-d1
+      - name: Setup Pnpm
+        uses: pnpm/action-setup@v4
+      - name: Setup Node
+        uses: actions/setup-node@v2
         with:
+          node-version: '22'
+          cache: 'pnpm'
+      - name: Migrate Email
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_SECRET }}
           workingDirectory: "api/email"
-          dbName: "email-api"
+          wranglerVersion: "3.103.1"
+          command: "d1 migrations apply email-api --remote"
+          packageManager: "pnpm"
   migrate_tasks:
     needs: [migrate_auth]
     runs-on: ubuntu-latest
     name: Migrate Tasks
     steps:
       - uses: actions/checkout@v4
-      - uses: ./.github/actions/migrate-d1
+      - name: Setup Pnpm
+        uses: pnpm/action-setup@v4
+      - name: Setup Node
+        uses: actions/setup-node@v2
         with:
+          node-version: '22'
+          cache: 'pnpm'
+      - name: Migrate Tasks
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_SECRET }}
           workingDirectory: "api/tasks-api"
-          dbName: "tasks-api"
+          wranglerVersion: "3.103.1"
+          command: "d1 migrations apply tasks-api-prod --remote"
+          packageManager: "pnpm"
