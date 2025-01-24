@@ -5,7 +5,7 @@ on:
     branches:
       - main
     paths:
-      - "api/**"
+      - "api/*/migrations/*.sql"
       - ".github/workflows/prev-migrate.yaml"
 
 jobs:
@@ -14,111 +14,59 @@ jobs:
     name: Migrate Auth
     steps:
       - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
-      - name: Migrate Auth
-        uses: cloudflare/wrangler-action@v3
+      - uses: ./.github/actions/migrate-d1
         with:
-          apiToken: ${{ secrets.CLOUDFLARE_SECRET }}
           workingDirectory: "api/auth"
-          wranglerVersion: "3.102.0"
-          preCommands: |
-            echo "*** pre commands ***"
-            wrangler d1 migrations apply lucia-auth-prev --env prev --remote
-            echo "******"
-          command: "d1 execute lucia-auth-prev --env prev --remote --file='./reset-db.sql'"
-          packageManager: "pnpm"
+          dbName: "lucia-auth-prev"
+          envName: "--env prev"
   migrate_users:
     runs-on: ubuntu-latest
     name: Migrate Users
     steps:
       - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
-      - name: Migrate Users
-        uses: cloudflare/wrangler-action@v3
+      - uses: ./.github/actions/migrate-d1
         with:
-          apiToken: ${{ secrets.CLOUDFLARE_SECRET }}
           workingDirectory: "api/users-api"
-          wranglerVersion: "3.102.0"
-          preCommands: |
-            echo "*** pre commands ***"
-            wrangler d1 migrations apply users-api-dev-prev --env prev --remote
-            echo "******"
-          command: "d1 execute users-api-dev-prev --env prev --remote --command=\"select * from user_profiles\""
-          packageManager: "pnpm"
+          dbName: "users-api-dev-prev"
+          envName: "--env prev"
   migrate_org:
     runs-on: ubuntu-latest
     name: Migrate Org
     steps:
       - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
-      - name: Migrate Org
-        uses: cloudflare/wrangler-action@v3
+      - uses: ./.github/actions/migrate-d1
         with:
-          apiToken: ${{ secrets.CLOUDFLARE_SECRET }}
           workingDirectory: "api/org-api"
-          wranglerVersion: "3.102.0"
-          preCommands: |
-            echo "*** pre commands ***"
-            wrangler d1 migrations apply org-api-dev-prev --env prev --remote
-            echo "******"
-          command: "d1 execute org-api-dev-prev --env prev --remote --file='./reset-db.sql'"
-          packageManager: "pnpm"
+          dbName: "org-api-dev-prev"
+          envName: "--env prev"
   migrate_email:
     runs-on: ubuntu-latest
     name: Migrate Email
     steps:
       - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
-      - name: Migrate Email
-        uses: cloudflare/wrangler-action@v3
+      - uses: ./.github/actions/migrate-d1
         with:
-          apiToken: ${{ secrets.CLOUDFLARE_SECRET }}
           workingDirectory: "api/email"
-          wranglerVersion: "3.102.0"
-          preCommands: |
-            echo "*** pre commands ***"
-            wrangler d1 migrations apply email-api-dev-prev --env prev --remote
-            echo "******"
-          command: "d1 execute --command=\"delete from email_queue\" email-api-dev-prev --env prev --remote"
-          packageManager: "pnpm"
+          dbName: "email-api-dev-prev"
+          envName: "--env prev"
   migrate_intl:
     runs-on: ubuntu-latest
     name: Migrate Intl
     steps:
       - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
-      - name: Migrate Intl
-        uses: cloudflare/wrangler-action@v3
+      - uses: ./.github/actions/migrate-d1
         with:
-          apiToken: ${{ secrets.CLOUDFLARE_SECRET }}
           workingDirectory: "api/intl-api"
-          wranglerVersion: "3.102.0"
-          preCommands: |
-            echo "*** pre commands ***"
-            wrangler d1 migrations apply intl-api-prev --env prev --remote
-            wrangler d1 execute intl-api-prev --file="./seeds/0001_base.sql" --env prev --remote
-            wrangler d1 execute intl-api-prev --file="./seeds/0002_en.sql" --env prev --remote
-            wrangler d1 execute intl-api-prev --file="./seeds/0003_pt.sql" --env prev --remote
-            echo "******"
-          command: "d1 execute intl-api-prev --command=\"select * from locales\" --env prev --remote"
-          packageManager: "pnpm"
+          dbName: "intl-api-dev-prev"
+          envName: "--env prev"
   migrate_tasks:
     needs: [migrate_auth]
     runs-on: ubuntu-latest
     name: Migrate Tasks
     steps:
       - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
-      - name: Migrate Tasks
-        uses: cloudflare/wrangler-action@v3
+      - uses: ./.github/actions/migrate-d1
         with:
-          apiToken: ${{ secrets.CLOUDFLARE_SECRET }}
           workingDirectory: "api/tasks-api"
-          wranglerVersion: "3.102.0"
-          preCommands: |
-            echo "*** pre commands ***"
-            wrangler d1 migrations apply tasks-api-dev-prev --env prev --remote
-            echo "******"
-          command: "d1 execute tasks-api-dev-prev --env prev --remote --file='./reset-db.sql'"
-          packageManager: "pnpm"
-
+          dbName: "tasks-api-dev-prev"
+          envName: "--env prev"
