@@ -1,0 +1,35 @@
+name: 'Migrate D1'
+description: 'Reusable action to migrate D1 database using Cloudflare Wrangler'
+inputs:
+  dbName:
+    description: 'Name of the remote D1 database'
+    required: true
+  envName:
+    description: 'Name of the environment, --env prev|dev|prod, etc.'
+    required: false
+  workingDirectory:
+    description: 'Working directory for the migration'
+    required: true
+  preCommands:
+    description: 'Wrangler commands to execute before migration'
+    required: false
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Setup pnpm
+      uses: pnpm/action-setup@v4
+    - name: Setup Node
+      uses: actions/setup-node@v4
+      with:
+        node-version: 22.13.0
+        cache: 'pnpm'
+    - name: Migrate Auth
+      uses: cloudflare/wrangler-action@v3
+      with:
+        apiToken: ${{ secrets.CLOUDFLARE_SECRET }}
+        workingDirectory: ${{ inputs.workingDirectory }}
+        wranglerVersion: "3.102.0"
+        preCommands: ${{ inputs.preCommands }}
+        command: "d1 migrations apply ${{ inputs.dbName }} --remote ${{ inputs.envName }}"
+        packageManager: "pnpm"

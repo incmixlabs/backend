@@ -11,7 +11,7 @@ import {
   AuthUserSchema,
   AuthUserSessionSchema,
   UserProfileSchema,
-} from "@jsprtmnn/utils/types"
+} from "@incmix/utils/types"
 
 export const getCurrentUser = createRoute({
   method: "get",

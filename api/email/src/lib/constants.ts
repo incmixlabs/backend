@@ -1,3 +1,3 @@
-import { API } from "@jsprtmnn/utils/env"
+import { API } from "@incmix/utils/env"
 
 export const BASE_PATH = API.EMAIL

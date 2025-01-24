@@ -13,7 +13,7 @@ import {
   zodError,
 } from "@incmix-api/utils/errors"
 import { useTranslation } from "@incmix-api/utils/middleware"
-import type { DdlSchema, DdlVersion } from "@jsprtmnn/utils/types"
+import type { DdlSchema, DdlVersion } from "@incmix/utils/types"
 import { DateTime } from "luxon"
 import { getSchema, pullChanges, pushChanges } from "./openapi"
 const syncRoutes = new OpenAPIHono<HonoApp>({

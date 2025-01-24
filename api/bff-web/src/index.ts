@@ -2,7 +2,7 @@ import { OpenAPIHono } from "@hono/zod-openapi"
 import { NotFoundError } from "@incmix-api/utils/errors"
 import { setupCors } from "@incmix-api/utils/middleware"
 
-import { API } from "@jsprtmnn/utils/env"
+import { API } from "@incmix/utils/env"
 import type { HonoApp } from "./types"
 
 const app = new OpenAPIHono<HonoApp>()

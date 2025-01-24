@@ -12,7 +12,7 @@ import {
 } from "@/routes/files/openapi"
 import type { ListFilesSchema } from "@/routes/files/types"
 import { defaultHeaders } from "@/test/test-utils"
-import type { presignedUrlSchema } from "@jsprtmnn/utils/types"
+import type { presignedUrlSchema } from "@incmix/utils/types"
 import { beforeAll, describe, expect, test } from "vitest"
 import type { z } from "zod"
 

@@ -9,14 +9,14 @@
   "dependencies": {
     "@hono/zod-openapi": "catalog:",
     "@hono/zod-validator": "0.4.1",
-    "@incmix-api/utils": "workspace: *",
-    "@jsprtmnn/utils": "catalog:",
+    "@incmix-api/utils": "workspace:^",
+    "@incmix/utils": "catalog:",
     "hono": "catalog:",
     "zod": "catalog:"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "catalog:",
-    "@incmix-api/config": "workspace: *",
+    "@incmix-api/config": "workspace:^",
     "wrangler": "catalog:"
   }
 }

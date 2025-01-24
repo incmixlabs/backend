@@ -16,7 +16,7 @@ import {
 import * as React from "react"
 
 import { contents } from "@/emails/contents"
-import { config } from "@jsprtmnn/utils/env"
+import { config } from "@incmix/utils/env"
 
 interface Props {
   username?: string

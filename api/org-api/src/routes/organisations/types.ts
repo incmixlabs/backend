@@ -1,5 +1,5 @@
 import { z } from "@hono/zod-openapi"
-import { MemberRoles } from "@jsprtmnn/utils/types"
+import { MemberRoles } from "@incmix/utils/types"
 
 export const MessageResponseSchema = z
   .object({

@@ -1,4 +1,4 @@
-import type { TaskStatus } from "@jsprtmnn/utils/types"
+import type { TaskStatus } from "@incmix/utils/types"
 import type { ColumnType, Insertable, Selectable, Updateable } from "kysely"
 
 type TasksTable = {

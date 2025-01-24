@@ -36,15 +36,15 @@ import {
   parseQueryParams,
 } from "@incmix-api/utils"
 import { useTranslation } from "@incmix-api/utils/middleware"
-import type { Filter } from "@jsprtmnn/utils/data-table"
+import type { Filter } from "@incmix/utils/data-table"
 import type {
   PaginatedUser,
   Permission,
   UserAndProfile,
   presignedUrlSchema,
-} from "@jsprtmnn/utils/types"
+} from "@incmix/utils/types"
 
-import { ROLE_MEMBER, ROLE_SUPER_ADMIN } from "@jsprtmnn/utils/types"
+import { ROLE_MEMBER, ROLE_SUPER_ADMIN } from "@incmix/utils/types"
 import type { ContentfulStatusCode } from "hono/utils/http-status"
 import type { ExpressionWrapper, OrderByExpression, SqlBool } from "kysely"
 import {

@@ -1,5 +1,5 @@
 import { createRoute } from "@hono/zod-openapi"
-import { BoardSchema, ColumnSchema, ProjectSchema } from "@jsprtmnn/utils/types"
+import { BoardSchema, ColumnSchema, ProjectSchema } from "@incmix/utils/types"
 import { ResponseSchema } from "../types"
 import {
   ColumnIdSchema,

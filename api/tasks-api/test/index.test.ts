@@ -14,7 +14,7 @@ import {
   insertProject,
   insertTask,
 } from "@/test/test-utils"
-import type { Task } from "@jsprtmnn/utils/types"
+import type { Task } from "@incmix/utils/types"
 import { beforeAll, describe, expect, test } from "vitest"
 
 describe("Todo worker tests", () => {

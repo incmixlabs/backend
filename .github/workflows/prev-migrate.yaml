@@ -121,4 +121,3 @@ jobs:
             echo "******"
           command: "d1 execute tasks-api-dev-prev --env prev --remote --file='./reset-db.sql'"
           packageManager: "pnpm"
-

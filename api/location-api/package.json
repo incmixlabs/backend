@@ -11,8 +11,8 @@
     "@hono-rate-limiter/cloudflare": "0.2.2",
     "@hono/zod-openapi": "catalog:",
     "@hono/zod-validator": "0.4.1",
-    "@incmix-api/utils": "workspace: *",
-    "@jsprtmnn/utils": "catalog:",
+    "@incmix-api/utils": "workspace:^",
+    "@incmix/utils": "catalog:",
     "@lucia-auth/adapter-sqlite": "3.0.2",
     "@playwright/test": "1.49.0",
     "arctic": "2.3.0",
@@ -25,7 +25,7 @@
   "devDependencies": {
     "@cloudflare/vitest-pool-workers": "catalog:",
     "@cloudflare/workers-types": "catalog:",
-    "@incmix-api/config": "workspace: *",
+    "@incmix-api/config": "workspace:^",
     "vitest": "catalog:",
     "wrangler": "catalog:"
   }

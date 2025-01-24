@@ -1,5 +1,5 @@
 import type { MongoQuery } from "@casl/ability"
-import type { Action, MemberRole, Subject } from "@jsprtmnn/utils/types"
+import type { Action, MemberRole, Subject } from "@incmix/utils/types"
 import type { Insertable, JSONColumnType, Selectable, Updateable } from "kysely"
 type OrganisationTable = {
   id: string

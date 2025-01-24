@@ -17,7 +17,7 @@ import {
   zodError,
 } from "@incmix-api/utils/errors"
 import { useTranslation } from "@incmix-api/utils/middleware"
-import { ROLE_SUPER_ADMIN } from "@jsprtmnn/utils/types"
+import { ROLE_SUPER_ADMIN } from "@incmix/utils/types"
 import type { ExpressionWrapper, OrderByExpression, SqlBool } from "kysely"
 import { Scrypt } from "lucia"
 import { getAllUsers, setEnabled, setPassword, setVerified } from "./openapi"

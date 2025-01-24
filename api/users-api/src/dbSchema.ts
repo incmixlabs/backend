@@ -1,4 +1,4 @@
-import type { UserType } from "@jsprtmnn/utils/types"
+import type { UserType } from "@incmix/utils/types"
 import type { Insertable, Selectable, Updateable } from "kysely"
 
 export type UserRow = {
