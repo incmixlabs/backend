@@ -102,7 +102,7 @@ export async function processError<R extends RouteConfig>(
     ) as TypedResponse as RouteConfigToTypedResponse<R>
 
   console.error(error)
-  logSentryError(c, error, sentryFingerPrint)
+  // logSentryError(c, error, sentryFingerPrint)
 
   const message =
     error instanceof Error && error.message
