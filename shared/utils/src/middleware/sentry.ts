@@ -12,7 +12,7 @@ export function setupSentryMiddleware<T extends Env>(
   _service?: string
 ) {
   // app.use(`${basePath}/*`, sentryMiddleware({ tracesSampleRate: 1.0 }))
-  app.use(`${basePath}/*`, async (c, next) => {
+  app.use(`${basePath}/*`, async (_c, next) => {
     // const sentry = getSentry(c)
 
     // if (service) sentry.setTag("service", service)
