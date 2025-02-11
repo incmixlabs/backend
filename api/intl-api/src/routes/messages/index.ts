@@ -9,14 +9,20 @@ import {
   zodError,
 } from "@incmix-api/utils/errors"
 
+import { type Database, type MessageColumn, columns } from "@/db-schema"
+import { getDatabase } from "@/lib/db"
 import {
   addMessage,
+  deleteMessages,
   getAllMessages,
+  getAllMessagesByLocale,
   getDefaultMessages,
   getMessage,
   getMessagesByNamespace,
   updateMessage,
 } from "@/routes/messages/openapi"
+import { createKyselyFilter, parseQueryParams } from "@incmix-api/utils"
+import type { ExpressionWrapper, OrderByExpression, SqlBool } from "kysely"
 
 const messageRoutes = new OpenAPIHono<HonoApp>({
   defaultHook: zodError,
@@ -47,6 +53,41 @@ messageRoutes.openapi(getMessage, async (c) => {
     return await processError<typeof getMessage>(c, error, [
       "{{ default }}",
       "get-message",
+    ])
+  }
+})
+messageRoutes.openapi(deleteMessages, async (c) => {
+  try {
+    const { items } = c.req.valid("json")
+
+    const db = getDatabase(c)
+
+    await Promise.all(
+      items.map((item) =>
+        db
+          .deleteFrom("translations")
+          .where((eb) => {
+            return eb.and([
+              eb("key", "=", item.key),
+              eb(
+                "localeId",
+                "=",
+                eb
+                  .selectFrom("locales")
+                  .select("id")
+                  .where("langCode", "=", item.locale)
+              ),
+            ])
+          })
+          .executeTakeFirst()
+      )
+    )
+
+    return c.json({ message: "Translation Deleted Successfully" }, 200)
+  } catch (error) {
+    return await processError<typeof deleteMessages>(c, error, [
+      "{{ default }}",
+      "delete-message",
     ])
   }
 })
@@ -116,7 +157,7 @@ messageRoutes.openapi(getDefaultMessages, async (c) => {
   }
 })
 
-messageRoutes.openapi(getAllMessages, async (c) => {
+messageRoutes.openapi(getAllMessagesByLocale, async (c) => {
   try {
     const { locale } = c.req.valid("param")
 
@@ -137,6 +178,107 @@ messageRoutes.openapi(getAllMessages, async (c) => {
         ...m,
         locale,
       })),
+      200
+    )
+  } catch (error) {
+    return await processError<typeof getAllMessagesByLocale>(c, error, [
+      "{{ default }}",
+      "get-all-messages-by-locale",
+    ])
+  }
+})
+
+messageRoutes.openapi(getAllMessages, async (c) => {
+  try {
+    const db = getDatabase(c)
+
+    const queryParams = c.req.query()
+
+    const { filters, sort, pagination, joinOperator } =
+      parseQueryParams<MessageColumn>(queryParams, columns)
+
+    let query = db
+      .selectFrom("translations")
+      .innerJoin("locales", "locales.id", "translations.localeId")
+      .select([
+        "translations.id",
+        "translations.key",
+        "translations.value",
+        "translations.type",
+        "translations.namespace",
+        "locales.langCode as locale",
+      ])
+
+    if (filters.length) {
+      query = query.where(({ eb, and, or }) => {
+        const expressions: ExpressionWrapper<
+          Database,
+          "translations",
+          string | SqlBool | null | number
+        >[] = []
+
+        for (const filter of filters) {
+          const kf = createKyselyFilter<
+            MessageColumn,
+            Database,
+            "translations"
+          >(filter, eb)
+          if (kf) expressions.push(kf)
+        }
+        // @ts-expect-error Type issue, fix WIP
+        if (joinOperator === "or") return or(expressions)
+        // @ts-expect-error Type issue, fix WIP
+        return and(expressions)
+      })
+    }
+
+    if (sort.length) {
+      query = query.orderBy(
+        sort.map((s) => {
+          let field = s.id
+          if (field === "locale") field = "localeId"
+          const order = s.desc ? "desc" : "asc"
+          const expression: OrderByExpression<
+            Database,
+            "translations",
+            typeof order
+          > = `${field} ${order}`
+
+          return expression
+        })
+      )
+    }
+
+    const total = await query
+      .select(({ fn }) => fn.count<number>("translations.id").as("count"))
+      .executeTakeFirst()
+
+    if (pagination) {
+      query = query.limit(pagination.pageSize)
+      if (pagination.page && pagination.page > 1) {
+        query = query.offset((pagination.page - 1) * pagination.pageSize)
+      }
+    }
+
+    const messages = await query.execute()
+    const totalPages = Math.ceil(
+      (total?.count ?? 1) / (pagination?.pageSize ?? 10)
+    )
+
+    const hasNextPage = totalPages > (pagination?.page ?? 1)
+    const hasPrevPage = (pagination?.page ?? 1) > 1
+    return c.json(
+      {
+        results: messages,
+        metadata: {
+          page: pagination?.page ?? 1,
+          pageSize: pagination?.pageSize ?? 10,
+          total: total?.count ?? 0,
+          pageCount: totalPages,
+          hasNextPage,
+          hasPrevPage,
+        },
+      },
       200
     )
   } catch (error) {

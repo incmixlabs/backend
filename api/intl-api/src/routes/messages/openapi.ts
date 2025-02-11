@@ -1,4 +1,8 @@
-import { MessageSchema, NamespaceSchema } from "@/routes/messages/types"
+import {
+  MessageSchema,
+  NamespaceSchema,
+  PaginatedMessageSchema,
+} from "@/routes/messages/types"
 import { MessageResponseSchema } from "@/routes/types"
 import { createRoute, z } from "@hono/zod-openapi"
 
@@ -29,7 +33,7 @@ export const getDefaultMessages = createRoute({
   },
 })
 
-export const getAllMessages = createRoute({
+export const getAllMessagesByLocale = createRoute({
   method: "get",
   path: "/{locale}",
   description: "Get All Messages for locale",
@@ -48,6 +52,34 @@ export const getAllMessages = createRoute({
       content: {
         "application/json": {
           schema: z.array(MessageSchema),
+        },
+      },
+      description: "Returns messages",
+    },
+
+    500: {
+      content: {
+        "application/json": {
+          schema: MessageResponseSchema,
+        },
+      },
+      description: "Internal Server Error",
+    },
+  },
+})
+
+export const getAllMessages = createRoute({
+  method: "get",
+  path: "",
+  description: "Get All Messages for locale",
+  summary: "Get All Messages",
+  tags: ["Messages"],
+
+  responses: {
+    200: {
+      content: {
+        "application/json": {
+          schema: PaginatedMessageSchema,
         },
       },
       description: "Returns messages",
@@ -123,6 +155,67 @@ export const getMessage = createRoute({
       content: {
         "application/json": {
           schema: MessageSchema,
+        },
+      },
+      description: "Returns message by Key",
+    },
+    404: {
+      content: {
+        "application/json": {
+          schema: MessageResponseSchema,
+        },
+      },
+      description: "No Message found for given Key",
+    },
+    422: {
+      content: {
+        "application/json": {
+          schema: MessageResponseSchema,
+        },
+      },
+      description: "Invalid Key or Key not provided",
+    },
+    500: {
+      content: {
+        "application/json": {
+          schema: MessageResponseSchema,
+        },
+      },
+      description: "Internal Server Error",
+    },
+  },
+})
+export const deleteMessages = createRoute({
+  method: "delete",
+  path: "",
+  description: "Delete Messages by keys",
+  summary: "Delete Messages",
+  tags: ["Messages"],
+  request: {
+    body: {
+      content: {
+        "application/json": {
+          schema: z.object({
+            items: z
+              .object({
+                locale: z
+                  .string({ required_error: "Locale is required" })
+                  .openapi({ example: "en" }),
+                key: z
+                  .string({ required_error: "Key is required" })
+                  .openapi({ example: "button_login" }),
+              })
+              .array(),
+          }),
+        },
+      },
+    },
+  },
+  responses: {
+    200: {
+      content: {
+        "application/json": {
+          schema: MessageResponseSchema,
         },
       },
       description: "Returns message by Key",
