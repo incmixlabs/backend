@@ -1,5 +1,6 @@
 import { MessageTypes } from "@/types"
 import { z } from "@hono/zod-openapi"
+import { PaginationMeta } from "@incmix/utils/data-table"
 
 export const MessageSchema = z
   .object({
@@ -20,6 +21,11 @@ export const MessageSchema = z
       .openapi({ example: "label" }),
   })
   .openapi("Intl Message")
+
+export const PaginatedMessageSchema = z.object({
+  results: MessageSchema.array(),
+  metadata: PaginationMeta,
+})
 
 export const NamespaceSchema = z
   .record(z.string())

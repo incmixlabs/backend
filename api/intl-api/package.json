@@ -12,7 +12,9 @@
     "@incmix-api/utils": "workspace:^",
     "@incmix/utils": "catalog:",
     "hono": "catalog:",
-    "zod": "catalog:"
+    "zod": "catalog:",
+    "@noxharmonium/kysely-d1": "0.4.0",
+    "kysely": "0.27.5"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "catalog:",
