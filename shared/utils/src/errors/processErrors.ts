@@ -43,7 +43,7 @@ export const zodError = (result: Result, c: Context) => {
 export async function processError<R extends RouteConfig>(
   c: Context,
   error: unknown,
-  sentryFingerPrint?: string[]
+  _sentryFingerPrint?: string[]
 ): Promise<RouteConfigToTypedResponse<R>> {
   const t = await useTranslation(c)
 
