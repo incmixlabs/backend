@@ -37,7 +37,6 @@ export async function verifyVerificationCode(
       .where((eb) =>
         eb.and([
           eb("userId", "=", user.id),
-          eb("code", "=", user.email),
           eb("code", "=", code),
           eb("description", "=", type),
         ])
@@ -51,7 +50,6 @@ export async function verifyVerificationCode(
     .where((eb) =>
       eb.and([
         eb("userId", "=", user.id),
-        eb("code", "=", user.email),
         eb("code", "=", code),
         eb("description", "=", type),
       ])
