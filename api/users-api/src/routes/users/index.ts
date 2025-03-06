@@ -27,7 +27,7 @@ import {
 } from "@/dbSchema"
 
 import { adminPermissions, userPermissions } from "@/lib/casl"
-import { getDatabase } from "@/lib/db"
+import { db } from "@/lib/db"
 import {
   ERROR_CASL_FORBIDDEN,
   ERROR_FORBIDDEN,
@@ -59,6 +59,7 @@ import {
   getUserpermissions,
   updateUser,
 } from "./openapi"
+import { envVars } from "@/env-vars"
 
 const userRoutes = new OpenAPIHono<HonoApp>({
   defaultHook: zodError,
@@ -68,7 +69,6 @@ userRoutes.openapi(createUserProfile, async (c) => {
   try {
     const { email, fullName, id, profileImage, avatar, localeId } =
       c.req.valid("json")
-    const db = getDatabase(c)
 
     const existingProfile = await db
       .selectFrom("userProfiles")
@@ -122,7 +122,7 @@ userRoutes.openapi(getCurrentUser, async (c) => {
     if (!user) {
       throw new UnauthorizedError()
     }
-    const db = getDatabase(c)
+
     const profile = await db
       .selectFrom("userProfiles")
       .selectAll()
@@ -149,8 +149,6 @@ userRoutes.openapi(getUser, async (c) => {
     }
 
     const { id, email } = c.req.valid("query")
-
-    const db = getDatabase(c)
 
     let query = db.selectFrom("userProfiles").selectAll()
 
@@ -238,7 +236,6 @@ userRoutes.openapi(getAllUsers, async (c) => {
 
     const { filters, sort, pagination, joinOperator } =
       parseQueryParams<UserProfileColumn>(queryParams, columns)
-    const db = getDatabase(c)
 
     let query = db.selectFrom("userProfiles").selectAll()
 
@@ -370,7 +367,6 @@ userRoutes.openapi(deleteUser, async (c) => {
       throw new ForbiddenError(msg)
     }
 
-    const db = getDatabase(c)
     const profile = await db
       .selectFrom("userProfiles")
       .selectAll()
@@ -415,7 +411,6 @@ userRoutes.openapi(updateUser, async (c) => {
       throw new ForbiddenError(msg)
     }
 
-    const db = getDatabase(c)
     const profile = await db
       .selectFrom("userProfiles")
       .selectAll()
@@ -453,11 +448,12 @@ userRoutes.openapi(addProfilePicture, async (c) => {
       throw new UnauthorizedError(msg)
     }
     const { id } = c.req.valid("param")
+    console.log(user.id, id)
     if (user.id !== id && user.userType !== ROLE_SUPER_ADMIN) {
       const msg = await t.text(ERROR_FORBIDDEN)
       throw new ForbiddenError(msg)
     }
-    const db = getDatabase(c)
+
     const profile = await db
       .selectFrom("userProfiles")
       .selectAll()
@@ -470,8 +466,8 @@ userRoutes.openapi(addProfilePicture, async (c) => {
     }
     const { file } = c.req.valid("form")
     const fileName = `profile_image/${user.id}.jpg`
-    const presignedUrlResponse = await c.env.FILES_API.fetch(
-      `${c.env.FILES_API_URL}/presigned-upload?fileName=${encodeURIComponent(
+    const presignedUrlResponse = await fetch(
+      `${envVars.FILES_API_URL}/presigned-upload?fileName=${encodeURIComponent(
         fileName
       )}`,
       {
@@ -492,11 +488,7 @@ userRoutes.openapi(addProfilePicture, async (c) => {
     const { url: presignedUrl } =
       await presignedUrlResponse.json<z.infer<typeof presignedUrlSchema>>()
 
-    const filesFetch = c.env.DOMAIN.includes("localhost")
-      ? c.env.FILES_API.fetch.bind(c.env.FILES_API)
-      : fetch
-
-    const uploadResponse = await filesFetch(presignedUrl, {
+    const uploadResponse = await fetch(presignedUrl, {
       method: "PUT",
       headers: {
         "Content-Type": file.type,
@@ -544,7 +536,6 @@ userRoutes.openapi(deleteProfilePicture, async (c) => {
       throw new ForbiddenError(msg)
     }
 
-    const db = getDatabase(c)
     const profile = await db
       .selectFrom("userProfiles")
       .selectAll()
@@ -561,8 +552,8 @@ userRoutes.openapi(deleteProfilePicture, async (c) => {
       throw new NotFoundError(msg)
     }
 
-    const presignedUrlResponse = await c.env.FILES_API.fetch(
-      `${c.env.FILES_API_URL}/presigned-delete?fileName=${encodeURIComponent(
+    const presignedUrlResponse = await fetch(
+      `${envVars.FILES_API_URL}/presigned-delete?fileName=${encodeURIComponent(
         profile.profileImage
       )}`,
       {
@@ -584,11 +575,7 @@ userRoutes.openapi(deleteProfilePicture, async (c) => {
     const { url: presignedUrl } =
       await presignedUrlResponse.json<z.infer<typeof presignedUrlSchema>>()
 
-    const filesFetch = c.env.DOMAIN.includes("localhost")
-      ? c.env.FILES_API.fetch.bind(c.env.FILES_API)
-      : fetch
-
-    const deleteResponse = await filesFetch(presignedUrl, {
+    const deleteResponse = await fetch(presignedUrl, {
       method: "DELETE",
       headers: {
         Cookie: c.req.header("Cookie") || "",
@@ -630,7 +617,6 @@ userRoutes.openapi(getProfilePicture, async (c) => {
     }
     const { id } = c.req.valid("param")
 
-    const db = getDatabase(c)
     const profile = await db
       .selectFrom("userProfiles")
       .selectAll()
@@ -646,8 +632,8 @@ userRoutes.openapi(getProfilePicture, async (c) => {
       return c.json({ url: null }, 200)
     }
 
-    const presignedUrlResponse = await c.env.FILES_API.fetch(
-      `${c.env.FILES_API_URL}/presigned-download?fileName=${encodeURIComponent(
+    const presignedUrlResponse = await fetch(
+      `${envVars.FILES_API_URL}/presigned-download?fileName=${encodeURIComponent(
         profile.profileImage
       )}`,
       {

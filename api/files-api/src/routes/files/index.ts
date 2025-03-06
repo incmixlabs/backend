@@ -1,10 +1,7 @@
-import { getS3Client } from "@/index"
 import {
   ERROR_FILENAME_REQ,
+  ERROR_FILE_DELETE_FAIL,
   ERROR_FILE_NOT_FOUND,
-  ERROR_R2_BUCKET,
-  ERROR_R2_MISSING,
-  ERROR_UPLOAD_FAIL,
   FILE_DELETE_SUCCESS,
   FILE_UPLOAD_SUCCESS,
 } from "@/lib/constants"
@@ -21,6 +18,8 @@ import type { HonoApp } from "@/types"
 import {
   DeleteObjectCommand,
   GetObjectCommand,
+  HeadObjectCommand,
+  ListObjectsCommand,
   PutObjectCommand,
 } from "@aws-sdk/client-s3"
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner"
@@ -37,6 +36,9 @@ import {
 import { ERROR_NOT_IMPL, ERROR_UNAUTHORIZED } from "@incmix-api/utils"
 import { useTranslation } from "@incmix-api/utils/middleware"
 
+import { envVars } from "@/env-vars"
+import { S3 } from "@/lib/s3"
+import { Upload } from "@aws-sdk/lib-storage"
 import { stream } from "hono/streaming"
 
 const filesRoutes = new OpenAPIHono<HonoApp>({
@@ -45,7 +47,7 @@ const filesRoutes = new OpenAPIHono<HonoApp>({
 filesRoutes.openapi(uploadFile, async (c) => {
   try {
     const t = await useTranslation(c)
-    if (!c.env.PORT) {
+    if (!envVars.PORT) {
       const msg = await t.text(ERROR_NOT_IMPL)
       throw new ServerError(msg)
     }
@@ -61,19 +63,29 @@ filesRoutes.openapi(uploadFile, async (c) => {
 
     const body = await c.req.raw.arrayBuffer()
 
-    const res = await c.env.MY_BUCKET.put(fileName, body, {
-      httpMetadata: {
-        contentType: contentType,
+    const upload = new Upload({
+      client: S3,
+      params: {
+        Bucket: envVars.BUCKET_NAME,
+        Key: fileName,
+        Body: new Blob([body]),
+        ContentType: contentType,
       },
+      queueSize: 4,
+      partSize: 10 * 1024 * 1024,
+      leavePartsOnError: false,
     })
 
-    if (!res) {
-      const msg = await t.text(ERROR_UPLOAD_FAIL)
-      return c.json({ message: msg }, 500)
-    }
+    upload.on("httpUploadProgress", (progress) => {
+      console.log(progress.loaded, progress.total)
+    })
+
+    await upload.done()
+
     const msg = await t.text(FILE_UPLOAD_SUCCESS)
     return c.json({ message: msg }, 200)
   } catch (error) {
+    console.log("aws error", error)
     return await processError<typeof uploadFile>(c, error, [
       "{{ default }}",
       "upload-file",
@@ -85,7 +97,7 @@ filesRoutes.openapi(uploadFile, async (c) => {
 filesRoutes.openapi(downloadFile, async (c) => {
   try {
     const t = await useTranslation(c)
-    if (!c.env.PORT) {
+    if (!envVars.PORT) {
       const msg = await t.text(ERROR_NOT_IMPL)
       throw new ServerError(msg)
     }
@@ -97,11 +109,12 @@ filesRoutes.openapi(downloadFile, async (c) => {
       throw new BadRequestError(msg)
     }
 
-    const file = await c.env.MY_BUCKET.get(fileName)
-    if (!file) {
-      const msg = await t.text(ERROR_FILE_NOT_FOUND)
-      return c.json({ message: msg }, 404)
-    }
+    const command = new GetObjectCommand({
+      Bucket: envVars.BUCKET_NAME,
+      Key: fileName,
+    })
+
+    const file = await S3.send(command)
 
     c.res.headers.set("Content-Type", "application/octet-stream")
     c.res.headers.set(
@@ -114,7 +127,12 @@ filesRoutes.openapi(downloadFile, async (c) => {
       stream.onAbort(() => {
         console.log("Stream aborted")
       })
-      await stream.pipe(file.body)
+
+      if (!file.Body) {
+        const msg = await t.text(ERROR_FILE_NOT_FOUND)
+        throw new NotFoundError(msg)
+      }
+      await stream.pipe(file.Body.transformToWebStream())
     })
   } catch (error) {
     return await processError<typeof downloadFile>(c, error, [
@@ -127,7 +145,7 @@ filesRoutes.openapi(downloadFile, async (c) => {
 filesRoutes.openapi(deleteFile, async (c) => {
   try {
     const t = await useTranslation(c)
-    if (!c.env.PORT) {
+    if (!envVars.PORT) {
       const msg = await t.text(ERROR_NOT_IMPL)
       throw new ServerError(msg)
     }
@@ -144,12 +162,27 @@ filesRoutes.openapi(deleteFile, async (c) => {
       throw new BadRequestError(msg)
     }
 
-    const file = await c.env.MY_BUCKET.head(fileName)
-    if (!file) {
+    const command = new HeadObjectCommand({
+      Bucket: envVars.BUCKET_NAME,
+      Key: fileName,
+    })
+
+    const file = await S3.send(command)
+    if (!file.ContentLength) {
       const msg = await t.text(ERROR_FILE_NOT_FOUND)
       throw new NotFoundError(msg)
     }
-    await c.env.MY_BUCKET.delete(fileName)
+
+    const deletedFile = await S3.send(
+      new DeleteObjectCommand({
+        Bucket: envVars.BUCKET_NAME,
+        Key: fileName,
+      })
+    )
+    if (!deletedFile.DeleteMarker) {
+      const msg = await t.text(ERROR_FILE_DELETE_FAIL)
+      throw new ServerError(msg)
+    }
     const msg = await t.text(FILE_DELETE_SUCCESS)
     return c.json({ message: msg }, 200)
   } catch (error) {
@@ -163,7 +196,7 @@ filesRoutes.openapi(deleteFile, async (c) => {
 filesRoutes.openapi(listFiles, async (c) => {
   try {
     const t = await useTranslation(c)
-    if (!c.env.PORT) {
+    if (!envVars.PORT) {
       const msg = await t.text(ERROR_NOT_IMPL)
       throw new ServerError(msg)
     }
@@ -174,12 +207,17 @@ filesRoutes.openapi(listFiles, async (c) => {
       throw new UnauthorizedError(msg)
     }
 
-    const objects = await c.env.MY_BUCKET.list()
-    const files = objects.objects.map((obj) => ({
-      name: obj.key,
-      size: obj.size,
-      uploaded: obj.uploaded,
-    }))
+    const command = new ListObjectsCommand({
+      Bucket: envVars.BUCKET_NAME,
+    })
+    const objects = await S3.send(command)
+
+    const files =
+      objects.Contents?.map((obj) => ({
+        name: obj.Key ?? "",
+        size: obj.Size ?? 0,
+        uploaded: obj.LastModified?.toISOString() ?? "",
+      })) ?? []
 
     return c.json({ files }, 200)
   } catch (error) {
@@ -199,13 +237,6 @@ filesRoutes.openapi(presignedUpload, async (c) => {
       throw new UnauthorizedError(msg)
     }
 
-    if (!c.env.MY_BUCKET || !c.env.BUCKET_NAME) {
-      const msg = await t.text(ERROR_R2_MISSING)
-      throw new ServerError(msg)
-    }
-
-    const s3Client = await getS3Client(c)
-
     const { fileName } = c.req.valid("query")
 
     if (!fileName) {
@@ -213,19 +244,19 @@ filesRoutes.openapi(presignedUpload, async (c) => {
       throw new BadRequestError(msg)
     }
 
-    if (c.env.PORT) {
+    if (envVars.PORT) {
       // For local development, return a local URL
       const localUrl = `http://127.0.0.1:${
-        c.env.PORT
+        envVars.PORT
       }/api/files/upload?fileName=${encodeURIComponent(fileName)}`
       return c.json({ url: localUrl }, 200)
     }
 
     const command = new PutObjectCommand({
-      Bucket: c.env.BUCKET_NAME,
+      Bucket: envVars.BUCKET_NAME,
       Key: fileName,
     })
-    const url = await getSignedUrl(s3Client, command, { expiresIn: 3600 })
+    const url = await getSignedUrl(S3, command, { expiresIn: 3600 })
 
     return c.json({ url }, 200)
   } catch (error) {
@@ -245,12 +276,6 @@ filesRoutes.openapi(presignedDownload, async (c) => {
       throw new UnauthorizedError(msg)
     }
 
-    if (!c.env.MY_BUCKET || !c.env.BUCKET_NAME) {
-      const msg = await t.text(ERROR_R2_BUCKET)
-
-      throw new ServerError(msg)
-    }
-
     const { fileName } = c.req.valid("query")
 
     if (!fileName) {
@@ -259,24 +284,23 @@ filesRoutes.openapi(presignedDownload, async (c) => {
       throw new BadRequestError(msg)
     }
 
-    if (c.env.PORT) {
+    if (envVars.PORT) {
       // The date is used to invalidate the cache after the file has been updated.
       const date = new Date().toISOString()
       // For local development, return a local URL
       const localUrl = `http://127.0.0.1:${
-        c.env.PORT
+        envVars.PORT
       }/api/files/download?fileName=${encodeURIComponent(
         fileName
       )}&date=${date}`
       return c.json({ url: localUrl }, 200)
     }
 
-    const s3Client = await getS3Client(c)
     const command = new GetObjectCommand({
-      Bucket: c.env.BUCKET_NAME,
+      Bucket: envVars.BUCKET_NAME,
       Key: fileName,
     })
-    const url = await getSignedUrl(s3Client, command, { expiresIn: 3600 })
+    const url = await getSignedUrl(S3, command, { expiresIn: 3600 })
 
     return c.json({ url }, 200)
   } catch (error) {
@@ -296,12 +320,6 @@ filesRoutes.openapi(presignedDelete, async (c) => {
       throw new UnauthorizedError(msg)
     }
 
-    if (!c.env.MY_BUCKET || !c.env.BUCKET_NAME) {
-      const msg = await t.text(ERROR_R2_BUCKET)
-
-      throw new ServerError(msg)
-    }
-
     const { fileName } = c.req.valid("query")
 
     if (!fileName) {
@@ -310,20 +328,19 @@ filesRoutes.openapi(presignedDelete, async (c) => {
       throw new BadRequestError(msg)
     }
 
-    if (c.env.PORT) {
+    if (envVars.PORT) {
       // For local development, return a local URL
       const localUrl = `http://127.0.0.1:${
-        c.env.PORT
+        envVars.PORT
       }/api/files/delete?fileName=${encodeURIComponent(fileName)}`
       return c.json({ url: localUrl }, 200)
     }
 
-    const s3Client = await getS3Client(c)
     const command = new DeleteObjectCommand({
-      Bucket: c.env.BUCKET_NAME,
+      Bucket: envVars.BUCKET_NAME,
       Key: fileName,
     })
-    const url = await getSignedUrl(s3Client, command, { expiresIn: 3600 })
+    const url = await getSignedUrl(S3, command, { expiresIn: 3600 })
 
     return c.json({ url }, 200)
   } catch (error) {

@@ -7,12 +7,7 @@ import {
   USER_DEL,
   VERIFIY_REQ,
 } from "@/lib/constants"
-import {
-  deleteUserById,
-  findUserByEmail,
-  getDatabase,
-  insertUser,
-} from "@/lib/db"
+import { deleteUserById, findUserByEmail, db, insertUser } from "@/lib/db"
 import {
   generateVerificationCode,
   sendVerificationEmailOrLog,
@@ -90,7 +85,6 @@ authRoutes.openapi(getUser, async (c) => {
       throw new UnauthorizedError()
     }
     const { id, email } = c.req.valid("query")
-    const db = getDatabase(c)
     const searchedUser = await db
       .selectFrom("users")
       .selectAll()
@@ -121,7 +115,6 @@ authRoutes.openapi(getUser, async (c) => {
 authRoutes.openapi(signup, async (c) => {
   const { fullName, email, password } = c.req.valid("json")
   try {
-    const db = getDatabase(c)
     const existing = await db
       .selectFrom("users")
       .selectAll()
@@ -134,15 +127,19 @@ authRoutes.openapi(signup, async (c) => {
     const userId = generateId(15)
 
     const verificationCode = await generateVerificationCode(
-      c,
       userId,
       email,
       "email_verification"
     )
-    sendVerificationEmailOrLog(c, email, verificationCode)
+    // sendVerificationEmailOrLog(c, email, verificationCode)
     const { profile, ...user } = await insertUser(
       c,
-      { id: userId, email, emailVerified: 0, userType: "member" },
+      {
+        id: userId,
+        email,
+        emailVerified: 0,
+        userType: "member",
+      },
       fullName,
       password
     )
@@ -218,7 +215,7 @@ authRoutes.openapi(login, async (c) => {
 })
 
 authRoutes.openapi(logout, async (c) => {
-  const lucia = initializeLucia(c)
+  const lucia = initializeLucia()
   const session = c.get("session")
   const t = await useTranslation(c)
 
@@ -246,9 +243,9 @@ authRoutes.openapi(deleteUser, async (c) => {
       throw new UnauthorizedError(msg)
     }
     await deleteUserProfile(c, user.id)
-    const lucia = initializeLucia(c)
+    const lucia = initializeLucia()
     await lucia.invalidateUserSessions(user.id)
-    await deleteUserById(c, user.id)
+    await deleteUserById(user.id)
     const sessionCookie = lucia.createBlankSessionCookie()
     c.header("Set-Cookie", sessionCookie.serialize(), {
       append: false,

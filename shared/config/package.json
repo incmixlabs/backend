@@ -5,6 +5,6 @@
   "license": "MIT",
   "files": ["hono.json"],
   "devDependencies": {
-    "typescript": "5.7.3"
+    "typescript": "catalog:"
   }
 }

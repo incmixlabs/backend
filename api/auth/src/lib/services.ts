@@ -1,3 +1,4 @@
+import { envVars } from "@/env-vars"
 import type { MessageResponse } from "@/routes/types"
 import type { Context } from "@/types"
 import { generateSentryHeaders } from "@incmix-api/utils"
@@ -30,7 +31,7 @@ export async function createUserProfile(
   localeId: number
 ) {
   const sentryHeaders = generateSentryHeaders(c)
-  const res = await c.env.USERS_API.fetch(`${c.env.USERS_API_URL}`, {
+  const res = await fetch(`${envVars.USERS_API_URL}`, {
     method: "POST",
     headers: {
       "content-type": "application/json",
@@ -54,7 +55,7 @@ export async function createUserProfile(
 }
 export async function deleteUserProfile(c: Context, id: string) {
   const sentryHeaders = generateSentryHeaders(c)
-  const res = await c.env.USERS_API.fetch(`${c.env.USERS_API_URL}/${id}`, {
+  const res = await fetch(`${envVars.USERS_API_URL}/${id}`, {
     method: "delete",
     headers: {
       "content-type": "application/json",

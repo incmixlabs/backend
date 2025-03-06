@@ -1,16 +1,16 @@
-import type { Insertable, Selectable, Updateable } from "kysely"
+import type { Generated, Insertable, Selectable, Updateable } from "kysely"
 
 type LocaleTable = {
-  id: number
+  id: Generated<number>
   langCode: string
-  isDefault: number
+  isDefault: boolean | null
 }
 
 export const MessageTypes = ["frag", "label"] as const
 export type MessageType = (typeof MessageTypes)[number]
 
 type MessageTable = {
-  id: number
+  id: Generated<number>
   localeId: number
   key: string
   value: string

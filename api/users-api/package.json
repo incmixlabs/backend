@@ -2,13 +2,13 @@
   "name": "@incmix-api/users-api",
   "type": "module",
   "scripts": {
-    "dev": "wrangler dev src/index.ts --env dev --inspector-port 9237",
-    "deploy": "wrangler deploy dist/index.js --no-bundle",
-    "build": "wrangler deploy --minify --dry-run --outdir=dist",
-    "migrate:local": "wrangler d1 migrations apply users-api-dev --env dev",
+    "dev": "kysely migrate:up && tsx watch src/index.ts",
+    "build": "tsc && tsc-alias",
+    "migrate:local": "kysely migrate:up",
     "test": "vitest --run"
   },
   "dependencies": {
+    "@hono/node-server": "^1.13.8",
     "@hono/zod-openapi": "catalog:",
     "@hono/zod-validator": "0.4.1",
     "@incmix-api/utils": "workspace:^",
@@ -18,11 +18,16 @@
     "kysely": "0.27.5"
   },
   "devDependencies": {
-    "@cloudflare/vitest-pool-workers": "catalog:",
-    "@cloudflare/workers-types": "catalog:",
+    "@types/node": "^22.13.8",
+    "@types/pg": "^8.11.11",
+    "dotenv": "^16.4.7",
+    "dotenv-expand": "^12.0.1",
+    "kysely-ctl": "0.12.1",
+    "tsc-alias": "^1.8.11",
+    "tsx": "^4.19.3",
+    "typescript": "catalog:",
     "@incmix-api/config": "workspace:^",
     "vite-tsconfig-paths": "5.1.4",
-    "vitest": "catalog:",
-    "wrangler": "catalog:"
+    "vitest": "catalog:"
   }
 }

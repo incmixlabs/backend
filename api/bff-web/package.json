@@ -1,7 +1,6 @@
 {
   "name": "@incmix-api/bff-web",
   "scripts": {
-    "dev": "wrangler dev src/index.ts --env dev --inspector-port 9230",
     "deploy": "wrangler deploy --minify",
     "test": "vitest --run"
   },

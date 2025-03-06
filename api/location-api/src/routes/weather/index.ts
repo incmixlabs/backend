@@ -7,6 +7,7 @@ import {
   WeatherCodes,
   type WeatherForecast,
 } from "./types"
+import { envVars } from "@/env-vars"
 
 const weatherRoutes = new OpenAPIHono<HonoApp>()
 
@@ -14,7 +15,7 @@ weatherRoutes.openapi(getWeatherForecast, async (c) => {
   const { lat, lon } = c.req.valid("query")
 
   const searchParams = new URLSearchParams({
-    apikey: c.env.WEATHER_API_KEY,
+    apikey: envVars.WEATHER_API_KEY,
     units: "metric",
   })
 
@@ -36,7 +37,7 @@ weatherRoutes.openapi(getWeatherForecast, async (c) => {
   }
 
   const res = await fetch(
-    `${c.env.WEATHER_URL}/forecast?${searchParams.toString()}`,
+    `${envVars.WEATHER_URL}/forecast?${searchParams.toString()}`,
     {
       method: "get",
     }

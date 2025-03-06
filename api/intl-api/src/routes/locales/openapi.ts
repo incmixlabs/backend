@@ -1,6 +1,7 @@
 import { LocaleSchema } from "@/routes/locales/types"
 import { MessageResponseSchema } from "@/routes/types"
 import { createRoute, z } from "@hono/zod-openapi"
+import { createAuthMiddleware } from "@incmix-api/utils/middleware"
 
 export const addLocale = createRoute({
   method: "post",
@@ -8,6 +9,7 @@ export const addLocale = createRoute({
   tags: ["Locales"],
   summary: "Add Locale",
   description: "Add new Locale",
+  middleware: [createAuthMiddleware()] as const,
   request: {
     body: {
       content: {
@@ -65,6 +67,7 @@ export const updateLocale = createRoute({
   tags: ["Locales"],
   summary: "Update Locale",
   description: "Update existing locale",
+  middleware: [createAuthMiddleware()] as const,
   request: {
     params: z.object({
       code: z.string({ required_error: "Code is required" }),

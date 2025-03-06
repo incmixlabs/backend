@@ -1,23 +1,27 @@
 import type { Database, NewUser, User } from "@/dbSchema"
+import { envVars } from "@/env-vars"
 import { ERROR_USER_NOT_FOUND } from "@/lib/constants"
 import type { Context } from "@/types"
 import { NotFoundError, ServerError } from "@incmix-api/utils/errors"
 import { useTranslation } from "@incmix-api/utils/middleware"
 import type { UserProfile } from "@incmix/utils/types"
-import { D1Dialect } from "@noxharmonium/kysely-d1"
-import { CamelCasePlugin, Kysely } from "kysely"
+import { CamelCasePlugin, Kysely, PostgresDialect } from "kysely"
 import { Scrypt } from "lucia"
+import pg from "pg"
 import { createUserProfile } from "./services"
 
-export const getDatabase = (c: Context) => {
-  return new Kysely<Database>({
-    dialect: new D1Dialect({ database: c.env.DB }),
-    plugins: [new CamelCasePlugin()],
-  })
-}
+const dialect = new PostgresDialect({
+  pool: new pg.Pool({
+    connectionString: envVars.DATABASE_URL,
+    max: 10,
+  }),
+})
+export const db = new Kysely<Database>({
+  dialect,
+  plugins: [new CamelCasePlugin()],
+})
 
 export async function findUserByEmail(c: Context, email: string) {
-  const db = getDatabase(c)
   const user = await db
     .selectFrom("users")
     .selectAll()
@@ -34,7 +38,6 @@ export async function findUserByEmail(c: Context, email: string) {
 }
 
 export async function findUserById(c: Context, id: string) {
-  const db = getDatabase(c)
   const user = await db
     .selectFrom("users")
     .selectAll()
@@ -66,7 +69,6 @@ export async function insertUser(
   let hashedPassword: string | null = null
   if (password?.length) hashedPassword = await new Scrypt().hash(password)
 
-  const db = getDatabase(c)
   const user = await db
     .insertInto("users")
     .values({ ...newUser, hashedPassword: hashedPassword })
@@ -77,8 +79,7 @@ export async function insertUser(
   return { ...user, profile }
 }
 
-export async function deleteUserById(c: Context, id: string) {
-  const db = getDatabase(c)
+export async function deleteUserById(id: string) {
   const deletedUser = await db
     .deleteFrom("users")
     .where("id", "=", id)

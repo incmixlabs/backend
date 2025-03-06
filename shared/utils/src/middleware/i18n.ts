@@ -4,7 +4,7 @@ import {
   getDefaultLocale,
   getDefaultMessages,
 } from "@incmix-api/utils"
-import type { IntlMessage, Locale } from "@incmix/utils/types"
+import type { IntlMessage, Locale } from "@incmix-api/utils/types"
 import { getHeaderLocale } from "@intlify/utils"
 import type { Context, MiddlewareHandler } from "hono"
 
@@ -38,14 +38,14 @@ export function createI18nMiddleware({
   return async (c, next) => {
     const kv = c.get("kv")
 
-    await kv.getItem(DEFAULT_LOCALE, { fn: () => getDefaultLocale(c) })
+    await kv.getItem(DEFAULT_LOCALE, { fn: () => getDefaultLocale() })
 
     const localeHeader = getHeaderLocale(c.req.raw, { name: localeHeaderName })
     const locale = localeHeader.language
 
     c.set("locale", locale)
     await kv.getItem(locale, { fn: () => getAllMessages(c) })
-    await kv.getItem(DEFAULT_MESSAGES, { fn: () => getDefaultMessages(c) })
+    await kv.getItem(DEFAULT_MESSAGES, { fn: () => getDefaultMessages() })
 
     c.header("content-language", locale, { append: true })
     return await next()

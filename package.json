@@ -10,13 +10,15 @@
     "lint": "biome check .",
     "lint:fix": "biome check --fix --unsafe",
     "lint:packages": "pnpx sherif@latest",
-    "postinstall": "lefthook install",
     "typecheck": "turbo typecheck",
     "test": "turbo test",
     "test:e2e": "turbo test:e2e"
   },
   "engines": {
     "node": ">=22.13.0"
+  },
+  "pnpm": {
+    "neverBuiltDependencies": ["@incmix/utils"]
   },
   "packageManager": "pnpm@9.15.4",
   "devDependencies": {

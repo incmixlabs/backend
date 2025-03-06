@@ -1,10 +1,11 @@
+import { envVars } from "@/env-vars"
 import type { Context } from "@/types"
 import type { Organization } from "@incmix/utils/types"
 
 export async function getOrganizationById(c: Context, id: string) {
-  const url = `${c.env.ORG_URL}/id/${id}`
+  const url = `${envVars.ORG_URL}/id/${id}`
 
-  const res = await c.env.ORG.fetch(url, {
+  const res = await fetch(url, {
     method: "get",
     headers: c.req.header(),
   })

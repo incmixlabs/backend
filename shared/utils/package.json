@@ -2,6 +2,7 @@
   "name": "@incmix-api/utils",
   "version": "0.0.0",
   "license": "MIT",
+  "type": "module",
   "exports": {
     ".": "./src/utils/index.ts",
     "./middleware": "./src/middleware/index.ts",
@@ -21,7 +22,7 @@
     "@casl/ability": "6.7.2",
     "@hono/zod-openapi": "catalog:",
     "@incmix-api/config": "workspace:^",
-    "@incmix/utils": "latest",
+    "@incmix/utils": "catalog:",
     "hono": "catalog:",
     "kysely": "0.27.5",
     "typescript": "5.7.3",

@@ -1,5 +1,5 @@
 import { OpenAPIHono } from "@hono/zod-openapi"
-
+import { serve } from "@hono/node-server"
 import { BASE_PATH } from "@/lib/constants"
 import { middlewares } from "@/middleware"
 import { routes } from "@/routes"
@@ -15,5 +15,9 @@ setupKvStore(app, BASE_PATH, globalStore)
 middlewares(app)
 
 routes(app)
+
+serve({ fetch: app.fetch, port: 9090 }, (info) => {
+  console.log(`Server is running on port ${info.port}`)
+})
 
 export default app

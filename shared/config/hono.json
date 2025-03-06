@@ -19,15 +19,17 @@
     "esModuleInterop": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
-    "lib": ["es2023"],
-    "module": "esnext",
-    "target": "es2022",
+    "lib": ["ESNext"],
+    "target": "ESNext",
     "moduleResolution": "bundler",
-    "moduleDetection": "force",
+    "module": "Preserve",
+    "moduleDetection": "auto",
     "noEmit": true,
     "allowImportingTsExtensions": true,
     "resolveJsonModule": true,
     "incremental": true,
+    "verbatimModuleSyntax": true,
+    "types": ["node"],
     "outDir": "./dist"
   }
 }

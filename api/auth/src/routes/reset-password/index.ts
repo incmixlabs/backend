@@ -4,7 +4,7 @@ import {
   MAIL_SENT,
   PASS_RESET_SUCCESS,
 } from "@/lib/constants"
-import { findUserByEmail, findUserById, getDatabase } from "@/lib/db"
+import { findUserByEmail, findUserById, db } from "@/lib/db"
 
 import {
   generateVerificationCode,
@@ -57,7 +57,7 @@ resetPasswordRoutes.openapi(resetPassword, async (c) => {
     }
 
     const newHash = await scrypt.hash(newPassword)
-    const db = getDatabase(c)
+
     await db
       .updateTable("users")
       .set({ hashedPassword: newHash })
@@ -82,7 +82,6 @@ resetPasswordRoutes.openapi(sendForgetPasswordEmail, async (c) => {
     const user = await findUserByEmail(c, email)
 
     const verificationCode = await generateVerificationCode(
-      c,
       user.id,
       email,
       "forgot_password"
@@ -107,7 +106,6 @@ resetPasswordRoutes.openapi(forgetPassword, async (c) => {
     const user = await findUserByEmail(c, email)
 
     const validCode = await verifyVerificationCode(
-      c,
       {
         email,
         id: user.id,
@@ -124,7 +122,7 @@ resetPasswordRoutes.openapi(forgetPassword, async (c) => {
     const scrypt = new Scrypt()
 
     const newHash = await scrypt.hash(newPassword)
-    const db = getDatabase(c)
+
     await db
       .updateTable("users")
       .set({ hashedPassword: newHash })
