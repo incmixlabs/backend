@@ -2,8 +2,8 @@ import { BASE_PATH } from "@/lib/constants"
 import type { HonoApp } from "@/types"
 import type { OpenAPIHono } from "@hono/zod-openapi"
 import {
-  createI18nMiddleware,
   createAuthMiddleware,
+  createI18nMiddleware,
   setupCors,
   setupOpenApi,
   setupSentryMiddleware,

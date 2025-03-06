@@ -44,6 +44,7 @@ import type {
   presignedUrlSchema,
 } from "@incmix/utils/types"
 
+import { envVars } from "@/env-vars"
 import { ROLE_MEMBER, ROLE_SUPER_ADMIN } from "@incmix/utils/types"
 import type { ContentfulStatusCode } from "hono/utils/http-status"
 import type { ExpressionWrapper, OrderByExpression, SqlBool } from "kysely"
@@ -59,7 +60,6 @@ import {
   getUserpermissions,
   updateUser,
 } from "./openapi"
-import { envVars } from "@/env-vars"
 
 const userRoutes = new OpenAPIHono<HonoApp>({
   defaultHook: zodError,

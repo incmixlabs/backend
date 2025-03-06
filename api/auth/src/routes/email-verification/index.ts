@@ -5,7 +5,7 @@ import {
   MAIL_SENT,
   VERIFY_SUCCESS,
 } from "@/lib/constants"
-import { findUserByEmail, db } from "@/lib/db"
+import { db, findUserByEmail } from "@/lib/db"
 import {
   generateVerificationCode,
   sendVerificationEmailOrLog,

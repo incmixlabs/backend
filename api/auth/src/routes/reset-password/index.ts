@@ -4,7 +4,7 @@ import {
   MAIL_SENT,
   PASS_RESET_SUCCESS,
 } from "@/lib/constants"
-import { findUserByEmail, findUserById, db } from "@/lib/db"
+import { db, findUserByEmail, findUserById } from "@/lib/db"
 
 import {
   generateVerificationCode,

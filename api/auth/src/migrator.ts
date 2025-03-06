@@ -1,12 +1,12 @@
-import * as path from "node:path"
-import { Pool } from "pg"
 import { promises as fs } from "node:fs"
+import * as path from "node:path"
 import {
+  FileMigrationProvider,
   Kysely,
   Migrator,
   PostgresDialect,
-  FileMigrationProvider,
 } from "kysely"
+import { Pool } from "pg"
 import type { Database } from "./dbSchema"
 
 async function migrateToLatest() {

@@ -7,7 +7,7 @@ import {
   USER_DEL,
   VERIFIY_REQ,
 } from "@/lib/constants"
-import { deleteUserById, findUserByEmail, db, insertUser } from "@/lib/db"
+import { db, deleteUserById, findUserByEmail, insertUser } from "@/lib/db"
 import {
   generateVerificationCode,
   sendVerificationEmailOrLog,
@@ -126,7 +126,7 @@ authRoutes.openapi(signup, async (c) => {
     if (existing) throw new ConflictError(msg)
     const userId = generateId(15)
 
-    const verificationCode = await generateVerificationCode(
+    const _verificationCode = await generateVerificationCode(
       userId,
       email,
       "email_verification"

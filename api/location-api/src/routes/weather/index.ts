@@ -1,3 +1,4 @@
+import { envVars } from "@/env-vars"
 import { getAddressFromLocation, getLocationFromIp } from "@/lib/helper"
 import type { Address, HonoApp } from "@/types"
 import { OpenAPIHono } from "@hono/zod-openapi"
@@ -7,7 +8,6 @@ import {
   WeatherCodes,
   type WeatherForecast,
 } from "./types"
-import { envVars } from "@/env-vars"
 
 const weatherRoutes = new OpenAPIHono<HonoApp>()
 

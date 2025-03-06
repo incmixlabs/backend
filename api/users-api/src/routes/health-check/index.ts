@@ -1,8 +1,8 @@
+import { envVars } from "@/env-vars"
+import { db } from "@/lib/db"
 import { healthCheck } from "@/routes/health-check/openapi"
 import type { HonoApp } from "@/types"
 import { OpenAPIHono } from "@hono/zod-openapi"
-import { db } from "@/lib/db"
-import { envVars } from "@/env-vars"
 const healthcheckRoutes = new OpenAPIHono<HonoApp>()
 
 healthcheckRoutes.openapi(healthCheck, async (c) => {

@@ -1,5 +1,5 @@
 import { type Database, type UserColumn, columns } from "@/dbSchema"
-import { findUserById, db } from "@/lib/db"
+import { db, findUserById } from "@/lib/db"
 import { initializeLucia } from "@/lib/lucia"
 import type { HonoApp } from "@/types"
 import { OpenAPIHono } from "@hono/zod-openapi"

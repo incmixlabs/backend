@@ -7,7 +7,7 @@ import {
   ERROR_PROJECT_EXISTS,
   ERROR_PROJECT_NOT_FOUND,
 } from "@/lib/constants"
-import { generateBoard, db } from "@/lib/db"
+import { db, generateBoard } from "@/lib/db"
 import { getOrganizationById } from "@/lib/services"
 import type { HonoApp } from "@/types"
 import { OpenAPIHono } from "@hono/zod-openapi"
