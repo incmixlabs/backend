@@ -62,7 +62,7 @@ emailVerificationRoutes.openapi(verifyEmail, async (c) => {
     const { code, email } = c.req.valid("json")
     const user = await findUserByEmail(c, email)
 
-    const lucia = initializeLucia(c)
+    const lucia = initializeLucia()
     await lucia.invalidateUserSessions(user.id)
     const sessionCookie = lucia.createBlankSessionCookie()
     c.header("Set-Cookie", sessionCookie.serialize(), {
@@ -87,7 +87,7 @@ emailVerificationRoutes.openapi(verifyEmail, async (c) => {
 
     await db
       .updateTable("users")
-      .set({ emailVerified: 1 })
+      .set({ emailVerified: true })
       .where("id", "=", user.id)
       .execute()
 

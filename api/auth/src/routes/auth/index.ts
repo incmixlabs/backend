@@ -8,10 +8,7 @@ import {
   VERIFIY_REQ,
 } from "@/lib/constants"
 import { db, deleteUserById, findUserByEmail, insertUser } from "@/lib/db"
-import {
-  generateVerificationCode,
-  sendVerificationEmailOrLog,
-} from "@/lib/helper"
+// import { generateVerificationCode } from "@/lib/helper"
 import { createSession, initializeLucia } from "@/lib/lucia"
 import { deleteUserProfile } from "@/lib/services"
 import {
@@ -126,18 +123,18 @@ authRoutes.openapi(signup, async (c) => {
     if (existing) throw new ConflictError(msg)
     const userId = generateId(15)
 
-    const _verificationCode = await generateVerificationCode(
-      userId,
-      email,
-      "email_verification"
-    )
+    // const _verificationCode = await generateVerificationCode(
+    //   userId,
+    //   email,
+    //   "email_verification"
+    // )
     // sendVerificationEmailOrLog(c, email, verificationCode)
     const { profile, ...user } = await insertUser(
       c,
       {
         id: userId,
         email,
-        emailVerified: 0,
+        emailVerified: true,
         userType: "member",
       },
       fullName,

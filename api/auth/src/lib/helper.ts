@@ -94,7 +94,7 @@ export async function insertOAuthUser(
     {
       id: userId,
       email: user.email,
-      emailVerified: 1,
+      emailVerified: true,
       userType: "member",
       isActive: false,
       hashedPassword: null,

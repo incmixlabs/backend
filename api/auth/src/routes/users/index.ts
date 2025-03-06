@@ -161,7 +161,7 @@ userRoutes.openapi(setVerified, async (c) => {
 
     const updated = await db
       .updateTable("users")
-      .set("emailVerified", value ? 1 : 0)
+      .set("emailVerified", value)
       .where("id", "=", u.id)
       .returningAll()
       .executeTakeFirst()
@@ -171,7 +171,7 @@ userRoutes.openapi(setVerified, async (c) => {
     }
 
     // Logout users everywhere
-    const lucia = initializeLucia(c)
+    const lucia = initializeLucia()
     await lucia.invalidateUserSessions(updated.id)
 
     return c.json({ message: "Updated Successfully" }, 200)
@@ -210,7 +210,7 @@ userRoutes.openapi(setEnabled, async (c) => {
 
     const updated = await db
       .updateTable("users")
-      .set("isActive", value ? 1 : 0)
+      .set("isActive", value)
       .where("id", "=", u.id)
       .returningAll()
       .executeTakeFirst()
@@ -220,7 +220,7 @@ userRoutes.openapi(setEnabled, async (c) => {
     }
 
     // Logout users everywhere
-    const lucia = initializeLucia(c)
+    const lucia = initializeLucia()
     await lucia.invalidateUserSessions(updated.id)
 
     return c.json({ message: "Updated Successfully" }, 200)
@@ -270,7 +270,7 @@ userRoutes.openapi(setPassword, async (c) => {
     }
 
     // Logout users everywhere
-    const lucia = initializeLucia(c)
+    const lucia = initializeLucia()
     await lucia.invalidateUserSessions(updated.id)
 
     return c.json({ message: "Updated Successfully" }, 200)

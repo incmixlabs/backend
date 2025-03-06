@@ -11,7 +11,7 @@ export const setupWebsocket = (app: OpenAPIHono<HonoApp>) => {
       return c.json({ message: "Expected Upgrade: websocket" }, 426)
     }
     const sessionId = getCookie(c, c.env.COOKIE_NAME)
-    const lucia = initializeLucia(c)
+    const lucia = initializeLucia()
     const { session } = await lucia.validateSession(sessionId ?? "")
 
     if (!session?.userId) return c.json({ message: "Unauthorized" })

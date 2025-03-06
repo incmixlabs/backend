@@ -12,7 +12,7 @@ type UsersTable = {
   id: string
   email: string
   hashedPassword: string | null
-  emailVerified: number
+  emailVerified: boolean
   userType: UserType
   isActive: boolean | null
   lastLoggedIn: ColumnType<Date, null, string>
