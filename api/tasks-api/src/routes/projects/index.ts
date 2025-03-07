@@ -7,7 +7,7 @@ import {
   ERROR_PROJECT_EXISTS,
   ERROR_PROJECT_NOT_FOUND,
 } from "@/lib/constants"
-import { generateBoard, getDatabase } from "@/lib/db"
+import { db, generateBoard } from "@/lib/db"
 import { getOrganizationById } from "@/lib/services"
 import type { HonoApp } from "@/types"
 import { OpenAPIHono } from "@hono/zod-openapi"
@@ -49,7 +49,6 @@ projectRoutes.openapi(createProject, async (c) => {
       throw new UnprocessableEntityError(msg)
     }
 
-    const db = getDatabase(c)
     const existingProject = await db
       .selectFrom("projects")
       .selectAll()
@@ -97,7 +96,6 @@ projectRoutes.openapi(createColumn, async (c) => {
 
     const { label, projectId, parentId, columnOrder } = c.req.valid("json")
 
-    const db = getDatabase(c)
     const existingProject = await db
       .selectFrom("projects")
       .selectAll()
@@ -188,7 +186,6 @@ projectRoutes.openapi(getProjects, async (c) => {
       throw new UnprocessableEntityError(msg)
     }
 
-    const db = getDatabase(c)
     const projects = await db
       .selectFrom("projects")
       .selectAll()
@@ -213,7 +210,6 @@ projectRoutes.openapi(getColumns, async (c) => {
       return c.json({ message: msg }, 401)
     }
     const { projectId } = c.req.valid("param")
-    const db = getDatabase(c)
 
     const project = await db
       .selectFrom("projects")
@@ -259,7 +255,7 @@ projectRoutes.openapi(getBoard, async (c) => {
     }
     const { projectId } = c.req.valid("param")
 
-    const board = await generateBoard(c, projectId)
+    const board = await generateBoard(projectId)
     if (!board) {
       const msg = await t.text(ERROR_PROJECT_NOT_FOUND)
       throw new UnprocessableEntityError(msg)

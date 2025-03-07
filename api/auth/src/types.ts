@@ -1,4 +1,3 @@
-import type { Clients } from "@/durable-objects/clients"
 import type { AuthUser } from "@incmix/utils/types"
 import type { Context as HonoContext } from "hono"
 import type { Session } from "lucia"
@@ -15,15 +14,7 @@ type EnvVariables = {
   DOMAIN: string
 }
 
-type Services = {
-  DB: D1Database
-  EMAIL: Fetcher
-  USERS_API: Fetcher
-  INTL: Fetcher
-  CLIENTS: DurableObjectNamespace<Clients>
-}
-
-export type Bindings = EnvVariables & Services
+export type Bindings = EnvVariables
 
 export type Variables = {
   user: AuthUser | null

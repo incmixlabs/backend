@@ -1,3 +1,4 @@
+import { envVars } from "@/env-vars"
 import { healthCheck } from "@/routes/health-check/openapi"
 import type { HonoApp } from "@/types"
 import { OpenAPIHono } from "@hono/zod-openapi"
@@ -13,7 +14,7 @@ healthcheckRoutes.openapi(healthCheck, (c) => {
       LOCATION_URL,
       WEATHER_API_KEY,
       WEATHER_URL,
-    } = c.env
+    } = envVars
 
     let status = "UP"
     const missing: string[] = []

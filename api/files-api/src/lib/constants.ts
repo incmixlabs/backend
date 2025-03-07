@@ -19,6 +19,10 @@ export const FILE_DELETE_SUCCESS = {
   namespace: "files",
   key: "delete_success",
 }
+export const ERROR_FILE_DELETE_FAIL = {
+  namespace: "errors",
+  key: "file_delete_fail",
+}
 export const FILE_UPLOAD_SUCCESS = {
   namespace: "files",
   key: "upload_success",

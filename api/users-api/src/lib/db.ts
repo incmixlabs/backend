@@ -3,16 +3,21 @@ import type { Context } from "@/types"
 import { generateSentryHeaders } from "@incmix-api/utils"
 import { ServerError, UnauthorizedError } from "@incmix-api/utils/errors"
 
-import { D1Dialect } from "@noxharmonium/kysely-d1"
+import { envVars } from "@/env-vars"
 import { getCookie } from "hono/cookie"
-import { CamelCasePlugin, Kysely } from "kysely"
+import { CamelCasePlugin, Kysely, PostgresDialect } from "kysely"
+import pg from "pg"
 
-export const getDatabase = (c: Context) => {
-  return new Kysely<Database>({
-    dialect: new D1Dialect({ database: c.env.DB }),
-    plugins: [new CamelCasePlugin()],
-  })
-}
+const pool = new pg.Pool({
+  connectionString: envVars.DATABASE_URL,
+})
+
+const dialect = new PostgresDialect({ pool })
+
+export const db = new Kysely<Database>({
+  dialect,
+  plugins: [new CamelCasePlugin()],
+})
 
 export async function getUserByEmail(c: Context, email: string) {
   const sessionId = getCookie(c, c.env.COOKIE_NAME) ?? null
@@ -20,16 +25,16 @@ export async function getUserByEmail(c: Context, email: string) {
   if (!sessionId) {
     throw new UnauthorizedError()
   }
-  const url = `${c.env.AUTH_URL}/get-user-by-email`
+  const url = `${envVars.AUTH_URL}/get-user-by-email`
 
   const sentryHeaders = generateSentryHeaders(c)
 
-  const res = await c.env.AUTH.fetch(url, {
+  const res = await fetch(url, {
     method: "POST",
     body: JSON.stringify({ email }),
     headers: {
       "content-type": "application/json",
-      cookie: `${c.env.COOKIE_NAME}=sessionId`,
+      cookie: `${envVars.COOKIE_NAME}=${sessionId}`,
       ...sentryHeaders,
     },
   })

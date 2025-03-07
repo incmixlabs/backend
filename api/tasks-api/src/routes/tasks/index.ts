@@ -6,7 +6,7 @@ import {
   ERROR_TASK_NOT_FOUND,
   ERROR_TASK_UPDATE_FAIL,
 } from "@/lib/constants"
-import { getDatabase } from "@/lib/db"
+import { db } from "@/lib/db"
 import {
   createTask,
   deleteTask,
@@ -36,7 +36,7 @@ tasksRoutes.openapi(listTasks, async (c) => {
       const msg = await t.text(ERROR_UNAUTHORIZED)
       return c.json({ message: msg }, 401)
     }
-    const db = getDatabase(c)
+
     const tasks = await db
       .selectFrom("tasks")
       .selectAll()
@@ -63,8 +63,6 @@ tasksRoutes.openapi(createTask, async (c) => {
 
     const { columnId, content, projectId, taskOrder, status, assignedTo } =
       c.req.valid("json")
-
-    const db = getDatabase(c)
 
     const project = await db
       .selectFrom("projects")
@@ -134,7 +132,7 @@ tasksRoutes.openapi(updateTask, async (c) => {
       c.req.valid("json")
 
     const { id } = c.req.valid("param")
-    const db = getDatabase(c)
+
     const existingTask = await db
       .selectFrom("tasks")
       .selectAll()
@@ -212,7 +210,7 @@ tasksRoutes.openapi(taskById, async (c) => {
     }
 
     const { id } = c.req.valid("param")
-    const db = getDatabase(c)
+
     const task = await db
       .selectFrom("tasks")
       .selectAll()
@@ -243,7 +241,7 @@ tasksRoutes.openapi(deleteTask, async (c) => {
     }
 
     const { id } = c.req.valid("param")
-    const db = getDatabase(c)
+
     const task = await db
       .deleteFrom("tasks")
       .where("id", "=", id)

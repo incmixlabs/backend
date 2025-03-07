@@ -1,15 +1,13 @@
+import { db } from "@/lib/db"
 import { healthCheck } from "@/routes/health-check/openapi"
-import type { HonoApp, LocaleRow } from "@/types"
+import type { HonoApp } from "@/types"
 import { OpenAPIHono } from "@hono/zod-openapi"
 
 const healthcheckRoutes = new OpenAPIHono<HonoApp>()
 
 healthcheckRoutes.openapi(healthCheck, async (c) => {
   try {
-    const { results, error } = await c.env.DB.prepare(
-      "select * from locales"
-    ).all<LocaleRow>()
-    if (error) throw error
+    const results = await db.selectFrom("locales").selectAll().execute()
 
     if (!results.length)
       return c.json(

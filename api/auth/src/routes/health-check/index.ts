@@ -1,13 +1,14 @@
+import { envVars } from "@/env-vars"
 import { healthCheck } from "@/routes/health-check/openapi"
 import type { HonoApp } from "@/types"
 import { OpenAPIHono } from "@hono/zod-openapi"
 
 const healthcheckRoutes = new OpenAPIHono<HonoApp>()
 
-healthcheckRoutes.openapi(healthCheck, async (c) => {
+healthcheckRoutes.openapi(healthCheck, (c) => {
   try {
-    const { error } = await c.env.DB.prepare("select * from users").run()
-    if (error) throw error
+    // const { error } = await c.env.DB.prepare("select * from users").run()
+    // if (error) throw error
 
     const {
       COOKIE_NAME,
@@ -19,7 +20,7 @@ healthcheckRoutes.openapi(healthCheck, async (c) => {
       GOOGLE_REDIRECT_URL,
       INTL_URL,
       USERS_API_URL,
-    } = c.env
+    } = envVars
     let status = "UP"
     const missing: string[] = []
     if (!COOKIE_NAME) {

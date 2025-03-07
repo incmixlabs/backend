@@ -1,8 +1,10 @@
+import { envVars } from "@/env-vars"
 import type { Context } from "@/types"
 import type { UserType } from "@incmix/utils/types"
-import { D1Adapter } from "@lucia-auth/adapter-sqlite"
+import { NodePostgresAdapter } from "@lucia-auth/adapter-postgresql"
 import { setCookie } from "hono/cookie"
 import { Lucia, type SessionCookieAttributesOptions } from "lucia"
+import postgres from "pg"
 
 interface DatabaseUserAttributes {
   id: string
@@ -17,8 +19,11 @@ declare module "lucia" {
     DatabaseUserAttributes: DatabaseUserAttributes
   }
 }
-export function initializeLucia(c: Context) {
-  const adapter = new D1Adapter(c.env.DB, {
+export function initializeLucia() {
+  const pool = new postgres.Pool({
+    connectionString: envVars.DATABASE_URL,
+  })
+  const adapter = new NodePostgresAdapter(pool, {
     user: "users",
     session: "sessions",
   })
@@ -26,12 +31,12 @@ export function initializeLucia(c: Context) {
     secure: true,
     sameSite: "none",
   }
-  if (!c.env.DOMAIN.includes("localhost")) {
-    attributes.domain = c.env.DOMAIN
+  if (!envVars.DOMAIN.includes("localhost")) {
+    attributes.domain = envVars.DOMAIN
   }
   return new Lucia(adapter, {
     sessionCookie: {
-      name: c.env.COOKIE_NAME,
+      name: envVars.COOKIE_NAME,
       attributes,
     },
 
@@ -47,8 +52,9 @@ export function initializeLucia(c: Context) {
 }
 
 export async function createSession(c: Context, userId: string) {
-  const lucia = initializeLucia(c)
+  const lucia = initializeLucia()
   const session = await lucia.createSession(userId, {})
+
   const sessionCookie = lucia.createSessionCookie(session.id)
   setCookie(
     c,

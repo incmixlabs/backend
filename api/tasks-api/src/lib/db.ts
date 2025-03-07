@@ -1,18 +1,28 @@
 import type { Database } from "@/dbSchema"
-import type { Context } from "@/types"
 import type { Board, NestedColumns } from "@incmix/utils/types"
-import { D1Dialect } from "@noxharmonium/kysely-d1"
-import { CamelCasePlugin, Kysely, ParseJSONResultsPlugin } from "kysely"
-import { jsonArrayFrom } from "kysely/helpers/sqlite"
-export const getDatabase = (c: Context) => {
-  return new Kysely<Database>({
-    dialect: new D1Dialect({ database: c.env.DB }),
-    plugins: [new CamelCasePlugin()],
-  })
-}
 
-export function getProjectById(c: Context, projectId: string) {
-  const db = getDatabase(c)
+import { envVars } from "@/env-vars"
+import {
+  CamelCasePlugin,
+  Kysely,
+  ParseJSONResultsPlugin,
+  PostgresDialect,
+} from "kysely"
+import { jsonArrayFrom } from "kysely/helpers/postgres"
+import pg from "pg"
+
+const dialect = new PostgresDialect({
+  pool: new pg.Pool({
+    connectionString: envVars.DATABASE_URL,
+    max: 10,
+  }),
+})
+export const db = new Kysely<Database>({
+  dialect,
+  plugins: [new CamelCasePlugin()],
+})
+
+export function getProjectById(projectId: string) {
   return db
     .withPlugin(new ParseJSONResultsPlugin())
     .selectFrom("projects")
@@ -64,10 +74,9 @@ export function getProjectById(c: Context, projectId: string) {
 }
 
 export async function generateBoard(
-  c: Context,
   projectId: string
 ): Promise<Board | undefined> {
-  const data = await getProjectById(c, projectId)
+  const data = await getProjectById(projectId)
   if (!data) return
 
   const columnMap: Record<string, NestedColumns> = {}

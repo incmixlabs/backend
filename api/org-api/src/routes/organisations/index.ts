@@ -13,6 +13,7 @@ import {
 } from "@/lib/constants"
 import {
   checkHandleAvailability,
+  db,
   doesOrganisationExist,
   ensureAtLeastOneOwner,
   findAllRoles,
@@ -22,7 +23,6 @@ import {
   findOrganisationByHandle,
   findOrganisationById,
   findOrganisationByUserId,
-  getDatabase,
   getUserByEmail,
   getUserById,
   insertMembers,
@@ -149,7 +149,7 @@ orgRoutes.openapi(getUserOrganisations, async (c) => {
       throw new UnauthorizedError(msg)
     }
 
-    const userOrgs = await findOrganisationByUserId(c, user.id)
+    const userOrgs = await findOrganisationByUserId(user.id)
 
     return c.json(userOrgs, 200)
   } catch (error) {
@@ -170,7 +170,7 @@ orgRoutes.openapi(validateHandle, async (c) => {
     }
 
     const { handle } = c.req.valid("json")
-    const handleExists = await checkHandleAvailability(c, handle)
+    const handleExists = await checkHandleAvailability(handle)
 
     return c.json(
       {
@@ -197,13 +197,13 @@ orgRoutes.openapi(createOrganisation, async (c) => {
 
     const { members, name, handle } = c.req.valid("json")
 
-    const handleAvailable = await checkHandleAvailability(c, handle)
+    const handleAvailable = await checkHandleAvailability(handle)
     if (!handleAvailable) {
       const msg = await t.text(ERROR_ORG_EXIST)
       throw new ConflictError(msg)
     }
 
-    const orgExists = await doesOrganisationExist(c, name)
+    const orgExists = await doesOrganisationExist(name)
 
     if (orgExists) {
       const msg = await t.text(ERROR_ORG_EXIST)
@@ -220,14 +220,14 @@ orgRoutes.openapi(createOrganisation, async (c) => {
     }
 
     const orgId = generateId(15)
-    const dbRoles = await findAllRoles(c)
+    const dbRoles = await findAllRoles()
 
     if (!dbRoles.length) {
       const msg = await t.text(ERROR_NO_ROLES)
       throw new ServerError(msg)
     }
 
-    const newOrg = await insertOrganisation(c, { id: orgId, name, handle })
+    const newOrg = await insertOrganisation({ id: orgId, name, handle })
 
     if (!newOrg) {
       const msg = await t.text(ERROR_ORG_CREATE_FAIL)
@@ -240,7 +240,7 @@ orgRoutes.openapi(createOrganisation, async (c) => {
       throw new ServerError(msg)
     }
 
-    await insertMembers(c, [
+    await insertMembers([
       {
         userId: user.id,
         orgId: orgId,
@@ -297,19 +297,19 @@ orgRoutes.openapi(addMember, async (c) => {
     const existingUser = await getUserByEmail(c, email)
     const userId = existingUser.id
 
-    const isMember = await isOrgMember(c, userId, org.id)
+    const isMember = await isOrgMember(userId, org.id)
     if (isMember) {
       const msg = await t.text(ERROR_MEMBER_EXIST)
       throw new ConflictError(msg)
     }
-    const dbRoles = await findAllRoles(c)
+    const dbRoles = await findAllRoles()
     const dbRole = getRoleIdByName(dbRoles, role)
     if (!dbRole) {
       const msg = await t.text(ERROR_NO_ROLES)
       throw new ServerError(msg)
     }
 
-    const [newMember] = await insertMembers(c, [
+    const [newMember] = await insertMembers([
       { userId, orgId: org.id, roleId: dbRole },
     ])
 
@@ -318,7 +318,7 @@ orgRoutes.openapi(addMember, async (c) => {
       throw new ServerError(msg)
     }
 
-    const members = await findOrgMembers(c, org.id)
+    const members = await findOrgMembers(org.id)
 
     return c.json(
       {
@@ -357,7 +357,7 @@ orgRoutes.openapi(updateOrganisation, async (c) => {
       action: "update",
       subject: "Organisation",
     })
-    const db = getDatabase(c)
+
     const updatedOrg = await db
       .updateTable("organisations")
       .set({ name: name })
@@ -370,7 +370,7 @@ orgRoutes.openapi(updateOrganisation, async (c) => {
       throw new ServerError(msg)
     }
 
-    const members = await findOrgMembers(c, org.id)
+    const members = await findOrgMembers(org.id)
 
     return c.json(
       {
@@ -409,7 +409,7 @@ orgRoutes.openapi(deleteOrganisation, async (c) => {
       action: "delete",
       subject: "Organisation",
     })
-    const db = getDatabase(c)
+
     const deletedMembers = await db
       .deleteFrom("members")
       .where("orgId", "=", org.id)
@@ -469,7 +469,7 @@ orgRoutes.openapi(removeMembers, async (c) => {
       subject: "Member",
     })
     await ensureAtLeastOneOwner(c, org.id, userIds, "remove")
-    const db = getDatabase(c)
+
     await db
       .deleteFrom("members")
       .where((eb) =>
@@ -478,7 +478,7 @@ orgRoutes.openapi(removeMembers, async (c) => {
       .returningAll()
       .execute()
 
-    const members = await findOrgMembers(c, org.id)
+    const members = await findOrgMembers(org.id)
 
     return c.json(
       {
@@ -525,13 +525,13 @@ orgRoutes.openapi(updateMemberRole, async (c) => {
       await ensureAtLeastOneOwner(c, org.id, [userId], "update")
     }
 
-    const dbRoles = await findAllRoles(c)
+    const dbRoles = await findAllRoles()
     const dbRole = getRoleIdByName(dbRoles, newRole)
     if (!dbRole) {
       const msg = await t.text(ERROR_NO_ROLES)
       throw new ServerError(msg)
     }
-    const db = getDatabase(c)
+
     const updated = await db
       .updateTable("members")
       .set({ roleId: dbRole })
@@ -544,7 +544,7 @@ orgRoutes.openapi(updateMemberRole, async (c) => {
       const msg = await t.text(ERROR_MEMBER_UPDATE_FAIL)
       throw new ServerError(msg)
     }
-    const members = await findOrgMembers(c, org.id)
+    const members = await findOrgMembers(org.id)
 
     return c.json(
       {
@@ -583,7 +583,7 @@ orgRoutes.openapi(getOrganizationMembers, async (c) => {
       subject: "Member",
     })
 
-    const members = await findOrgMembers(c, org.id)
+    const members = await findOrgMembers(org.id)
     const memberDetails = await Promise.all(
       members.map(async (member) => {
         const userDetails = await getUserById(c, member.userId)

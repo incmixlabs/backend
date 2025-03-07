@@ -1,11 +1,15 @@
 import type { Database } from "@/db-schema"
-import type { Context } from "@/types"
-import { D1Dialect } from "@noxharmonium/kysely-d1"
-import { CamelCasePlugin, Kysely } from "kysely"
+import { envVars } from "@/env-vars"
+import { CamelCasePlugin, Kysely, PostgresDialect } from "kysely"
+import pg from "pg"
 
-export function getDatabase(c: Context) {
-  return new Kysely<Database>({
-    dialect: new D1Dialect({ database: c.env.DB }),
-    plugins: [new CamelCasePlugin()],
-  })
-}
+const dialect = new PostgresDialect({
+  pool: new pg.Pool({
+    connectionString: envVars.DATABASE_URL,
+    max: 10,
+  }),
+})
+export const db = new Kysely<Database>({
+  dialect,
+  plugins: [new CamelCasePlugin()],
+})

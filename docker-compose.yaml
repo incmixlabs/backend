@@ -1,0 +1,138 @@
+services:
+  postgres_intl_api:
+    image: postgres:16-alpine
+    platform: linux/amd64
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: intl
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_intl_data:/var/lib/postgresql/data
+    networks:
+      - intl_network
+  postgres_auth_api:
+    image: postgres:16-alpine
+    platform: linux/amd64
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: auth
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_auth_data:/var/lib/postgresql/data
+    networks:
+      - auth_network
+  postgres_users_api:
+    image: postgres:16-alpine
+    platform: linux/amd64
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: users
+    ports:
+      - "5434:5432"
+    volumes:
+      - postgres_users_data:/var/lib/postgresql/data
+    networks:
+      - users_network
+  postgres_email_api:
+    image: postgres:16-alpine
+    platform: linux/amd64
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: email
+    ports:
+      - "5435:5432"
+    volumes:
+      - postgres_email_data:/var/lib/postgresql/data
+    networks:
+      - email_network
+  postgres_org_api:
+    image: postgres:16-alpine
+    platform: linux/amd64
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: org
+    ports:
+      - "5436:5432"
+    volumes:
+      - postgres_org_data:/var/lib/postgresql/data
+    networks:
+      - org_network
+  postgres_tasks_api:
+    image: postgres:16-alpine
+    platform: linux/amd64
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: tasks
+    ports:
+      - "5437:5432"
+    volumes:
+      - postgres_tasks_data:/var/lib/postgresql/data
+    networks:
+      - tasks_network
+
+  minio:
+    image: minio/minio:latest
+    platform: linux/amd64
+    environment:
+      - MINIO_ROOT_USER=minioadmin
+      - MINIO_ROOT_PASSWORD=minioadmin
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio_data:/data
+    command: server /data --console-address ":9001"
+    networks:
+      - files_network
+  # intl_api:
+  #   build:
+  #     context: .
+  #     dockerfile: api/intl-api/Dockerfile
+  #   environment:
+  #     - DATABASE_URL=postgresql://postgres:postgres@postgres_intl_api:5432/intl
+  #   depends_on:
+  #     - postgres_intl_api
+  #   ports:
+  #     - "9090:9090"
+  #   networks:
+  #     - intl_network
+
+  # auth_api:
+  #   build:
+  #     context: .
+  #     dockerfile: api/auth/Dockerfile
+  #   environment:
+  #     - DATABASE_URL=postgresql://postgres:postgres@postgres_auth_api:5432/auth
+  #   depends_on:
+  #     - postgres_auth_api
+  #   ports:
+  #     - "8787:8787"
+  #   networks:
+  #     - auth_network
+
+
+
+volumes:
+  postgres_intl_data:
+  postgres_auth_data:
+  postgres_users_data:
+  postgres_email_data:
+  postgres_org_data:
+  postgres_tasks_data:
+  minio_data:
+networks:
+  auth_network:
+  intl_network:
+  users_network:
+  email_network:
+  org_network:
+  tasks_network:
+  files_network:

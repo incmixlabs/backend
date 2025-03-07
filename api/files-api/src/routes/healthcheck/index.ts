@@ -1,4 +1,5 @@
-import { getS3Client } from "@/index"
+import { envVars } from "@/env-vars"
+import { S3 } from "@/lib/s3"
 import { healthCheck } from "@/routes/healthcheck/openapi"
 import type { HonoApp } from "@/types"
 import { ListObjectsV2Command } from "@aws-sdk/client-s3"
@@ -13,10 +14,11 @@ healthcheckRoutes.openapi(healthCheck, async (c) => {
       COOKIE_NAME,
       DOMAIN,
       INTL_URL,
-      R2_ACCESS_KEY_ID,
-      R2_ENDPOINT,
-      R2_SECRET_ACCESS_KEY,
-    } = c.env
+      AWS_ACCESS_KEY_ID,
+      AWS_SECRET_ACCESS_KEY,
+      AWS_REGION,
+      AWS_ENDPOINT_URL_S3,
+    } = envVars
 
     let status = "UP"
     const missing: string[] = []
@@ -42,25 +44,29 @@ healthcheckRoutes.openapi(healthCheck, async (c) => {
       status = "DOWN"
       missing.push("INTL_URL")
     }
-    if (!R2_ACCESS_KEY_ID) {
+
+    if (!AWS_ACCESS_KEY_ID) {
       status = "DOWN"
-      missing.push("R2_ACCESS_KEY_ID")
+      missing.push("AWS_ACCESS_KEY_ID")
     }
-    if (!R2_ENDPOINT) {
+    if (!AWS_SECRET_ACCESS_KEY) {
       status = "DOWN"
-      missing.push("R2_ENDPOINT")
+      missing.push("AWS_SECRET_ACCESS_KEY")
     }
-    if (!R2_SECRET_ACCESS_KEY) {
+    if (!AWS_REGION) {
       status = "DOWN"
-      missing.push("R2_SECRET_ACCESS_KEY")
+      missing.push("AWS_REGION")
+    }
+    if (!AWS_ENDPOINT_URL_S3) {
+      status = "DOWN"
+      missing.push("AWS_ENDPOINT_URL_S3")
     }
 
-    const s3Client = await getS3Client(c)
     const command = new ListObjectsV2Command({
-      Bucket: c.env.BUCKET_NAME,
+      Bucket: envVars.BUCKET_NAME,
       MaxKeys: 1,
     })
-    await s3Client.send(command)
+    await S3.send(command)
 
     return c.json(
       {

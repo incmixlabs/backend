@@ -1,4 +1,4 @@
-import type { HonoApp, IntlMessageRow, LocaleRow } from "@/types"
+import type { HonoApp } from "@/types"
 import { OpenAPIHono } from "@hono/zod-openapi"
 import {
   ConflictError,
@@ -10,7 +10,7 @@ import {
 } from "@incmix-api/utils/errors"
 
 import { type Database, type MessageColumn, columns } from "@/db-schema"
-import { getDatabase } from "@/lib/db"
+import { db } from "@/lib/db"
 import {
   addMessage,
   deleteMessages,
@@ -32,17 +32,19 @@ messageRoutes.openapi(getMessage, async (c) => {
   try {
     const { key, locale } = c.req.valid("param")
 
-    const dbLocale = await c.env.DB.prepare(
-      "select * from locales where lang_code = ?"
-    )
-      .bind(locale)
-      .first<LocaleRow>()
+    const dbLocale = await db
+      .selectFrom("locales")
+      .selectAll()
+      .where("langCode", "=", locale)
+      .executeTakeFirstOrThrow()
 
-    const message = await c.env.DB.prepare(
-      "select * from translations where key = ? and locale_id = ?"
-    )
-      .bind(key, dbLocale?.id)
-      .first<IntlMessageRow>()
+    const message = await db
+      .selectFrom("translations")
+      .selectAll()
+      .where("key", "=", key)
+      .where("localeId", "=", dbLocale.id)
+      .executeTakeFirstOrThrow()
+
     if (!message)
       throw new NotFoundError(
         `Translation not found for key: '${key}' and locale: '${locale}'`
@@ -59,8 +61,6 @@ messageRoutes.openapi(getMessage, async (c) => {
 messageRoutes.openapi(deleteMessages, async (c) => {
   try {
     const { items } = c.req.valid("json")
-
-    const db = getDatabase(c)
 
     await Promise.all(
       items.map((item) =>
@@ -95,19 +95,20 @@ messageRoutes.openapi(getMessagesByNamespace, async (c) => {
   try {
     const { locale, namespace } = c.req.valid("param")
 
-    const dbLocale = await c.env.DB.prepare(
-      "select * from locales where lang_code = ?"
-    )
-      .bind(locale)
-      .first<LocaleRow>()
+    const dbLocale = await db
+      .selectFrom("locales")
+      .selectAll()
+      .where("langCode", "=", locale)
+      .executeTakeFirstOrThrow()
 
     if (!dbLocale) throw new NotFoundError(`Locale ${locale} not found`)
 
-    const { results: messages } = await c.env.DB.prepare(
-      "select * from translations where namespace = ? and locale_id = ?"
-    )
-      .bind(namespace, dbLocale.id)
-      .all<IntlMessageRow>()
+    const messages = await db
+      .selectFrom("translations")
+      .selectAll()
+      .where("namespace", "=", namespace)
+      .where("localeId", "=", dbLocale.id)
+      .execute()
 
     const namespaces = messages.reduce<Record<string, string>>((res, curr) => {
       const { key, value } = curr
@@ -128,24 +129,24 @@ messageRoutes.openapi(getMessagesByNamespace, async (c) => {
 
 messageRoutes.openapi(getDefaultMessages, async (c) => {
   try {
-    const dbLocale = await c.env.DB.prepare(
-      "select * from locales where is_default = ?"
-    )
-      .bind(true)
-      .first<LocaleRow>()
+    const dbLocale = await db
+      .selectFrom("locales")
+      .selectAll()
+      .where("isDefault", "=", true)
+      .executeTakeFirstOrThrow()
 
     if (!dbLocale) throw new ServerError("Default Locale not set")
 
-    const { results: messages } = await c.env.DB.prepare(
-      "select * from translations where locale_id = ?"
-    )
-      .bind(dbLocale?.id)
-      .all<IntlMessageRow>()
+    const messages = await db
+      .selectFrom("translations")
+      .selectAll()
+      .where("localeId", "=", dbLocale.id)
+      .execute()
 
     return c.json(
       messages.map((m) => ({
         ...m,
-        locale: dbLocale.lang_code,
+        locale: dbLocale.langCode,
       })),
       200
     )
@@ -161,17 +162,19 @@ messageRoutes.openapi(getAllMessagesByLocale, async (c) => {
   try {
     const { locale } = c.req.valid("param")
 
-    const dbLocale = await c.env.DB.prepare(
-      "select * from locales where lang_code = ?"
-    )
-      .bind(locale)
-      .first<LocaleRow>()
+    const dbLocale = await db
+      .selectFrom("locales")
+      .selectAll()
+      .where("langCode", "=", locale)
+      .executeTakeFirstOrThrow()
+
     if (!dbLocale) throw new NotFoundError("Locale not found")
-    const { results: messages } = await c.env.DB.prepare(
-      "select * from translations where locale_id = ?"
-    )
-      .bind(dbLocale.id)
-      .all<IntlMessageRow>()
+
+    const messages = await db
+      .selectFrom("translations")
+      .selectAll()
+      .where("localeId", "=", dbLocale.id)
+      .execute()
 
     return c.json(
       messages.map((m) => ({
@@ -190,8 +193,6 @@ messageRoutes.openapi(getAllMessagesByLocale, async (c) => {
 
 messageRoutes.openapi(getAllMessages, async (c) => {
   try {
-    const db = getDatabase(c)
-
     const queryParams = c.req.query()
 
     const { filters, sort, pagination, joinOperator } =
@@ -295,27 +296,32 @@ messageRoutes.openapi(addMessage, async (c) => {
     if (!user) throw new UnauthorizedError()
 
     const { key, locale, type, value, namespace } = c.req.valid("json")
-    const dbLocale = await c.env.DB.prepare(
-      "select * from locales where lang_code = ?"
-    )
-      .bind(locale)
-      .first<LocaleRow>()
+    const dbLocale = await db
+      .selectFrom("locales")
+      .selectAll()
+      .where("langCode", "=", locale)
+      .executeTakeFirstOrThrow()
+
     if (!dbLocale) throw new NotFoundError(`Locale '${locale}' not found`)
-    const keyExists = await c.env.DB.prepare(
-      "select * from translations where locale_id = ? and key = ?"
-    )
-      .bind(dbLocale.id, key)
-      .first()
+
+    const keyExists = await db
+      .selectFrom("translations")
+      .selectAll()
+      .where("localeId", "=", dbLocale.id)
+      .where("key", "=", key)
+      .executeTakeFirstOrThrow()
+
     if (keyExists)
       throw new ConflictError(
         `Key '${key}' already exists for locale '${locale}'`
       )
 
-    const insertedMessage = await c.env.DB.prepare(
-      "insert into translations (locale_id, key, value, type, namespace) values (?,?,?,?,?) returning *"
-    )
-      .bind(dbLocale.id, key, value, type, namespace)
-      .first<IntlMessageRow>()
+    const insertedMessage = await db
+      .insertInto("translations")
+      .values({ localeId: dbLocale.id, key, value, type, namespace })
+      .returningAll()
+      .executeTakeFirstOrThrow()
+
     if (!insertedMessage) throw new ServerError("Failed to add message")
 
     return c.json({ ...insertedMessage, locale }, 201)
@@ -333,28 +339,34 @@ messageRoutes.openapi(updateMessage, async (c) => {
     if (!user) throw new UnauthorizedError()
 
     const { key, locale, type, value } = c.req.valid("json")
-    const dbLocale = await c.env.DB.prepare(
-      "select * from locales where lang_code = ?"
-    )
-      .bind(locale)
-      .first<LocaleRow>()
+    const dbLocale = await db
+      .selectFrom("locales")
+      .selectAll()
+      .where("langCode", "=", locale)
+      .executeTakeFirstOrThrow()
+
     if (!dbLocale) throw new NotFoundError(`Locale '${locale}' not found`)
 
-    const keyExists = await c.env.DB.prepare(
-      "select * from translations where locale_id = ? and key = ?"
-    )
-      .bind(dbLocale.id, key)
-      .first()
+    const keyExists = await db
+      .selectFrom("translations")
+      .selectAll()
+      .where("localeId", "=", dbLocale.id)
+      .where("key", "=", key)
+      .executeTakeFirstOrThrow()
+
     if (!keyExists)
       throw new NotFoundError(
         `Key '${key}' does not exist for locale '${locale}'`
       )
 
-    const updatedMessage = await c.env.DB.prepare(
-      "update translations set value = ?, type = ? where locale_id = ? and key = ? returning *"
-    )
-      .bind(value, type, dbLocale.id, key)
-      .first<IntlMessageRow>()
+    const updatedMessage = await db
+      .updateTable("translations")
+      .set({ value, type })
+      .where("localeId", "=", dbLocale.id)
+      .where("key", "=", key)
+      .returningAll()
+      .executeTakeFirstOrThrow()
+
     if (!updatedMessage) throw new ServerError("Failed to update message")
 
     return c.json({ ...updatedMessage, locale }, 200)

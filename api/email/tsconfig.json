@@ -6,7 +6,11 @@
     "jsx": "react-jsx",
     "paths": {
       "@/*": ["./src/*"]
-    }
+    },
+    "outDir": "dist"
+  },
+  "tsc-alias": {
+    "resolveFullPaths": true
   },
   "include": ["src"]
 }
