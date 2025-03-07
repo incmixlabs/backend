@@ -12,12 +12,12 @@
     "@hono/zod-openapi": "catalog:",
     "@hono/zod-validator": "0.4.1",
     "@incmix-api/utils": "workspace:^",
-    "@intlify/utils": "0.13.0",
     "@incmix/utils": "catalog:",
+    "@intlify/utils": "0.13.0",
     "hono": "catalog:",
-    "zod": "catalog:",
     "kysely": "catalog:",
-    "pg": "catalog:"
+    "pg": "catalog:",
+    "zod": "catalog:"
   },
   "devDependencies": {
     "@incmix-api/config": "workspace:^",
@@ -28,7 +28,7 @@
     "kysely-ctl": "0.12.1",
     "tsc-alias": "^1.8.11",
     "tsx": "^4.19.3",
-    "vitest": "catalog:",
-    "typescript": "catalog:"
+    "typescript": "catalog:",
+    "vitest": "catalog:"
   }
 }

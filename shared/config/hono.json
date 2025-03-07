@@ -29,7 +29,6 @@
     "resolveJsonModule": true,
     "incremental": true,
     "verbatimModuleSyntax": true,
-    "types": ["node"],
-    "outDir": "./dist"
+    "types": ["node"]
   }
 }

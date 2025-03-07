@@ -1,8 +1,8 @@
 {
   "extends": "@incmix-api/config/hono.json",
   "compilerOptions": {
-    // "types": ["@cloudflare/workers-types"],
     "baseUrl": ".",
+    "outDir": "dist",
     "paths": {
       "@/*": ["src/*"]
     }

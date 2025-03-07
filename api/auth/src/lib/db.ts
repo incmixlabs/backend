@@ -1,10 +1,9 @@
-import type { Database, NewUser, User } from "@/dbSchema"
+import type { Database, NewUser } from "@/dbSchema"
 import { envVars } from "@/env-vars"
 import { ERROR_USER_NOT_FOUND } from "@/lib/constants"
 import type { Context } from "@/types"
 import { NotFoundError, ServerError } from "@incmix-api/utils/errors"
 import { useTranslation } from "@incmix-api/utils/middleware"
-import type { UserProfile } from "@incmix/utils/types"
 import { CamelCasePlugin, Kysely, PostgresDialect } from "kysely"
 import { Scrypt } from "lucia"
 import pg from "pg"
@@ -57,7 +56,7 @@ export async function insertUser(
   newUser: NewUser,
   fullName: string,
   password?: string
-): Promise<User & { profile: UserProfile }> {
+) {
   const profile = await createUserProfile(
     c,
     newUser.id,

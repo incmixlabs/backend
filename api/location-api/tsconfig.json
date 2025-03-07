@@ -1,12 +1,14 @@
 {
   "extends": "@incmix-api/config/hono.json",
   "compilerOptions": {
+    "baseUrl": ".",
     "paths": {
       "@": ["./src/index.ts"],
       "@/*": ["./src/*"],
       "@test/*": ["./test/*"],
       "@e2e/*": ["./e2e/*"]
-    }
+    },
+    "outDir": "dist"
   },
   "tsc-alias": {
     "resolveFullPaths": true

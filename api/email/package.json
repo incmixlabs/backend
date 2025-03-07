@@ -19,22 +19,22 @@
     "@react-email/components": "0.0.29",
     "@sendgrid/eventwebhook": "8.0.0",
     "hono": "catalog:",
+    "kysely": "catalog:",
+    "pg": "catalog:",
     "react": "18.3.1",
     "react-email": "3.0.3",
-    "zod": "catalog:",
-    "kysely": "catalog:",
-    "pg": "catalog:"
+    "zod": "catalog:"
   },
   "devDependencies": {
     "@incmix-api/config": "workspace:^",
     "@types/node": "^22.13.8",
     "@types/pg": "^8.11.11",
+    "@types/react": "18.3.1",
     "dotenv": "^16.4.7",
     "dotenv-expand": "^12.0.1",
     "kysely-ctl": "0.12.1",
     "tsc-alias": "^1.8.11",
     "tsx": "^4.19.3",
-    "typescript": "catalog:",
-    "@types/react": "18.3.1"
+    "typescript": "catalog:"
   }
 }

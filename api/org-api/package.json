@@ -10,23 +10,20 @@
   },
   "dependencies": {
     "@casl/ability": "6.7.2",
+    "@hono/node-server": "^1.13.8",
     "@hono/zod-openapi": "catalog:",
     "@hono/zod-validator": "0.4.1",
     "@incmix-api/utils": "workspace:^",
     "@incmix/utils": "catalog:",
-    "@hono/node-server": "^1.13.8",
-    "kysely": "catalog:",
-    "pg": "catalog:",
     "hono": "catalog:",
+    "kysely": "catalog:",
     "lodash": "4.17.21",
+    "pg": "catalog:",
     "zod": "catalog:"
   },
   "devDependencies": {
-    "@cloudflare/vitest-pool-workers": "catalog:",
-    "@cloudflare/workers-types": "catalog:",
     "@incmix-api/config": "workspace:^",
     "@types/lodash": "4.17.13",
-    "vitest": "catalog:",
     "@types/node": "^22.13.8",
     "@types/pg": "^8.11.11",
     "dotenv": "^16.4.7",
@@ -35,6 +32,6 @@
     "tsc-alias": "^1.8.11",
     "tsx": "^4.19.3",
     "typescript": "catalog:",
-    "wrangler": "catalog:"
+    "vitest": "catalog:"
   }
 }

@@ -33,7 +33,7 @@ export function createAuthMiddleware(): MiddlewareHandler {
       c.set("user", null)
       return next()
     }
-    const user = await res.json<AuthUser>()
+    const user = (await res.json()) as AuthUser
 
     if (user) {
       c.set("user", user)

@@ -7,6 +7,7 @@ import { generateId } from "lucia"
 import { TimeSpan, createDate, isWithinExpirationDate } from "oslo"
 import { alphabet, generateRandomString } from "oslo/crypto"
 import { db, insertUser } from "./db"
+import { envVars } from "@/env-vars"
 export async function verifyVerificationCode(
   user: { id: string; email: string },
   code: string,
@@ -148,14 +149,14 @@ export const sendVerificationEmailOrLog = (
   recipient: string,
   verificationCode: string
 ) => {
-  const verificationLink = `${c.env.FRONTEND_URL}/email-verification?code=${verificationCode}&email=${recipient}`
-  const emailUrl = `${c.env.EMAIL_URL}`
+  const verificationLink = `${envVars.FRONTEND_URL}/email-verification?code=${verificationCode}&email=${recipient}`
+  const emailUrl = `${envVars.EMAIL_URL}`
   console.log({
     recipient,
     verificationLink,
   })
   const sentryHeaders = generateSentryHeaders(c)
-  c.env.EMAIL.fetch(emailUrl, {
+  fetch(emailUrl, {
     method: "POST",
     body: JSON.stringify({
       body: {
@@ -177,9 +178,9 @@ export const sendForgetPasswordEmailOrLog = async (
   verificationCode: string
 ) => {
   console.log(recipient)
-  const emailUrl = c.env.EMAIL_URL
+  const emailUrl = envVars.EMAIL_URL
   const [username] = recipient.split("@")
-  const resetPasswordLink = `${c.env.FRONTEND_URL}/reset-password?code=${verificationCode}&email=${recipient}`
+  const resetPasswordLink = `${envVars.FRONTEND_URL}/reset-password?code=${verificationCode}&email=${recipient}`
 
   const sentryHeaders = generateSentryHeaders(c)
   const request = new Request(emailUrl, {
@@ -196,7 +197,7 @@ export const sendForgetPasswordEmailOrLog = async (
       ...sentryHeaders,
     },
   })
-  const res = await c.env.EMAIL.fetch(request)
+  const res = await fetch(request)
 
   if (!res.ok) throw new ServerError()
   console.log({

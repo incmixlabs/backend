@@ -24,16 +24,16 @@
     "@incmix-api/config": "workspace:^",
     "@incmix/utils": "catalog:",
     "hono": "catalog:",
-    "kysely": "0.27.5",
-    "typescript": "5.7.3",
+    "kysely": "catalog:",
+    "typescript": "catalog:",
     "zod": "catalog:"
   },
   "peerDependencies": {
     "@casl/ability": "6.7.2",
     "@hono/zod-openapi": "catalog:",
-    "@incmix/utils": "latest",
-    "hono": "4.6.12",
-    "kysely": "0.27.5",
+    "@incmix/utils": "catalog:",
+    "hono": "catalog:",
+    "kysely": "catalog:",
     "zod": "catalog:"
   }
 }

@@ -7,7 +7,7 @@ import type { UserProfile } from "@incmix/utils/types"
 
 export async function getUserProfile(c: Context, id: string, cookie: string) {
   const sentryHeaders = generateSentryHeaders(c)
-  const res = await c.env.USERS_API.fetch(`${c.env.USERS_API_URL}?id=${id}`, {
+  const res = await fetch(`${envVars.USERS_API_URL}?id=${id}`, {
     method: "GET",
     headers: {
       "content-type": "application/json",
@@ -17,11 +17,11 @@ export async function getUserProfile(c: Context, id: string, cookie: string) {
   })
 
   if (!res.ok) {
-    const error = await res.json<MessageResponse>()
+    const error = (await res.json()) as MessageResponse
     if (res.status >= 500) throw new ServerError(error.message)
     throw new BadRequestError(error.message)
   }
-  return await res.json<UserProfile>()
+  return (await res.json()) as UserProfile
 }
 export async function createUserProfile(
   c: Context,
@@ -47,11 +47,11 @@ export async function createUserProfile(
   })
 
   if (!res.ok) {
-    const error = await res.json<MessageResponse>()
+    const error = (await res.json()) as MessageResponse
     if (res.status >= 500) throw new ServerError(error.message)
     throw new BadRequestError(error.message)
   }
-  return await res.json<UserProfile>()
+  return (await res.json()) as UserProfile
 }
 export async function deleteUserProfile(c: Context, id: string) {
   const sentryHeaders = generateSentryHeaders(c)
@@ -65,9 +65,9 @@ export async function deleteUserProfile(c: Context, id: string) {
   })
 
   if (!res.ok) {
-    const error = await res.json<MessageResponse>()
+    const error = (await res.json()) as MessageResponse
     if (res.status >= 500) throw new ServerError(error.message)
     throw new BadRequestError()
   }
-  return await res.json<MessageResponse>()
+  return (await res.json()) as MessageResponse
 }

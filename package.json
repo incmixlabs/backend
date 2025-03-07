@@ -15,7 +15,8 @@
     "test:e2e": "turbo test:e2e"
   },
   "engines": {
-    "node": ">=22.13.0"
+    "node": ">=22.13.0",
+    "pnpm": ">=9"
   },
   "pnpm": {
     "neverBuiltDependencies": ["@incmix/utils"]

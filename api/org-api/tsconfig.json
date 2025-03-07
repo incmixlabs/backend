@@ -1,13 +1,15 @@
 {
   "extends": "@incmix-api/config/hono.json",
   "compilerOptions": {
+    "baseUrl": ".",
     "paths": {
       "@": ["./src/index.ts"],
       "@/*": ["./src/*"]
-    }
+    },
+    "outDir": "dist"
   },
   "tsc-alias": {
     "resolveFullPaths": true
   },
-  "include": ["./**/*.ts", "../src/env.d.ts", "vitest.config.mts"]
+  "include": ["./**/*.ts", "../src/env.d.ts"]
 }

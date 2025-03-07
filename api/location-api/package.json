@@ -9,15 +9,15 @@
   },
   "dependencies": {
     "@hono-rate-limiter/cloudflare": "0.2.2",
+    "@hono/node-server": "^1.13.8",
     "@hono/zod-openapi": "catalog:",
     "@hono/zod-validator": "0.4.1",
     "@incmix-api/utils": "workspace:^",
     "@incmix/utils": "catalog:",
     "hono": "catalog:",
-    "zod": "catalog:",
-    "@hono/node-server": "^1.13.8",
     "kysely": "catalog:",
-    "pg": "catalog:"
+    "pg": "catalog:",
+    "zod": "catalog:"
   },
   "devDependencies": {
     "@incmix-api/config": "workspace:^",
