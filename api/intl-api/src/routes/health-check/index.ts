@@ -1,3 +1,4 @@
+import { envVars } from "@/env-vars"
 import { db } from "@/lib/db"
 import { healthCheck } from "@/routes/health-check/openapi"
 import type { HonoApp } from "@/types"
@@ -19,7 +20,7 @@ healthcheckRoutes.openapi(healthCheck, async (c) => {
         200
       )
 
-    const { AUTH_URL, COOKIE_NAME } = c.env
+    const { AUTH_URL, COOKIE_NAME } = envVars
 
     let status = "UP"
     const missing: string[] = []

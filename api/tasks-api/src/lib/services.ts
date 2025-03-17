@@ -11,7 +11,7 @@ export async function getOrganizationById(c: Context, id: string) {
   })
 
   if (res.status !== 200 && res.status !== 404) {
-    const data = await res.json<{ message: string }>()
+    const data = (await res.json()) as { message: string }
     throw new Error(data.message)
   }
 
@@ -19,5 +19,5 @@ export async function getOrganizationById(c: Context, id: string) {
     return
   }
 
-  return res.json<Organization>()
+  return res.json()
 }

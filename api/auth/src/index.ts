@@ -1,5 +1,6 @@
 import { BASE_PATH } from "@/lib/constants"
 import "@/env-vars"
+import { envVars } from "@/env-vars"
 import { middlewares } from "@/middleware"
 import { routes } from "@/routes"
 import type { HonoApp } from "@/types"
@@ -18,7 +19,7 @@ middlewares(app)
 
 routes(app)
 
-serve({ fetch: app.fetch, port: 8787 }, (info) => {
+serve({ fetch: app.fetch, port: envVars.PORT }, (info) => {
   console.log(`Server is running on port ${info.port}`)
 })
 export default app

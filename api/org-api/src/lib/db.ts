@@ -73,7 +73,7 @@ export async function getUserByEmail(c: Context, email: string) {
   if (res.status === 401) throw new UnauthorizedError()
   if (res.status === 404) throw new NotFoundError()
 
-  return await res.json<UserProfile>()
+  return (await res.json()) as UserProfile
 }
 export async function getUserById(c: Context, id: string) {
   const sessionId = getCookie(c, envVars.COOKIE_NAME) ?? null
@@ -94,7 +94,7 @@ export async function getUserById(c: Context, id: string) {
 
   if (!res.ok) throw new ServerError()
 
-  return await res.json<UserProfile>()
+  return (await res.json()) as UserProfile
 }
 export async function isValidUser(c: Context, id: string) {
   const sessionId = getCookie(c, envVars.COOKIE_NAME) ?? null
@@ -114,7 +114,7 @@ export async function isValidUser(c: Context, id: string) {
 
   if (!res.ok) return false
 
-  const user = await res.json<UserProfile>()
+  const user = (await res.json()) as UserProfile
 
   if (Object.hasOwn(user, "id")) return true
 

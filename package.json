@@ -26,6 +26,7 @@
     "@biomejs/biome": "1.9.4",
     "@commitlint/cli": "19.6.1",
     "@commitlint/config-conventional": "19.6.0",
+    "@flydotio/dockerfile": "^0.7.8",
     "@turbo/gen": "2.3.3",
     "lefthook": "1.10.4",
     "turbo": "2.3.3"

@@ -2,12 +2,11 @@ import type { AuthUser as User } from "@incmix/utils/types"
 import type { Context as HonoContext } from "hono"
 
 type Bindings = {
-  AUTH: Fetcher
   AUTH_URL: string
   COOKIE_NAME: string
-  INTL: Fetcher
+
   INTL_URL: string
-  MY_BUCKET: R2Bucket
+
   BUCKET_NAME: string
   PORT?: string
   DOMAIN: string

@@ -1,13 +1,13 @@
 import type { Provider, TokenType } from "@/dbSchema"
 import type { Context } from "@/types"
 
+import { envVars } from "@/env-vars"
 import { generateSentryHeaders } from "@incmix-api/utils"
 import { ServerError } from "@incmix-api/utils/errors"
 import { generateId } from "lucia"
 import { TimeSpan, createDate, isWithinExpirationDate } from "oslo"
 import { alphabet, generateRandomString } from "oslo/crypto"
 import { db, insertUser } from "./db"
-import { envVars } from "@/env-vars"
 export async function verifyVerificationCode(
   user: { id: string; email: string },
   code: string,

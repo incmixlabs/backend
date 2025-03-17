@@ -10,7 +10,7 @@ export async function getDefaultLocale() {
     .where("isDefault", "=", true)
     .executeTakeFirst()
 
-  if (!locale) throw new ServerError("Defaulty locale not set")
+  if (!locale) return { code: "en", isDefault: true }
   return { code: locale.langCode, isDefault: true } as Locale
 }
 export async function getAllMessages(c: Context) {
@@ -21,7 +21,7 @@ export async function getAllMessages(c: Context) {
     .where("langCode", "=", locale)
     .executeTakeFirst()
 
-  if (!dbLocale) throw new ServerError("Locale not found")
+  if (!dbLocale) return []
 
   const messages = await db
     .selectFrom("translations")
@@ -38,7 +38,7 @@ export async function getDefaultMessages() {
     .selectAll()
     .executeTakeFirst()
 
-  if (!dbLocale) throw new ServerError("Default Locale not set")
+  if (!dbLocale) return []
 
   const messages = await db
     .selectFrom("translations")

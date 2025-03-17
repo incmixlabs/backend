@@ -5,7 +5,6 @@ import ResetPasswordEmail from "./emails/reset-password"
 export type Bindings = {
   SENDGRID_API_KEY: string
   SENDGRID_WEBHOOK_KEY: string
-  DB: D1Database
 }
 type Variables = {}
 

@@ -25,7 +25,7 @@ export const getLocationFromIp = async (c: Context) => {
     }
   )
 
-  const address = await res.json<Location>()
+  const address = (await res.json()) as Location
 
   return {
     name: address.city.name,
@@ -55,7 +55,7 @@ export const getAddressFromLocation = async (
     }
   )
 
-  const data = await res.json<{ results: Address[] }>()
+  const data = (await res.json()) as { results: Address[] }
 
   const [address] = data.results
 

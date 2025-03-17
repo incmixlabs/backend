@@ -19,10 +19,14 @@ export function setupCors<T extends Env>(
   app.use(
     `${basePath}/*`,
     cors({
-      origin: (origin, c: Context) => {
+      origin: (origin) => {
+        const DOMAIN = "incmix-api.fly.dev"
+        if (!DOMAIN) {
+          return null
+        }
         if (
           allowedOrigins.includes(origin) ||
-          origin.endsWith(c.env.DOMAIN) ||
+          origin.endsWith(DOMAIN) ||
           origin.endsWith(frontendDomain) ||
           origin.endsWith(storybookDomain)
         )

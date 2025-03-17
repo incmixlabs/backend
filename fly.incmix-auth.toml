@@ -1,0 +1,35 @@
+# fly.gateway.toml
+
+# fly.toml app configuration file generated for monorepo-demo-gateway"
+#
+# See https://fly.io/docs/reference/configuration/ for information about how to use this file.
+
+
+app = "auth-incmix-api"
+primary_region = "lax"
+
+[build]
+dockerfile = "api/auth/Dockerfile"
+
+[build.args]
+PROJECT = "incmix-apis"
+
+[http_service]
+internal_port = 8787
+force_https = true
+min_machines_running = 0
+processes = ["app"]
+
+[[vm]]
+memory = "512mb"
+size = "shared-cpu-1x"
+
+[env]
+PORT = "8787"
+FRONTEND_URL = "https://turbo-mix.pages.dev"
+EMAIL_URL = "https://email-incmix-api.fly.dev/api/email"
+USERS_API_URL = "https://users-incmix-api.fly.dev/api/users"
+COOKIE_NAME = "incmix_session"
+GOOGLE_REDIRECT_URL = "https://turbo-mix.pages.dev/auth/google"
+DOMAIN = "bff-web-incmix-api.fly.dev"
+INTL_URL = "https://intl-incmix-api.fly.dev/api/intl"

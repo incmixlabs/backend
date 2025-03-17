@@ -166,6 +166,7 @@ authRoutes.openapi(login, async (c) => {
   try {
     const t = await useTranslation(c)
     const { email, password } = c.req.valid("json")
+    console.log(email, password)
     const user = await findUserByEmail(c, email)
 
     const validPassword = await new Scrypt().verify(

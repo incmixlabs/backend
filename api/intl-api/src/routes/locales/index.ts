@@ -24,8 +24,8 @@ const localeRoutes = new OpenAPIHono<HonoApp>({
 
 localeRoutes.openapi(addLocale, async (c) => {
   try {
-    const user = c.get("user")
-    if (!user) throw new UnauthorizedError()
+    // const user = c.get("user")
+    // if (!user) throw new UnauthorizedError()
 
     const { code, isDefault } = c.req.valid("json")
     const existingLocale = await db

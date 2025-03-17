@@ -6,6 +6,7 @@ import { serve } from "@hono/node-server"
 import { OpenAPIHono } from "@hono/zod-openapi"
 import { KVStore } from "@incmix-api/utils/kv-store"
 import { setupKvStore } from "@incmix-api/utils/middleware"
+import { envVars } from "./env-vars"
 
 const app = new OpenAPIHono<HonoApp>()
 
@@ -16,7 +17,7 @@ middlewares(app)
 
 routes(app)
 
-serve({ fetch: app.fetch, port: 9090 }, (info) => {
+serve({ fetch: app.fetch, port: envVars.PORT }, (info) => {
   console.log(`Server is running on port ${info.port}`)
 })
 

@@ -4,7 +4,8 @@ import {
   getDefaultLocale,
   getDefaultMessages,
 } from "@incmix-api/utils"
-import type { IntlMessage, Locale } from "@incmix-api/utils/types"
+
+import type { IntlMessage, Locale } from "@/types"
 import { getHeaderLocale } from "@intlify/utils"
 import type { Context, MiddlewareHandler } from "hono"
 

@@ -41,11 +41,11 @@ newsRoutes.openapi(getNewsTopics, async (c) => {
 
   const res = await fetch(`${envVars.SERP_NEWS_URL}?${searchParams.toString()}`)
   if (!res.ok) {
-    const { error } = await res.json<{ error: string }>()
+    const { error } = (await res.json()) as { error: string }
     return c.json({ message: error }, 400)
   }
 
-  const data = await res.json<{ menu_links: TopicApiResponse[] }>()
+  const data = (await res.json()) as { menu_links: TopicApiResponse[] }
   // Expire after one day
   await redis.setex(searchParams.toString(), 60 * 60 * 24, data)
 
@@ -83,11 +83,11 @@ newsRoutes.openapi(getNews, async (c) => {
 
   const res = await fetch(`${envVars.SERP_NEWS_URL}?${searchParams.toString()}`)
   if (!res.ok) {
-    const { error } = await res.json<{ error: string }>()
+    const { error } = (await res.json()) as { error: string }
     return c.json({ message: error }, 400)
   }
 
-  const news = await res.json<NewsApiResponse>()
+  const news = (await res.json()) as NewsApiResponse
   const parsed = parseNewsResults(news)
   // Expire after 15 mins
   await redis.setex(searchParams.toString(), 60 * 15, parsed)

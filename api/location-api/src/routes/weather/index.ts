@@ -43,8 +43,7 @@ weatherRoutes.openapi(getWeatherForecast, async (c) => {
     }
   )
 
-  const weatherForecast = await res.json<WeatherApiResponse>()
-
+  const weatherForecast = (await res.json()) as WeatherApiResponse
   const data = {
     temperatureUnit: "c",
     days: weatherForecast.timelines.daily.map((day) => ({

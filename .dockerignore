@@ -2,3 +2,4 @@ node_modules
 .turbo
 .git
 dist
+*/**/node_modules

@@ -190,11 +190,11 @@ userRoutes.openapi(getUserpermissions, async (c) => {
       if (!orgId) throw new BadRequestError("orgId is required")
       const url = `${c.env.ORG_URL}/${orgId}/permissions`
       const cookie = c.req.header("Cookie") || ""
-      const res = await c.env.ORG.fetch(url, {
+      const res = await fetch(url, {
         headers: { cookie },
       })
       if (!res.ok) {
-        const error = await res.json<{ message: string }>()
+        const error = (await res.json()) as { message: string }
 
         return c.json(
           { message: error.message },
@@ -202,7 +202,7 @@ userRoutes.openapi(getUserpermissions, async (c) => {
         )
       }
 
-      const permissions = await res.json<Permission[]>()
+      const permissions = (await res.json()) as Permission[]
       return c.json(permissions, 200)
     }
 
@@ -305,13 +305,13 @@ userRoutes.openapi(getAllUsers, async (c) => {
       pageSize: String(pagination.pageSize),
     })
 
-    const { results } = await c.env.AUTH.fetch(
-      `${c.env.AUTH_URL}/users/getAll?${searchParams.toString()}`,
+    const { results } = await fetch(
+      `${envVars.AUTH_URL}/users/getAll?${searchParams.toString()}`,
       {
         method: "get",
         headers: c.req.raw.headers,
       }
-    ).then((res) => res.json<PaginatedUser>())
+    ).then(async (res) => (await res.json()) as PaginatedUser)
 
     const combinedData = profiles.map<UserAndProfile>((p) => {
       const user = results.find((u) => u.id === p.id)
@@ -486,7 +486,7 @@ userRoutes.openapi(addProfilePicture, async (c) => {
       throw new ServerError(msg)
     }
     const { url: presignedUrl } =
-      await presignedUrlResponse.json<z.infer<typeof presignedUrlSchema>>()
+      (await presignedUrlResponse.json()) as z.infer<typeof presignedUrlSchema>
 
     const uploadResponse = await fetch(presignedUrl, {
       method: "PUT",
@@ -573,7 +573,7 @@ userRoutes.openapi(deleteProfilePicture, async (c) => {
     }
 
     const { url: presignedUrl } =
-      await presignedUrlResponse.json<z.infer<typeof presignedUrlSchema>>()
+      (await presignedUrlResponse.json()) as z.infer<typeof presignedUrlSchema>
 
     const deleteResponse = await fetch(presignedUrl, {
       method: "DELETE",
@@ -652,8 +652,9 @@ userRoutes.openapi(getProfilePicture, async (c) => {
       throw new ServerError(msg)
     }
 
-    const { url } =
-      await presignedUrlResponse.json<z.infer<typeof presignedUrlSchema>>()
+    const { url } = (await presignedUrlResponse.json()) as z.infer<
+      typeof presignedUrlSchema
+    >
 
     return c.json({ url }, 200)
   } catch (error) {

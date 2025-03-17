@@ -4,13 +4,16 @@
     "lib": ["ESNext", "DOM", "DOM.Iterable"],
     /* Bundler mode */
     "jsx": "react-jsx",
+    "baseUrl": "./",
     "paths": {
       "@/*": ["./src/*"]
     },
-    "outDir": "dist"
+
+    "outDir": "./dist"
   },
   "tsc-alias": {
     "resolveFullPaths": true
   },
-  "include": ["src"]
+  "include": ["src"],
+  "exclude": ["node_modules", "e2e"]
 }

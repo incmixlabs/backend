@@ -1,17 +1,18 @@
 {
   "extends": "@incmix-api/config/hono.json",
   "compilerOptions": {
-    "baseUrl": ".",
+    "baseUrl": "./",
     "paths": {
       "@": ["./src/index.ts"],
       "@/*": ["./src/*"],
       "@test/*": ["./test/*"],
       "@e2e/*": ["./e2e/*"]
     },
-    "outDir": "dist"
+    "outDir": "./dist"
   },
   "tsc-alias": {
     "resolveFullPaths": true
   },
-  "include": ["./**/*.ts", "../src/env.d.ts"]
+  "include": ["./**/*.ts", "../src/env.d.ts"],
+  "exclude": ["node_modules", "e2e"]
 }

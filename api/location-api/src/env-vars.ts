@@ -26,8 +26,6 @@ const EnvSchema = z.object({
   SERP_API_KEY: z.string(),
   UPSTASH_REDIS_REST_URL: z.string().url(),
   UPSTASH_REDIS_REST_TOKEN: z.string(),
-  RATE_LIMIT: z.coerce.number(),
-  RATE_LIMIT_PERIOD: z.coerce.number(),
 })
 
 export type env = z.infer<typeof EnvSchema>

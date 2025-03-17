@@ -41,5 +41,5 @@ export async function getUserByEmail(c: Context, email: string) {
 
   if (!res.ok) throw new ServerError()
 
-  return await res.json<UserRow>()
+  return (await res.json()) as UserRow
 }

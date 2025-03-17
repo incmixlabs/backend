@@ -4,6 +4,7 @@
   "scripts": {
     "dev": "kysely migrate:up && tsx watch src/index.ts",
     "build": "tsc && tsc-alias",
+    "start": "kysely migrate:up && node dist/src/index.js",
     "migrate:local": "kysely migrate:up",
     "deploy": "wrangler deploy dist/index.js --no-bundle",
     "test": "vitest --run"
@@ -17,6 +18,7 @@
     "@incmix/utils": "catalog:",
     "hono": "catalog:",
     "kysely": "catalog:",
+    "lucia": "3.2.2",
     "lodash": "4.17.21",
     "pg": "catalog:",
     "zod": "catalog:"
@@ -24,7 +26,7 @@
   "devDependencies": {
     "@incmix-api/config": "workspace:^",
     "@types/lodash": "4.17.13",
-    "@types/node": "^22.13.8",
+    "@types/node": "catalog:",
     "@types/pg": "^8.11.11",
     "dotenv": "^16.4.7",
     "dotenv-expand": "^12.0.1",

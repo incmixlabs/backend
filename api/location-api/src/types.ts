@@ -15,10 +15,7 @@ type EnvVariables = {
   UPSTASH_REDIS_REST_TOKEN: string
 }
 
-type Services = {
-  INTL: Fetcher
-  RATE_LIMITER: RateLimit
-}
+type Services = {}
 
 export type Bindings = EnvVariables & Services
 

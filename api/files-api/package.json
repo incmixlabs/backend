@@ -4,6 +4,7 @@
   "type": "module",
   "scripts": {
     "dev": "tsx watch src/index.ts",
+    "start": "node dist/src/index.js",
     "build": "tsc && tsc-alias",
     "deploy": "wrangler deploy dist/index.js --no-bundle",
     "test": "vitest --run",
@@ -18,7 +19,10 @@
     "@hono/zod-validator": "0.4.1",
     "@incmix-api/utils": "workspace:^",
     "@incmix/utils": "catalog:",
+    "@playwright/test": "1.49.0",
     "hono": "catalog:",
+    "pkg-types": "2.1.0",
+    "prettier": "3.5.3",
     "zod": "catalog:"
   },
   "devDependencies": {

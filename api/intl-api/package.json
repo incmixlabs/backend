@@ -3,6 +3,7 @@
   "type": "module",
   "scripts": {
     "dev": "kysely migrate:up && tsx watch src/index.ts",
+    "start": "kysely migrate:up && node dist/src/index.js",
     "deploy": "wrangler deploy dist/index.js --no-bundle",
     "build": "tsc && tsc-alias",
     "migrate:local": "kysely migrate:up"
@@ -21,7 +22,7 @@
   },
   "devDependencies": {
     "@incmix-api/config": "workspace:^",
-    "@types/node": "^22.13.8",
+    "@types/node": "catalog:",
     "@types/pg": "^8.11.11",
     "dotenv": "^16.4.7",
     "dotenv-expand": "^12.0.1",

@@ -10,5 +10,6 @@
   "tsc-alias": {
     "resolveFullPaths": true
   },
-  "include": ["./**/*.ts", "vitest.config.mts"]
+  "include": ["./**/*.ts", "vitest.config.mts"],
+  "exclude": ["node_modules", "e2e"]
 }
