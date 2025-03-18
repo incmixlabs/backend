@@ -285,17 +285,17 @@ filesRoutes.openapi(presignedDownload, async (c) => {
       throw new BadRequestError(msg)
     }
 
-    if (envVars.PORT) {
-      // The date is used to invalidate the cache after the file has been updated.
-      const date = new Date().toISOString()
-      // For local development, return a local URL
-      const localUrl = `http://127.0.0.1:${
-        envVars.PORT
-      }/api/files/download?fileName=${encodeURIComponent(
-        fileName
-      )}&date=${date}`
-      return c.json({ url: localUrl }, 200)
-    }
+    // if (envVars.PORT) {
+    //   // The date is used to invalidate the cache after the file has been updated.
+    //   const date = new Date().toISOString()
+    //   // For local development, return a local URL
+    //   const localUrl = `http://127.0.0.1:${
+    //     envVars.PORT
+    //   }/api/files/download?fileName=${encodeURIComponent(
+    //     fileName
+    //   )}&date=${date}`
+    //   return c.json({ url: localUrl }, 200)
+    // }
 
     const command = new GetObjectCommand({
       Bucket: envVars.BUCKET_NAME,

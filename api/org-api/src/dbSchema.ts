@@ -1,6 +1,12 @@
 import type { MongoQuery } from "@casl/ability"
 import type { Action, MemberRole, Subject } from "@incmix/utils/types"
-import type { Insertable, JSONColumnType, Selectable, Updateable } from "kysely"
+import type {
+  Generated,
+  Insertable,
+  JSONColumnType,
+  Selectable,
+  Updateable,
+} from "kysely"
 type OrganisationTable = {
   id: string
   name: string
@@ -14,12 +20,12 @@ type MemberTable = {
 }
 
 type RoleTable = {
-  id: number
+  id: Generated<number>
   name: MemberRole
 }
 
 export type PermissionTable = {
-  id: number
+  id: Generated<number>
   roleId: number
   action: Action
   subject: Subject
