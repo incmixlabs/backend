@@ -1,5 +1,5 @@
-import type { Context } from "./types"
 import { stream } from "hono/streaming"
+import type { Context } from "./types"
 export async function returnResponse(res: Response, c: Context) {
   const contentType = res.headers.get("content-type")
   const cookies = res.headers.get("set-cookie")

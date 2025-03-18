@@ -3,7 +3,9 @@
   "version": "0.0.0",
   "license": "MIT",
   "type": "module",
-  "scripts": { "build": "tsc && tsc-alias" },
+  "scripts": {
+    "build": "tsc && tsc-alias"
+  },
   "exports": {
     ".": "./dist/src/utils/index.js",
     "./middleware": {
@@ -36,12 +38,12 @@
     "@hono/zod-openapi": "catalog:",
     "@incmix-api/config": "workspace:^",
     "@incmix/utils": "catalog:",
-    "hono": "catalog:",
-    "kysely": "catalog:",
+    "@types/node": "catalog:",
     "@types/pg": "^8.11.11",
     "dotenv": "^16.4.7",
-    "@types/node": "catalog:",
     "dotenv-expand": "^12.0.1",
+    "hono": "catalog:",
+    "kysely": "catalog:",
     "kysely-ctl": "0.12.1",
     "tsc-alias": "^1.8.11",
     "tsx": "^4.19.3",
