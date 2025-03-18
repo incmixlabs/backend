@@ -8,8 +8,8 @@ const rateLimitRoutes = new OpenAPIHono<HonoApp>()
 rateLimitRoutes.openapi(getLimts, (c) => {
   return c.json(
     {
-      time: 0,
-      limit: 0,
+      time: 100,
+      limit: 100,
     },
     200
   )

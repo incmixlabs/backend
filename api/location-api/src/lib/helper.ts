@@ -1,5 +1,6 @@
+import { envVars } from "@/env-vars"
 import type { Address, Context } from "@/types"
-import { getConnInfo } from "hono/cloudflare-workers"
+import { getConnInfo } from "@hono/node-server/conninfo"
 
 type Location = {
   location: { latitude: string; longitude: string }
@@ -19,7 +20,7 @@ export const getLocationFromIp = async (c: Context) => {
   const userIp = connInfo.remote.address
 
   const res = await fetch(
-    `${c.env.LOCATION_URL}/ipinfo?ip=${userIp}&apiKey=${c.env.LOCATION_API_KEY}`,
+    `${envVars.LOCATION_URL}/ipinfo?ip=${userIp}&apiKey=${envVars.LOCATION_API_KEY}`,
     {
       method: "get",
     }
@@ -38,18 +39,18 @@ export const getLocationFromIp = async (c: Context) => {
   }
 }
 
-export const getAddressFromLocation = async (
-  c: Context,
-  location: { lat: string; lon: string }
-) => {
+export const getAddressFromLocation = async (location: {
+  lat: string
+  lon: string
+}) => {
   const searchParams = new URLSearchParams({
     lat: location.lat,
     lon: location.lon,
-    apiKey: c.env.LOCATION_API_KEY,
+    apiKey: envVars.LOCATION_API_KEY,
     format: "json",
   })
   const res = await fetch(
-    `${c.env.LOCATION_URL}/geocode/reverse?${searchParams.toString()}`,
+    `${envVars.LOCATION_URL}/geocode/reverse?${searchParams.toString()}`,
     {
       method: "get",
     }

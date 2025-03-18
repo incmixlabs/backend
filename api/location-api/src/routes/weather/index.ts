@@ -25,7 +25,7 @@ weatherRoutes.openapi(getWeatherForecast, async (c) => {
     address = await getLocationFromIp(c)
     searchParams.append("location", `${address.lat},${address.lon}`)
   } else {
-    address = await getAddressFromLocation(c, { lat, lon })
+    address = await getAddressFromLocation({ lat, lon })
     searchParams.append("location", `${lat},${lon}`)
   }
 

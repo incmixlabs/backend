@@ -56,24 +56,27 @@ userRoutes.openapi(getAllUsers, async (c) => {
         "accounts.provider as oauth",
       ])
 
-    if (filters.length) console.log(filters)
-    query = query.where(({ eb, and, or }) => {
-      const expressions: ExpressionWrapper<
-        Database,
-        "users",
-        string | SqlBool | null | number
-      >[] = []
+    if (filters.length)
+      query = query.where(({ eb, and, or }) => {
+        const expressions: ExpressionWrapper<
+          Database,
+          "users",
+          string | SqlBool | null | number
+        >[] = []
 
-      for (const filter of filters) {
-        const kf = createKyselyFilter<UserColumn, Database, "users">(filter, eb)
-        if (kf) expressions.push(kf)
-      }
+        for (const filter of filters) {
+          const kf = createKyselyFilter<UserColumn, Database, "users">(
+            filter,
+            eb
+          )
+          if (kf) expressions.push(kf)
+        }
 
-      // @ts-expect-error Type issue, fix WIP
-      if (joinOperator === "or") return or(expressions)
-      // @ts-expect-error Type issue, fix WIP
-      return and(expressions)
-    })
+        // @ts-expect-error Type issue, fix WIP
+        if (joinOperator === "or") return or(expressions)
+        // @ts-expect-error Type issue, fix WIP
+        return and(expressions)
+      })
 
     if (sort.length) {
       query = query.orderBy(

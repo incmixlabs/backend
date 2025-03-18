@@ -448,7 +448,7 @@ userRoutes.openapi(addProfilePicture, async (c) => {
       throw new UnauthorizedError(msg)
     }
     const { id } = c.req.valid("param")
-    console.log(user.id, id)
+
     if (user.id !== id && user.userType !== ROLE_SUPER_ADMIN) {
       const msg = await t.text(ERROR_FORBIDDEN)
       throw new ForbiddenError(msg)
@@ -465,6 +465,7 @@ userRoutes.openapi(addProfilePicture, async (c) => {
       throw new NotFoundError(msg)
     }
     const { file } = c.req.valid("form")
+
     const fileName = `profile_image/${user.id}.jpg`
     const presignedUrlResponse = await fetch(
       `${envVars.FILES_API_URL}/presigned-upload?fileName=${encodeURIComponent(
@@ -472,9 +473,7 @@ userRoutes.openapi(addProfilePicture, async (c) => {
       )}`,
       {
         method: "GET",
-        headers: {
-          ...c.req.header(),
-        },
+        headers: c.req.raw.headers,
       }
     )
 

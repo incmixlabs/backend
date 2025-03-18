@@ -231,6 +231,7 @@ filesRoutes.openapi(listFiles, async (c) => {
 filesRoutes.openapi(presignedUpload, async (c) => {
   try {
     const user = c.get("user")
+
     const t = await useTranslation(c)
     if (!user) {
       const msg = await t.text(ERROR_UNAUTHORIZED)
@@ -244,13 +245,13 @@ filesRoutes.openapi(presignedUpload, async (c) => {
       throw new BadRequestError(msg)
     }
 
-    if (envVars.PORT) {
-      // For local development, return a local URL
-      const localUrl = `http://127.0.0.1:${
-        envVars.PORT
-      }/api/files/upload?fileName=${encodeURIComponent(fileName)}`
-      return c.json({ url: localUrl }, 200)
-    }
+    // if (envVars.PORT) {
+    //   // For local development, return a local URL
+    //   const localUrl = `http://127.0.0.1:${
+    //     envVars.PORT
+    //   }/api/files/upload?fileName=${encodeURIComponent(fileName)}`
+    //   return c.json({ url: localUrl }, 200)
+    // }
 
     const command = new PutObjectCommand({
       Bucket: envVars.BUCKET_NAME,

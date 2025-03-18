@@ -124,72 +124,55 @@ app.all("/api/*", async (c) => {
   const pathname = url.pathname
   const searchParams = url.searchParams.toString()
   const queryString = searchParams ? `?${searchParams}` : ""
-  const contentType = c.req.header("content-type")
-  let body: BodyInit | null = null
-
-  if (contentType?.includes("application/json")) {
-    body = await c.req.text()
-  }
-
-  if (contentType?.includes("multipart/form-data")) {
-    body = await c.req.formData()
-  }
 
   if (pathname.startsWith(API.AUTH)) {
-    const res = await fetch(`${envVars.AUTH_URL}${pathname}${queryString}`, {
-      ...c.req.raw,
-      body,
-      method: c.req.method,
-      headers: c.req.header(),
-    })
+    const req = new Request(
+      `${envVars.AUTH_URL}${pathname}${queryString}`,
+      c.req.raw
+    )
+
+    const res = await fetch(req)
     return returnResponse(res, c)
   }
   if (pathname.startsWith(API.ORG)) {
-    const res = await fetch(`${envVars.ORG_URL}${pathname}${queryString}`, {
-      ...c.req.raw,
-      body,
-      method: c.req.method,
-      headers: c.req.header(),
-    })
+    const req = new Request(
+      `${envVars.ORG_URL}${pathname}${queryString}`,
+      c.req.raw
+    )
+    const res = await fetch(req)
+
     return returnResponse(res, c)
   }
   if (pathname.startsWith(API.USERS)) {
-    const res = await fetch(`${envVars.USERS_URL}${pathname}${queryString}`, {
-      ...c.req.raw,
-      body,
-      method: c.req.method,
-      headers: c.req.header(),
-    })
+    const req = new Request(
+      `${envVars.USERS_URL}${pathname}${queryString}`,
+      c.req.raw
+    )
+    const res = await fetch(req)
     return returnResponse(res, c)
   }
   if (pathname.startsWith(API.INTL)) {
-    const res = await fetch(`${envVars.INTL_URL}${pathname}${queryString}`, {
-      ...c.req.raw,
-      body,
-      method: c.req.method,
-      headers: c.req.header(),
-    })
+    const req = new Request(
+      `${envVars.INTL_URL}${pathname}${queryString}`,
+      c.req.raw
+    )
+    const res = await fetch(req)
     return returnResponse(res, c)
   }
   if (pathname.startsWith(API.TASKS)) {
-    const res = await fetch(`${envVars.TASKS_URL}${pathname}${queryString}`, {
-      ...c.req.raw,
-      body,
-      method: c.req.method,
-      headers: c.req.header(),
-    })
+    const req = new Request(
+      `${envVars.TASKS_URL}${pathname}${queryString}`,
+      c.req.raw
+    )
+    const res = await fetch(req)
     return returnResponse(res, c)
   }
   if (pathname.startsWith(API.LOCATION)) {
-    const res = await fetch(
+    const req = new Request(
       `${envVars.LOCATION_URL}${pathname}${queryString}`,
-      {
-        ...c.req.raw,
-        body,
-        method: c.req.method,
-        headers: c.req.header(),
-      }
+      c.req.raw
     )
+    const res = await fetch(req)
     return returnResponse(res, c)
   }
 

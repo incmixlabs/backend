@@ -22,7 +22,7 @@ export const middlewares = (app: OpenAPIHono<HonoApp>) => {
   app.use(`${BASE_PATH}/*`, async (c, next) => {
     const lucia = initializeLucia()
     const sessionId = getCookie(c, lucia.sessionCookieName) ?? null
-    console.log("sessionId", sessionId)
+
     if (!sessionId) {
       c.set("user", null)
       c.set("session", null)
