@@ -21,12 +21,12 @@ min_machines_running = 0
 processes = ["app"]
 
 [[vm]]
-memory = "512mb"
+memory = "256mb"
 size = "shared-cpu-1x"
 
 [env]
 PORT = "9191"
-ORG_URL = "https://org-incmix-api.fly.dev/api/org"
+ORG_API_URL = "https://org-incmix-api.fly.dev/api/org"
 AUTH_URL = "https://auth-incmix-api.fly.dev/api/auth"
 INTL_URL = "https://intl-incmix-api.fly.dev/api/intl"
 FILES_API_URL = "https://files-incmix-api.fly.dev/api/files"

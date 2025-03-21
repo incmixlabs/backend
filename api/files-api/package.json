@@ -3,7 +3,7 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "tsx watch src/index.ts",
+    "dev": "tsx watch --env-file=.env src/index.ts",
     "start": "node dist/src/index.js",
     "build": "tsc && tsc-alias",
     "deploy": "wrangler deploy dist/index.js --no-bundle",
@@ -28,9 +28,6 @@
   "devDependencies": {
     "@incmix-api/config": "workspace:^",
     "@types/node": "catalog:",
-    "dotenv": "^16.4.7",
-    "dotenv-expand": "^12.0.1",
-    "kysely-ctl": "0.12.1",
     "tsc-alias": "^1.8.11",
     "tsx": "^4.19.3",
     "typescript": "catalog:"

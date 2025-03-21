@@ -92,6 +92,9 @@ importers:
       kysely:
         specifier: 'catalog:'
         version: 0.27.5
+      kysely-ctl:
+        specifier: 0.12.1
+        version: 0.12.1(kysely@0.27.5)
       lucia:
         specifier: 3.2.2
         version: 3.2.2
@@ -117,15 +120,6 @@ importers:
       '@types/pg':
         specifier: ^8.11.11
         version: 8.11.11
-      dotenv:
-        specifier: ^16.4.7
-        version: 16.4.7
-      dotenv-expand:
-        specifier: ^12.0.1
-        version: 12.0.1
-      kysely-ctl:
-        specifier: 0.12.1
-        version: 0.12.1(kysely@0.27.5)
       tsc-alias:
         specifier: ^1.8.11
         version: 1.8.11
@@ -169,12 +163,6 @@ importers:
       '@types/node':
         specifier: 'catalog:'
         version: 22.10.1
-      dotenv:
-        specifier: ^16.4.7
-        version: 16.4.7
-      dotenv-expand:
-        specifier: ^12.0.1
-        version: 12.0.1
       tsc-alias:
         specifier: ^1.8.11
         version: 1.8.11
@@ -214,6 +202,9 @@ importers:
       kysely:
         specifier: 'catalog:'
         version: 0.27.5
+      kysely-ctl:
+        specifier: 0.12.1
+        version: 0.12.1(kysely@0.27.5)
       pg:
         specifier: 'catalog:'
         version: 8.13.3
@@ -239,15 +230,6 @@ importers:
       '@types/react':
         specifier: 18.3.1
         version: 18.3.1
-      dotenv:
-        specifier: ^16.4.7
-        version: 16.4.7
-      dotenv-expand:
-        specifier: ^12.0.1
-        version: 12.0.1
-      kysely-ctl:
-        specifier: 0.12.1
-        version: 0.12.1(kysely@0.27.5)
       tsc-alias:
         specifier: ^1.8.11
         version: 1.8.11
@@ -306,15 +288,6 @@ importers:
       '@types/node':
         specifier: 'catalog:'
         version: 22.10.1
-      dotenv:
-        specifier: ^16.4.7
-        version: 16.4.7
-      dotenv-expand:
-        specifier: ^12.0.1
-        version: 12.0.1
-      kysely-ctl:
-        specifier: 0.12.1
-        version: 0.12.1(kysely@0.27.5)
       tsc-alias:
         specifier: ^1.8.11
         version: 1.8.11
@@ -351,6 +324,9 @@ importers:
       kysely:
         specifier: 'catalog:'
         version: 0.27.5
+      kysely-ctl:
+        specifier: 0.12.1
+        version: 0.12.1(kysely@0.27.5)
       pg:
         specifier: 'catalog:'
         version: 8.13.3
@@ -367,15 +343,6 @@ importers:
       '@types/pg':
         specifier: ^8.11.11
         version: 8.11.11
-      dotenv:
-        specifier: ^16.4.7
-        version: 16.4.7
-      dotenv-expand:
-        specifier: ^12.0.1
-        version: 12.0.1
-      kysely-ctl:
-        specifier: 0.12.1
-        version: 0.12.1(kysely@0.27.5)
       tsc-alias:
         specifier: ^1.8.11
         version: 1.8.11
@@ -431,15 +398,6 @@ importers:
       '@types/pg':
         specifier: ^8.11.11
         version: 8.11.11
-      dotenv:
-        specifier: ^16.4.7
-        version: 16.4.7
-      dotenv-expand:
-        specifier: ^12.0.1
-        version: 12.0.1
-      kysely-ctl:
-        specifier: 0.12.1
-        version: 0.12.1(kysely@0.27.5)
       tsc-alias:
         specifier: ^1.8.11
         version: 1.8.11
@@ -476,6 +434,9 @@ importers:
       kysely:
         specifier: 'catalog:'
         version: 0.27.5
+      kysely-ctl:
+        specifier: 0.12.1
+        version: 0.12.1(kysely@0.27.5)
       lodash:
         specifier: 4.17.21
         version: 4.17.21
@@ -501,15 +462,6 @@ importers:
       '@types/pg':
         specifier: ^8.11.11
         version: 8.11.11
-      dotenv:
-        specifier: ^16.4.7
-        version: 16.4.7
-      dotenv-expand:
-        specifier: ^12.0.1
-        version: 12.0.1
-      kysely-ctl:
-        specifier: 0.12.1
-        version: 0.12.1(kysely@0.27.5)
       tsc-alias:
         specifier: ^1.8.11
         version: 1.8.11
@@ -546,6 +498,9 @@ importers:
       kysely:
         specifier: 'catalog:'
         version: 0.27.5
+      kysely-ctl:
+        specifier: 0.12.1
+        version: 0.12.1(kysely@0.27.5)
       luxon:
         specifier: 3.5.0
         version: 3.5.0
@@ -571,15 +526,6 @@ importers:
       '@types/pg':
         specifier: ^8.11.11
         version: 8.11.11
-      dotenv:
-        specifier: ^16.4.7
-        version: 16.4.7
-      dotenv-expand:
-        specifier: ^12.0.1
-        version: 12.0.1
-      kysely-ctl:
-        specifier: 0.12.1
-        version: 0.12.1(kysely@0.27.5)
       tsc-alias:
         specifier: ^1.8.11
         version: 1.8.11
@@ -616,6 +562,9 @@ importers:
       kysely:
         specifier: 'catalog:'
         version: 0.27.5
+      kysely-ctl:
+        specifier: 0.12.1
+        version: 0.12.1(kysely@0.27.5)
       pg:
         specifier: 'catalog:'
         version: 8.13.3
@@ -632,15 +581,6 @@ importers:
       '@types/pg':
         specifier: ^8.11.11
         version: 8.11.11
-      dotenv:
-        specifier: ^16.4.7
-        version: 16.4.7
-      dotenv-expand:
-        specifier: ^12.0.1
-        version: 12.0.1
-      kysely-ctl:
-        specifier: 0.12.1
-        version: 0.12.1(kysely@0.27.5)
       tsc-alias:
         specifier: ^1.8.11
         version: 1.8.11
@@ -665,9 +605,18 @@ importers:
 
   shared/utils:
     dependencies:
+      '@casl/ability':
+        specifier: 6.7.2
+        version: 6.7.2
       '@hono/sentry':
         specifier: 1.2.0
         version: 1.2.0(hono@4.6.16)
+      '@hono/zod-openapi':
+        specifier: 'catalog:'
+        version: 0.18.3(hono@4.6.16)(zod@3.23.8)
+      '@incmix/utils':
+        specifier: 'catalog:'
+        version: 0.1.0(@types/luxon@3.4.2)(hono@4.6.16)(luxon@3.5.0)(zod@3.23.8)
       '@intlify/utils':
         specifier: 0.13.0
         version: 0.13.0
@@ -683,40 +632,25 @@ importers:
       add:
         specifier: 2.0.6
         version: 2.0.6
-    devDependencies:
-      '@casl/ability':
-        specifier: 6.7.2
-        version: 6.7.2
-      '@hono/zod-openapi':
-        specifier: 'catalog:'
-        version: 0.18.3(hono@4.6.16)(zod@3.23.8)
-      '@incmix-api/config':
-        specifier: workspace:^
-        version: link:../config
-      '@incmix/utils':
-        specifier: 'catalog:'
-        version: 0.1.0(@types/luxon@3.4.2)(hono@4.6.16)(luxon@3.5.0)(zod@3.23.8)
-      '@types/node':
-        specifier: 'catalog:'
-        version: 22.10.1
-      '@types/pg':
-        specifier: ^8.11.11
-        version: 8.11.11
-      dotenv:
-        specifier: ^16.4.7
-        version: 16.4.7
-      dotenv-expand:
-        specifier: ^12.0.1
-        version: 12.0.1
       hono:
         specifier: 'catalog:'
         version: 4.6.16
       kysely:
         specifier: 'catalog:'
         version: 0.27.5
-      kysely-ctl:
-        specifier: 0.12.1
-        version: 0.12.1(kysely@0.27.5)
+      zod:
+        specifier: 'catalog:'
+        version: 3.23.8
+    devDependencies:
+      '@incmix-api/config':
+        specifier: workspace:^
+        version: link:../config
+      '@types/node':
+        specifier: 'catalog:'
+        version: 22.10.1
+      '@types/pg':
+        specifier: ^8.11.11
+        version: 8.11.11
       tsc-alias:
         specifier: ^1.8.11
         version: 1.8.11
@@ -726,9 +660,6 @@ importers:
       typescript:
         specifier: 'catalog:'
         version: 5.7.3
-      zod:
-        specifier: 'catalog:'
-        version: 3.23.8
 
 packages:
 
@@ -3164,10 +3095,6 @@ packages:
   dot-prop@5.3.0:
     resolution: {integrity: sha512-QM8q3zDe58hqUqjraQOmzZ1LIH9SWQJTlEKCH4kJ2oQvLZk7RbQXvtDM2XEq3fwkV9CCvvH4LA0AV+ogFsBM2Q==}
     engines: {node: '>=8'}
-
-  dotenv-expand@12.0.1:
-    resolution: {integrity: sha512-LaKRbou8gt0RNID/9RoI+J2rvXsBRPMV7p+ElHlPhcSARbCPDYcYG2s1TIzAfWv4YSgyY5taidWzzs31lNV3yQ==}
-    engines: {node: '>=12'}
 
   dotenv@16.4.7:
     resolution: {integrity: sha512-47qPchRCykZC03FhkYAhrvwU4xDBFIj1QPqaarj6mdM/hgUzfPHcpkHJOn3mJAufFeeAxAzeGsr5X0M4k6fLZQ==}
@@ -7658,10 +7585,6 @@ snapshots:
   dot-prop@5.3.0:
     dependencies:
       is-obj: 2.0.0
-
-  dotenv-expand@12.0.1:
-    dependencies:
-      dotenv: 16.4.7
 
   dotenv@16.4.7: {}
 

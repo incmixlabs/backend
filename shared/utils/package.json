@@ -26,36 +26,27 @@
     }
   },
   "dependencies": {
+    "@casl/ability": "6.7.2",
     "@hono/sentry": "1.2.0",
+    "@hono/zod-openapi": "catalog:",
+    "@incmix/utils": "catalog:",
     "@intlify/utils": "0.13.0",
     "@scalar/hono-api-reference": "0.5.163",
     "@sentry/utils": "8.42.0",
     "@upstash/redis": "1.34.3",
-    "add": "2.0.6"
+    "add": "2.0.6",
+    "hono": "catalog:",
+    "kysely": "catalog:",
+    "zod": "catalog:"
   },
   "devDependencies": {
     "@casl/ability": "6.7.2",
     "@hono/zod-openapi": "catalog:",
     "@incmix-api/config": "workspace:^",
-    "@incmix/utils": "catalog:",
     "@types/node": "catalog:",
     "@types/pg": "^8.11.11",
-    "dotenv": "^16.4.7",
-    "dotenv-expand": "^12.0.1",
-    "hono": "catalog:",
-    "kysely": "catalog:",
-    "kysely-ctl": "0.12.1",
     "tsc-alias": "^1.8.11",
     "tsx": "^4.19.3",
-    "typescript": "catalog:",
-    "zod": "catalog:"
-  },
-  "peerDependencies": {
-    "@casl/ability": "6.7.2",
-    "@hono/zod-openapi": "catalog:",
-    "@incmix/utils": "catalog:",
-    "hono": "catalog:",
-    "kysely": "catalog:",
-    "zod": "catalog:"
+    "typescript": "catalog:"
   }
 }
