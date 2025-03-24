@@ -1,4 +1,5 @@
 import type { Status } from "@/dbSchema"
+import { envVars } from "@/env-vars"
 import { db } from "@/lib/db"
 import { sendEmail } from "@/lib/helper"
 import type { HonoApp } from "@/types"
@@ -6,7 +7,6 @@ import { OpenAPIHono, type RouteConfigToTypedResponse } from "@hono/zod-openapi"
 import { processError, zodError } from "@incmix-api/utils/errors"
 import type { ContentfulStatusCode } from "hono/utils/http-status"
 import { sendMail } from "./openapi"
-import { envVars } from "@/env-vars"
 const emailRoutes = new OpenAPIHono<HonoApp>({
   defaultHook: zodError,
 })
