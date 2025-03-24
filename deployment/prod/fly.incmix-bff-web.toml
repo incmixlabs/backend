@@ -9,7 +9,7 @@ app = "bff-web-incmix-api"
 primary_region = "lax"
 
 [build]
-dockerfile = "api/bff-web/Dockerfile"
+dockerfile = "../../api/bff-web/Dockerfile"
 
 [build.args]
 PROJECT = "incmix-apis"

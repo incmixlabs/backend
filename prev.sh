@@ -2,23 +2,23 @@
 set -e
 
 # Run all deployments in parallel and capture their output
-# fly deploy --config fly.incmix-auth.toml 2>&1 | sed 's/^/[auth] /' &
-# fly deploy --config fly.incmix-bff-web.toml 2>&1 | sed 's/^/[bff-web] /' &
-# fly deploy --config fly.incmix-intl.toml 2>&1 | sed 's/^/[intl] /' &
-fly deploy --config fly.incmix-email.toml 2>&1 | sed 's/^/[email] /' &
-# fly deploy --config fly.incmix-files.toml 2>&1 | sed 's/^/[files] /' &
-# fly deploy --config fly.incmix-location.toml 2>&1 | sed 's/^/[location] /' &
-# fly deploy --config fly.incmix-org.toml 2>&1 | sed 's/^/[org] /' &
-# fly deploy --config fly.incmix-tasks.toml 2>&1 | sed 's/^/[tasks] /' &
-fly deploy --config fly.incmix-users.toml 2>&1 | sed 's/^/[users] /' &
+fly deploy --config ./deployment/prev/fly.incmix-auth.toml 2>&1 | sed 's/^/[auth] /' &
+fly deploy --config ./deployment/prev/fly.incmix-bff-web.toml 2>&1 | sed 's/^/[bff-web] /' &
+fly deploy --config ./deployment/prev/fly.incmix-intl.toml 2>&1 | sed 's/^/[intl] /' &
+fly deploy --config ./deployment/prev/fly.incmix-email.toml 2>&1 | sed 's/^/[email] /' &
+fly deploy --config ./deployment/prev/fly.incmix-files.toml 2>&1 | sed 's/^/[files] /' &
+fly deploy --config ./deployment/prev/fly.incmix-location.toml 2>&1 | sed 's/^/[location] /' &
+fly deploy --config ./deployment/prev/fly.incmix-org.toml 2>&1 | sed 's/^/[org] /' &
+fly deploy --config ./deployment/prev/fly.incmix-tasks.toml 2>&1 | sed 's/^/[tasks] /' &
+fly deploy --config ./deployment/prev/fly.incmix-users.toml 2>&1 | sed 's/^/[users] /' &
 
 # Wait for all background processes to complete
 wait
 
-# fly secrets import -a auth-incmix-api < ./api/auth/.env --stage
-# fly secrets import -a email-incmix-api < ./api/email/.env --stage
-# fly secrets import -a files-incmix-api < ./api/files-api/.env --stage
-# fly secrets import -a location-incmix-api < ./api/location-api/.env --stage
+# fly secrets import -a auth-incmix-api-prev < ./api/auth/.env --stage
+# fly secrets import -a email-incmix-api-prev < ./api/email/.env --stage
+# fly secrets import -a files-incmix-api-prev < ./api/files-api/.env --stage
+# fly secrets import -a location-incmix-api-prev < ./api/location-api/.env --stage
 
 # fly postgres attach --app auth-incmix-api incmix-auth-db
 # fly postgres attach --app intl-incmix-api incmix-intl-db
@@ -26,6 +26,30 @@ wait
 # fly postgres attach --app org-incmix-api incmix-org-db
 # fly postgres attach --app tasks-incmix-api incmix-tasks-db
 # fly postgres attach --app users-incmix-api incmix-users-db
+
+# fly postgres create --name incmix-auth-db-prev --region lax --org incmix
+# fly postgres create --name incmix-intl-db-prev --region lax --org incmix
+# fly postgres create --name incmix-email-db-prev --region lax --org incmix
+# fly postgres create --name incmix-org-db-prev --region lax --org incmix
+# fly postgres create --name incmix-tasks-db-prev --region lax --org incmix
+# fly postgres create --name incmix-users-db-prev --region lax --org incmix
+
+# fly apps create auth-incmix-api-prev --org incmix
+# fly apps create intl-incmix-api-prev --org incmix
+# fly apps create email-incmix-api-prev --org incmix
+# fly apps create files-incmix-api-prev --org incmix
+# fly apps create location-incmix-api-prev --org incmix
+# fly apps create org-incmix-api-prev --org incmix
+# fly apps create tasks-incmix-api-prev --org incmix
+# fly apps create users-incmix-api-prev --org incmix
+# fly apps create bff-web-incmix-api-prev --org incmix
+
+# fly postgres attach --app auth-incmix-api-prev incmix-auth-db-prev
+# fly postgres attach --app intl-incmix-api-prev incmix-intl-db-prev
+# fly postgres attach --app email-incmix-api-prev incmix-email-db-prev
+# fly postgres attach --app org-incmix-api-prev incmix-org-db-prev
+# fly postgres attach --app tasks-incmix-api-prev incmix-tasks-db-prev
+# fly postgres attach --app users-incmix-api-prev incmix-users-db-prev
 
 
 # # Sentry Diabled

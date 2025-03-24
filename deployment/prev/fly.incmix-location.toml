@@ -5,11 +5,11 @@
 # See https://fly.io/docs/reference/configuration/ for information about how to use this file.
 
 
-app = "location-incmix-api"
+app = "location-incmix-api-prev"
 primary_region = "lax"
 
 [build]
-dockerfile = "api/location-api/Dockerfile"
+dockerfile = "../../api/location-api/Dockerfile"
 
 [build.args]
 PROJECT = "incmix-apis"
@@ -26,10 +26,10 @@ size = "shared-cpu-1x"
 
 [env]
 PORT = "9494"
-AUTH_URL = "https://auth-incmix-api.fly.dev/api/auth"
-INTL_URL = "https://intl-incmix-api.fly.dev/api/intl"
-COOKIE_NAME = "incmix_session"
-DOMAIN = "bff-web-incmix-api.fly.dev"
+AUTH_URL = "https://auth-incmix-api-prev.fly.dev/api/auth"
+INTL_URL = "https://intl-incmix-api-prev.fly.dev/api/intl"
+COOKIE_NAME = "incmix_session_prev"
+DOMAIN = "bff-web-incmix-api-prev.fly.dev"
 WEATHER_URL = "https://api.tomorrow.io/v4/weather"
 LOCATION_URL = "https://api.geoapify.com/v1"
 SERP_NEWS_URL = "https://serpapi.com/search.json"

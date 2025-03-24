@@ -5,27 +5,25 @@
 # See https://fly.io/docs/reference/configuration/ for information about how to use this file.
 
 
-app = "files-incmix-api"
+app = "email-incmix-api"
 primary_region = "lax"
 
 [build]
-dockerfile = "api/files-api/Dockerfile"
+dockerfile = "../../api/email/Dockerfile"
 
 [build.args]
 PROJECT = "incmix-apis"
 
 [http_service]
-internal_port = 8282
+internal_port = 8989
 force_https = true
 min_machines_running = 0
 processes = ["app"]
 
 [[vm]]
-memory = "256mb"
+memory = "512mb"
 size = "shared-cpu-1x"
 
 [env]
-PORT = "8282"
+PORT = "8989"
 INTL_URL = "https://intl-incmix-api.fly.dev/api/intl"
-AUTH_URL = "https://auth-incmix-api.fly.dev/api/auth"
-COOKIE_NAME = "incmix_session"

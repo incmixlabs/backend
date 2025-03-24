@@ -5,30 +5,31 @@
 # See https://fly.io/docs/reference/configuration/ for information about how to use this file.
 
 
-app = "users-incmix-api"
+app = "auth-incmix-api"
 primary_region = "lax"
 
 [build]
-dockerfile = "api/users-api/Dockerfile"
+dockerfile = "../../api/auth/Dockerfile"
 
 [build.args]
 PROJECT = "incmix-apis"
 
 [http_service]
-internal_port = 9191
+internal_port = 8787
 force_https = true
 min_machines_running = 0
 processes = ["app"]
 
 [[vm]]
-memory = "256mb"
+memory = "512mb"
 size = "shared-cpu-1x"
 
 [env]
-PORT = "9191"
-ORG_API_URL = "https://org-incmix-api.fly.dev/api/org"
-AUTH_URL = "https://auth-incmix-api.fly.dev/api/auth"
-INTL_URL = "https://intl-incmix-api.fly.dev/api/intl"
-FILES_API_URL = "https://files-incmix-api.fly.dev/api/files"
+PORT = "8787"
+FRONTEND_URL = "https://turbo-mix.pages.dev"
+EMAIL_URL = "https://email-incmix-api.fly.dev/api/email"
+USERS_API_URL = "https://users-incmix-api.fly.dev/api/users"
 COOKIE_NAME = "incmix_session"
+GOOGLE_REDIRECT_URL = "https://turbo-mix.pages.dev/auth/google"
 DOMAIN = "bff-web-incmix-api.fly.dev"
+INTL_URL = "https://intl-incmix-api.fly.dev/api/intl"
