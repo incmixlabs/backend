@@ -6,6 +6,7 @@ import { OpenAPIHono, type RouteConfigToTypedResponse } from "@hono/zod-openapi"
 import { processError, zodError } from "@incmix-api/utils/errors"
 import type { ContentfulStatusCode } from "hono/utils/http-status"
 import { sendMail } from "./openapi"
+import { envVars } from "@/env-vars"
 const emailRoutes = new OpenAPIHono<HonoApp>({
   defaultHook: zodError,
 })
@@ -14,7 +15,7 @@ emailRoutes.openapi(sendMail, async (c) => {
   try {
     const params = c.req.valid("json")
 
-    const res = await sendEmail(c.env.SENDGRID_API_KEY, params)
+    const res = await sendEmail(envVars.SENDGRID_API_KEY, params)
 
     let status: Status = "pending"
     let shouldRetry = false
