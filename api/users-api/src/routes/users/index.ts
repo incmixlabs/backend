@@ -280,6 +280,7 @@ userRoutes.openapi(getAllUsers, async (c) => {
 
     const total = await query
       .select(({ fn }) => fn.count<number>("id").as("count"))
+      .groupBy("id")
       .executeTakeFirst()
 
     if (pagination) {

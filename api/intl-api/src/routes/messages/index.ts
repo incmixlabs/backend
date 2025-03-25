@@ -252,6 +252,7 @@ messageRoutes.openapi(getAllMessages, async (c) => {
 
     const total = await query
       .select(({ fn }) => fn.count<number>("translations.id").as("count"))
+      .groupBy(["translations.id", "locales.langCode"])
       .executeTakeFirst()
 
     if (pagination) {

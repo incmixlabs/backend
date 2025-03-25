@@ -7,10 +7,12 @@ export async function up(db: Kysely<Database>): Promise<void> {
     .insertInto("locales")
     .values([
       {
+        id: 1,
         langCode: "en",
         isDefault: true,
       },
       {
+        id: 2,
         langCode: "pt",
         isDefault: false,
       },
@@ -20,5 +22,5 @@ export async function up(db: Kysely<Database>): Promise<void> {
 
 // `any` is required here since migrations should be frozen in time. alternatively, keep a "snapshot" db interface.
 export async function down(db: Kysely<Database>): Promise<void> {
-  await db.deleteFrom("locales").where("langCode", "in", ["en", "pt"]).execute()
+  await db.deleteFrom("locales").where("id", ">", 0).execute()
 }

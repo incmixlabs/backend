@@ -1,19 +1,22 @@
 import { stream } from "hono/streaming"
 import type { Context } from "./types"
+import type { ContentfulStatusCode } from "hono/utils/http-status"
+
 export async function returnResponse(res: Response, c: Context) {
   const contentType = res.headers.get("content-type")
   const cookies = res.headers.get("set-cookie")
+  const status = res.status as ContentfulStatusCode
 
   if (cookies) {
     c.res.headers.set("set-cookie", cookies)
   }
 
   if (contentType?.includes("application/json")) {
-    return c.json(await res.json())
+    return c.json(await res.json(), status)
   }
 
   if (contentType?.includes("text/html")) {
-    return c.html(await res.text())
+    return c.html(await res.text(), status)
   }
 
   if (contentType?.includes("application/octet-stream")) {
@@ -26,5 +29,5 @@ export async function returnResponse(res: Response, c: Context) {
     })
   }
 
-  return c.text(await res.text())
+  return c.text(await res.text(), status)
 }
