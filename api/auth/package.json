@@ -1,34 +1,39 @@
 {
   "name": "@incmix-api/auth",
+  "type": "module",
   "scripts": {
-    "dev": "wrangler dev src/index.ts --env dev --inspector-port 9229",
-    "deploy": "wrangler deploy dist/index.js --no-bundle",
-    "build": "wrangler deploy --minify --dry-run --outdir=dist",
-    "migrate:local": "wrangler d1 migrations apply lucia-auth-dev --env dev",
+    "dev": "kysely migrate:up && tsx watch --env-file=.env src/index.ts",
+    "build": "tsc && tsc-alias",
+    "start": "kysely migrate:up && node ./dist/src/index.js",
+    "migrate:local": "kysely migrate:up",
     "test": "vitest --run",
     "test:e2e": "playwright test"
   },
   "dependencies": {
+    "@hono/node-server": "^1.13.8",
     "@hono/zod-openapi": "catalog:",
     "@hono/zod-validator": "0.4.1",
     "@incmix-api/utils": "workspace:^",
     "@incmix/utils": "catalog:",
-    "@lucia-auth/adapter-sqlite": "3.0.2",
-    "@noxharmonium/kysely-d1": "0.4.0",
+    "@lucia-auth/adapter-postgresql": "^3.1.2",
     "@playwright/test": "1.49.0",
     "arctic": "2.3.0",
     "hono": "catalog:",
-    "kysely": "0.27.5",
+    "kysely": "catalog:",
+    "kysely-ctl": "0.12.1",
     "lucia": "3.2.2",
     "mailslurp-client": "15.20.2",
     "oslo": "1.2.1",
+    "pg": "catalog:",
     "zod": "catalog:"
   },
   "devDependencies": {
-    "@cloudflare/vitest-pool-workers": "catalog:",
-    "@cloudflare/workers-types": "catalog:",
     "@incmix-api/config": "workspace:^",
-    "vitest": "catalog:",
-    "wrangler": "catalog:"
+    "@types/node": "catalog:",
+    "@types/pg": "^8.11.11",
+    "tsc-alias": "^1.8.11",
+    "tsx": "^4.19.3",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
   }
 }

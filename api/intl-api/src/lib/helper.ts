@@ -1,57 +1,50 @@
-import type { Context, IntlMessageRow, LocaleRow } from "@/types"
+import type { Context } from "@/types"
 import { ServerError } from "@incmix-api/utils/errors"
-import type { IntlMessage, Locale } from "@incmix-api/utils/types"
+import type { Locale } from "@incmix-api/utils/types"
+import { db } from "./db"
 
-export async function getDefaultLocale(c: Context) {
-  const locale = await c.env.DB.prepare(
-    "select * from locales where is_default = ?"
-  )
-    .bind(1)
-    .first<LocaleRow>()
+export async function getDefaultLocale() {
+  const locale = await db
+    .selectFrom("locales")
+    .selectAll()
+    .where("isDefault", "=", true)
+    .executeTakeFirst()
 
-  if (!locale) throw new ServerError("Defaulty locale not set")
-  return { code: locale.lang_code, isDefault: true } as Locale
+  if (!locale) return { code: "en", isDefault: true }
+  return { code: locale.langCode, isDefault: true } as Locale
 }
 export async function getAllMessages(c: Context) {
   const locale = c.get("locale")
-  const dbLocale = await c.env.DB.prepare(
-    "select * from locales where lang_code = ?"
-  )
-    .bind(locale)
-    .first<LocaleRow>()
-  const { results: messages } = await c.env.DB.prepare(
-    "select * from translations where locale_id = ?"
-  )
-    .bind(dbLocale?.id)
-    .all<IntlMessageRow>()
+  const dbLocale = await db
+    .selectFrom("locales")
+    .selectAll()
+    .where("langCode", "=", locale)
+    .executeTakeFirst()
 
-  return messages.map<IntlMessage>((m) => ({
-    key: m.key,
-    locale,
-    type: m.type,
-    value: m.value,
-    namespace: m.namespace,
-  }))
+  if (!dbLocale) return []
+
+  const messages = await db
+    .selectFrom("translations")
+    .selectAll()
+    .where("localeId", "=", dbLocale.id)
+    .execute()
+
+  return messages
 }
-export async function getDefaultMessages(c: Context) {
-  const dbLocale = await c.env.DB.prepare(
-    "select * from locales where is_default = ?"
-  )
-    .bind(true)
-    .first<LocaleRow>()
-  if (!dbLocale) throw new ServerError("Default Locale not set")
+export async function getDefaultMessages() {
+  const dbLocale = await db
+    .selectFrom("locales")
+    .where("isDefault", "=", true)
+    .selectAll()
+    .executeTakeFirst()
 
-  const { results: messages } = await c.env.DB.prepare(
-    "select * from translations where locale_id = ?"
-  )
-    .bind(dbLocale.id)
-    .all<IntlMessageRow>()
+  if (!dbLocale) return []
 
-  return messages.map<IntlMessage>((m) => ({
-    key: m.key,
-    locale: dbLocale?.lang_code,
-    type: m.type,
-    value: m.value,
-    namespace: m.namespace,
-  }))
+  const messages = await db
+    .selectFrom("translations")
+    .selectAll()
+    .where("localeId", "=", dbLocale.id)
+    .execute()
+
+  return messages
 }

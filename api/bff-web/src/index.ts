@@ -2,50 +2,49 @@ import { OpenAPIHono } from "@hono/zod-openapi"
 import { NotFoundError } from "@incmix-api/utils/errors"
 import { setupCors } from "@incmix-api/utils/middleware"
 
+import { serve } from "@hono/node-server"
 import { API } from "@incmix/utils/env"
+import { compress } from "hono/compress"
+import { envVars } from "./env-vars"
 import type { HonoApp } from "./types"
+import { returnResponse } from "./utils"
 
 const app = new OpenAPIHono<HonoApp>()
 
 setupCors(app, "/api")
 
+app.use("*", compress({ encoding: "gzip" }))
+
 app.get("/api/healthcheck", async (c) => {
-  const auth = await c.env.AUTH_API.fetch(
-    `${c.env.AUTH_URL}${API.AUTH}/healthcheck`,
-    { method: "get" }
-  ).then(async (res) => await res.json())
+  const auth = await fetch(`${envVars.AUTH_URL}${API.AUTH}/healthcheck`, {
+    method: "get",
+  }).then(async (res) => await res.json())
 
-  const email = await c.env.EMAIL_API.fetch(
-    `${c.env.EMAIL_URL}${API.EMAIL}/healthcheck`,
-    { method: "get" }
-  ).then(async (res) => await res.json())
+  const email = await fetch(`${envVars.EMAIL_URL}${API.EMAIL}/healthcheck`, {
+    method: "get",
+  }).then(async (res) => await res.json())
 
-  const files = await c.env.FILES_API.fetch(
-    `${c.env.FILES_URL}${API.FILES}/healthcheck`,
-    { method: "get" }
-  ).then(async (res) => await res.json())
+  const files = await fetch(`${envVars.FILES_URL}${API.FILES}/healthcheck`, {
+    method: "get",
+  }).then(async (res) => await res.json())
 
-  const intl = await c.env.INTL_API.fetch(
-    `${c.env.INTL_URL}${API.INTL}/healthcheck`,
-    { method: "get" }
-  ).then(async (res) => await res.json())
+  const intl = await fetch(`${envVars.INTL_URL}${API.INTL}/healthcheck`, {
+    method: "get",
+  }).then(async (res) => await res.json())
 
-  const org = await c.env.ORG_API.fetch(
-    `${c.env.ORG_URL}${API.ORG}/healthcheck`,
-    { method: "get" }
-  ).then(async (res) => await res.json())
+  const org = await fetch(`${envVars.ORG_URL}${API.ORG}/healthcheck`, {
+    method: "get",
+  }).then(async (res) => await res.json())
 
-  const users = await c.env.USERS_API.fetch(
-    `${c.env.USERS_URL}${API.USERS}/healthcheck`,
-    { method: "get" }
-  ).then(async (res) => await res.json())
+  const users = await fetch(`${envVars.USERS_URL}${API.USERS}/healthcheck`, {
+    method: "get",
+  }).then(async (res) => await res.json())
 
-  const todo = await c.env.TODO_API.fetch(
-    `${c.env.TODO_URL}${API.TASKS}/healthcheck`,
-    { method: "get" }
-  ).then(async (res) => await res.json())
-  const location = await c.env.LOCATION_API.fetch(
-    `${c.env.LOCATION_URL}${API.LOCATION}/healthcheck`,
+  const todo = await fetch(`${envVars.TASKS_URL}${API.TASKS}/healthcheck`, {
+    method: "get",
+  }).then(async (res) => await res.json())
+  const location = await fetch(
+    `${envVars.LOCATION_URL}${API.LOCATION}/healthcheck`,
     { method: "get" }
   ).then(async (res) => await res.json())
 
@@ -64,43 +63,45 @@ app.get("/api/healthcheck", async (c) => {
   )
 })
 app.get("/api/rate-limits", async (c) => {
-  // const auth = await c.env.AUTH_API.fetch(
-  //   `${c.env.AUTH_URL}${AUTH_BASE_PATH}/rate-limits`,
+  // const auth = await envVars.AUTH_API.fetch(
+  //   `${envVars.AUTH_URL}${AUTH_BASE_PATH}/rate-limits`,
   //   { method: "get" }
   // ).then(async (res) => await res.json())
 
-  // const email = await c.env.EMAIL_API.fetch(
-  //   `${c.env.EMAIL_URL}${EMAIL_BASE_PATH}/rate-limits`,
+  // const email = await envVars.EMAIL_API.fetch(
+  //   `${envVars.EMAIL_URL}${EMAIL_BASE_PATH}/rate-limits`,
   //   { method: "get" }
   // ).then(async (res) => await res.json())
 
-  // const files = await c.env.FILES_API.fetch(
-  //   `${c.env.FILES_URL}${FILES_BASE_PATH}/rate-limits`,
+  // const files = await envVars.FILES_API.fetch(
+  //   `${envVars.FILES_URL}${FILES_BASE_PATH}/rate-limits`,
   //   { method: "get" }
   // ).then(async (res) => await res.json())
 
-  // const intl = await c.env.INTL_API.fetch(
-  //   `${c.env.INTL_URL}${INTL_BASE_PATH}/rate-limits`,
+  // const intl = await envVars.INTL_API.fetch(
+  //   `${envVars.INTL_URL}${INTL_BASE_PATH}/rate-limits`,
   //   { method: "get" }
   // ).then(async (res) => await res.json())
 
-  // const org = await c.env.ORG_API.fetch(
-  //   `${c.env.ORG_URL}${ORG_BASE_PATH}/rate-limits`,
+  // const org = await envVars.ORG_API.fetch(
+  //   `${envVars.ORG_URL}${ORG_BASE_PATH}/rate-limits`,
   //   { method: "get" }
   // ).then(async (res) => await res.json())
 
-  // const users = await c.env.USERS_API.fetch(
-  //   `${c.env.USERS_URL}${USERS_BASE_PATH}/rate-limits`,
+  // const users = await envVars.USERS_API.fetch(
+  //   `${envVars.USERS_URL}${USERS_BASE_PATH}/rate-limits`,
   //   { method: "get" }
   // ).then(async (res) => await res.json())
 
-  // const todo = await c.env.TODO_API.fetch(
-  //   `${c.env.TODO_URL}${TODO_BASE_PATH}/rate-limits`,
+  // const todo = await envVars.TODO_API.fetch(
+  //   `${envVars.TODO_URL}${TODO_BASE_PATH}/rate-limits`,
   //   { method: "get" }
   // ).then(async (res) => await res.json())
-  const location = await c.env.LOCATION_API.fetch(
-    `${c.env.LOCATION_URL}${API.LOCATION}/rate-limits`,
-    { method: "get" }
+  const location = await fetch(
+    `${envVars.LOCATION_URL}${API.LOCATION}/rate-limits`,
+    {
+      method: "get",
+    }
   ).then(async (res) => await res.json())
 
   return c.json(
@@ -125,49 +126,67 @@ app.all("/api/*", async (c) => {
   const queryString = searchParams ? `?${searchParams}` : ""
 
   if (pathname.startsWith(API.AUTH)) {
-    const res = await c.env.AUTH_API.fetch(
-      `${c.env.AUTH_URL}${pathname}${queryString}`,
+    const req = new Request(
+      `${envVars.AUTH_URL}${pathname}${queryString}`,
       c.req.raw
     )
-    return res
+
+    const res = await fetch(req)
+    return returnResponse(res, c)
   }
   if (pathname.startsWith(API.ORG)) {
-    const res = await c.env.ORG_API.fetch(
-      `${c.env.ORG_URL}${pathname}${queryString}`,
+    const req = new Request(
+      `${envVars.ORG_URL}${pathname}${queryString}`,
       c.req.raw
     )
-    return res
+    const res = await fetch(req)
+
+    return returnResponse(res, c)
   }
   if (pathname.startsWith(API.USERS)) {
-    const res = await c.env.USERS_API.fetch(
-      `${c.env.USERS_URL}${pathname}${queryString}`,
+    const req = new Request(
+      `${envVars.USERS_URL}${pathname}${queryString}`,
       c.req.raw
     )
-    return res
+    const res = await fetch(req)
+    return returnResponse(res, c)
   }
   if (pathname.startsWith(API.INTL)) {
-    const res = await c.env.INTL_API.fetch(
-      `${c.env.INTL_URL}${pathname}${queryString}`,
+    const req = new Request(
+      `${envVars.INTL_URL}${pathname}${queryString}`,
       c.req.raw
     )
-    return res
+    const res = await fetch(req)
+    return returnResponse(res, c)
   }
   if (pathname.startsWith(API.TASKS)) {
-    const res = await c.env.TODO_API.fetch(
-      `${c.env.TODO_URL}${pathname}${queryString}`,
+    const req = new Request(
+      `${envVars.TASKS_URL}${pathname}${queryString}`,
       c.req.raw
     )
-    return res
+    const res = await fetch(req)
+    return returnResponse(res, c)
   }
   if (pathname.startsWith(API.LOCATION)) {
-    const res = await c.env.LOCATION_API.fetch(
-      `${c.env.LOCATION_URL}${pathname}${queryString}`,
+    const req = new Request(
+      `${envVars.LOCATION_URL}${pathname}${queryString}`,
       c.req.raw
     )
-    return res
+    const res = await fetch(req)
+    return returnResponse(res, c)
   }
 
   throw new NotFoundError(`404: ${pathname} does not exist`)
 })
+
+serve(
+  {
+    fetch: app.fetch,
+    port: envVars.PORT,
+  },
+  (info) => {
+    console.log(`Server is running on port ${info.port}`)
+  }
+)
 
 export default app

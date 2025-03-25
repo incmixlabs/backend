@@ -1,7 +1,6 @@
-import type { OpenAPIHono } from "@hono/zod-openapi"
 import { generateSentryHeaders } from "@incmix-api/utils"
 import type { AuthUser } from "@incmix/utils/types"
-import type { Env as HonoEnv } from "hono"
+import type { MiddlewareHandler } from "hono"
 import { getCookie } from "hono/cookie"
 
 declare module "hono" {
@@ -10,29 +9,23 @@ declare module "hono" {
   }
 }
 
-type Env = {
-  Bindings: { AUTH_URL: string; AUTH: Fetcher; COOKIE_NAME: string }
-} & HonoEnv
-
-export function setupAuthMiddleware<T extends Env>(
-  app: OpenAPIHono<T>,
-  basePath: string
-) {
-  app.use(`${basePath}/*`, async (c, next) => {
-    const sessionId = getCookie(c, c.env.COOKIE_NAME) ?? null
+export function createAuthMiddleware(): MiddlewareHandler {
+  return async (c, next) => {
+    const cookieName = process.env["COOKIE_NAME"] ?? "session"
+    const sessionId = getCookie(c, cookieName) ?? null
 
     if (!sessionId) {
       c.set("user", null)
       return next()
     }
 
-    const authUrl = `${c.env.AUTH_URL}/validate-session`
+    const authUrl = `${process.env["AUTH_URL"]}/validate-session`
     const sentryHeaders = generateSentryHeaders(c)
-    const res = await c.env.AUTH.fetch(authUrl, {
+    const res = await fetch(authUrl, {
       method: "get",
       headers: {
         "Content-Type": "application/json",
-        cookie: `${c.env.COOKIE_NAME}=${sessionId}`,
+        cookie: `${cookieName}=${sessionId}`,
         ...sentryHeaders,
       },
     })
@@ -40,11 +33,11 @@ export function setupAuthMiddleware<T extends Env>(
       c.set("user", null)
       return next()
     }
-    const user = await res.json<AuthUser>()
+    const user = (await res.json()) as AuthUser
 
     if (user) {
       c.set("user", user)
     }
     return next()
-  })
+  }
 }

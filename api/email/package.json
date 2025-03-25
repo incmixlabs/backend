@@ -1,15 +1,18 @@
 {
   "name": "@incmix-api/email",
   "version": "0.0.0",
+  "type": "module",
   "scripts": {
-    "dev": "wrangler dev src/index.ts --env dev --inspector-port 9231",
+    "dev": "kysely migrate:up && tsx watch --env-file=.env src/index.ts",
+    "build": "tsc && tsc-alias",
+    "start": "kysely migrate:up && node dist/src/index.js",
+    "migrate:local": "kysely migrate:up",
     "dev:email": "email dev --dir src/emails",
     "deploy": "wrangler deploy dist/index.js --no-bundle",
-    "build": "wrangler deploy --minify --dry-run --outdir=dist",
-    "migrate:local": "wrangler d1 migrations apply email-api-dev --env dev",
     "export": "email export"
   },
   "dependencies": {
+    "@hono/node-server": "^1.13.8",
     "@hono/zod-openapi": "catalog:",
     "@hono/zod-validator": "0.4.1",
     "@incmix-api/utils": "workspace:^",
@@ -17,15 +20,20 @@
     "@react-email/components": "0.0.29",
     "@sendgrid/eventwebhook": "8.0.0",
     "hono": "catalog:",
+    "kysely": "catalog:",
+    "kysely-ctl": "0.12.1",
+    "pg": "catalog:",
     "react": "18.3.1",
     "react-email": "3.0.3",
     "zod": "catalog:"
   },
   "devDependencies": {
-    "@cloudflare/workers-types": "catalog:",
     "@incmix-api/config": "workspace:^",
     "@types/node": "catalog:",
+    "@types/pg": "^8.11.11",
     "@types/react": "18.3.1",
-    "wrangler": "catalog:"
+    "tsc-alias": "^1.8.11",
+    "tsx": "^4.19.3",
+    "typescript": "catalog:"
   }
 }

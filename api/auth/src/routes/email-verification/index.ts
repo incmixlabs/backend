@@ -5,7 +5,7 @@ import {
   MAIL_SENT,
   VERIFY_SUCCESS,
 } from "@/lib/constants"
-import { findUserByEmail, getDatabase } from "@/lib/db"
+import { db, findUserByEmail } from "@/lib/db"
 import {
   generateVerificationCode,
   sendVerificationEmailOrLog,
@@ -41,7 +41,6 @@ emailVerificationRoutes.openapi(sendVerificationEmail, async (c) => {
     }
 
     const verificationCode = await generateVerificationCode(
-      c,
       user.id,
       email,
       "email_verification"
@@ -63,7 +62,7 @@ emailVerificationRoutes.openapi(verifyEmail, async (c) => {
     const { code, email } = c.req.valid("json")
     const user = await findUserByEmail(c, email)
 
-    const lucia = initializeLucia(c)
+    const lucia = initializeLucia()
     await lucia.invalidateUserSessions(user.id)
     const sessionCookie = lucia.createBlankSessionCookie()
     c.header("Set-Cookie", sessionCookie.serialize(), {
@@ -77,7 +76,6 @@ emailVerificationRoutes.openapi(verifyEmail, async (c) => {
     }
 
     const validCode = await verifyVerificationCode(
-      c,
       user,
       code,
       "email_verification"
@@ -86,10 +84,10 @@ emailVerificationRoutes.openapi(verifyEmail, async (c) => {
       const msg = await t.text(ERROR_INVALID_CODE)
       throw new UnauthorizedError(msg)
     }
-    const db = getDatabase(c)
+
     await db
       .updateTable("users")
-      .set({ emailVerified: 1 })
+      .set({ emailVerified: true })
       .where("id", "=", user.id)
       .execute()
 

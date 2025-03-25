@@ -5,6 +5,7 @@ import {
 } from "@/routes/messages/types"
 import { MessageResponseSchema } from "@/routes/types"
 import { createRoute, z } from "@hono/zod-openapi"
+import { createAuthMiddleware } from "@incmix-api/utils/middleware"
 
 export const getDefaultMessages = createRoute({
   method: "get",
@@ -189,6 +190,7 @@ export const deleteMessages = createRoute({
   method: "delete",
   path: "",
   description: "Delete Messages by keys",
+  middleware: [createAuthMiddleware()] as const,
   summary: "Delete Messages",
   tags: ["Messages"],
   request: {
@@ -253,6 +255,7 @@ export const addMessage = createRoute({
   description: "Add a new Message for locale and key",
   summary: "Add Message",
   tags: ["Messages"],
+  middleware: [createAuthMiddleware()] as const,
   request: {
     body: {
       content: {
@@ -320,6 +323,7 @@ export const updateMessage = createRoute({
   description: "Update Message for locale and key",
   summary: "Update Message",
   tags: ["Messages"],
+  middleware: [createAuthMiddleware()] as const,
   request: {
     body: {
       content: {

@@ -2,8 +2,6 @@ import type { AuthUser as User } from "@incmix/utils/types"
 import type { Context as HonoContext } from "hono"
 
 export type Bindings = {
-  DB: D1Database
-  AUTH: Fetcher
   COOKIE_NAME: string
   AUTH_URL: string
 }

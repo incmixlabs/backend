@@ -1,14 +1,21 @@
 import type { UserType } from "@incmix/utils/types"
-import type { Generated, Insertable, Selectable, Updateable } from "kysely"
+import type {
+  ColumnType,
+  Generated,
+  Insertable,
+  Selectable,
+  Updateable,
+} from "kysely"
 export type Provider = "google" | "github"
 
 type UsersTable = {
   id: string
   email: string
   hashedPassword: string | null
-  emailVerified: number
+  emailVerified: boolean
   userType: UserType
-  isActive: number | null
+  isActive: boolean | null
+  lastLoggedIn: ColumnType<Date, null, string>
 }
 
 type UserAccountsTable = {
@@ -24,7 +31,7 @@ export type VerificationCodesTable = {
   userId: string
   code: string
   email: string
-  expiresAt: string
+  expiresAt: ColumnType<Date, string, null>
   description: TokenType
 }
 

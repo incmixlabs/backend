@@ -1,5 +1,6 @@
+import { envVars } from "@/env-vars"
 import { getLocationFromIp } from "@/lib/helper"
-import { rateLimiter } from "@/middleware"
+
 import type { HonoApp } from "@/types"
 import { OpenAPIHono } from "@hono/zod-openapi"
 import { zodError } from "@incmix-api/utils/errors"
@@ -8,12 +9,11 @@ import type { NewsApiResponse, NewsResponse, TopicApiResponse } from "./types"
 
 const newsRoutes = new OpenAPIHono<HonoApp>({ defaultHook: zodError })
 
-newsRoutes.use(rateLimiter)
 newsRoutes.openapi(getNewsTopics, async (c) => {
   const { country } = c.req.valid("query")
 
   const searchParams = new URLSearchParams({
-    api_key: c.env.SERP_API_KEY,
+    api_key: envVars.SERP_API_KEY,
     engine: "google_news",
     hl: "en",
   })
@@ -39,13 +39,13 @@ newsRoutes.openapi(getNewsTopics, async (c) => {
     )
   }
 
-  const res = await fetch(`${c.env.SERP_NEWS_URL}?${searchParams.toString()}`)
+  const res = await fetch(`${envVars.SERP_NEWS_URL}?${searchParams.toString()}`)
   if (!res.ok) {
-    const { error } = await res.json<{ error: string }>()
+    const { error } = (await res.json()) as { error: string }
     return c.json({ message: error }, 400)
   }
 
-  const data = await res.json<{ menu_links: TopicApiResponse[] }>()
+  const data = (await res.json()) as { menu_links: TopicApiResponse[] }
   // Expire after one day
   await redis.setex(searchParams.toString(), 60 * 60 * 24, data)
 
@@ -62,7 +62,7 @@ newsRoutes.openapi(getNews, async (c) => {
     topic_token: topicToken,
     engine: "google_news",
     hl: "en",
-    api_key: c.env.SERP_API_KEY,
+    api_key: envVars.SERP_API_KEY,
   })
 
   if (country) {
@@ -81,13 +81,13 @@ newsRoutes.openapi(getNews, async (c) => {
     return c.json(cache, 200)
   }
 
-  const res = await fetch(`${c.env.SERP_NEWS_URL}?${searchParams.toString()}`)
+  const res = await fetch(`${envVars.SERP_NEWS_URL}?${searchParams.toString()}`)
   if (!res.ok) {
-    const { error } = await res.json<{ error: string }>()
+    const { error } = (await res.json()) as { error: string }
     return c.json({ message: error }, 400)
   }
 
-  const news = await res.json<NewsApiResponse>()
+  const news = (await res.json()) as NewsApiResponse
   const parsed = parseNewsResults(news)
   // Expire after 15 mins
   await redis.setex(searchParams.toString(), 60 * 15, parsed)

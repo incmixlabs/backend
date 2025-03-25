@@ -1,31 +1,37 @@
 {
   "name": "@incmix-api/tasks-api",
+  "type": "module",
   "scripts": {
-    "dev": "wrangler dev src/index.ts --env dev --inspector-port 9236",
+    "dev": "kysely migrate:up && tsx watch --env-file=.env src/index.ts",
+    "build": "tsc && tsc-alias",
+    "start": "kysely migrate:up && node dist/src/index.js",
+    "migrate:local": "kysely migrate:up",
     "deploy": "wrangler deploy dist/index.js --no-bundle",
-    "build": "wrangler deploy --minify --dry-run --outdir=dist",
-    "migrate:local": "wrangler d1 migrations apply tasks-api-dev --env dev",
     "test": "vitest --run",
     "test:e2e": "playwright test"
   },
   "dependencies": {
+    "@hono/node-server": "^1.13.8",
     "@hono/zod-openapi": "catalog:",
     "@hono/zod-validator": "0.4.1",
     "@incmix-api/utils": "workspace:^",
     "@incmix/utils": "catalog:",
-    "@noxharmonium/kysely-d1": "0.4.0",
     "hono": "catalog:",
-    "kysely": "0.27.5",
+    "kysely": "catalog:",
+    "kysely-ctl": "0.12.1",
     "luxon": "3.5.0",
     "nanoid": "5.0.9",
+    "pg": "catalog:",
     "zod": "catalog:"
   },
   "devDependencies": {
-    "@cloudflare/vitest-pool-workers": "catalog:",
-    "@cloudflare/workers-types": "catalog:",
     "@incmix-api/config": "workspace:^",
     "@playwright/test": "1.49.0",
-    "vitest": "catalog:",
-    "wrangler": "catalog:"
+    "@types/node": "catalog:",
+    "@types/pg": "^8.11.11",
+    "tsc-alias": "^1.8.11",
+    "tsx": "^4.19.3",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
   }
 }

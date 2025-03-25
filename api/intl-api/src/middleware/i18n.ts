@@ -33,13 +33,13 @@ export function createI18nMiddleware({
   return async (c, next) => {
     const kv = c.get("kv")
 
-    await kv.getItem(DEFAULT_LOCALE, { fn: () => getDefaultLocale(c) })
+    await kv.getItem(DEFAULT_LOCALE, { fn: () => getDefaultLocale() })
 
     const localeHeader = getHeaderLocale(c.req.raw, { name: localeHeaderName })
     const locale = localeHeader.language
     c.set("locale", locale)
     await kv.getItem(locale, { fn: () => getAllMessages(c) })
-    await kv.getItem(DEFAULT_MESSAGES, { fn: () => getDefaultMessages(c) })
+    await kv.getItem(DEFAULT_MESSAGES, { fn: () => getDefaultMessages() })
 
     c.header("content-language", locale, { append: true })
     return await next()

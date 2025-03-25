@@ -1,24 +1,33 @@
 {
   "name": "@incmix-api/intl",
+  "type": "module",
   "scripts": {
-    "dev": "wrangler dev src/index.ts --env dev --inspector-port 9233",
+    "dev": "kysely migrate:up && tsx watch --env-file=.env src/index.ts",
+    "start": "kysely migrate:up && node dist/src/index.js",
     "deploy": "wrangler deploy dist/index.js --no-bundle",
-    "build": "wrangler deploy --minify --dry-run --outdir=dist",
-    "migrate:local": "wrangler d1 migrations apply intl-api-dev --env dev"
+    "build": "tsc && tsc-alias",
+    "migrate:local": "kysely migrate:up"
   },
   "dependencies": {
+    "@hono/node-server": "^1.13.8",
     "@hono/zod-openapi": "catalog:",
     "@hono/zod-validator": "0.4.1",
     "@incmix-api/utils": "workspace:^",
     "@incmix/utils": "catalog:",
+    "@intlify/utils": "0.13.0",
     "hono": "catalog:",
-    "zod": "catalog:",
-    "@noxharmonium/kysely-d1": "0.4.0",
-    "kysely": "0.27.5"
+    "kysely": "catalog:",
+    "kysely-ctl": "0.12.1",
+    "pg": "catalog:",
+    "zod": "catalog:"
   },
   "devDependencies": {
-    "@cloudflare/workers-types": "catalog:",
     "@incmix-api/config": "workspace:^",
-    "wrangler": "catalog:"
+    "@types/node": "catalog:",
+    "@types/pg": "^8.11.11",
+    "tsc-alias": "^1.8.11",
+    "tsx": "^4.19.3",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
   }
 }

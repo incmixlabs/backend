@@ -17,8 +17,12 @@ import { createAbilityFromPermissions } from "@incmix/utils/casl"
 
 import { ERROR_CASL_FORBIDDEN, generateSentryHeaders } from "@incmix-api/utils"
 import { useTranslation } from "@incmix-api/utils/middleware"
-import type { AuthUser, UserProfile } from "@incmix/utils/types"
-import type { Action, Permission } from "@incmix/utils/types"
+import type {
+  Action,
+  AuthUser,
+  Permission,
+  UserProfile,
+} from "@incmix/utils/types"
 import { ROLE_OWNER, ROLE_SUPER_ADMIN } from "@incmix/utils/types"
 import { getCookie } from "hono/cookie"
 import { defaultPermissions, interpolate } from "./casl"
@@ -28,26 +32,36 @@ import {
   ERROR_ORG_NOT_FOUND,
 } from "./constants"
 
-import { D1Dialect } from "@noxharmonium/kysely-d1"
-import { CamelCasePlugin, Kysely, ParseJSONResultsPlugin } from "kysely"
-import { jsonArrayFrom } from "kysely/helpers/sqlite"
+import { envVars } from "@/env-vars"
+import {
+  CamelCasePlugin,
+  Kysely,
+  ParseJSONResultsPlugin,
+  PostgresDialect,
+} from "kysely"
+import { jsonArrayFrom } from "kysely/helpers/postgres"
+import pg from "pg"
 
-export const getDatabase = (c: Context) => {
-  return new Kysely<Database>({
-    dialect: new D1Dialect({ database: c.env.DB }),
-    plugins: [new CamelCasePlugin()],
-  })
-}
+const dialect = new PostgresDialect({
+  pool: new pg.Pool({
+    connectionString: envVars.DATABASE_URL,
+    max: 10,
+  }),
+})
+export const db = new Kysely<Database>({
+  dialect,
+  plugins: [new CamelCasePlugin()],
+})
 
 export async function getUserByEmail(c: Context, email: string) {
-  const sessionId = getCookie(c, c.env.COOKIE_NAME) ?? null
+  const sessionId = getCookie(c, envVars.COOKIE_NAME) ?? null
 
   if (!sessionId) {
     throw new UnauthorizedError()
   }
-  const url = `${c.env.USERS_URL}?email=${email}`
+  const url = `${envVars.USERS_URL}?email=${email}`
   const sentryHeaders = generateSentryHeaders(c)
-  const res = await c.env.USERS.fetch(url, {
+  const res = await fetch(url, {
     method: "GET",
     headers: {
       cookie: c.req.header("cookie") || "",
@@ -59,18 +73,18 @@ export async function getUserByEmail(c: Context, email: string) {
   if (res.status === 401) throw new UnauthorizedError()
   if (res.status === 404) throw new NotFoundError()
 
-  return await res.json<UserProfile>()
+  return (await res.json()) as UserProfile
 }
 export async function getUserById(c: Context, id: string) {
-  const sessionId = getCookie(c, c.env.COOKIE_NAME) ?? null
+  const sessionId = getCookie(c, envVars.COOKIE_NAME) ?? null
 
   if (!sessionId) {
     throw new UnauthorizedError()
   }
-  const url = `${c.env.USERS_URL}?id=${id}`
+  const url = `${envVars.USERS_URL}?id=${id}`
   const sentryHeaders = generateSentryHeaders(c)
 
-  const res = await c.env.USERS.fetch(url, {
+  const res = await fetch(url, {
     method: "GET",
     headers: {
       cookie: c.req.header("cookie") || "",
@@ -80,17 +94,17 @@ export async function getUserById(c: Context, id: string) {
 
   if (!res.ok) throw new ServerError()
 
-  return await res.json<UserProfile>()
+  return (await res.json()) as UserProfile
 }
 export async function isValidUser(c: Context, id: string) {
-  const sessionId = getCookie(c, c.env.COOKIE_NAME) ?? null
+  const sessionId = getCookie(c, envVars.COOKIE_NAME) ?? null
 
   if (!sessionId) {
     throw new UnauthorizedError()
   }
-  const url = `${c.env.USERS_URL}?id=${id}`
+  const url = `${envVars.USERS_URL}?id=${id}`
   const sentryHeaders = generateSentryHeaders(c)
-  const res = await c.env.USERS.fetch(url, {
+  const res = await fetch(url, {
     method: "GET",
     headers: {
       cookie: c.req.header("cookie") || "",
@@ -100,21 +114,18 @@ export async function isValidUser(c: Context, id: string) {
 
   if (!res.ok) return false
 
-  const user = await res.json<UserProfile>()
+  const user = (await res.json()) as UserProfile
 
   if (Object.hasOwn(user, "id")) return true
 
   return false
 }
 
-export function findAllRoles(c: Context) {
-  const db = getDatabase(c)
-
+export function findAllRoles() {
   return db.selectFrom("roles").selectAll().execute()
 }
 
-export function insertOrganisation(c: Context, org: NewOrganisation) {
-  const db = getDatabase(c)
+export function insertOrganisation(org: NewOrganisation) {
   return db
     .insertInto("organisations")
     .values(org)
@@ -122,9 +133,7 @@ export function insertOrganisation(c: Context, org: NewOrganisation) {
     .executeTakeFirst()
 }
 
-export async function checkHandleAvailability(c: Context, handle: string) {
-  const db = getDatabase(c)
-
+export async function checkHandleAvailability(handle: string) {
   const org = await db
     .selectFrom("organisations")
     .selectAll()
@@ -134,8 +143,6 @@ export async function checkHandleAvailability(c: Context, handle: string) {
   return false
 }
 export async function findOrganisationByHandle(c: Context, handle: string) {
-  const db = getDatabase(c)
-
   const org = await db
     .withPlugin(new ParseJSONResultsPlugin())
     .selectFrom("organisations")
@@ -167,8 +174,6 @@ export async function findOrganisationByHandle(c: Context, handle: string) {
   return { ...org, owners }
 }
 export async function findOrganisationByName(c: Context, name: string) {
-  const db = getDatabase(c)
-
   const org = await db
     .selectFrom("organisations")
     .selectAll()
@@ -184,8 +189,7 @@ export async function findOrganisationByName(c: Context, name: string) {
   return org
 }
 
-export function findOrganisationByUserId(c: Context, userId: string) {
-  const db = getDatabase(c)
+export function findOrganisationByUserId(userId: string) {
   return db
     .withPlugin(new ParseJSONResultsPlugin())
     .selectFrom("organisations")
@@ -207,7 +211,6 @@ export function findOrganisationByUserId(c: Context, userId: string) {
 }
 
 export async function findOrganisationById(c: Context, id: string) {
-  const db = getDatabase(c)
   const org = await db
     .withPlugin(new ParseJSONResultsPlugin())
     .selectFrom("organisations")
@@ -239,8 +242,7 @@ export async function findOrganisationById(c: Context, id: string) {
   return { ...org, owners }
 }
 
-export function insertMembers(c: Context, members: NewMember[]) {
-  const db = getDatabase(c)
+export function insertMembers(members: NewMember[]) {
   return db.insertInto("members").values(members).returningAll().execute()
 }
 
@@ -249,8 +251,6 @@ export async function findOrgMemberById(
   userId: string,
   orgId: string
 ) {
-  const db = getDatabase(c)
-
   const member = await db
     .withPlugin(new ParseJSONResultsPlugin())
     .selectFrom("members")
@@ -277,8 +277,6 @@ export async function findOrgMemberPermissions(
   user: AuthUser,
   org: Organisation & { owners: string[] }
 ) {
-  const db = getDatabase(c)
-
   const member = await db
     .withPlugin(new ParseJSONResultsPlugin())
     .selectFrom("members")
@@ -325,9 +323,7 @@ export async function findOrgMemberPermissions(
   return { member, permissions: interpolatedPermissions }
 }
 
-export function findOrgMembers(c: Context, orgId: string) {
-  const db = getDatabase(c)
-
+export function findOrgMembers(orgId: string) {
   return db
     .selectFrom("members")
     .innerJoin("roles", "roles.id", "members.roleId")
@@ -343,7 +339,7 @@ export async function ensureAtLeastOneOwner(
   operation: "remove" | "update"
 ): Promise<void> {
   const t = await useTranslation(c)
-  const currentMembers = await findOrgMembers(c, orgId)
+  const currentMembers = await findOrgMembers(orgId)
   const adminMembers = currentMembers.filter((m) => m.role === ROLE_OWNER)
 
   if (operation === "remove") {
@@ -366,11 +362,9 @@ export async function ensureAtLeastOneOwner(
 }
 
 export async function isOrgMember(
-  c: Context,
   userId: string,
   orgId: string
 ): Promise<boolean> {
-  const db = getDatabase(c)
   const member = await db
     .selectFrom("members")
     .select("userId")
@@ -385,11 +379,7 @@ export async function isOrgMember(
   return !!member
 }
 
-export async function doesOrganisationExist(
-  c: Context,
-  name: string
-): Promise<boolean> {
-  const db = getDatabase(c)
+export async function doesOrganisationExist(name: string): Promise<boolean> {
   const org = await db
     .selectFrom("organisations")
     .select("id")

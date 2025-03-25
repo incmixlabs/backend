@@ -1,15 +1,14 @@
+import { envVars } from "@/env-vars"
+import { db } from "@/lib/db"
 import { healthCheck } from "@/routes/health-check/openapi"
-import type { HonoApp, LocaleRow } from "@/types"
+import type { HonoApp } from "@/types"
 import { OpenAPIHono } from "@hono/zod-openapi"
 
 const healthcheckRoutes = new OpenAPIHono<HonoApp>()
 
 healthcheckRoutes.openapi(healthCheck, async (c) => {
   try {
-    const { results, error } = await c.env.DB.prepare(
-      "select * from locales"
-    ).all<LocaleRow>()
-    if (error) throw error
+    const results = await db.selectFrom("locales").selectAll().execute()
 
     if (!results.length)
       return c.json(
@@ -21,7 +20,7 @@ healthcheckRoutes.openapi(healthCheck, async (c) => {
         200
       )
 
-    const { AUTH_URL, COOKIE_NAME } = c.env
+    const { AUTH_URL, COOKIE_NAME } = envVars
 
     let status = "UP"
     const missing: string[] = []

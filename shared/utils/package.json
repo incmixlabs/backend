@@ -2,37 +2,51 @@
   "name": "@incmix-api/utils",
   "version": "0.0.0",
   "license": "MIT",
+  "type": "module",
+  "scripts": {
+    "build": "tsc && tsc-alias"
+  },
   "exports": {
-    ".": "./src/utils/index.ts",
-    "./middleware": "./src/middleware/index.ts",
-    "./errors": "./src/errors/index.ts",
-    "./kv-store": "./src/kv-store/index.ts",
-    "./types": "./src/types.ts"
+    ".": "./dist/src/utils/index.js",
+    "./middleware": {
+      "default": "./dist/src/middleware/index.js",
+      "types": "./dist/src/middleware/index.d.ts"
+    },
+    "./errors": {
+      "default": "./dist/src/errors/index.js",
+      "types": "./dist/src/errors/index.d.ts"
+    },
+    "./kv-store": {
+      "default": "./dist/src/kv-store/index.js",
+      "types": "./dist/src/kv-store/index.d.ts"
+    },
+    "./types": {
+      "default": "./dist/src/types.js",
+      "types": "./dist/src/types.d.ts"
+    }
   },
   "dependencies": {
+    "@casl/ability": "6.7.2",
     "@hono/sentry": "1.2.0",
+    "@hono/zod-openapi": "catalog:",
+    "@incmix/utils": "catalog:",
     "@intlify/utils": "0.13.0",
     "@scalar/hono-api-reference": "0.5.163",
     "@sentry/utils": "8.42.0",
     "@upstash/redis": "1.34.3",
-    "add": "2.0.6"
+    "add": "2.0.6",
+    "hono": "catalog:",
+    "kysely": "catalog:",
+    "zod": "catalog:"
   },
   "devDependencies": {
     "@casl/ability": "6.7.2",
     "@hono/zod-openapi": "catalog:",
     "@incmix-api/config": "workspace:^",
-    "@incmix/utils": "latest",
-    "hono": "catalog:",
-    "kysely": "0.27.5",
-    "typescript": "5.7.3",
-    "zod": "catalog:"
-  },
-  "peerDependencies": {
-    "@casl/ability": "6.7.2",
-    "@hono/zod-openapi": "catalog:",
-    "@incmix/utils": "latest",
-    "hono": "4.6.12",
-    "kysely": "0.27.5",
-    "zod": "catalog:"
+    "@types/node": "catalog:",
+    "@types/pg": "^8.11.11",
+    "tsc-alias": "^1.8.11",
+    "tsx": "^4.19.3",
+    "typescript": "catalog:"
   }
 }

@@ -1,3 +1,5 @@
+import { envVars } from "@/env-vars"
+import { db } from "@/lib/db"
 import { healthCheck } from "@/routes/health-check/openapi"
 import type { HonoApp } from "@/types"
 import { OpenAPIHono } from "@hono/zod-openapi"
@@ -6,12 +8,9 @@ const healthcheckRoutes = new OpenAPIHono<HonoApp>()
 
 healthcheckRoutes.openapi(healthCheck, async (c) => {
   try {
-    const { results, error } = await c.env.DB.prepare(
-      "select * from roles"
-    ).all()
-    if (error) throw error
+    const roles = await db.selectFrom("roles").selectAll().execute()
 
-    if (!results.length)
+    if (!roles.length)
       return c.json(
         {
           status: "DOWN",
@@ -21,7 +20,7 @@ healthcheckRoutes.openapi(healthCheck, async (c) => {
         200
       )
 
-    const { AUTH_URL, COOKIE_NAME, DOMAIN, INTL_URL, USERS_URL } = c.env
+    const { AUTH_URL, COOKIE_NAME, DOMAIN, INTL_URL, USERS_URL } = envVars
     let status = "UP"
     const missing: string[] = []
 

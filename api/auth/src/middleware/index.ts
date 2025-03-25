@@ -8,17 +8,19 @@ import {
   setupOpenApi,
   setupSentryMiddleware,
 } from "@incmix-api/utils/middleware"
+import { compress } from "hono/compress"
 
 import { getCookie, setCookie } from "hono/cookie"
 
 export const middlewares = (app: OpenAPIHono<HonoApp>) => {
+  app.use("*", compress({ encoding: "gzip" }))
   setupCors(app, BASE_PATH)
   setupSentryMiddleware(app, BASE_PATH, "auth")
 
   app.use(`${BASE_PATH}/*`, createI18nMiddleware())
 
   app.use(`${BASE_PATH}/*`, async (c, next) => {
-    const lucia = initializeLucia(c)
+    const lucia = initializeLucia()
     const sessionId = getCookie(c, lucia.sessionCookieName) ?? null
 
     if (!sessionId) {

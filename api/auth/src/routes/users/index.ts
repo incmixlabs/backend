@@ -1,5 +1,5 @@
 import { type Database, type UserColumn, columns } from "@/dbSchema"
-import { findUserById, getDatabase } from "@/lib/db"
+import { db, findUserById } from "@/lib/db"
 import { initializeLucia } from "@/lib/lucia"
 import type { HonoApp } from "@/types"
 import { OpenAPIHono } from "@hono/zod-openapi"
@@ -46,7 +46,6 @@ userRoutes.openapi(getAllUsers, async (c) => {
     const { filters, sort, joinOperator, pagination } =
       parseQueryParams<UserColumn>(queryParams, columns)
 
-    const db = getDatabase(c)
     let query = db
       .selectFrom("users")
       .leftJoin("accounts", "userId", "id")
@@ -57,24 +56,27 @@ userRoutes.openapi(getAllUsers, async (c) => {
         "accounts.provider as oauth",
       ])
 
-    if (filters.length) console.log(filters)
-    query = query.where(({ eb, and, or }) => {
-      const expressions: ExpressionWrapper<
-        Database,
-        "users",
-        string | SqlBool | null | number
-      >[] = []
+    if (filters.length)
+      query = query.where(({ eb, and, or }) => {
+        const expressions: ExpressionWrapper<
+          Database,
+          "users",
+          string | SqlBool | null | number
+        >[] = []
 
-      for (const filter of filters) {
-        const kf = createKyselyFilter<UserColumn, Database, "users">(filter, eb)
-        if (kf) expressions.push(kf)
-      }
+        for (const filter of filters) {
+          const kf = createKyselyFilter<UserColumn, Database, "users">(
+            filter,
+            eb
+          )
+          if (kf) expressions.push(kf)
+        }
 
-      // @ts-expect-error Type issue, fix WIP
-      if (joinOperator === "or") return or(expressions)
-      // @ts-expect-error Type issue, fix WIP
-      return and(expressions)
-    })
+        // @ts-expect-error Type issue, fix WIP
+        if (joinOperator === "or") return or(expressions)
+        // @ts-expect-error Type issue, fix WIP
+        return and(expressions)
+      })
 
     if (sort.length) {
       query = query.orderBy(
@@ -91,6 +93,7 @@ userRoutes.openapi(getAllUsers, async (c) => {
 
     const total = await query
       .select(({ fn }) => fn.count<number>("id").as("count"))
+      .groupBy(["users.id", "accounts.provider"])
       .executeTakeFirst()
 
     if (pagination) {
@@ -160,10 +163,9 @@ userRoutes.openapi(setVerified, async (c) => {
       throw new ForbiddenError("Cannot update own account")
     }
 
-    const db = getDatabase(c)
     const updated = await db
       .updateTable("users")
-      .set("emailVerified", value ? 1 : 0)
+      .set("emailVerified", value)
       .where("id", "=", u.id)
       .returningAll()
       .executeTakeFirst()
@@ -173,7 +175,7 @@ userRoutes.openapi(setVerified, async (c) => {
     }
 
     // Logout users everywhere
-    const lucia = initializeLucia(c)
+    const lucia = initializeLucia()
     await lucia.invalidateUserSessions(updated.id)
 
     return c.json({ message: "Updated Successfully" }, 200)
@@ -210,10 +212,9 @@ userRoutes.openapi(setEnabled, async (c) => {
       throw new ForbiddenError("Cannot update own account")
     }
 
-    const db = getDatabase(c)
     const updated = await db
       .updateTable("users")
-      .set("isActive", value ? 1 : 0)
+      .set("isActive", value)
       .where("id", "=", u.id)
       .returningAll()
       .executeTakeFirst()
@@ -223,7 +224,7 @@ userRoutes.openapi(setEnabled, async (c) => {
     }
 
     // Logout users everywhere
-    const lucia = initializeLucia(c)
+    const lucia = initializeLucia()
     await lucia.invalidateUserSessions(updated.id)
 
     return c.json({ message: "Updated Successfully" }, 200)
@@ -259,8 +260,6 @@ userRoutes.openapi(setPassword, async (c) => {
       throw new ForbiddenError("Cannot update own account")
     }
 
-    const db = getDatabase(c)
-
     const newHash = await new Scrypt().hash(value)
 
     const updated = await db
@@ -275,7 +274,7 @@ userRoutes.openapi(setPassword, async (c) => {
     }
 
     // Logout users everywhere
-    const lucia = initializeLucia(c)
+    const lucia = initializeLucia()
     await lucia.invalidateUserSessions(updated.id)
 
     return c.json({ message: "Updated Successfully" }, 200)

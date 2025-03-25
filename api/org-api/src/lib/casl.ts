@@ -1,5 +1,5 @@
 import type { Permission } from "@incmix/utils/types"
-import get from "lodash/get"
+import get from "lodash/get.js"
 
 export const defaultPermissions: Permission[] = [
   {

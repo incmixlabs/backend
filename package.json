@@ -10,19 +10,23 @@
     "lint": "biome check .",
     "lint:fix": "biome check --fix --unsafe",
     "lint:packages": "pnpx sherif@latest",
-    "postinstall": "lefthook install",
     "typecheck": "turbo typecheck",
     "test": "turbo test",
     "test:e2e": "turbo test:e2e"
   },
   "engines": {
-    "node": ">=22.13.0"
+    "node": ">=22.13.0",
+    "pnpm": ">=9"
+  },
+  "pnpm": {
+    "neverBuiltDependencies": ["@incmix/utils"]
   },
   "packageManager": "pnpm@9.15.4",
   "devDependencies": {
     "@biomejs/biome": "1.9.4",
     "@commitlint/cli": "19.6.1",
     "@commitlint/config-conventional": "19.6.0",
+    "@flydotio/dockerfile": "^0.7.8",
     "@turbo/gen": "2.3.3",
     "lefthook": "1.10.4",
     "turbo": "2.3.3"
