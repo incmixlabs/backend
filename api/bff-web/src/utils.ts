@@ -1,6 +1,6 @@
 import { stream } from "hono/streaming"
-import type { Context } from "./types"
 import type { ContentfulStatusCode } from "hono/utils/http-status"
+import type { Context } from "./types"
 
 export async function returnResponse(res: Response, c: Context) {
   const contentType = res.headers.get("content-type")
