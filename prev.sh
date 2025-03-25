@@ -2,15 +2,15 @@
 set -e
 
 # Run all deployments in parallel and capture their output
-fly deploy --config ./deployment/prev/fly.incmix-auth.toml 2>&1 | sed 's/^/[auth] /' &
-fly deploy --config ./deployment/prev/fly.incmix-bff-web.toml 2>&1 | sed 's/^/[bff-web] /' &
-fly deploy --config ./deployment/prev/fly.incmix-intl.toml 2>&1 | sed 's/^/[intl] /' &
-fly deploy --config ./deployment/prev/fly.incmix-email.toml 2>&1 | sed 's/^/[email] /' &
-fly deploy --config ./deployment/prev/fly.incmix-files.toml 2>&1 | sed 's/^/[files] /' &
-fly deploy --config ./deployment/prev/fly.incmix-location.toml 2>&1 | sed 's/^/[location] /' &
-fly deploy --config ./deployment/prev/fly.incmix-org.toml 2>&1 | sed 's/^/[org] /' &
-fly deploy --config ./deployment/prev/fly.incmix-tasks.toml 2>&1 | sed 's/^/[tasks] /' &
-fly deploy --config ./deployment/prev/fly.incmix-users.toml 2>&1 | sed 's/^/[users] /' &
+flyctl deploy --config ./deployment/prev/fly.incmix-auth.toml 2>&1 | sed 's/^/[auth] /' &
+flyctl deploy --config ./deployment/prev/fly.incmix-bff-web.toml 2>&1 | sed 's/^/[bff-web] /' &
+flyctl deploy --config ./deployment/prev/fly.incmix-intl.toml 2>&1 | sed 's/^/[intl] /' &
+flyctl deploy --config ./deployment/prev/fly.incmix-email.toml 2>&1 | sed 's/^/[email] /' &
+flyctl deploy --config ./deployment/prev/fly.incmix-files.toml 2>&1 | sed 's/^/[files] /' &
+flyctl deploy --config ./deployment/prev/fly.incmix-location.toml 2>&1 | sed 's/^/[location] /' &
+flyctl deploy --config ./deployment/prev/fly.incmix-org.toml 2>&1 | sed 's/^/[org] /' &
+flyctl deploy --config ./deployment/prev/fly.incmix-tasks.toml 2>&1 | sed 's/^/[tasks] /' &
+flyctl deploy --config ./deployment/prev/fly.incmix-users.toml 2>&1 | sed 's/^/[users] /' &
 
 # Wait for all background processes to complete
 wait
