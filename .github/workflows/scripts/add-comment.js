@@ -10,7 +10,7 @@ module.exports = async ({ github, context }) => {
     "<table><tr><td><strong>Status:</strong><td>✅ Deploy successful!<tr><td><strong>BFF Preview URL:</strong><td><a href=https://bff-web-incmix-api.fly.dev/api/auth/reference>https://bff-web-incmix-api.fly.dev/api/auth/reference</a></table>"
 
   for (const c of comments.data) {
-    const isDocs = c.body?.includes("Auth Preview URL")
+    const isDocs = c.body?.includes("BFF Preview URL")
     if (isDocs) {
       await github.rest.issues.updateComment({
         repo: context.repo.repo,
