@@ -11,11 +11,6 @@ jobs:
     name: Build and Deploy
     env:
       FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
-      # SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
-      # SENTRY_ORG: "incmix"
-      # SENTRY_PROJECT: "incmix-be-prev"
-      # CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_SECRET }}
-      # CLOUDFLARE_ACCOUNT_ID: "337b73d40247ca97f4eaa7ea3dfc96df"
     steps:
       - uses: actions/checkout@v4
       - uses: superfly/flyctl-actions/setup-flyctl@master
@@ -40,16 +35,16 @@ jobs:
   #       run: pnpx playwright install --with-deps
   #     - name: Run Playwright tests
   #       run: pnpm test:e2e
-  # add_comment:
-  #   needs: [deploy]
-  #   runs-on: ubuntu-latest
-  #   name: Add Comments
-  #   steps:
-  #     - uses: actions/checkout@v4
-  #     - uses: actions/github-script@v7
-  #       with:
-  #         script: |
-  #           const script = require('./.github/workflows/scripts/add-comment.js')
-  #           await script({github,context,core})
+  add_comment:
+    needs: [deploy]
+    runs-on: ubuntu-latest
+    name: Add Comments
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/github-script@v7
+        with:
+          script: |
+            const script = require('./.github/workflows/scripts/add-comment.js')
+            await script({github,context,core})
 
 
