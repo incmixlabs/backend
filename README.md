@@ -1,6 +1,4 @@
-# Incmix Monorepo
-
-## Scaffolded from turborepo-nextjs
+# Incmix API Monorepo
 
 ## The Tech stack is
 
@@ -12,13 +10,14 @@
 - [x] zustand
 - [x] tailwind
 - [x] radix-ui and shadcn
-- [x] lucia auth
 
 ### Server
 
 - [x] pnpm
-- [x] hono
-- [ ] backend postgres (porsager/postgres)
+- [x] hono (Nodejs)
+- [x] lucia auth
+- [x] backend postgres (postgres)
+- [x] Deployment (Flyio)
 
 *Backend APIs*
 
@@ -34,5 +33,7 @@
 | *email-api*    |              |
 | email          | sendgrid.com |
 
-
-
+## How to Run
+1. Install Docker
+2. Run ```docker compose up -d``` to start database containers
+3. Run ```pnpm dev``` to start APIs
