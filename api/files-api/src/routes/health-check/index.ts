@@ -1,30 +1,34 @@
 import { envVars } from "@/env-vars"
-import { db } from "@/lib/db"
+import { S3 } from "@/lib/s3"
 import type { HonoApp } from "@/types"
+import { ListObjectsV2Command } from "@aws-sdk/client-s3"
 import { createHealthCheckRoute } from "@incmix-api/utils"
 
 const healthcheckRoutes = createHealthCheckRoute<HonoApp>({
   // Pass all environment variables to check
   envVars: {
+    AUTH_URL: envVars.AUTH_URL,
+    BUCKET_NAME: envVars.BUCKET_NAME,
     COOKIE_NAME: envVars.COOKIE_NAME,
     DOMAIN: envVars.DOMAIN,
-    EMAIL_URL: envVars.EMAIL_URL,
-    FRONTEND_URL: envVars.FRONTEND_URL,
-    GOOGLE_CLIENT_ID: envVars.GOOGLE_CLIENT_ID,
-    GOOGLE_CLIENT_SECRET: envVars.GOOGLE_CLIENT_SECRET,
-    GOOGLE_REDIRECT_URL: envVars.GOOGLE_REDIRECT_URL,
     INTL_URL: envVars.INTL_URL,
-    USERS_API_URL: envVars.USERS_API_URL,
+    AWS_ACCESS_KEY_ID: envVars.AWS_ACCESS_KEY_ID,
+    AWS_SECRET_ACCESS_KEY: envVars.AWS_SECRET_ACCESS_KEY,
+    AWS_REGION: envVars.AWS_REGION,
+    AWS_ENDPOINT_URL_S3: envVars.AWS_ENDPOINT_URL_S3,
   },
   
   // Add service-specific checks
   checks: [
     {
-      name: "Database",
+      name: "S3 Bucket",
       check: async () => {
         try {
-          // Simple query to check database connectivity
-          await db.selectFrom("users").selectAll().limit(1).execute()
+          const command = new ListObjectsV2Command({
+            Bucket: envVars.BUCKET_NAME,
+            MaxKeys: 1,
+          })
+          await S3.send(command)
           return true
         } catch (error) {
           return false
@@ -36,8 +40,8 @@ const healthcheckRoutes = createHealthCheckRoute<HonoApp>({
   // Set OpenAPI tags
   tags: ["Health Check"],
   
-  // No authentication required for health check
-  requireAuth: false,
+  // Require authentication (optional)
+  requireAuth: true,
 })
 
 export default healthcheckRoutes
