@@ -21,7 +21,7 @@ export type HealthCheckConfig = {
    * Key is the environment variable name, value is the actual value
    */
   envVars?: Record<string, string | undefined>
-  
+
   /**
    * Additional health check functions that return true if healthy
    * Each function should return a promise that resolves to a boolean
@@ -31,12 +31,12 @@ export type HealthCheckConfig = {
     name: string
     check: () => Promise<boolean>
   }>
-  
+
   /**
    * OpenAPI tags for documentation
    */
   tags?: string[]
-  
+
   /**
    * Whether to require authentication for the health check endpoint
    */
@@ -46,7 +46,9 @@ export type HealthCheckConfig = {
 /**
  * Create a health check route
  */
-export function createHealthCheckRoute<T extends object = any>(config: HealthCheckConfig) {
+export function createHealthCheckRoute<T extends object = any>(
+  config: HealthCheckConfig
+) {
   const tags = config.tags || ["Health Check"]
   const security = config.requireAuth ? [{ cookieAuth: [] }] : undefined
 
@@ -71,7 +73,7 @@ export function createHealthCheckRoute<T extends object = any>(config: HealthChe
 
   // Create the Hono route handler
   const healthCheckRoutes = new OpenAPIHono<T>()
-  
+
   healthCheckRoutes.openapi(healthCheckRoute, async (c) => {
     try {
       let status = "UP"
@@ -99,18 +101,20 @@ export function createHealthCheckRoute<T extends object = any>(config: HealthChe
             }
           } catch (error) {
             status = "DOWN"
-            checkFailures.push(`${name}: ${error instanceof Error ? error.message : String(error)}`)
+            checkFailures.push(
+              `${name}: ${error instanceof Error ? error.message : String(error)}`
+            )
           }
         }
       }
 
       // Combine all failure reasons
       let reason: string | undefined = undefined
-      
+
       if (missing.length > 0) {
         reason = `Env variables missing: [${missing.join(", ")}]`
       }
-      
+
       if (checkFailures.length > 0) {
         const checkFailureStr = `Check failures: [${checkFailures.join(", ")}]`
         reason = reason ? `${reason}, ${checkFailureStr}` : checkFailureStr
@@ -126,7 +130,7 @@ export function createHealthCheckRoute<T extends object = any>(config: HealthChe
     } catch (error) {
       let reason = "Service error"
       if (error instanceof Error) reason = error.message
-      
+
       return c.json(
         {
           status: "DOWN",

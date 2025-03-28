@@ -16,7 +16,7 @@ const healthcheckRoutes = createHealthCheckRoute<HonoApp>({
     INTL_URL: envVars.INTL_URL,
     USERS_API_URL: envVars.USERS_API_URL,
   },
-  
+
   // Add service-specific checks
   checks: [
     {
@@ -26,16 +26,16 @@ const healthcheckRoutes = createHealthCheckRoute<HonoApp>({
           // Simple query to check database connectivity
           await db.selectFrom("users").selectAll().limit(1).execute()
           return true
-        } catch (error) {
+        } catch (_error) {
           return false
         }
       },
     },
   ],
-  
+
   // Set OpenAPI tags
   tags: ["Health Check"],
-  
+
   // No authentication required for health check
   requireAuth: false,
 })

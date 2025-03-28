@@ -21,7 +21,7 @@ const healthcheckRoutes = createHealthCheckRoute<HonoApp>({
     AWS_REGION: envVars.AWS_REGION,
     AWS_ENDPOINT_URL_S3: envVars.AWS_ENDPOINT_URL_S3,
   },
-  
+
   // Add service-specific checks
   checks: [
     {
@@ -34,16 +34,16 @@ const healthcheckRoutes = createHealthCheckRoute<HonoApp>({
           })
           await S3.send(command)
           return true
-        } catch (error) {
+        } catch (_error) {
           return false
         }
       },
     },
   ],
-  
+
   // Set OpenAPI tags
   tags: ["Health Check"],
-  
+
   // Require authentication (optional)
   requireAuth: true,
 })
