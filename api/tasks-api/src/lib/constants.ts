@@ -51,3 +51,7 @@ export const ERROR_PARENT_NOT_FOUND = {
   namespace: "errors",
   key: "parent_not_found",
 }
+export const ERROR_USER_STORY_GENERATION_FAILED = {
+  namespace: "errors",
+  key: "user_story_generation_failed",
+}

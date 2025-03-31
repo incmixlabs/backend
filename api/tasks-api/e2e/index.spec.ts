@@ -38,6 +38,45 @@ test("Delete Task by ID", async ({ request }) => {
   expect((await res.json()).id).toBe(TASKID)
 })
 
+test("Generate user story without login", async ({ request }) => {
+  const res = await request.post("/api/tasks/generate-user-story", {
+    data: {
+      prompt: "create a dashboard"
+    }
+  })
+  expect(res.status()).toBe(401)
+})
+
+test("Generate user story with free tier", async ({ request }) => {
+  await login(request)
+  const res = await request.post("/api/tasks/generate-user-story", {
+    data: {
+      prompt: "create a dashboard",
+      userTier: "free"
+    }
+  })
+  expect(res.status()).toBe(200)
+  const data = await res.json()
+  expect(data.userStory).toBeDefined()
+  expect(typeof data.userStory).toBe("string")
+  expect(data.userStory.length).toBeGreaterThan(50)
+})
+
+test("Generate user story with paid tier", async ({ request }) => {
+  await login(request)
+  const res = await request.post("/api/tasks/generate-user-story", {
+    data: {
+      prompt: "create a dashboard",
+      userTier: "paid"
+    }
+  })
+  expect(res.status()).toBe(200)
+  const data = await res.json()
+  expect(data.userStory).toBeDefined()
+  expect(typeof data.userStory).toBe("string")
+  expect(data.userStory.length).toBeGreaterThan(50)
+})
+
 async function login(request: APIRequestContext) {
   const loginRes = await request.post(
     "https://auth-api-dev-prev.uincmix.workers.dev/api/auth/login",
