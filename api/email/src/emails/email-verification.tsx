@@ -1,3 +1,4 @@
+import * as React from "react"
 import {
   Body,
   Button,
@@ -10,8 +11,7 @@ import {
   Section,
   Tailwind,
   Text,
-} from "@react-email/components"
-import * as React from "react"
+} from "./react-email-import"
 
 import { contents } from "@/emails/contents"
 import { config } from "@incmix/utils/env"
