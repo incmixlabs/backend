@@ -5,8 +5,14 @@ test.setTimeout(120000)
 // Helper function to login
 async function login(request: APIRequestContext) {
   const loginRes = await request.post(
-    "https://auth-api-dev-prev.uincmix.workers.dev/api/auth/login",
-    { data: { email: "test.user1@example.com", password: "1234" } }
+    process.env.AUTH_API_ENDPOINT ||
+      "https://auth-api-dev-prev.uincmix.workers.dev/api/auth/login",
+    {
+      data: {
+        email: process.env.TEST_USER_EMAIL || "test.user1@example.com",
+        password: process.env.TEST_USER_PASSWORD || "1234",
+      },
+    }
   )
   expect(loginRes.status()).toBe(200)
   const cookie = loginRes.headers()["set-cookie"]?.split(";")[0]
