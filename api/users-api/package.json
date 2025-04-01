@@ -9,25 +9,25 @@
     "test": "vitest --run"
   },
   "dependencies": {
-    "@hono/node-server": "^1.13.8",
+    "@hono/node-server": "catalog:",
     "@hono/zod-openapi": "catalog:",
-    "@hono/zod-validator": "0.4.1",
+    "@hono/zod-validator": "catalog:",
     "@incmix-api/utils": "workspace:^",
     "@incmix/utils": "catalog:",
     "hono": "catalog:",
     "kysely": "catalog:",
-    "kysely-ctl": "0.12.1",
+    "kysely-ctl": "catalog:",
     "pg": "catalog:",
     "zod": "catalog:"
   },
   "devDependencies": {
     "@incmix-api/config": "workspace:^",
     "@types/node": "catalog:",
-    "@types/pg": "^8.11.11",
-    "tsc-alias": "^1.8.11",
-    "tsx": "^4.19.3",
+    "@types/pg": "catalog:",
+    "tsc-alias": "catalog:",
+    "tsx": "catalog:",
     "typescript": "catalog:",
-    "vite-tsconfig-paths": "5.1.4",
+    "vite-tsconfig-paths": "catalog:",
     "vitest": "catalog:"
   }
 }
