@@ -116,7 +116,7 @@ describe("Files Routes", () => {
       )?.handler
 
       expect(handler).toBeDefined()
-      await handler?.(mockContext as any)
+      await handler?.(mockContext as any, {} as any)
 
       // Verify S3 client was used with correct command
       expect(getSignedUrl).toHaveBeenCalledWith(
@@ -152,7 +152,7 @@ describe("Files Routes", () => {
         }
       })
 
-      await handler?.(mockContext as any)
+      await handler?.(mockContext as any, {} as any)
 
       // Verify error was processed
       expect(processErrorMock).toHaveBeenCalled()
@@ -167,7 +167,7 @@ describe("Files Routes", () => {
       )?.handler
 
       expect(handler).toBeDefined()
-      await handler?.(mockContext as any)
+      await handler?.(mockContext as any, {} as any)
 
       // Verify S3 client was used with correct command
       expect(getSignedUrl).toHaveBeenCalledWith(
@@ -192,7 +192,7 @@ describe("Files Routes", () => {
       )?.handler
 
       expect(handler).toBeDefined()
-      await handler?.(mockContext as any)
+      await handler?.(mockContext as any, {} as any)
 
       // Verify S3 client was used with correct command
       expect(S3.send).toHaveBeenCalledWith(expect.any(ListObjectsCommand))
@@ -221,7 +221,7 @@ describe("Files Routes", () => {
       )?.handler
 
       expect(handler).toBeDefined()
-      await handler?.(mockContext as any)
+      await handler?.(mockContext as any, {} as any)
 
       // Verify Upload was initialized with correct params
       expect(Upload).toHaveBeenCalledWith(
@@ -255,7 +255,7 @@ describe("Files Routes", () => {
       )?.handler
 
       expect(handler).toBeDefined()
-      await handler?.(mockContext as any)
+      await handler?.(mockContext as any, {} as any)
 
       // Verify HeadObject was called to check if file exists
       expect(S3.send).toHaveBeenCalledWith(expect.any(HeadObjectCommand))
