@@ -1,8 +1,12 @@
-import { describe, expect, it, vi } from "vitest"
-import { listDirectories, listFiles, formatAndWriteWithPrettier } from "@/lib/filesystem"
 import * as fs from "node:fs/promises"
+import {
+  formatAndWriteWithPrettier,
+  listDirectories,
+  listFiles,
+} from "@/lib/filesystem"
 import * as pkgTypes from "pkg-types"
 import prettier from "prettier"
+import { describe, expect, it, vi } from "vitest"
 
 // Mock external dependencies
 vi.mock("node:fs/promises")
@@ -20,8 +24,10 @@ describe("filesystem utils", () => {
       ] as fs.Dirent[])
 
       const result = await listDirectories("/test/path")
-      
-      expect(fs.readdir).toHaveBeenCalledWith("/test/path", { withFileTypes: true })
+
+      expect(fs.readdir).toHaveBeenCalledWith("/test/path", {
+        withFileTypes: true,
+      })
       expect(result).toHaveLength(2)
       expect(result[0].name).toBe("dir1")
       expect(result[1].name).toBe("dir2")
@@ -38,8 +44,10 @@ describe("filesystem utils", () => {
       ] as fs.Dirent[])
 
       const result = await listFiles("/test/path")
-      
-      expect(fs.readdir).toHaveBeenCalledWith("/test/path", { withFileTypes: true })
+
+      expect(fs.readdir).toHaveBeenCalledWith("/test/path", {
+        withFileTypes: true,
+      })
       expect(result).toHaveLength(2)
       expect(result[0].name).toBe("file1")
       expect(result[1].name).toBe("file2")
@@ -52,7 +60,9 @@ describe("filesystem utils", () => {
       vi.resetAllMocks()
 
       // Setup common mocks
-      vi.mocked(pkgTypes.findFarthestFile).mockResolvedValue("/path/to/prettier.config.js")
+      vi.mocked(pkgTypes.findFarthestFile).mockResolvedValue(
+        "/path/to/prettier.config.js"
+      )
       vi.mocked(prettier.resolveConfig).mockResolvedValue({ tabWidth: 2 })
       vi.mocked(prettier.format).mockResolvedValue("formatted content")
       vi.mocked(fs.writeFile).mockResolvedValue()
@@ -65,12 +75,17 @@ describe("filesystem utils", () => {
         parser: "babel" as prettier.BuiltInParserName,
       })
 
-      expect(prettier.resolveConfig).toHaveBeenCalledWith("/path/to/prettier.config.js")
+      expect(prettier.resolveConfig).toHaveBeenCalledWith(
+        "/path/to/prettier.config.js"
+      )
       expect(prettier.format).toHaveBeenCalledWith("content to format", {
         tabWidth: 2,
         parser: "babel",
       })
-      expect(fs.writeFile).toHaveBeenCalledWith("/output/path.js", "formatted content")
+      expect(fs.writeFile).toHaveBeenCalledWith(
+        "/output/path.js",
+        "formatted content"
+      )
     })
 
     it("should format with filePath when filePath is provided", async () => {
@@ -79,29 +94,38 @@ describe("filesystem utils", () => {
         filePath: "/input/path.js",
       })
 
-      expect(prettier.resolveConfig).toHaveBeenCalledWith("/path/to/prettier.config.js")
+      expect(prettier.resolveConfig).toHaveBeenCalledWith(
+        "/path/to/prettier.config.js"
+      )
       expect(prettier.format).toHaveBeenCalledWith("content to format", {
         tabWidth: 2,
         filepath: "/input/path.js",
       })
-      expect(fs.writeFile).toHaveBeenCalledWith("/input/path.js", "formatted content")
+      expect(fs.writeFile).toHaveBeenCalledWith(
+        "/input/path.js",
+        "formatted content"
+      )
     })
 
     it("should throw error if prettier config not found", async () => {
       vi.mocked(prettier.resolveConfig).mockResolvedValue(null)
 
-      await expect(formatAndWriteWithPrettier({
-        content: "content to format",
-        filePath: "/input/path.js",
-      })).rejects.toThrow("Prettier config not found")
+      await expect(
+        formatAndWriteWithPrettier({
+          content: "content to format",
+          filePath: "/input/path.js",
+        })
+      ).rejects.toThrow("Prettier config not found")
     })
 
     it("should throw error if neither outputFilePath nor filePath is provided", async () => {
       // @ts-expect-error - Intentionally testing invalid input
-      await expect(formatAndWriteWithPrettier({
-        content: "content to format",
-        parser: "babel" as prettier.BuiltInParserName,
-      })).rejects.toThrow("outputFilePath or filePath must be provided")
+      await expect(
+        formatAndWriteWithPrettier({
+          content: "content to format",
+          parser: "babel" as prettier.BuiltInParserName,
+        })
+      ).rejects.toThrow("outputFilePath or filePath must be provided")
     })
   })
 })
