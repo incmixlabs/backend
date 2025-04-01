@@ -30,9 +30,9 @@
   "devDependencies": {
     "@incmix-api/config": "workspace:^",
     "@types/node": "catalog:",
-    "@types/pg": "^8.11.11",
-    "tsc-alias": "^1.8.11",
-    "tsx": "^4.19.3",
+    "@types/pg": "catalog:",
+    "tsc-alias": "catalog:",
+    "tsx": "catalog:",
     "typescript": "catalog:",
     "vitest": "catalog:"
   }
