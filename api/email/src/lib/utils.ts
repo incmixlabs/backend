@@ -1,7 +1,13 @@
 import { config } from "@incmix/utils/env"
 
+export type EmailSender = {
+  apiKey: string
+  to: string
+  subject: string
+  html: string
+}
 export const emailSender = {
-  send: async (apiKey: string, to: string, subject: string, html: string) => {
+  send: async ({ apiKey, to, subject, html }: EmailSender) => {
     return await fetch("https://api.sendgrid.com/v3/mail/send", {
       method: "POST",
       headers: {
