@@ -11,26 +11,26 @@
     "test:e2e": "playwright test"
   },
   "dependencies": {
-    "@hono/node-server": "^1.13.8",
+    "@hono/node-server": "catalog:",
     "@hono/zod-openapi": "catalog:",
-    "@hono/zod-validator": "0.4.1",
+    "@hono/zod-validator": "catalog:",
     "@incmix-api/utils": "workspace:^",
     "@incmix/utils": "catalog:",
     "hono": "catalog:",
     "kysely": "catalog:",
-    "kysely-ctl": "0.12.1",
-    "luxon": "3.5.0",
-    "nanoid": "5.0.9",
+    "kysely-ctl": "catalog:",
+    "luxon": "catalog:",
+    "nanoid": "catalog:",
     "pg": "catalog:",
     "zod": "catalog:"
   },
   "devDependencies": {
     "@incmix-api/config": "workspace:^",
-    "@playwright/test": "1.49.0",
+    "@playwright/test": "catalog:",
     "@types/node": "catalog:",
-    "@types/pg": "^8.11.11",
-    "tsc-alias": "^1.8.11",
-    "tsx": "^4.19.3",
+    "@types/pg": "catalog:",
+    "tsc-alias": "catalog:",
+    "tsx": "catalog:",
     "typescript": "catalog:",
     "vitest": "catalog:"
   }

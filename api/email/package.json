@@ -7,24 +7,22 @@
     "build": "tsc && tsc-alias",
     "start": "kysely migrate:up && node dist/src/index.js",
     "migrate:local": "kysely migrate:up",
-    "dev:email": "email dev --dir src/emails",
-    "deploy": "wrangler deploy dist/index.js --no-bundle",
-    "export": "email export"
+    "deploy": "wrangler deploy dist/index.js --no-bundle"
   },
   "dependencies": {
-    "@hono/node-server": "^1.13.8",
+    "@hono/node-server": "catalog:",
     "@hono/zod-openapi": "catalog:",
-    "@hono/zod-validator": "0.4.1",
+    "@hono/zod-validator": "catalog:",
     "@incmix-api/utils": "workspace:^",
     "@incmix/utils": "catalog:",
     "@react-email/components": "0.0.29",
     "@sendgrid/eventwebhook": "8.0.0",
     "hono": "catalog:",
     "kysely": "catalog:",
-    "kysely-ctl": "0.12.1",
+    "kysely-ctl": "catalog:",
     "pg": "catalog:",
-    "react": "18.3.1",
-    "react-email": "3.0.3",
+    "react": "19.0.0",
+    "react-email": "4.0.2",
     "zod": "catalog:"
   },
   "devDependencies": {
