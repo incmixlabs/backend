@@ -1,3 +1,4 @@
+import type { Dirent } from "node:fs"
 import * as fs from "node:fs/promises"
 import {
   formatAndWriteWithPrettier,
@@ -6,7 +7,7 @@ import {
 } from "@/lib/filesystem"
 import * as pkgTypes from "pkg-types"
 import prettier from "prettier"
-import { describe, expect, it, vi } from "vitest"
+import { beforeEach, describe, expect, it, vi } from "vitest"
 
 // Mock external dependencies
 vi.mock("node:fs/promises")
@@ -18,10 +19,10 @@ describe("filesystem utils", () => {
     it("should return only directories", async () => {
       // Mock readdir to return a mix of files and directories
       vi.mocked(fs.readdir).mockResolvedValue([
-        { name: "dir1", isDirectory: () => true } as fs.Dirent,
-        { name: "file1", isDirectory: () => false } as fs.Dirent,
-        { name: "dir2", isDirectory: () => true } as fs.Dirent,
-      ] as fs.Dirent[])
+        { name: "dir1", isDirectory: () => true } as Dirent,
+        { name: "file1", isDirectory: () => false } as Dirent,
+        { name: "dir2", isDirectory: () => true } as Dirent,
+      ] as Dirent[])
 
       const result = await listDirectories("/test/path")
 
@@ -38,10 +39,10 @@ describe("filesystem utils", () => {
     it("should return only files", async () => {
       // Mock readdir to return a mix of files and directories
       vi.mocked(fs.readdir).mockResolvedValue([
-        { name: "dir1", isFile: () => false } as fs.Dirent,
-        { name: "file1", isFile: () => true } as fs.Dirent,
-        { name: "file2", isFile: () => true } as fs.Dirent,
-      ] as fs.Dirent[])
+        { name: "dir1", isFile: () => false } as Dirent,
+        { name: "file1", isFile: () => true } as Dirent,
+        { name: "file2", isFile: () => true } as Dirent,
+      ] as Dirent[])
 
       const result = await listFiles("/test/path")
 
@@ -119,12 +120,11 @@ describe("filesystem utils", () => {
     })
 
     it("should throw error if neither outputFilePath nor filePath is provided", async () => {
-      // @ts-expect-error - Intentionally testing invalid input
       await expect(
         formatAndWriteWithPrettier({
           content: "content to format",
           parser: "babel" as prettier.BuiltInParserName,
-        })
+        } as any)
       ).rejects.toThrow("outputFilePath or filePath must be provided")
     })
   })
