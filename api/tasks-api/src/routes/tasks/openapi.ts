@@ -251,7 +251,8 @@ export const generateUserStory = createRoute({
   path: "/generate-user-story",
   summary: "Generate User Story",
   tags: ["Tasks"],
-  description: "Generate a user story from a prompt using AI (Claude for paid users, Gemini for free)",
+  description:
+    "Generate a user story from a prompt using AI (Claude for paid users, Gemini for free)",
   security: [{ cookieAuth: [] }],
   request: {
     body: {

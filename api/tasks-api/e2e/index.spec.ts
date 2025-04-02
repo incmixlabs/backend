@@ -41,8 +41,8 @@ test("Delete Task by ID", async ({ request }) => {
 test("Generate user story without login", async ({ request }) => {
   const res = await request.post("/api/tasks/generate-user-story", {
     data: {
-      prompt: "create a dashboard"
-    }
+      prompt: "create a dashboard",
+    },
   })
   expect(res.status()).toBe(401)
 })
@@ -52,8 +52,8 @@ test("Generate user story with free tier", async ({ request }) => {
   const res = await request.post("/api/tasks/generate-user-story", {
     data: {
       prompt: "create a dashboard",
-      userTier: "free"
-    }
+      userTier: "free",
+    },
   })
   expect(res.status()).toBe(200)
   const data = await res.json()
@@ -67,8 +67,8 @@ test("Generate user story with paid tier", async ({ request }) => {
   const res = await request.post("/api/tasks/generate-user-story", {
     data: {
       prompt: "create a dashboard",
-      userTier: "paid"
-    }
+      userTier: "paid",
+    },
   })
   expect(res.status()).toBe(200)
   const data = await res.json()
