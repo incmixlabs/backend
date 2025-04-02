@@ -1,8 +1,10 @@
 import {
   CreateTaskSchema,
+  GenerateUserStorySchema,
   ParamSchema,
   TaskListSchema,
   UpdateTaskSchema,
+  UserStoryResponseSchema,
 } from "@/routes/tasks/types"
 import { createRoute } from "@hono/zod-openapi"
 import { TaskSchema } from "@incmix/utils/types"
@@ -224,6 +226,59 @@ export const deleteTask = createRoute({
         },
       },
       description: "Error response when Task deletion fails",
+    },
+    401: {
+      content: {
+        "application/json": {
+          schema: ResponseSchema,
+        },
+      },
+      description: "Error response when not authenticated",
+    },
+    500: {
+      content: {
+        "application/json": {
+          schema: ResponseSchema,
+        },
+      },
+      description: "Internal Server Error",
+    },
+  },
+})
+
+export const generateUserStory = createRoute({
+  method: "post",
+  path: "/generate-user-story",
+  summary: "Generate User Story",
+  tags: ["Tasks"],
+  description:
+    "Generate a user story from a prompt using AI (Claude for paid users, Gemini for free)",
+  security: [{ cookieAuth: [] }],
+  request: {
+    body: {
+      content: {
+        "application/json": {
+          schema: GenerateUserStorySchema,
+        },
+      },
+    },
+  },
+  responses: {
+    200: {
+      content: {
+        "application/json": {
+          schema: UserStoryResponseSchema,
+        },
+      },
+      description: "Returns the generated user story in markdown format",
+    },
+    400: {
+      content: {
+        "application/json": {
+          schema: ResponseSchema,
+        },
+      },
+      description: "Error response when user story generation fails",
     },
     401: {
       content: {

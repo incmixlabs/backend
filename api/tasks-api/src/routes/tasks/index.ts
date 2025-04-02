@@ -5,11 +5,14 @@ import {
   ERROR_TASK_INSERT_FAIL,
   ERROR_TASK_NOT_FOUND,
   ERROR_TASK_UPDATE_FAIL,
+  ERROR_USER_STORY_GENERATION_FAILED,
 } from "@/lib/constants"
 import { db } from "@/lib/db"
+import { generateUserStory as aiGenerateUserStory } from "@/lib/services"
 import {
   createTask,
   deleteTask,
+  generateUserStory,
   listTasks,
   taskById,
   updateTask,
@@ -258,6 +261,33 @@ tasksRoutes.openapi(deleteTask, async (c) => {
     return await processError<typeof deleteTask>(c, error, [
       "{{ default }}",
       "delete-task",
+    ])
+  }
+})
+
+tasksRoutes.openapi(generateUserStory, async (c) => {
+  try {
+    const user = c.get("user")
+    const t = await useTranslation(c)
+    if (!user) {
+      const msg = await t.text(ERROR_UNAUTHORIZED)
+      return c.json({ message: msg }, 401)
+    }
+
+    const { prompt, userTier } = c.req.valid("json")
+
+    try {
+      const userStory = await aiGenerateUserStory(c, prompt, userTier)
+      return c.json({ userStory }, 200)
+    } catch (error) {
+      console.error("User story generation failed:", error)
+      const msg = await t.text(ERROR_USER_STORY_GENERATION_FAILED)
+      return c.json({ message: msg }, 400)
+    }
+  } catch (error) {
+    return await processError<typeof generateUserStory>(c, error, [
+      "{{ default }}",
+      "generate-user-story",
     ])
   }
 })
