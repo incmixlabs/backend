@@ -686,3 +686,47 @@ export const getOrganizationPermissions = createRoute({
     },
   },
 })
+export const getRolesPermissions = createRoute({
+  method: "get",
+  path: "/{handle}/roles-permissions",
+  summary: "Get Organisation Roles and Permissions",
+  tags: ["Organisations"],
+  security: [{ cookieAuth: [] }],
+  request: {
+    params: OrgHandleSchema,
+  },
+  responses: {
+    200: {
+      content: {
+        "application/json": {
+          schema: PermissionsResponseSchema,
+        },
+      },
+      description: "Roles and permissions for the organization",
+    },
+    401: {
+      content: {
+        "application/json": {
+          schema: MessageResponseSchema,
+        },
+      },
+      description: "Authentication Error",
+    },
+    404: {
+      content: {
+        "application/json": {
+          schema: MessageResponseSchema,
+        },
+      },
+      description: "Resource not found",
+    },
+    500: {
+      content: {
+        "application/json": {
+          schema: MessageResponseSchema,
+        },
+      },
+      description: "Internal Server Error",
+    },
+  },
+})

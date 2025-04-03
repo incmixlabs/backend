@@ -10,5 +10,5 @@ catalog:
   kysely: 0.27.5
   pg: 8.13.3
   "@hono/zod-openapi": 0.18.3
-  "@incmix/utils": 0.1.0
+  "@incmix/utils": 0.3.1
   "@types/node": 22.10.1

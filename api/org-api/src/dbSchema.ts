@@ -1,6 +1,7 @@
 import type { MongoQuery } from "@casl/ability"
-import type { Action, MemberRole, Subject } from "@incmix/utils/types"
+import type { Action, Subject, UserRole } from "@incmix/utils/types"
 import type {
+  ColumnType,
   Generated,
   Insertable,
   JSONColumnType,
@@ -21,14 +22,24 @@ type MemberTable = {
 
 type RoleTable = {
   id: Generated<number>
-  name: MemberRole
+  name: ColumnType<UserRole, string, string>
 }
 
+type SubjectTable = {
+  id: Generated<number>
+  name: string
+  editable: boolean
+}
+
+type ActionTable = {
+  id: Generated<number>
+  name: string
+}
 export type PermissionTable = {
   id: Generated<number>
   roleId: number
-  action: Action
-  subject: Subject
+  action: ColumnType<Action, string, string>
+  subject: ColumnType<Subject, string, string>
   conditions: JSONColumnType<MongoQuery>
 }
 
@@ -37,6 +48,8 @@ export type Database = {
   members: MemberTable
   roles: RoleTable
   permissions: PermissionTable
+  subjects: SubjectTable
+  actions: ActionTable
 }
 
 export type Organisation = Selectable<OrganisationTable>

@@ -16,6 +16,7 @@ import {
   db,
   doesOrganisationExist,
   ensureAtLeastOneOwner,
+  findAllPermissions,
   findAllRoles,
   findOrgMemberById,
   findOrgMemberPermissions,
@@ -40,6 +41,7 @@ import {
   getOrganisationById,
   getOrganizationMembers,
   getOrganizationPermissions,
+  getRolesPermissions,
   getUserOrganisations,
   removeMembers,
   updateMemberRole,
@@ -48,7 +50,7 @@ import {
 } from "@/routes/organisations/openapi"
 import type { HonoApp } from "@/types"
 import { OpenAPIHono } from "@hono/zod-openapi"
-import { ERROR_UNAUTHORIZED } from "@incmix-api/utils"
+import { ERROR_CASL_FORBIDDEN, ERROR_UNAUTHORIZED } from "@incmix-api/utils"
 import {
   ConflictError,
   ServerError,
@@ -58,10 +60,16 @@ import {
   zodError,
 } from "@incmix-api/utils/errors"
 import { useTranslation } from "@incmix-api/utils/middleware"
-import type { MemberRole } from "@incmix/utils/types"
-import { ROLE_OWNER } from "@incmix/utils/types"
+import {
+  subjects,
+  actions,
+  UserRoles,
+  Permission,
+  UserRole,
+} from "@incmix/utils/types"
 
 import { generateId } from "lucia"
+import { object } from "zod"
 
 const orgRoutes = new OpenAPIHono<HonoApp>({
   defaultHook: zodError,
@@ -203,7 +211,7 @@ orgRoutes.openapi(createOrganisation, async (c) => {
       throw new ConflictError(msg)
     }
 
-    const orgExists = await doesOrganisationExist(name)
+    const orgExists = await doesOrganisationExist(name, user.id)
 
     if (orgExists) {
       const msg = await t.text(ERROR_ORG_EXIST)
@@ -234,7 +242,7 @@ orgRoutes.openapi(createOrganisation, async (c) => {
       throw new ServerError(msg)
     }
 
-    const ownerRole = getRoleIdByName(dbRoles, ROLE_OWNER)
+    const ownerRole = getRoleIdByName(dbRoles, UserRoles.ROLE_OWNER)
     if (!ownerRole) {
       const msg = await t.text(ERROR_NO_ROLES)
       throw new ServerError(msg)
@@ -259,7 +267,7 @@ orgRoutes.openapi(createOrganisation, async (c) => {
         name: newOrg.name,
         handle: newOrg.handle,
         members: [
-          { userId: user.id, role: ROLE_OWNER as MemberRole },
+          { userId: user.id, role: UserRoles.ROLE_OWNER },
           ...members.map((m) => ({ userId: m.userId, role: m.role })),
         ],
       },
@@ -357,6 +365,13 @@ orgRoutes.openapi(updateOrganisation, async (c) => {
       action: "update",
       subject: "Organisation",
     })
+
+    const orgExists = await doesOrganisationExist(name, user.id)
+
+    if (orgExists) {
+      const msg = await t.text(ERROR_ORG_EXIST)
+      throw new ConflictError(msg)
+    }
 
     const updatedOrg = await db
       .updateTable("organisations")
@@ -521,7 +536,10 @@ orgRoutes.openapi(updateMemberRole, async (c) => {
 
     const member = await findOrgMemberById(c, userId, org.id)
 
-    if (member.role === ROLE_OWNER && newRole !== ROLE_OWNER) {
+    if (
+      member.role === UserRoles.ROLE_OWNER &&
+      newRole !== UserRoles.ROLE_OWNER
+    ) {
       await ensureAtLeastOneOwner(c, org.id, [userId], "update")
     }
 
@@ -589,7 +607,7 @@ orgRoutes.openapi(getOrganizationMembers, async (c) => {
         const userDetails = await getUserById(c, member.userId)
         return {
           userId: member.userId,
-          fullName: userDetails.fullName,
+          fullName: userDetails.name,
           email: userDetails.email,
           profileImage: userDetails.profileImage,
           avatar: userDetails.avatar,
@@ -626,6 +644,57 @@ orgRoutes.openapi(getOrganizationPermissions, async (c) => {
     return await processError<typeof getOrganizationPermissions>(c, error, [
       "{{ default }}",
       "get-organization-permissions",
+    ])
+  }
+})
+
+// @ts-expect-error
+orgRoutes.openapi(getRolesPermissions, async (c) => {
+  try {
+    const user = c.get("user")
+    const t = await useTranslation(c)
+    if (!user) {
+      const msg = await t.text(ERROR_UNAUTHORIZED)
+      throw new UnauthorizedError(msg)
+    }
+    if (user.userType !== UserRoles.ROLE_SUPER_ADMIN) {
+      const msg = await t.text(ERROR_CASL_FORBIDDEN)
+      throw new UnauthorizedError(msg)
+    }
+
+    // Create an array of all possible subject-action combinations
+    const subjectActionCombinations = []
+    for (const subject of subjects) {
+      for (const action of actions) {
+        subjectActionCombinations.push({
+          subject,
+          action,
+        })
+      }
+    }
+
+    const roles = await findAllRoles()
+
+    const permissions = await findAllPermissions()
+
+    const permissionsWithRole = permissions.map((permission) => {
+      return {
+        id: permission.id,
+        subject: permission.subject,
+        action: permission.action,
+        ...Object.fromEntries(
+          permissions.map((p) => {
+            const hasPermission = permissions.some((pr) => pr.id === p.id)
+            return [p.role, hasPermission]
+          })
+        ),
+      }
+    })
+    return c.json({ roles, permissions: permissionsWithRole }, 200)
+  } catch (error) {
+    return await processError<typeof getRolesPermissions>(c, error, [
+      "{{ default }}",
+      "get-roles-permissions",
     ])
   }
 })

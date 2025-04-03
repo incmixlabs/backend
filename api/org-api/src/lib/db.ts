@@ -17,13 +17,14 @@ import { createAbilityFromPermissions } from "@incmix/utils/casl"
 
 import { ERROR_CASL_FORBIDDEN, generateSentryHeaders } from "@incmix-api/utils"
 import { useTranslation } from "@incmix-api/utils/middleware"
-import type {
-  Action,
-  AuthUser,
-  Permission,
-  UserProfile,
+import {
+  UserRoles,
+  type Action,
+  type AuthUser,
+  type Permission,
+  type UserProfile,
 } from "@incmix/utils/types"
-import { ROLE_OWNER, ROLE_SUPER_ADMIN } from "@incmix/utils/types"
+
 import { getCookie } from "hono/cookie"
 import { defaultPermissions, interpolate } from "./casl"
 import {
@@ -125,6 +126,21 @@ export function findAllRoles() {
   return db.selectFrom("roles").selectAll().execute()
 }
 
+export function findAllPermissions() {
+  return db
+    .selectFrom("permissions")
+    .innerJoin("roles", "roles.id", "permissions.roleId")
+    .select([
+      "permissions.id",
+      "roles.id as roleId",
+      "roles.name as role",
+      "permissions.action",
+      "permissions.subject",
+      "permissions.conditions",
+    ])
+    .execute()
+}
+
 export function insertOrganisation(org: NewOrganisation) {
   return db
     .insertInto("organisations")
@@ -168,7 +184,7 @@ export async function findOrganisationByHandle(c: Context, handle: string) {
   }
 
   const owners = org.members
-    .filter((m) => m.role === ROLE_OWNER)
+    .filter((m) => m.role === UserRoles.ROLE_OWNER)
     .map((m) => m.userId)
 
   return { ...org, owners }
@@ -236,7 +252,7 @@ export async function findOrganisationById(c: Context, id: string) {
   }
 
   const owners = org.members
-    .filter((m) => m.role === ROLE_OWNER)
+    .filter((m) => m.role === UserRoles.ROLE_OWNER)
     .map((m) => m.userId)
 
   return { ...org, owners }
@@ -309,7 +325,7 @@ export async function findOrgMemberPermissions(
 
   let permissions = member.permissions as Permission[]
 
-  if (user.userType === ROLE_SUPER_ADMIN) {
+  if (user.userType === UserRoles.ROLE_SUPER_ADMIN) {
     permissions = defaultPermissions
   }
 
@@ -340,7 +356,9 @@ export async function ensureAtLeastOneOwner(
 ): Promise<void> {
   const t = await useTranslation(c)
   const currentMembers = await findOrgMembers(orgId)
-  const adminMembers = currentMembers.filter((m) => m.role === ROLE_OWNER)
+  const adminMembers = currentMembers.filter(
+    (m) => m.role === UserRoles.ROLE_OWNER
+  )
 
   if (operation === "remove") {
     const removingAdmins = affectedUserIds.some((userId) =>
@@ -379,14 +397,20 @@ export async function isOrgMember(
   return !!member
 }
 
-export async function doesOrganisationExist(name: string): Promise<boolean> {
+export async function doesOrganisationExist(
+  name: string,
+  userId: string
+): Promise<boolean> {
   const org = await db
     .selectFrom("organisations")
     .select("id")
-    .where("name", "=", name)
+    .where((eb) => eb.and([eb("name", "=", name)]))
     .executeTakeFirst()
 
-  return !!org
+  if (!org) return false
+
+  const members = await findOrgMembers(org.id)
+  return members.some((m) => m.userId === userId)
 }
 
 export async function throwUnlessUserCan({
