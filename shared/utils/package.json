@@ -26,7 +26,7 @@
     }
   },
   "dependencies": {
-    "@casl/ability": "6.7.2",
+    "@casl/ability": "catalog:",
     "@hono/sentry": "1.2.0",
     "@hono/zod-openapi": "catalog:",
     "@incmix/utils": "catalog:",
@@ -40,13 +40,14 @@
     "zod": "catalog:"
   },
   "devDependencies": {
-    "@casl/ability": "6.7.2",
+    "@casl/ability": "catalog:",
     "@hono/zod-openapi": "catalog:",
     "@incmix-api/config": "workspace:^",
     "@types/node": "catalog:",
-    "@types/pg": "^8.11.11",
-    "tsc-alias": "^1.8.11",
-    "tsx": "^4.19.3",
-    "typescript": "catalog:"
+    "@types/pg": "catalog:",
+    "tsc-alias": "catalog:",
+    "tsx": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
   }
 }

@@ -11,25 +11,26 @@
     "test:e2e": "playwright test"
   },
   "dependencies": {
-    "@aws-sdk/client-s3": "3.705.0",
-    "@aws-sdk/lib-storage": "^3.758.0",
-    "@aws-sdk/s3-request-presigner": "3.705.0",
-    "@hono/node-server": "^1.13.8",
+    "@aws-sdk/client-s3": "3.758.0",
+    "@aws-sdk/lib-storage": "3.758.0",
+    "@aws-sdk/s3-request-presigner": "3.758.0",
+    "@hono/node-server": "catalog:",
     "@hono/zod-openapi": "catalog:",
-    "@hono/zod-validator": "0.4.1",
+    "@hono/zod-validator": "catalog:",
     "@incmix-api/utils": "workspace:^",
     "@incmix/utils": "catalog:",
-    "@playwright/test": "1.49.0",
+    "@playwright/test": "catalog:",
     "hono": "catalog:",
-    "pkg-types": "2.1.0",
-    "prettier": "3.5.3",
+    "pkg-types": "catalog:",
+    "prettier": "catalog:",
     "zod": "catalog:"
   },
   "devDependencies": {
     "@incmix-api/config": "workspace:^",
     "@types/node": "catalog:",
-    "tsc-alias": "^1.8.11",
-    "tsx": "^4.19.3",
-    "typescript": "catalog:"
+    "tsc-alias": "catalog:",
+    "tsx": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
   }
 }
