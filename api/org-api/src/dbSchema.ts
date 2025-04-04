@@ -1,5 +1,10 @@
 import type { MongoQuery } from "@casl/ability"
-import type { Action, Subject, UserRole } from "@incmix/utils/types"
+import {
+  type Action,
+  type Subject,
+  type UserRole,
+  UserRoles,
+} from "@incmix/utils/types"
 import type {
   ColumnType,
   Generated,
@@ -8,6 +13,17 @@ import type {
   Selectable,
   Updateable,
 } from "kysely"
+
+const MemberRoles = [
+  UserRoles.ROLE_ADMIN,
+  UserRoles.ROLE_OWNER,
+  UserRoles.ROLE_EDITOR,
+  UserRoles.ROLE_VIEWER,
+  UserRoles.ROLE_COMMENTER,
+] as const
+
+type MemberRole = (typeof MemberRoles)[number]
+
 type OrganisationTable = {
   id: string
   name: string
@@ -22,7 +38,7 @@ type MemberTable = {
 
 type RoleTable = {
   id: Generated<number>
-  name: ColumnType<UserRole, string, string>
+  name: ColumnType<MemberRole, string, string>
 }
 
 type SubjectTable = {

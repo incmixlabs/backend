@@ -4,6 +4,8 @@ import {
   USER_ROLES,
   type UserRole,
   UserRoles,
+  actions,
+  subjects,
 } from "@incmix/utils/types"
 
 export const MessageResponseSchema = z
@@ -112,7 +114,26 @@ export const PermissionsResponseSchema = z
   })
   .openapi("PermissionsResponse")
 
-export const RolesPermissionsResponseSchema = z
+export const PermissionsWithRoleSchema = z
+  .object({
+    subject: z.enum(subjects),
+    action: z.enum(actions),
+    [UserRoles.ROLE_ADMIN]: z.boolean(),
+    [UserRoles.ROLE_EDITOR]: z.boolean(),
+    [UserRoles.ROLE_VIEWER]: z.boolean(),
+    [UserRoles.ROLE_OWNER]: z.boolean(),
+    subRows: z.object({
+      subject: z.enum(subjects),
+      action: z.enum(actions),
+      [UserRoles.ROLE_ADMIN]: z.boolean(),
+      [UserRoles.ROLE_EDITOR]: z.boolean(),
+      [UserRoles.ROLE_VIEWER]: z.boolean(),
+      [UserRoles.ROLE_OWNER]: z.boolean(),
+    }),
+  })
+  .openapi("PermissionsWithRoleSchema")
+
+export const PermissionRolesResponseSchema = z
   .object({
     roles: z
       .object({
@@ -120,16 +141,8 @@ export const RolesPermissionsResponseSchema = z
         id: z.number(),
       })
       .array(),
-    permissions: z
-      .object({
-        id: z.number(),
-        action: z.string(),
-        subject: z.string(),
-      })
-      .array(),
+    permissions: PermissionsWithRoleSchema.array(),
   })
-  .openapi("RolesPermissionsResponse")
+  .openapi("PermissionRolesResponseSchema")
 
-export type PermissionsWithRole = Permission & {
-  [key in UserRole]: boolean
-}
+export type PermissionsWithRole = z.infer<typeof PermissionsWithRoleSchema>
