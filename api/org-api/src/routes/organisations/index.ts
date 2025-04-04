@@ -60,16 +60,10 @@ import {
   zodError,
 } from "@incmix-api/utils/errors"
 import { useTranslation } from "@incmix-api/utils/middleware"
-import {
-  subjects,
-  actions,
-  UserRoles,
-  Permission,
-  UserRole,
-} from "@incmix/utils/types"
+import { UserRoles, actions, subjects } from "@incmix/utils/types"
 
 import { generateId } from "lucia"
-import { object } from "zod"
+import type { PermissionsWithRole } from "./types"
 
 const orgRoutes = new OpenAPIHono<HonoApp>({
   defaultHook: zodError,
@@ -648,7 +642,6 @@ orgRoutes.openapi(getOrganizationPermissions, async (c) => {
   }
 })
 
-// @ts-expect-error
 orgRoutes.openapi(getRolesPermissions, async (c) => {
   try {
     const user = c.get("user")
@@ -677,20 +670,123 @@ orgRoutes.openapi(getRolesPermissions, async (c) => {
 
     const permissions = await findAllPermissions()
 
-    const permissionsWithRole = permissions.map((permission) => {
-      return {
-        id: permission.id,
-        subject: permission.subject,
-        action: permission.action,
-        ...Object.fromEntries(
-          permissions.map((p) => {
-            const hasPermission = permissions.some((pr) => pr.id === p.id)
-            return [p.role, hasPermission]
+    // Create a map of role IDs to their names for easier lookup
+    const roleMap = new Map(roles.map((role) => [role.id, role.name]))
+
+    // Create a map to track which permissions are assigned to which roles
+    const rolePermissionsMap = new Map()
+
+    // Initialize the map with all subject-action combinations for each role
+    for (const role of roles) {
+      rolePermissionsMap.set(role.id, new Set())
+    }
+
+    // Populate the map with actual permissions
+    for (const permission of permissions) {
+      if (permission.roleId) {
+        const permissionSet = rolePermissionsMap.get(permission.roleId)
+        if (permissionSet) {
+          permissionSet.add(`${permission.subject}:${permission.action}`)
+        }
+      }
+    }
+
+    // Group permissions by subject and organize CRUD operations as subRows of 'manage'
+    const permissionsBySubject = new Map()
+
+    // First, process all 'manage' actions to create parent rows
+    subjectActionCombinations.forEach(({ subject, action }) => {
+      if (subject === "all") {
+        return
+      }
+      if (action === "manage") {
+        if (!permissionsBySubject.has(subject)) {
+          permissionsBySubject.set(subject, {
+            parent: null,
+            subRows: [],
           })
-        ),
+        }
+
+        const permissionObj = {
+          subject,
+          action,
+        }
+
+        // Add a boolean flag for each role indicating if this permission exists for that role
+        for (const role of roles) {
+          const roleName = roleMap.get(role.id) || role.name.toLowerCase()
+
+          const hasCreate =
+            rolePermissionsMap.get(role.id)?.has(`${subject}:create`) || false
+          const hasRead =
+            rolePermissionsMap.get(role.id)?.has(`${subject}:read`) || false
+          const hasUpdate =
+            rolePermissionsMap.get(role.id)?.has(`${subject}:update`) || false
+          const hasDelete =
+            rolePermissionsMap.get(role.id)?.has(`${subject}:delete`) || false
+
+          // Set manage to true if the role has all CRUD permissions
+          // @ts-expect-error
+          permissionObj[roleName] =
+            hasCreate && hasRead && hasUpdate && hasDelete
+        }
+
+        permissionsBySubject.get(subject).parent = permissionObj
       }
     })
-    return c.json({ roles, permissions: permissionsWithRole }, 200)
+
+    // Then, process all other actions as subRows
+    subjectActionCombinations.forEach(({ subject, action }) => {
+      if (subject === "all") {
+        return
+      }
+      if (action !== "manage") {
+        if (!permissionsBySubject.has(subject)) {
+          permissionsBySubject.set(subject, {
+            parent: null,
+            subRows: [],
+          })
+        }
+
+        const permissionObj = {
+          subject,
+          action,
+          admin: false,
+          editor: false,
+          viewer: false,
+          owner: false,
+          commenter: false,
+        }
+
+        // Add a boolean flag for each role
+        for (const role of roles) {
+          const roleName = roleMap.get(role.id) || role.name
+          const permissionKey = `${subject}:${action}`
+
+          // Check if this role has this specific permission
+          const hasPermission =
+            rolePermissionsMap.get(role.id)?.has(permissionKey) || false
+
+          permissionObj[roleName] = hasPermission
+        }
+
+        permissionsBySubject.get(subject).subRows.push(permissionObj)
+      }
+    })
+
+    // Transform the map into the final array structure
+    const enhancedPermissions: PermissionsWithRole[] = []
+    permissionsBySubject.forEach(({ parent, subRows }) => {
+      if (parent) {
+        parent.subRows = subRows
+        enhancedPermissions.push(parent)
+      } else {
+        // If there's no parent (manage) row, add the subRows directly
+        enhancedPermissions.push(...subRows)
+      }
+    })
+
+    return c.json({ roles, permissions: enhancedPermissions }, 200)
   } catch (error) {
     return await processError<typeof getRolesPermissions>(c, error, [
       "{{ default }}",
