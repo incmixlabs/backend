@@ -1,5 +1,12 @@
 import { z } from "@hono/zod-openapi"
-import { MemberRoles } from "@incmix/utils/types"
+import {
+  type Permission,
+  USER_ROLES,
+  type UserRole,
+  UserRoles,
+  actions,
+  subjects,
+} from "@incmix/utils/types"
 
 export const MessageResponseSchema = z
   .object({
@@ -14,14 +21,19 @@ export const MemberSchema = z
     userId: z.string().openapi({
       example: "93jpbulpkkavxnz",
     }),
-    role: z.enum(MemberRoles).default("viewer").openapi({ example: "viewer" }),
+    role: z.enum(USER_ROLES).default(UserRoles.ROLE_VIEWER).openapi({
+      example: UserRoles.ROLE_VIEWER,
+    }),
   })
   .openapi("Member")
 
 export const MemberEmailSchema = z
   .object({
     email: z.string().email("Invalid Email"),
-    role: z.enum(MemberRoles).default("viewer").openapi({ example: "viewer" }),
+    role: z
+      .enum(USER_ROLES)
+      .default(UserRoles.ROLE_VIEWER)
+      .openapi({ example: UserRoles.ROLE_VIEWER }),
   })
   .openapi("Member")
 
@@ -40,7 +52,7 @@ export const OrgSchema = z
       example: [
         {
           userId: "93jpbulpkkavxnz",
-          role: "viewer",
+          role: UserRoles.ROLE_VIEWER,
         },
       ],
     }),
@@ -76,7 +88,7 @@ export const CreateOrgSchema = z
       example: "test-organisation",
     }),
     members: z.array(MemberSchema).openapi({
-      example: [{ userId: "93jpbulpkkavxnz", role: "viewer" }],
+      example: [{ userId: "93jpbulpkkavxnz", role: UserRoles.ROLE_VIEWER }],
     }),
   })
   .openapi("Create Organisation")
@@ -101,3 +113,36 @@ export const PermissionsResponseSchema = z
     canCreateWorkspace: z.boolean(),
   })
   .openapi("PermissionsResponse")
+
+export const PermissionsWithRoleSchema = z
+  .object({
+    subject: z.enum(subjects),
+    action: z.enum(actions),
+    [UserRoles.ROLE_ADMIN]: z.boolean(),
+    [UserRoles.ROLE_EDITOR]: z.boolean(),
+    [UserRoles.ROLE_VIEWER]: z.boolean(),
+    [UserRoles.ROLE_OWNER]: z.boolean(),
+    subRows: z.object({
+      subject: z.enum(subjects),
+      action: z.enum(actions),
+      [UserRoles.ROLE_ADMIN]: z.boolean(),
+      [UserRoles.ROLE_EDITOR]: z.boolean(),
+      [UserRoles.ROLE_VIEWER]: z.boolean(),
+      [UserRoles.ROLE_OWNER]: z.boolean(),
+    }),
+  })
+  .openapi("PermissionsWithRoleSchema")
+
+export const PermissionRolesResponseSchema = z
+  .object({
+    roles: z
+      .object({
+        name: z.string(),
+        id: z.number(),
+      })
+      .array(),
+    permissions: PermissionsWithRoleSchema.array(),
+  })
+  .openapi("PermissionRolesResponseSchema")
+
+export type PermissionsWithRole = z.infer<typeof PermissionsWithRoleSchema>

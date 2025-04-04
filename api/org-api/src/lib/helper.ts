@@ -1,7 +1,7 @@
 import type { Role } from "@/dbSchema"
-import type { MemberRole } from "@incmix/utils/types"
+import type { UserRole } from "@incmix/utils/types"
 
-export function getRoleIdByName(dbRoles: Role[], name: MemberRole) {
+export function getRoleIdByName(dbRoles: Role[], name: UserRole) {
   const role = dbRoles.find((r) => r.name === name)
 
   return role?.id
