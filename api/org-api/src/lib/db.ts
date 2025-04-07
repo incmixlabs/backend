@@ -2,7 +2,9 @@ import type {
   Database,
   NewMember,
   NewOrganisation,
+  NewPermission,
   Organisation,
+  UpdatedPermission,
 } from "@/dbSchema"
 import type { Context } from "@/types"
 import { subject as caslSubject } from "@casl/ability"
@@ -21,6 +23,7 @@ import {
   type Action,
   type AuthUser,
   type Permission,
+  type Subject,
   type UserProfile,
   UserRoles,
 } from "@incmix/utils/types"
@@ -139,6 +142,51 @@ export function findAllPermissions() {
       "permissions.conditions",
     ])
     .execute()
+}
+
+export function findPermissionBySubjectAndAction(
+  subject: Subject,
+  action: Action,
+  roleId: number,
+  instance?: Kysely<Database>
+) {
+  return (instance ?? db)
+    .selectFrom("permissions")
+    .selectAll()
+    .where("subject", "=", subject)
+    .where("action", "=", action)
+    .where("roleId", "=", roleId)
+    .executeTakeFirst()
+}
+
+export function insertPermission(
+  permission: NewPermission,
+  instance?: Kysely<Database>
+) {
+  return (instance ?? db)
+    .insertInto("permissions")
+    .values(permission)
+    .returningAll()
+    .executeTakeFirstOrThrow()
+}
+
+export function updatePermission(
+  permission: UpdatedPermission,
+  id: number,
+  instance?: Kysely<Database>
+) {
+  return (instance ?? db)
+    .updateTable("permissions")
+    .set(permission)
+    .where("id", "=", id)
+    .executeTakeFirstOrThrow()
+}
+
+export function deletePermission(id: number, instance?: Kysely<Database>) {
+  return (instance ?? db)
+    .deleteFrom("permissions")
+    .where("id", "=", id)
+    .executeTakeFirstOrThrow()
 }
 
 export function insertOrganisation(org: NewOrganisation) {
@@ -323,9 +371,10 @@ export async function findOrgMemberPermissions(
     throw new NotFoundError(msg)
   }
 
-  let permissions = member.permissions as Permission[]
+  let permissions = member.permissions
 
   if (user.userType === UserRoles.ROLE_SUPER_ADMIN) {
+    // @ts-expect-error - defaultPermissions is not typed
     permissions = defaultPermissions
   }
 
