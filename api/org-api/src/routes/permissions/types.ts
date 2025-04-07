@@ -46,5 +46,3 @@ export const UpdatePermissionSchema = z
     ),
   })
   .openapi("UpdatePermissionSchema")
-
-export type UpdatePermissionSchema = z.infer<typeof UpdatePermissionSchema>

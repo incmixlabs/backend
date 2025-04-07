@@ -2,6 +2,10 @@ import { createRoute } from "@hono/zod-openapi"
 import { MessageResponseSchema } from "../organisations/types"
 import { PermissionRolesResponseSchema, UpdatePermissionSchema } from "./types"
 
+/**
+ * Route for retrieving all roles and permissions.
+ * Requires authentication and appropriate permissions to access data.
+ */
 export const getRolesPermissions = createRoute({
   method: "get",
   path: "/roles-permissions",
@@ -31,7 +35,7 @@ export const getRolesPermissions = createRoute({
           schema: MessageResponseSchema,
         },
       },
-      description: "Resource not found",
+      description: "Forbidden - Insufficient permissions",
     },
     500: {
       content: {
@@ -44,6 +48,10 @@ export const getRolesPermissions = createRoute({
   },
 })
 
+/**
+ * Route for updating permissions for specific roles.
+ * Requires authentication and administrative permissions to modify role permissions.
+ */
 export const updatePermissions = createRoute({
   method: "put",
   path: "/roles-permissions",
@@ -82,7 +90,15 @@ export const updatePermissions = createRoute({
           schema: MessageResponseSchema,
         },
       },
-      description: "Resource not found",
+      description: "Forbidden - Insufficient permissions",
+    },
+    500: {
+      content: {
+        "application/json": {
+          schema: MessageResponseSchema,
+        },
+      },
+      description: "Internal Server Error",
     },
   },
 })
