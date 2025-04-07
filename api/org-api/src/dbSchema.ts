@@ -54,9 +54,9 @@ type ActionTable = {
 export type PermissionTable = {
   id: Generated<number>
   roleId: number
-  action: ColumnType<Action, string, string>
-  subject: ColumnType<Subject, string, string>
-  conditions: JSONColumnType<MongoQuery>
+  action: ColumnType<Action>
+  subject: ColumnType<Subject>
+  conditions: string | null
 }
 
 export type Database = {
@@ -79,3 +79,7 @@ export type UpdatedMember = Updateable<MemberTable>
 export type Role = Selectable<RoleTable>
 export type NewRole = Insertable<RoleTable>
 export type UpdatedRole = Updateable<RoleTable>
+
+export type Permission = Selectable<PermissionTable>
+export type NewPermission = Insertable<PermissionTable>
+export type UpdatedPermission = Updateable<PermissionTable>
