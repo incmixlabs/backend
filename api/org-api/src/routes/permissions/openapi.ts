@@ -1,6 +1,6 @@
 import { createRoute } from "@hono/zod-openapi"
-import { PermissionRolesResponseSchema, UpdatePermissionSchema } from "./types"
 import { MessageResponseSchema } from "../organisations/types"
+import { PermissionRolesResponseSchema, UpdatePermissionSchema } from "./types"
 
 export const getRolesPermissions = createRoute({
   method: "get",
