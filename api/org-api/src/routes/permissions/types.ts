@@ -1,12 +1,5 @@
 import { z } from "@hono/zod-openapi"
-import {
-  type Permission,
-  USER_ROLES,
-  type UserRole,
-  UserRoles,
-  actions,
-  subjects,
-} from "@incmix/utils/types"
+import { UserRoles, actions, subjects } from "@incmix/utils/types"
 
 export const PermissionsWithRoleSchema = z
   .object({
@@ -19,6 +12,19 @@ export const PermissionsWithRoleSchema = z
     [UserRoles.ROLE_COMMENTER]: z.boolean(),
   })
   .openapi("PermissionsWithRoleSchema")
+
+export const AddNewRoleSchema = z
+  .object({
+    name: z.string(),
+  })
+  .openapi("AddNewRoleSchema")
+
+export const UpdateRoleSchema = z
+  .object({
+    id: z.number(),
+    name: z.string(),
+  })
+  .openapi("AddNewRoleSchema")
 
 export const PermissionRolesResponseSchema = z
   .object({

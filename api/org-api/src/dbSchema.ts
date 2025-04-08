@@ -22,7 +22,7 @@ const MemberRoles = [
   UserRoles.ROLE_COMMENTER,
 ] as const
 
-type MemberRole = (typeof MemberRoles)[number]
+export type MemberRole = (typeof MemberRoles)[number]
 
 type OrganisationTable = {
   id: string

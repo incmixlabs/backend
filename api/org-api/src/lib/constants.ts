@@ -37,3 +37,11 @@ export const ERROR_MEMBER_UPDATE_FAIL = {
   key: "member_update_fail",
 }
 export const ERROR_LAST_OWNER = { namespace: "errors", key: "last_owner" }
+export const ERROR_ROLE_ALREADY_EXISTS = {
+  namespace: "errors",
+  key: "role_already_exists",
+}
+export const ERROR_ROLE_NOT_FOUND = {
+  namespace: "errors",
+  key: "role_not_found",
+}

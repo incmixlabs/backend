@@ -1,11 +1,16 @@
 import {
   db,
   deletePermission,
+  deleteRoleById,
   findAllPermissions,
   findAllRoles,
   findPermissionBySubjectAndAction,
+  findRoleById,
+  findRoleByName,
   insertPermission,
+  insertRole,
   updatePermission,
+  updateRoleById,
 } from "@/lib/db"
 import type { HonoApp } from "@/types"
 import { OpenAPIHono } from "@hono/zod-openapi"
@@ -15,6 +20,8 @@ import {
   ERROR_UNAUTHORIZED,
 } from "@incmix-api/utils"
 import {
+  ConflictError,
+  NotFoundError,
   ServerError,
   UnauthorizedError,
   UnprocessableEntityError,
@@ -23,8 +30,18 @@ import {
 } from "@incmix-api/utils/errors"
 import { useTranslation } from "@incmix-api/utils/middleware"
 import { UserRoles, actions, subjects } from "@incmix/utils/types"
-import { getRolesPermissions, updatePermissions } from "./openapi"
+import {
+  addNewRole,
+  deleteRole,
+  getRolesPermissions,
+  updatePermissions,
+  updateRole,
+} from "./openapi"
 
+import {
+  ERROR_ROLE_ALREADY_EXISTS,
+  ERROR_ROLE_NOT_FOUND,
+} from "@/lib/constants"
 import type { PermissionsWithRole } from "./types"
 
 const permissionRoutes = new OpenAPIHono<HonoApp>({
@@ -132,6 +149,11 @@ permissionRoutes.openapi(updatePermissions, async (c) => {
       throw new UnauthorizedError(msg)
     }
 
+    if (user.userType !== UserRoles.ROLE_SUPER_ADMIN) {
+      const msg = await t.text(ERROR_CASL_FORBIDDEN)
+      throw new UnauthorizedError(msg)
+    }
+
     const { updates } = c.req.valid("json")
 
     if (updates.length === 0) {
@@ -186,6 +208,109 @@ permissionRoutes.openapi(updatePermissions, async (c) => {
     return await processError<typeof updatePermissions>(c, error, [
       "{{ default }}",
       "update-permission",
+    ])
+  }
+})
+
+permissionRoutes.openapi(addNewRole, async (c) => {
+  try {
+    const user = c.get("user")
+    const t = await useTranslation(c)
+    if (!user) {
+      const msg = await t.text(ERROR_UNAUTHORIZED)
+      throw new UnauthorizedError(msg)
+    }
+    if (user.userType !== UserRoles.ROLE_SUPER_ADMIN) {
+      const msg = await t.text(ERROR_CASL_FORBIDDEN)
+      throw new UnauthorizedError(msg)
+    }
+
+    const { name } = c.req.valid("json")
+
+    const existingRole = await findRoleByName(name)
+
+    if (existingRole) {
+      const msg = await t.text(ERROR_ROLE_ALREADY_EXISTS)
+      throw new ConflictError(msg)
+    }
+
+    const newRole = await insertRole({ name })
+
+    if (!newRole) {
+      throw new ServerError("Failed to add new role")
+    }
+
+    return c.json({ message: "Role added" }, 201)
+  } catch (error) {
+    return await processError<typeof addNewRole>(c, error, [
+      "{{ default }}",
+      "add-new-role",
+    ])
+  }
+})
+permissionRoutes.openapi(updateRole, async (c) => {
+  try {
+    const user = c.get("user")
+    const t = await useTranslation(c)
+    if (!user) {
+      const msg = await t.text(ERROR_UNAUTHORIZED)
+      throw new UnauthorizedError(msg)
+    }
+    if (user.userType !== UserRoles.ROLE_SUPER_ADMIN) {
+      const msg = await t.text(ERROR_CASL_FORBIDDEN)
+      throw new UnauthorizedError(msg)
+    }
+
+    const { name, id } = c.req.valid("json")
+
+    const existingRole = await findRoleById(id)
+
+    if (!existingRole) {
+      const msg = await t.text(ERROR_ROLE_NOT_FOUND)
+      throw new NotFoundError(msg)
+    }
+
+    const updatedRole = await updateRoleById({ name }, existingRole.id)
+
+    if (!updatedRole) {
+      throw new ServerError("Failed to update role")
+    }
+
+    return c.json({ message: "Role updated" }, 200)
+  } catch (error) {
+    return await processError<typeof updateRole>(c, error, [
+      "{{ default }}",
+      "update-role",
+    ])
+  }
+})
+
+permissionRoutes.openapi(deleteRole, async (c) => {
+  try {
+    const user = c.get("user")
+    const t = await useTranslation(c)
+    if (!user) {
+      const msg = await t.text(ERROR_UNAUTHORIZED)
+      throw new UnauthorizedError(msg)
+    }
+    if (user.userType !== UserRoles.ROLE_SUPER_ADMIN) {
+      const msg = await t.text(ERROR_CASL_FORBIDDEN)
+      throw new UnauthorizedError(msg)
+    }
+
+    const { id } = c.req.valid("param")
+
+    const deletedRole = await deleteRoleById(id)
+
+    if (!deletedRole) {
+      throw new ServerError("Failed to delete role")
+    }
+
+    return c.json({ message: "Role deleted" }, 200)
+  } catch (error) {
+    return await processError<typeof deleteRole>(c, error, [
+      "{{ default }}",
+      "delete-role",
     ])
   }
 })

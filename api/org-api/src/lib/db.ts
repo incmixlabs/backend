@@ -1,10 +1,13 @@
 import type {
   Database,
+  MemberRole,
   NewMember,
   NewOrganisation,
   NewPermission,
+  NewRole,
   Organisation,
   UpdatedPermission,
+  UpdatedRole,
 } from "@/dbSchema"
 import type { Context } from "@/types"
 import { subject as caslSubject } from "@casl/ability"
@@ -127,6 +130,41 @@ export async function isValidUser(c: Context, id: string) {
 
 export function findAllRoles() {
   return db.selectFrom("roles").selectAll().execute()
+}
+
+export function insertRole(role: NewRole) {
+  return db
+    .insertInto("roles")
+    .values({ name: role.name })
+    .returningAll()
+    .executeTakeFirst()
+}
+
+export function findRoleByName(name: string) {
+  return db
+    .selectFrom("roles")
+    .selectAll()
+    .where("name", "=", name as MemberRole)
+    .executeTakeFirst()
+}
+export function findRoleById(id: number) {
+  return db
+    .selectFrom("roles")
+    .selectAll()
+    .where("id", "=", id)
+    .executeTakeFirst()
+}
+
+export function updateRoleById(role: UpdatedRole, id: number) {
+  return db
+    .updateTable("roles")
+    .set(role)
+    .where("id", "=", id)
+    .executeTakeFirst()
+}
+
+export function deleteRoleById(id: number) {
+  return db.deleteFrom("roles").where("id", "=", id).executeTakeFirst()
 }
 
 export function findAllPermissions() {
