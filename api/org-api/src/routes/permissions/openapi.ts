@@ -217,7 +217,7 @@ export const deleteRole = createRoute({
   security: [{ cookieAuth: [] }],
   request: {
     params: z.object({
-      id: z.number(),
+      id: z.coerce.number(),
     }),
   },
   responses: {
