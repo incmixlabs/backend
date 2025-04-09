@@ -163,8 +163,17 @@ export function updateRoleById(role: UpdatedRole, id: number) {
     .executeTakeFirst()
 }
 
-export function deleteRoleById(id: number) {
-  return db.deleteFrom("roles").where("id", "=", id).executeTakeFirst()
+export async function deleteRoleById(id: number) {
+  return await db.transaction().execute(async (tx) => {
+    await tx
+      .deleteFrom("permissions")
+      .where("roleId", "=", id)
+      .executeTakeFirstOrThrow()
+    return await tx
+      .deleteFrom("roles")
+      .where("id", "=", id)
+      .executeTakeFirstOrThrow()
+  })
 }
 
 export function findAllPermissions() {
