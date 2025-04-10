@@ -24,7 +24,7 @@ export const UpdateRoleSchema = z
     id: z.number(),
     name: z.string(),
   })
-  .openapi("AddNewRoleSchema")
+  .openapi("UpdateRoleSchema")
 
 export const PermissionRolesResponseSchema = z
   .object({
