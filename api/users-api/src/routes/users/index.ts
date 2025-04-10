@@ -45,7 +45,7 @@ import type {
 } from "@incmix/utils/types"
 
 import { envVars } from "@/env-vars"
-import { ROLE_MEMBER, ROLE_SUPER_ADMIN } from "@incmix/utils/types"
+import { UserRoles } from "@incmix/utils/types"
 import type { ContentfulStatusCode } from "hono/utils/http-status"
 import type { ExpressionWrapper, OrderByExpression, SqlBool } from "kysely"
 import {
@@ -67,7 +67,7 @@ const userRoutes = new OpenAPIHono<HonoApp>({
 
 userRoutes.openapi(createUserProfile, async (c) => {
   try {
-    const { email, fullName, id, profileImage, avatar, localeId } =
+    const { email, name, id, profileImage, avatar, localeId } =
       c.req.valid("json")
 
     const existingProfile = await db
@@ -81,7 +81,7 @@ userRoutes.openapi(createUserProfile, async (c) => {
         .updateTable("userProfiles")
         .set({
           id,
-          fullName,
+          fullName: name,
           profileImage,
           avatar,
           localeId,
@@ -94,12 +94,12 @@ userRoutes.openapi(createUserProfile, async (c) => {
         throw new ServerError("Failed to create Profile")
       }
 
-      return c.json(updatedProfile, 201)
+      return c.json({ ...updatedProfile, name: updatedProfile.fullName }, 201)
     }
 
     const newProfile = await db
       .insertInto("userProfiles")
-      .values({ id, email, fullName, profileImage, avatar, localeId })
+      .values({ id, email, fullName: name, profileImage, avatar, localeId })
       .returningAll()
       .executeTakeFirst()
 
@@ -107,7 +107,7 @@ userRoutes.openapi(createUserProfile, async (c) => {
       throw new ServerError("Failed to create Profile")
     }
 
-    return c.json(newProfile, 201)
+    return c.json({ ...newProfile, name: newProfile.fullName }, 201)
   } catch (error) {
     return await processError<typeof createUserProfile>(c, error, [
       "{{ default }}",
@@ -132,7 +132,7 @@ userRoutes.openapi(getCurrentUser, async (c) => {
     if (!profile) {
       throw new NotFoundError("user not found")
     }
-    return c.json(profile, 200)
+    return c.json({ ...profile, name: profile.fullName }, 200)
   } catch (error) {
     return await processError<typeof getUser>(c, error, [
       "{{ default }}",
@@ -164,7 +164,7 @@ userRoutes.openapi(getUser, async (c) => {
       throw new NotFoundError("user not found")
     }
 
-    return c.json(profile, 200)
+    return c.json({ ...profile, name: profile.fullName }, 200)
   } catch (error) {
     return await processError<typeof getUser>(c, error, [
       "{{ default }}",
@@ -182,10 +182,10 @@ userRoutes.openapi(getUserpermissions, async (c) => {
       const msg = await t.text(ERROR_UNAUTHORIZED)
       throw new UnauthorizedError(msg)
     }
-    if (user.userType === ROLE_SUPER_ADMIN) {
+    if (user.userType === UserRoles.ROLE_SUPER_ADMIN) {
       return c.json(adminPermissions, 200)
     }
-    if (user.userType === ROLE_MEMBER) {
+    if (user.userType === UserRoles.ROLE_MEMBER) {
       const { orgId } = c.req.valid("query")
       if (!orgId) throw new BadRequestError("orgId is required")
       const url = `${c.env.ORG_URL}/${orgId}/permissions`
@@ -224,7 +224,7 @@ userRoutes.openapi(getAllUsers, async (c) => {
       throw new UnauthorizedError(msg)
     }
 
-    if (user.userType !== ROLE_SUPER_ADMIN) {
+    if (user.userType !== UserRoles.ROLE_SUPER_ADMIN) {
       const msg = await t.text(ERROR_CASL_FORBIDDEN, {
         action: "read",
         role: user.userType,
@@ -321,6 +321,7 @@ userRoutes.openapi(getAllUsers, async (c) => {
       return {
         ...p,
         ...user,
+        name: p.fullName,
       }
     })
 
@@ -363,7 +364,7 @@ userRoutes.openapi(deleteUser, async (c) => {
     }
     const { id } = c.req.valid("param")
 
-    if (user.id !== id && user.userType !== ROLE_SUPER_ADMIN) {
+    if (user.id !== id && user.userType !== UserRoles.ROLE_SUPER_ADMIN) {
       const msg = await t.text(ERROR_FORBIDDEN)
       throw new ForbiddenError(msg)
     }
@@ -407,7 +408,7 @@ userRoutes.openapi(updateUser, async (c) => {
       throw new UnauthorizedError(msg)
     }
     const { id } = c.req.valid("param")
-    if (user.id !== id && user.userType !== ROLE_SUPER_ADMIN) {
+    if (user.id !== id && user.userType !== UserRoles.ROLE_SUPER_ADMIN) {
       const msg = await t.text(ERROR_FORBIDDEN)
       throw new ForbiddenError(msg)
     }
@@ -450,7 +451,7 @@ userRoutes.openapi(addProfilePicture, async (c) => {
     }
     const { id } = c.req.valid("param")
 
-    if (user.id !== id && user.userType !== ROLE_SUPER_ADMIN) {
+    if (user.id !== id && user.userType !== UserRoles.ROLE_SUPER_ADMIN) {
       const msg = await t.text(ERROR_FORBIDDEN)
       throw new ForbiddenError(msg)
     }
@@ -513,7 +514,7 @@ userRoutes.openapi(addProfilePicture, async (c) => {
       const msg = await t.text(ERROR_UPLOAD_FAIL)
       throw new ServerError(msg)
     }
-    return c.json(updatedProfile, 200)
+    return c.json({ ...updatedProfile, name: updatedProfile.fullName }, 200)
   } catch (error) {
     return await processError<typeof addProfilePicture>(c, error, [
       "{{ default }}",
@@ -531,7 +532,7 @@ userRoutes.openapi(deleteProfilePicture, async (c) => {
       throw new UnauthorizedError(msg)
     }
     const { id } = c.req.valid("param")
-    if (user.id !== id && user.userType !== ROLE_SUPER_ADMIN) {
+    if (user.id !== id && user.userType !== UserRoles.ROLE_SUPER_ADMIN) {
       const msg = await t.text(ERROR_FORBIDDEN)
       throw new ForbiddenError(msg)
     }
@@ -598,7 +599,7 @@ userRoutes.openapi(deleteProfilePicture, async (c) => {
       const msg = await t.text(ERROR_PP_DELETE_FAIL)
       throw new ServerError(msg)
     }
-    return c.json(updatedProfile, 200)
+    return c.json({ ...updatedProfile, name: updatedProfile.fullName }, 200)
   } catch (error) {
     return await processError<typeof deleteProfilePicture>(c, error, [
       "{{ default }}",

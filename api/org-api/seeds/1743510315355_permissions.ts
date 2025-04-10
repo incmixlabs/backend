@@ -2,7 +2,8 @@ import type { Database } from "@/dbSchema"
 import type { Kysely } from "kysely"
 import { sql } from "kysely"
 
-export async function up(db: Kysely<Database>): Promise<void> {
+// replace `any` with your database interface.
+export async function seed(db: Kysely<Database>): Promise<void> {
   // Insert permissions for admin role
   await db
     .insertInto("permissions")
@@ -31,7 +32,12 @@ export async function up(db: Kysely<Database>): Promise<void> {
         subject: "Organisation",
         conditions: sql`null`,
       },
-      { roleId: 1, action: "manage", subject: "Member", conditions: sql`null` },
+      {
+        roleId: 1,
+        action: "manage",
+        subject: "Member",
+        conditions: sql`null`,
+      },
     ])
     .execute()
 
@@ -63,7 +69,12 @@ export async function up(db: Kysely<Database>): Promise<void> {
         subject: "Organisation",
         conditions: sql`null`,
       },
-      { roleId: 2, action: "manage", subject: "Member", conditions: sql`null` },
+      {
+        roleId: 2,
+        action: "manage",
+        subject: "Member",
+        conditions: sql`null`,
+      },
     ])
     .execute()
 
@@ -105,8 +116,4 @@ export async function up(db: Kysely<Database>): Promise<void> {
       },
     ])
     .execute()
-}
-
-export async function down(db: Kysely<Database>): Promise<void> {
-  await db.deleteFrom("permissions").where("roleId", ">", 0).execute()
 }

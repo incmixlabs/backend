@@ -17,7 +17,7 @@ import {
   zodError,
 } from "@incmix-api/utils/errors"
 import { useTranslation } from "@incmix-api/utils/middleware"
-import { ROLE_SUPER_ADMIN } from "@incmix/utils/types"
+import { UserRoles } from "@incmix/utils/types"
 import type { ExpressionWrapper, OrderByExpression, SqlBool } from "kysely"
 import { Scrypt } from "lucia"
 import { getAllUsers, setEnabled, setPassword, setVerified } from "./openapi"
@@ -34,7 +34,7 @@ userRoutes.openapi(getAllUsers, async (c) => {
       throw new UnauthorizedError(msg)
     }
 
-    if (user.userType !== ROLE_SUPER_ADMIN) {
+    if (user.userType !== UserRoles.ROLE_SUPER_ADMIN) {
       const msg = await t.text(ERROR_CASL_FORBIDDEN, {
         action: "read",
         role: user.userType,
@@ -147,7 +147,7 @@ userRoutes.openapi(setVerified, async (c) => {
       throw new UnauthorizedError(msg)
     }
 
-    if (user.userType !== ROLE_SUPER_ADMIN) {
+    if (user.userType !== UserRoles.ROLE_SUPER_ADMIN) {
       const msg = await t.text(ERROR_CASL_FORBIDDEN, {
         action: "read",
         role: user.userType,
@@ -196,7 +196,7 @@ userRoutes.openapi(setEnabled, async (c) => {
       throw new UnauthorizedError(msg)
     }
 
-    if (user.userType !== ROLE_SUPER_ADMIN) {
+    if (user.userType !== UserRoles.ROLE_SUPER_ADMIN) {
       const msg = await t.text(ERROR_CASL_FORBIDDEN, {
         action: "read",
         role: user.userType,
@@ -244,7 +244,7 @@ userRoutes.openapi(setPassword, async (c) => {
       throw new UnauthorizedError(msg)
     }
 
-    if (user.userType !== ROLE_SUPER_ADMIN) {
+    if (user.userType !== UserRoles.ROLE_SUPER_ADMIN) {
       const msg = await t.text(ERROR_CASL_FORBIDDEN, {
         action: "read",
         role: user.userType,
