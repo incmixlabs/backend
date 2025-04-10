@@ -62,10 +62,10 @@ async function mockAICompletion(
   // Format the prompt for user story generation
   const _enhancedPrompt = `
     Create a user story based on the following prompt: "${prompt}"
-    
+
     Format as:
     As a [type of user], I want [goal] so that [benefit/value].
-    
+
     Acceptance Criteria:
     - [criterion 1]
     - [criterion 2]
@@ -75,10 +75,10 @@ async function mockAICompletion(
   // Return a simulated response
   // In a real implementation, this would be the response from the AI API
   return `As a project manager, I want to ${prompt} so that I can efficiently track project progress.
-  
-Acceptance Criteria:
-- The feature should be accessible from the main dashboard
-- It should save all entries automatically
-- Users should receive confirmation when the action is complete
-- The interface should be responsive on both desktop and mobile devices`
+
+          Acceptance Criteria:
+          - The feature should be accessible from the main dashboard
+          - It should save all entries automatically
+          - Users should receive confirmation when the action is complete
+          - The interface should be responsive on both desktop and mobile devices`
 }
