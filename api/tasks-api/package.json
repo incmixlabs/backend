@@ -11,6 +11,8 @@
     "test:e2e": "playwright test"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.39.0",
+    "@google/genai": "^0.8.0",
     "@hono/node-server": "catalog:",
     "@hono/zod-openapi": "catalog:",
     "@hono/zod-validator": "catalog:",
