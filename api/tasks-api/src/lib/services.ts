@@ -59,8 +59,10 @@ async function getAIResponse(prompt: string, model: AIModel): Promise<string> {
   const enhancedPrompt = `
     Create a user story based on the following prompt: "${prompt}"
 
+
     Format as:
     As a [type of user], I want [goal] so that [benefit/value].
+
 
     Acceptance Criteria:
     - [criterion 1]
