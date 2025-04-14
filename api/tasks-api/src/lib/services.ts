@@ -71,6 +71,10 @@ async function getAIResponse(prompt: string, model: AIModel): Promise<string> {
   `
 
   if (model === "claude") {
+    if (!envVars.ANTHROPIC_API_KEY) {
+      throw new Error("AI Service is not available")
+    }
+
     const anthropic = new Anthropic({
       apiKey: envVars.ANTHROPIC_API_KEY,
     })
@@ -93,6 +97,10 @@ async function getAIResponse(prompt: string, model: AIModel): Promise<string> {
     return typeof msg.content === "string"
       ? msg.content
       : JSON.stringify(msg.content)
+  }
+
+  if (!envVars.GOOGLE_AI_API_KEY) {
+    throw new Error("AI Service is not available")
   }
 
   const genAI = new GoogleGenAI({ apiKey: envVars.GOOGLE_AI_API_KEY })

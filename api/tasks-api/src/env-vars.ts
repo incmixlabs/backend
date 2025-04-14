@@ -21,8 +21,8 @@ const EnvSchema = z.object({
   AUTH_URL: z.string().url(),
   ORG_URL: z.string().url(),
   DOMAIN: z.string().default("localhost"),
-  ANTHROPIC_API_KEY: z.string(),
-  GOOGLE_AI_API_KEY: z.string(),
+  ANTHROPIC_API_KEY: z.string().optional(),
+  GOOGLE_AI_API_KEY: z.string().optional(),
 })
 
 export type env = z.infer<typeof EnvSchema>
