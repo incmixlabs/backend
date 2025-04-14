@@ -2,7 +2,7 @@
   "name": "@incmix-api/org-api",
   "type": "module",
   "scripts": {
-    "dev": "kysely migrate:up && tsx watch --env-file=.env src/index.ts",
+    "dev": "tsx watch --env-file=.env src/index.ts",
     "build": "tsc && tsc-alias",
     "start": "kysely migrate:up && node dist/src/index.js",
     "migrate:local": "kysely migrate:up",

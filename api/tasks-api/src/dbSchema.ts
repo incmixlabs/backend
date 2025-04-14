@@ -1,5 +1,11 @@
 import type { TaskStatus } from "@incmix/utils/types"
-import type { ColumnType, Insertable, Selectable, Updateable } from "kysely"
+import type {
+  ColumnType,
+  Generated,
+  Insertable,
+  Selectable,
+  Updateable,
+} from "kysely"
 
 type TasksTable = {
   id: string
@@ -41,6 +47,16 @@ export type Database = {
   tasks: TasksTable
   columns: ColumnsTable
   projects: ProjectsTable
+  storyTemplates: StoryTemplatesTable
+}
+
+type StoryTemplatesTable = {
+  id: Generated<number>
+  name: string
+  content: string
+  createdAt: ColumnType<Date, string, never>
+  updatedAt: ColumnType<Date, string, string>
+  createdBy: string
 }
 
 export type Task = Selectable<TasksTable>
@@ -55,4 +71,8 @@ export type Project = Selectable<ProjectsTable>
 export type NewProject = Insertable<ProjectsTable>
 export type UpdatedProject = Updateable<ProjectsTable>
 
-export const tables = ["projects", "columns", "tasks"]
+export type StoryTemplate = Selectable<StoryTemplatesTable>
+export type NewStoryTemplate = Insertable<StoryTemplatesTable>
+export type UpdatedStoryTemplate = Updateable<StoryTemplatesTable>
+
+export const tables = ["projects", "columns", "tasks", "storyTemplates"]
