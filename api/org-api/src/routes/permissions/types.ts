@@ -15,14 +15,23 @@ export const PermissionsWithRoleSchema = z
 
 export const AddNewRoleSchema = z
   .object({
-    name: z.string(),
+    name: z.string().min(3).max(50).openapi({
+      example: "Admin",
+      description: "The name of the role",
+    }),
   })
   .openapi("AddNewRoleSchema")
 
 export const UpdateRoleSchema = z
   .object({
-    id: z.number(),
-    name: z.string(),
+    id: z.number().int().positive().openapi({
+      example: 1,
+      description: "The ID of the role",
+    }),
+    name: z.string().min(3).max(50).openapi({
+      example: "Admin",
+      description: "The name of the role",
+    }),
   })
   .openapi("UpdateRoleSchema")
 
@@ -44,10 +53,22 @@ export const UpdatePermissionSchema = z
   .object({
     updates: z.array(
       z.object({
-        subject: z.enum(subjects),
-        action: z.enum(actions),
-        roleId: z.number(),
-        allowed: z.boolean(),
+        subject: z.enum(subjects).openapi({
+          example: "Organisation",
+          description: "The resource being affected",
+        }),
+        action: z.enum(actions).openapi({
+          example: "manage",
+          description: "The operation being performed",
+        }),
+        roleId: z.number().int().positive().openapi({
+          example: 1,
+          description: "The ID of the role",
+        }),
+        allowed: z.boolean().openapi({
+          example: true,
+          description: "Whether the permission is granted",
+        }),
       })
     ),
   })
