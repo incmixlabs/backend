@@ -1,8 +1,8 @@
+import type { StoryTemplate } from "@/dbSchema"
 import { envVars } from "@/env-vars"
 import type { Context } from "@/types"
 import Anthropic from "@anthropic-ai/sdk"
 import { GoogleGenAI } from "@google/genai"
-import type { StoryTemplate } from "@/dbSchema"
 export async function getOrganizationById(c: Context, id: string) {
   const url = `${envVars.ORG_URL}/id/${id}`
 

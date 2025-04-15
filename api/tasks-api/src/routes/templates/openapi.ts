@@ -1,6 +1,6 @@
 import { createRoute, z } from "@hono/zod-openapi"
-import { newStoryTemplateSchema, storyTemplateSchema } from "./types"
 import { ResponseSchema } from "../types"
+import { newStoryTemplateSchema, storyTemplateSchema } from "./types"
 
 export const getStoryTemplates = createRoute({
   method: "get",
