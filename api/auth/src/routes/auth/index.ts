@@ -35,6 +35,7 @@ import {
   zodError,
 } from "@incmix-api/utils/errors"
 import { useTranslation } from "@incmix-api/utils/middleware"
+import { UserRoles } from "@incmix/utils/types"
 import { Scrypt, generateId } from "lucia"
 
 const authRoutes = new OpenAPIHono<HonoApp>({
@@ -137,7 +138,7 @@ authRoutes.openapi(signup, async (c) => {
         id: userId,
         email,
         emailVerified: false,
-        userType: "member",
+        userType: UserRoles.ROLE_MEMBER,
       },
       fullName,
       password
@@ -149,7 +150,7 @@ authRoutes.openapi(signup, async (c) => {
         userType: user.userType,
         email: user.email,
         emailVerified: Boolean(user.emailVerified),
-        fullName: profile.fullName,
+        name: profile.name,
         avatar: profile.avatar,
         profileImage: profile.profileImage,
         localeId: profile.localeId,
