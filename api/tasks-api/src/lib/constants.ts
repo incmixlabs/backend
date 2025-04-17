@@ -55,3 +55,11 @@ export const ERROR_USER_STORY_GENERATION_FAILED = {
   namespace: "errors",
   key: "user_story_generation_failed",
 }
+export const ERROR_TEMPLATE_ALREADY_EXISTS = {
+  namespace: "errors",
+  key: "template_already_exists",
+}
+export const ERROR_TEMPLATE_NOT_FOUND = {
+  namespace: "errors",
+  key: "template_not_found",
+}

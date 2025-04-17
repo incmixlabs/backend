@@ -1,8 +1,8 @@
+import type { StoryTemplate } from "@/dbSchema"
 import { envVars } from "@/env-vars"
 import type { Context } from "@/types"
 import Anthropic from "@anthropic-ai/sdk"
 import { GoogleGenAI } from "@google/genai"
-
 export async function getOrganizationById(c: Context, id: string) {
   const url = `${envVars.ORG_URL}/id/${id}`
 
@@ -33,6 +33,7 @@ export type AIModel = keyof typeof MODEL_MAP
 export async function generateUserStory(
   _c: Context,
   prompt: string,
+  template: StoryTemplate,
   userTier: "free" | "paid" = "free"
 ): Promise<string> {
   // Use Claude for paid users, Gemini for free users
@@ -44,7 +45,14 @@ export async function generateUserStory(
     // 2. Handle authentication, rate limiting, etc.
     // 3. Process the response
 
-    const userStory = await getAIResponse(prompt, model)
+    const enhancedPrompt = `
+    Create a user story based on the following prompt: "${prompt}"
+
+    Format as:
+    ${template.content}
+  `
+
+    const userStory = await getAiResponse(enhancedPrompt, model)
     return userStory
   } catch (error) {
     console.error(`Error generating user story with ${model}:`, error)
@@ -54,23 +62,28 @@ export async function generateUserStory(
   }
 }
 
-async function getAIResponse(prompt: string, model: AIModel): Promise<string> {
-  // Format the prompt for user story generation
+export async function generateTemplate(
+  _c: Context,
+  prompt: string,
+  userTier: "free" | "paid" = "free",
+  format: "markdown" | "html" | "plainText" = "markdown"
+): Promise<string> {
+  // Use Claude for paid users, Gemini for free users
+  const model = userTier === "paid" ? "claude" : "gemini"
   const enhancedPrompt = `
-    Create a user story based on the following prompt: "${prompt}"
+    Create a user story template for kanban board based on the following prompt: "${prompt}"
+    don't specify any heading or title for story summary section.
 
+    Make it so that it can be directly copied and pasted into a ${format} style text editor without any modifications. don't include any input fields or tables.
 
-    Format as:
-    As a [type of user], I want [goal] so that [benefit/value].
-
-
-    Acceptance Criteria:
-    - [criterion 1]
-    - [criterion 2]
-    - [criterion 3]
-
-    Important: Provide only the user story without any prefatory text or instructions. Do not include phrases like "Here's a user story" at the beginning of your response.
+    Important: Provide only the story template without any prefatory text or instructions. Do not include phrases like "Here's a story template" at the beginning of your response.
   `
+  const storyTemplate = await getAiResponse(enhancedPrompt, model)
+  return storyTemplate
+}
+
+async function getAiResponse(prompt: string, model: AIModel): Promise<string> {
+  // Format the prompt for user story generation
 
   if (model === "claude") {
     if (!envVars.ANTHROPIC_API_KEY) {
@@ -84,7 +97,7 @@ async function getAIResponse(prompt: string, model: AIModel): Promise<string> {
     const msg = await anthropic.messages.create({
       model: MODEL_MAP[model],
       max_tokens: 1024,
-      messages: [{ role: "user", content: enhancedPrompt }],
+      messages: [{ role: "user", content: prompt }],
     })
 
     if (Array.isArray(msg.content)) {
@@ -109,7 +122,7 @@ async function getAIResponse(prompt: string, model: AIModel): Promise<string> {
 
   const response = await genAI.models.generateContent({
     model: MODEL_MAP[model],
-    contents: enhancedPrompt,
+    contents: prompt,
   })
 
   if (response.text?.length) return response.text

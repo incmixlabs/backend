@@ -7,16 +7,16 @@ export async function up(db: Kysely<Database>): Promise<void> {
     .addColumn("id", "text", (col) => col.primaryKey())
     .addColumn("content", "text")
     .addColumn("status", "text", (col) => col.notNull())
-    .addColumn("task_order", "integer", (col) => col.notNull().defaultTo(0))
-    .addColumn("project_id", "text", (col) => col.notNull())
-    .addColumn("column_id", "text", (col) => col.notNull())
-    .addColumn("assigned_to", "text", (col) => col.notNull())
-    .addColumn("created_by", "text", (col) => col.notNull())
-    .addColumn("updated_by", "text", (col) => col.notNull())
-    .addColumn("created_at", "timestamp", (col) =>
+    .addColumn("taskOrder", "integer", (col) => col.notNull().defaultTo(0))
+    .addColumn("projectId", "text", (col) => col.notNull())
+    .addColumn("columnId", "text", (col) => col.notNull())
+    .addColumn("assignedTo", "text", (col) => col.notNull())
+    .addColumn("createdBy", "text", (col) => col.notNull())
+    .addColumn("updatedBy", "text", (col) => col.notNull())
+    .addColumn("createdAt", "timestamp", (col) =>
       col.defaultTo(sql`CURRENT_TIMESTAMP`)
     )
-    .addColumn("updated_at", "timestamp", (col) =>
+    .addColumn("updatedAt", "timestamp", (col) =>
       col.defaultTo(sql`CURRENT_TIMESTAMP`)
     )
     .execute()
@@ -25,20 +25,20 @@ export async function up(db: Kysely<Database>): Promise<void> {
     .createTable("columns")
     .addColumn("id", "text", (col) => col.primaryKey())
     .addColumn("label", "text")
-    .addColumn("column_order", "integer", (col) => col.notNull().defaultTo(0))
-    .addColumn("project_id", "text", (col) => col.notNull())
-    .addColumn("parent_id", "text")
-    .addColumn("created_by", "text", (col) => col.notNull())
-    .addColumn("updated_by", "text", (col) => col.notNull())
-    .addColumn("created_at", "timestamp", (col) =>
+    .addColumn("columnOrder", "integer", (col) => col.notNull().defaultTo(0))
+    .addColumn("projectId", "text", (col) => col.notNull())
+    .addColumn("parentId", "text")
+    .addColumn("createdBy", "text", (col) => col.notNull())
+    .addColumn("updatedBy", "text", (col) => col.notNull())
+    .addColumn("createdAt", "timestamp", (col) =>
       col.defaultTo(sql`CURRENT_TIMESTAMP`)
     )
-    .addColumn("updated_at", "timestamp", (col) =>
+    .addColumn("updatedAt", "timestamp", (col) =>
       col.defaultTo(sql`CURRENT_TIMESTAMP`)
     )
-    .addUniqueConstraint("columns_label_project_id_unique", [
+    .addUniqueConstraint("columns_label_projectId_unique", [
       "label",
-      "project_id",
+      "projectId",
     ])
     .execute()
 
@@ -46,16 +46,16 @@ export async function up(db: Kysely<Database>): Promise<void> {
     .createTable("projects")
     .addColumn("id", "text", (col) => col.primaryKey())
     .addColumn("name", "text")
-    .addColumn("org_id", "text", (col) => col.notNull())
-    .addColumn("created_by", "text", (col) => col.notNull())
-    .addColumn("updated_by", "text", (col) => col.notNull())
-    .addColumn("created_at", "timestamp", (col) =>
+    .addColumn("orgId", "text", (col) => col.notNull())
+    .addColumn("createdBy", "text", (col) => col.notNull())
+    .addColumn("updatedBy", "text", (col) => col.notNull())
+    .addColumn("createdAt", "timestamp", (col) =>
       col.defaultTo(sql`CURRENT_TIMESTAMP`)
     )
-    .addColumn("updated_at", "timestamp", (col) =>
+    .addColumn("updatedAt", "timestamp", (col) =>
       col.defaultTo(sql`CURRENT_TIMESTAMP`)
     )
-    .addUniqueConstraint("projects_name_org_id_unique", ["name", "org_id"])
+    .addUniqueConstraint("projects_name_orgId_unique", ["name", "orgId"])
     .execute()
 }
 
