@@ -5,6 +5,7 @@ import {
   ERROR_TASK_INSERT_FAIL,
   ERROR_TASK_NOT_FOUND,
   ERROR_TASK_UPDATE_FAIL,
+  ERROR_TEMPLATE_NOT_FOUND,
   ERROR_USER_STORY_GENERATION_FAILED,
 } from "@/lib/constants"
 import { db } from "@/lib/db"
@@ -279,16 +280,21 @@ tasksRoutes.openapi(generateUserStory, async (c) => {
       return c.json({ message: msg }, 401)
     }
 
-    const { prompt, userTier } = c.req.valid("json")
+    const { prompt, userTier, templateId } = c.req.valid("json")
 
-    try {
-      const userStory = await aiGenerateUserStory(c, prompt, userTier)
-      return c.json({ userStory }, 200)
-    } catch (error) {
-      console.error("User story generation failed:", error)
-      const msg = await t.text(ERROR_USER_STORY_GENERATION_FAILED)
-      return c.json({ message: msg }, 400)
+    const template = await db
+      .selectFrom("storyTemplates")
+      .selectAll()
+      .where("id", "=", templateId)
+      .executeTakeFirst()
+
+    if (!template) {
+      const msg = await t.text(ERROR_TEMPLATE_NOT_FOUND)
+      throw new UnprocessableEntityError(msg)
     }
+
+    const userStory = await aiGenerateUserStory(c, prompt, template, userTier)
+    return c.json({ userStory }, 200)
   } catch (error) {
     return await processError<typeof generateUserStory>(c, error, [
       "{{ default }}",

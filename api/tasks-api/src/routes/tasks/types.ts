@@ -31,6 +31,10 @@ export const GenerateUserStorySchema = z
       description:
         "User tier determines which AI model to use (free: Gemini, paid: Claude)",
     }),
+    templateId: z.number().openapi({
+      example: 1,
+      description: "ID of the story template to use",
+    }),
   })
   .openapi("GenerateUserStory")
 
