@@ -195,7 +195,7 @@ export async function getFigmaFile(url: string, layerName: string) {
     }
   ).then((res) => res.json())
 
-  if (nodes.err === "null" || nodes.err == null) {
+  if (!nodes.nodes) {
     throw new ServerError("Failed to fetch Figma file")
   }
 
@@ -216,7 +216,7 @@ export async function getFigmaFile(url: string, layerName: string) {
       }>
   )
 
-  if (imageResponse.err === "null" || imageResponse.err == null) {
+  if (!imageResponse.images) {
     throw new ServerError("Failed to fetch Figma File")
   }
 
@@ -375,10 +375,11 @@ async function getAiResponseUsingImagePrompt(
         `Failed to fetch image: ${response.status} ${response.statusText}`
       )
     }
+
     const originalBlob = await response.blob()
     // Ensure the blob is treated as a JPG image
     imageBlob = new Blob([await originalBlob.arrayBuffer()], {
-      type: "image/jpeg",
+      type: response.headers.get("content-type") || "image/jpeg",
     })
   } catch (error) {
     console.error("Error fetching image:", error)
