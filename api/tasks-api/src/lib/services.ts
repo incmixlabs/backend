@@ -216,7 +216,7 @@ export async function getFigmaFile(url: string, layerName: string) {
       }>
   )
 
-  if (!imageResponse.images) {
+  if (!imageResponse.images?.[layerId]) {
     throw new ServerError("Failed to fetch Figma File")
   }
 
