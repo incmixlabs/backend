@@ -177,6 +177,10 @@ export function extractLayerIdByName(
 export async function getFigmaFile(url: string, layerName: string) {
   const { fileKey, nodeId } = parseFigmaUrl(url)
 
+  if (!fileKey || !nodeId) {
+    throw new ServerError("Invalid Figma URL")
+  }
+
   if (!envVars.FIGMA_TOKEN) {
     throw new Error("Figma API is not available")
   }
