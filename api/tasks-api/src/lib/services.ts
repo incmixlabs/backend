@@ -71,10 +71,11 @@ export async function generateTemplate(
   // Use Claude for paid users, Gemini for free users
   const model = userTier === "paid" ? "claude" : "gemini"
   const enhancedPrompt = `
-    Create a useer story template for kanban board based on the following prompt: "${prompt}"
+    Create a user story template for kanban board based on the following prompt: "${prompt}"
     don't specify any heading or title for story summary section.
 
     Make it so that it can be directly copied and pasted into a ${format} style text editor without any modifications. don't include any input fields or tables.
+
     Important: Provide only the story template without any prefatory text or instructions. Do not include phrases like "Here's a story template" at the beginning of your response.
   `
   const storyTemplate = await getAiResponse(enhancedPrompt, model)
@@ -85,6 +86,10 @@ async function getAiResponse(prompt: string, model: AIModel): Promise<string> {
   // Format the prompt for user story generation
 
   if (model === "claude") {
+    if (!envVars.ANTHROPIC_API_KEY) {
+      throw new Error("AI Service is not available")
+    }
+
     const anthropic = new Anthropic({
       apiKey: envVars.ANTHROPIC_API_KEY,
     })
@@ -107,6 +112,10 @@ async function getAiResponse(prompt: string, model: AIModel): Promise<string> {
     return typeof msg.content === "string"
       ? msg.content
       : JSON.stringify(msg.content)
+  }
+
+  if (!envVars.GOOGLE_AI_API_KEY) {
+    throw new Error("AI Service is not available")
   }
 
   const genAI = new GoogleGenAI({ apiKey: envVars.GOOGLE_AI_API_KEY })

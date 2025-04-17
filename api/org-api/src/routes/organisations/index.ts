@@ -58,8 +58,7 @@ import {
   zodError,
 } from "@incmix-api/utils/errors"
 import { useTranslation } from "@incmix-api/utils/middleware"
-import type { MemberRole } from "@incmix/utils/types"
-import { ROLE_OWNER } from "@incmix/utils/types"
+import { UserRoles } from "@incmix/utils/types"
 
 import { generateId } from "lucia"
 
@@ -203,7 +202,7 @@ orgRoutes.openapi(createOrganisation, async (c) => {
       throw new ConflictError(msg)
     }
 
-    const orgExists = await doesOrganisationExist(name)
+    const orgExists = await doesOrganisationExist(name, user.id)
 
     if (orgExists) {
       const msg = await t.text(ERROR_ORG_EXIST)
@@ -234,7 +233,7 @@ orgRoutes.openapi(createOrganisation, async (c) => {
       throw new ServerError(msg)
     }
 
-    const ownerRole = getRoleIdByName(dbRoles, ROLE_OWNER)
+    const ownerRole = getRoleIdByName(dbRoles, UserRoles.ROLE_OWNER)
     if (!ownerRole) {
       const msg = await t.text(ERROR_NO_ROLES)
       throw new ServerError(msg)
@@ -259,7 +258,7 @@ orgRoutes.openapi(createOrganisation, async (c) => {
         name: newOrg.name,
         handle: newOrg.handle,
         members: [
-          { userId: user.id, role: ROLE_OWNER as MemberRole },
+          { userId: user.id, role: UserRoles.ROLE_OWNER },
           ...members.map((m) => ({ userId: m.userId, role: m.role })),
         ],
       },
@@ -357,6 +356,13 @@ orgRoutes.openapi(updateOrganisation, async (c) => {
       action: "update",
       subject: "Organisation",
     })
+
+    const orgExists = await doesOrganisationExist(name, user.id)
+
+    if (orgExists) {
+      const msg = await t.text(ERROR_ORG_EXIST)
+      throw new ConflictError(msg)
+    }
 
     const updatedOrg = await db
       .updateTable("organisations")
@@ -521,7 +527,10 @@ orgRoutes.openapi(updateMemberRole, async (c) => {
 
     const member = await findOrgMemberById(c, userId, org.id)
 
-    if (member.role === ROLE_OWNER && newRole !== ROLE_OWNER) {
+    if (
+      member.role === UserRoles.ROLE_OWNER &&
+      newRole !== UserRoles.ROLE_OWNER
+    ) {
       await ensureAtLeastOneOwner(c, org.id, [userId], "update")
     }
 
@@ -589,7 +598,7 @@ orgRoutes.openapi(getOrganizationMembers, async (c) => {
         const userDetails = await getUserById(c, member.userId)
         return {
           userId: member.userId,
-          fullName: userDetails.fullName,
+          fullName: userDetails.name,
           email: userDetails.email,
           profileImage: userDetails.profileImage,
           avatar: userDetails.avatar,
