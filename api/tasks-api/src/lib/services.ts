@@ -6,6 +6,7 @@ import {
   createPartFromUri,
   createUserContent,
 } from "@google/genai"
+import { ServerError } from "@incmix-api/utils/errors"
 
 export async function getOrganizationById(c: Context, id: string) {
   const url = `${envVars.ORG_URL}/id/${id}`
@@ -190,6 +191,10 @@ export async function getFigmaFile(url: string, layerName: string) {
     }
   ).then((res) => res.json())
 
+  if (nodes.err === "null" || nodes.err == null) {
+    throw new ServerError("Failed to fetch Figma file")
+  }
+
   const layerId = extractLayerIdByName(nodes, layerName)
   const imageResponse = await fetch(
     `https://api.figma.com/v1/images/${fileKey}?ids=${layerId}&format=jpg`,
@@ -206,7 +211,10 @@ export async function getFigmaFile(url: string, layerName: string) {
         err: string | null
       }>
   )
-  console.log(imageResponse)
+
+  if (imageResponse.err === "null" || imageResponse.err == null) {
+    throw new ServerError("Failed to fetch Figma File")
+  }
 
   return imageResponse.images[layerId]
 }

@@ -300,7 +300,7 @@ export const generateUserStory = createRoute({
   },
 })
 
-export const genrateFromFigma = createRoute({
+export const generateFromFigma = createRoute({
   method: "post",
   path: "/generate/figma",
   summary: "Generate Task from Figma",

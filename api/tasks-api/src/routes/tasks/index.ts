@@ -17,7 +17,7 @@ import {
   createTask,
   deleteTask,
   generateUserStory,
-  genrateFromFigma,
+  generateFromFigma,
   listTasks,
   taskById,
   updateTask,
@@ -297,7 +297,7 @@ tasksRoutes.openapi(generateUserStory, async (c) => {
   }
 })
 
-tasksRoutes.openapi(genrateFromFigma, async (c) => {
+tasksRoutes.openapi(generateFromFigma, async (c) => {
   try {
     const user = c.get("user")
     const t = await useTranslation(c)
@@ -318,7 +318,7 @@ tasksRoutes.openapi(genrateFromFigma, async (c) => {
 
     return c.json({ userStory, imageUrl: figmaFile }, 200)
   } catch (error) {
-    return await processError<typeof genrateFromFigma>(c, error, [
+    return await processError<typeof generateFromFigma>(c, error, [
       "{{ default }}",
       "genrate-from-figma",
     ])
