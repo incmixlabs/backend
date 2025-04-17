@@ -1,5 +1,6 @@
 import {
   CreateTaskSchema,
+  FigmaSchema,
   GenerateUserStorySchema,
   ParamSchema,
   TaskListSchema,
@@ -279,6 +280,59 @@ export const generateUserStory = createRoute({
         },
       },
       description: "Error response when user story generation fails",
+    },
+    401: {
+      content: {
+        "application/json": {
+          schema: ResponseSchema,
+        },
+      },
+      description: "Error response when not authenticated",
+    },
+    500: {
+      content: {
+        "application/json": {
+          schema: ResponseSchema,
+        },
+      },
+      description: "Internal Server Error",
+    },
+  },
+})
+
+export const genrateFromFigma = createRoute({
+  method: "post",
+  path: "/generate/figma",
+  summary: "Generate Task from Figma",
+  tags: ["Tasks"],
+  description:
+    "Generate a task from Figma URL using AI (Claude for paid users, Gemini for free)",
+  security: [{ cookieAuth: [] }],
+  request: {
+    body: {
+      content: {
+        "application/json": {
+          schema: FigmaSchema,
+        },
+      },
+    },
+  },
+  responses: {
+    200: {
+      content: {
+        "application/json": {
+          schema: UserStoryResponseSchema,
+        },
+      },
+      description: "Returns the generated Story",
+    },
+    400: {
+      content: {
+        "application/json": {
+          schema: ResponseSchema,
+        },
+      },
+      description: "Error response when task generation fails",
     },
     401: {
       content: {

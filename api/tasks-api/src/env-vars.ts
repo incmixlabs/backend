@@ -23,6 +23,7 @@ const EnvSchema = z.object({
   DOMAIN: z.string().default("localhost"),
   ANTHROPIC_API_KEY: z.string().optional(),
   GOOGLE_AI_API_KEY: z.string().optional(),
+  FIGMA_TOKEN: z.string().optional(),
 })
 
 export type env = z.infer<typeof EnvSchema>
