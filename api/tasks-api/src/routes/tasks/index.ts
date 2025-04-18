@@ -9,10 +9,15 @@ import {
   ERROR_USER_STORY_GENERATION_FAILED,
 } from "@/lib/constants"
 import { db } from "@/lib/db"
-import { generateUserStory as aiGenerateUserStory } from "@/lib/services"
+import {
+  generateUserStory as aiGenerateUserStory,
+  generateUserStoryFromImage,
+  getFigmaFile,
+} from "@/lib/services"
 import {
   createTask,
   deleteTask,
+  generateFromFigma,
   generateUserStory,
   listTasks,
   taskById,
@@ -298,4 +303,31 @@ tasksRoutes.openapi(generateUserStory, async (c) => {
   }
 })
 
+tasksRoutes.openapi(generateFromFigma, async (c) => {
+  try {
+    const user = c.get("user")
+    const t = await useTranslation(c)
+    if (!user) {
+      const msg = await t.text(ERROR_UNAUTHORIZED)
+      return c.json({ message: msg }, 401)
+    }
+
+    const { url, layerName, prompt, userTier } = c.req.valid("json")
+
+    const figmaFile = await getFigmaFile(url, layerName)
+
+    const userStory = await generateUserStoryFromImage(
+      prompt,
+      figmaFile,
+      userTier
+    )
+
+    return c.json({ userStory, imageUrl: figmaFile }, 200)
+  } catch (error) {
+    return await processError<typeof generateFromFigma>(c, error, [
+      "{{ default }}",
+      "genrate-from-figma",
+    ])
+  }
+})
 export default tasksRoutes
