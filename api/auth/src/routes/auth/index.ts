@@ -10,7 +10,6 @@ import {
 import { db, deleteUserById, findUserByEmail, insertUser } from "@/lib/db"
 import { sendVerificationEmailOrLog } from "@/lib/helper"
 import { generateVerificationCode } from "@/lib/helper"
-// import { generateVerificationCode } from "@/lib/helper"
 import { createSession, initializeLucia } from "@/lib/lucia"
 import { deleteUserProfile } from "@/lib/services"
 import {
@@ -113,7 +112,19 @@ authRoutes.openapi(getUser, async (c) => {
 })
 
 authRoutes.openapi(signup, async (c) => {
-  const { fullName, email, password } = c.req.valid("json")
+  const {
+    fullName,
+    email,
+    password,
+    companyName,
+    companySize,
+    teamSize,
+    purpose,
+    role,
+    manageFirst,
+    focusFirst,
+    referralSources,
+  } = c.req.valid("json")
   try {
     const existing = await db
       .selectFrom("users")
@@ -141,7 +152,17 @@ authRoutes.openapi(signup, async (c) => {
         userType: UserRoles.ROLE_MEMBER,
       },
       fullName,
-      password
+      password,
+      {
+        companyName,
+        companySize,
+        teamSize,
+        purpose,
+        role,
+        manageFirst,
+        focusFirst,
+        referralSources,
+      }
     )
 
     return c.json(
@@ -150,10 +171,10 @@ authRoutes.openapi(signup, async (c) => {
         userType: user.userType,
         email: user.email,
         emailVerified: Boolean(user.emailVerified),
-        name: profile.name,
-        avatar: profile.avatar,
-        profileImage: profile.profileImage,
-        localeId: profile.localeId,
+        name: fullName,
+        localeId: 1,
+        profileImage: null,
+        avatar: null,
       },
       201
     )

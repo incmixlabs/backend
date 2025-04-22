@@ -1,4 +1,5 @@
 import { envVars } from "@/env-vars"
+import type { Onboarding } from "@/routes/auth/types"
 import type { MessageResponse } from "@/routes/types"
 import type { Context } from "@/types"
 import { generateSentryHeaders } from "@incmix-api/utils"
@@ -28,7 +29,8 @@ export async function createUserProfile(
   id: string,
   fullName: string,
   email: string,
-  localeId: number
+  localeId: number,
+  onboarding: Onboarding
 ) {
   const sentryHeaders = generateSentryHeaders(c)
   const res = await fetch(`${envVars.USERS_API_URL}`, {
@@ -43,6 +45,7 @@ export async function createUserProfile(
       email,
       fullName,
       localeId,
+      ...onboarding,
     }),
   })
 

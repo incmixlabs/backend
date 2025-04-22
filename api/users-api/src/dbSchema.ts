@@ -14,6 +14,15 @@ export type UserProfileTable = {
   profileImage: string | null
   avatar: string | null
   localeId: number
+  companyName: string
+  companySize: string
+  teamSize: string
+  purpose: string
+  role: string
+  manageFirst: string
+  focusFirst: string
+  referralSources: string[]
+  onboardingCompleted?: boolean
 }
 
 export type Database = {
