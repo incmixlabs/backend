@@ -32,5 +32,7 @@ export async function down(db: Kysely<any>): Promise<void> {
     .dropColumn("role")
     .dropColumn("manageFirst")
     .dropColumn("focusFirst")
+    .dropColumn("referralSources")
+    .dropColumn("onboardingCompleted")
     .execute()
 }
