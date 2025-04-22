@@ -1,6 +1,7 @@
 import type { Database, NewUser } from "@/dbSchema"
 import { envVars } from "@/env-vars"
 import { ERROR_USER_NOT_FOUND } from "@/lib/constants"
+import type { Onboarding } from "@/routes/auth/types"
 import type { Context } from "@/types"
 import { NotFoundError, ServerError } from "@incmix-api/utils/errors"
 import { useTranslation } from "@incmix-api/utils/middleware"
@@ -8,7 +9,6 @@ import { CamelCasePlugin, Kysely, PostgresDialect } from "kysely"
 import { Scrypt } from "lucia"
 import pg from "pg"
 import { createUserProfile } from "./services"
-import type { Onboarding } from "@/routes/auth/types"
 const dialect = new PostgresDialect({
   pool: new pg.Pool({
     connectionString: envVars.DATABASE_URL,
