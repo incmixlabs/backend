@@ -67,8 +67,20 @@ const userRoutes = new OpenAPIHono<HonoApp>({
 
 userRoutes.openapi(createUserProfile, async (c) => {
   try {
-    const { email, name, id, profileImage, avatar, localeId } =
-      c.req.valid("json")
+    const {
+      id,
+      email,
+      name,
+      companyName,
+      companySize,
+      teamSize,
+      purpose,
+      role,
+      manageFirst,
+      focusFirst,
+      referralSources,
+      localeId,
+    } = c.req.valid("json")
 
     const existingProfile = await db
       .selectFrom("userProfiles")
@@ -80,11 +92,18 @@ userRoutes.openapi(createUserProfile, async (c) => {
       const updatedProfile = await db
         .updateTable("userProfiles")
         .set({
-          id,
+          id: existingProfile.id,
           fullName: name,
-          profileImage,
-          avatar,
+          companyName,
+          companySize,
+          teamSize,
+          purpose,
+          role,
+          manageFirst,
+          focusFirst,
+          referralSources,
           localeId,
+          onboardingCompleted: true,
         })
         .where("email", "=", email)
         .returningAll()
@@ -99,7 +118,21 @@ userRoutes.openapi(createUserProfile, async (c) => {
 
     const newProfile = await db
       .insertInto("userProfiles")
-      .values({ id, email, fullName: name, profileImage, avatar, localeId })
+      .values({
+        id,
+        email,
+        fullName: name,
+        localeId,
+        companyName,
+        companySize,
+        teamSize,
+        purpose,
+        role,
+        manageFirst,
+        focusFirst,
+        referralSources,
+        onboardingCompleted: true,
+      })
       .returningAll()
       .executeTakeFirst()
 

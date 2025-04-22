@@ -1,4 +1,19 @@
 import { z } from "@hono/zod-openapi"
+import { UserProfileSchema } from "@incmix/utils/types"
+
+export const OnboardingSchema = UserProfileSchema.extend({
+  companyName: z.string().min(1).openapi({ example: "Company Name" }),
+  companySize: z.string().min(1).openapi({ example: "Company Size" }),
+  teamSize: z.string().min(1).openapi({ example: "Team Size" }),
+  purpose: z.string().min(1).openapi({ example: "Purpose" }),
+  role: z.string().min(1).openapi({ example: "Role" }),
+  manageFirst: z.string().min(1).openapi({ example: "Manage First" }),
+  focusFirst: z.string().min(1).openapi({ example: "Focus First" }),
+  referralSources: z
+    .array(z.string())
+    .min(1)
+    .openapi({ example: ["Referral Source 1", "Referral Source 2"] }),
+})
 
 export const MessageResponseSchema = z
   .object({

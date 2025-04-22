@@ -11,6 +11,7 @@ import {
   IdOrEmailSchema,
   IdSchema,
   MessageResponseSchema,
+  OnboardingSchema,
   OrgIdSchema,
   UploadFileSchema,
 } from "./types"
@@ -52,7 +53,7 @@ export const createUserProfile = createRoute({
     body: {
       content: {
         "application/json": {
-          schema: UserProfileSchema,
+          schema: OnboardingSchema,
         },
       },
     },
