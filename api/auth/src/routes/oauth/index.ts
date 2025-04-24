@@ -1,4 +1,5 @@
 import type { GoogleUser } from "@/dbSchema"
+import { envVars } from "@/env-vars"
 import { ACC_DISABLED, VERIFIY_REQ } from "@/lib/constants"
 
 import { insertOAuthUser } from "@/lib/helper"
@@ -27,7 +28,7 @@ const oAuthRoutes = new OpenAPIHono<HonoApp>({
 oAuthRoutes.openapi(googleOAuth, async (c) => {
   try {
     const clientType = c.req.header("X-Client-Type")
-    const google = initializeGoogleAuth(c.env, {
+    const google = initializeGoogleAuth(envVars, {
       isTauri: clientType === "desktop",
     })
 
@@ -38,20 +39,28 @@ oAuthRoutes.openapi(googleOAuth, async (c) => {
       "profile",
     ])
 
-    const options: CookieOptions = {
-      httpOnly: true,
-      path: "/",
-      maxAge: 600,
-      secure: true,
-      sameSite: "none",
+    // const options: CookieOptions = {
+    //   httpOnly: true,
+    //   path: "/",
+    //   maxAge: 600,
+    //   secure: true,
+    //   sameSite: "none",
+    // }
+
+    let options = "Max-Age=600; Path=/; HttpOnly; Secure; SameSite=None "
+
+    if (!envVars.DOMAIN.includes("localhost")) {
+      options += `; Domain=${envVars.DOMAIN}`
     }
 
-    if (!c.env.DOMAIN.includes("localhost")) {
-      options.domain = c.env.DOMAIN
-    }
+    c.res.headers.append("Set-Cookie", `state=${state}; ${options}`)
+    c.res.headers.append(
+      "Set-Cookie",
+      `code_verifier=${codeVerifier}; ${options}`
+    )
 
-    setCookie(c, "state", state, options)
-    setCookie(c, "code_verifier", codeVerifier, options)
+    // setCookie(c, "state", state, options)
+    // setCookie(c, "code_verifier", codeVerifier, options)
 
     return c.json({ authUrl: url }, 200)
   } catch (error) {
@@ -90,7 +99,7 @@ oAuthRoutes.openapi(googleCallback, async (c) => {
 
   try {
     const clientType = c.req.header("X-Client-Type")
-    const google = initializeGoogleAuth(c.env, {
+    const google = initializeGoogleAuth(envVars, {
       isTauri: clientType === "desktop",
     })
     const tokens = await google.validateAuthorizationCode(
@@ -139,6 +148,7 @@ oAuthRoutes.openapi(googleCallback, async (c) => {
       200
     )
   } catch (error) {
+    console.error(error)
     return await processError<typeof googleCallback>(c, error, [
       "{{ default }}",
       "google-oauth-callback",

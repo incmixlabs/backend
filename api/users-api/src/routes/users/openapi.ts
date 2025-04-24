@@ -53,7 +53,7 @@ export const createUserProfile = createRoute({
     body: {
       content: {
         "application/json": {
-          schema: OnboardingSchema,
+          schema: UserProfileSchema,
         },
       },
     },
@@ -85,10 +85,52 @@ export const createUserProfile = createRoute({
     },
   },
 })
+export const userOnboarding = createRoute({
+  method: "post",
+  path: "/onboarding",
+  summary: "User Onboarding",
+  description: "User Onboarding",
+  tags: ["Users"],
+  request: {
+    body: {
+      content: {
+        "application/json": {
+          schema: OnboardingSchema,
+        },
+      },
+    },
+  },
+  responses: {
+    200: {
+      content: {
+        "application/json": {
+          schema: OnboardingSchema,
+        },
+      },
+      description: "User Onboarding success",
+    },
+    500: {
+      content: {
+        "application/json": {
+          schema: MessageResponseSchema,
+        },
+      },
+      description: "Internal Server Error",
+    },
+    409: {
+      content: {
+        "application/json": {
+          schema: MessageResponseSchema,
+        },
+      },
+      description: "Error response when signup fails",
+    },
+  },
+})
 
 export const getUser = createRoute({
   method: "get",
-  path: "/",
+  path: "",
   security: [{ cookieAuth: [] }],
   summary: "Get User",
   tags: ["Users"],

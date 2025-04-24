@@ -1,7 +1,6 @@
 import type { Database, NewUser } from "@/dbSchema"
 import { envVars } from "@/env-vars"
 import { ERROR_USER_NOT_FOUND } from "@/lib/constants"
-import type { Onboarding } from "@/routes/auth/types"
 import type { Context } from "@/types"
 import { NotFoundError, ServerError } from "@incmix-api/utils/errors"
 import { useTranslation } from "@incmix-api/utils/middleware"
@@ -55,19 +54,15 @@ export async function insertUser(
   c: Context,
   newUser: NewUser,
   fullName: string,
-  password?: string,
-  onboarding?: Onboarding
+  password?: string
 ) {
-  if (onboarding) {
-    await createUserProfile(
-      c,
-      newUser.id,
-      fullName,
-      newUser.email,
-      1,
-      onboarding
-    )
-  }
+  const profile = await createUserProfile(
+    c,
+    newUser.id,
+    fullName,
+    newUser.email,
+    1
+  )
 
   let hashedPassword: string | null = null
   if (password?.length) hashedPassword = await new Scrypt().hash(password)
@@ -79,7 +74,7 @@ export async function insertUser(
     .executeTakeFirst()
   if (!user) throw new ServerError()
 
-  return { ...user, profile: onboarding ? onboarding : null }
+  return { ...user, profile }
 }
 
 export async function deleteUserById(id: string) {

@@ -4,6 +4,7 @@ import type { Context } from "@/types"
 import { envVars } from "@/env-vars"
 import { generateSentryHeaders } from "@incmix-api/utils"
 import { ServerError } from "@incmix-api/utils/errors"
+import { UserRoles } from "@incmix/utils/types"
 import { generateId } from "lucia"
 import { TimeSpan, createDate, isWithinExpirationDate } from "oslo"
 import { alphabet, generateRandomString } from "oslo/crypto"
@@ -96,8 +97,8 @@ export async function insertOAuthUser(
       id: userId,
       email: user.email,
       emailVerified: true,
-      userType: "member",
-      isActive: false,
+      userType: UserRoles.ROLE_MEMBER,
+      isActive: true,
       hashedPassword: null,
     },
     user.fullName
