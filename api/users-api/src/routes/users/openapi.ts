@@ -89,6 +89,7 @@ export const userOnboarding = createRoute({
   method: "post",
   path: "/onboarding",
   summary: "User Onboarding",
+  description: "User Onboarding",
   tags: ["Users"],
   request: {
     body: {
@@ -106,7 +107,7 @@ export const userOnboarding = createRoute({
           schema: OnboardingSchema,
         },
       },
-      description: "Creates a new User account",
+      description: "User Onboarding success",
     },
     500: {
       content: {
