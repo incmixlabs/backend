@@ -4,11 +4,11 @@ import type { Context } from "@/types"
 import { envVars } from "@/env-vars"
 import { generateSentryHeaders } from "@incmix-api/utils"
 import { ServerError } from "@incmix-api/utils/errors"
+import { UserRoles } from "@incmix/utils/types"
 import { generateId } from "lucia"
 import { TimeSpan, createDate, isWithinExpirationDate } from "oslo"
 import { alphabet, generateRandomString } from "oslo/crypto"
 import { db, insertUser } from "./db"
-import { UserRoles } from "@incmix/utils/types"
 export async function verifyVerificationCode(
   user: { id: string; email: string },
   code: string,
