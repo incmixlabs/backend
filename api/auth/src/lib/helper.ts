@@ -8,6 +8,7 @@ import { generateId } from "lucia"
 import { TimeSpan, createDate, isWithinExpirationDate } from "oslo"
 import { alphabet, generateRandomString } from "oslo/crypto"
 import { db, insertUser } from "./db"
+import { UserRoles } from "@incmix/utils/types"
 export async function verifyVerificationCode(
   user: { id: string; email: string },
   code: string,
@@ -96,8 +97,8 @@ export async function insertOAuthUser(
       id: userId,
       email: user.email,
       emailVerified: true,
-      userType: "member",
-      isActive: false,
+      userType: UserRoles.ROLE_MEMBER,
+      isActive: true,
       hashedPassword: null,
     },
     user.fullName

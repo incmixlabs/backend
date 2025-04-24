@@ -59,6 +59,7 @@ import {
   getUser,
   getUserpermissions,
   updateUser,
+  userOnboarding,
 } from "./openapi"
 
 const userRoutes = new OpenAPIHono<HonoApp>({
@@ -67,20 +68,7 @@ const userRoutes = new OpenAPIHono<HonoApp>({
 
 userRoutes.openapi(createUserProfile, async (c) => {
   try {
-    const {
-      id,
-      email,
-      name,
-      companyName,
-      companySize,
-      teamSize,
-      purpose,
-      role,
-      manageFirst,
-      focusFirst,
-      referralSources,
-      localeId,
-    } = c.req.valid("json")
+    const { id, email, name, localeId } = c.req.valid("json")
 
     const existingProfile = await db
       .selectFrom("userProfiles")
@@ -94,16 +82,8 @@ userRoutes.openapi(createUserProfile, async (c) => {
         .set({
           id: existingProfile.id,
           fullName: name,
-          companyName,
-          companySize,
-          teamSize,
-          purpose,
-          role,
-          manageFirst,
-          focusFirst,
-          referralSources,
           localeId,
-          onboardingCompleted: true,
+          onboardingCompleted: false,
         })
         .where("email", "=", email)
         .returningAll()
@@ -123,15 +103,15 @@ userRoutes.openapi(createUserProfile, async (c) => {
         email,
         fullName: name,
         localeId,
-        companyName,
-        companySize,
-        teamSize,
-        purpose,
-        role,
-        manageFirst,
-        focusFirst,
-        referralSources,
-        onboardingCompleted: true,
+        onboardingCompleted: false,
+        companyName: "",
+        companySize: "",
+        teamSize: "",
+        purpose: "",
+        role: "",
+        manageFirst: "",
+        focusFirst: "",
+        referralSources: [],
       })
       .returningAll()
       .executeTakeFirst()
@@ -145,6 +125,63 @@ userRoutes.openapi(createUserProfile, async (c) => {
     return await processError<typeof createUserProfile>(c, error, [
       "{{ default }}",
       "create-user-profile",
+    ])
+  }
+})
+userRoutes.openapi(userOnboarding, async (c) => {
+  try {
+    const {
+      email,
+      companyName,
+      companySize,
+      teamSize,
+      purpose,
+      role,
+      manageFirst,
+      focusFirst,
+      referralSources,
+    } = c.req.valid("json")
+
+    const t = await useTranslation(c)
+
+    const existingProfile = await db
+      .selectFrom("userProfiles")
+      .selectAll()
+      .where("email", "=", email)
+      .executeTakeFirst()
+
+    if (!existingProfile) {
+      const msg = await t.text(ERROR_USER_NOT_FOUND)
+      throw new NotFoundError(msg)
+    }
+
+    const updatedProfile = await db
+      .updateTable("userProfiles")
+      .set({
+        id: existingProfile.id,
+        companyName,
+        companySize,
+        teamSize,
+        purpose,
+        role,
+        manageFirst,
+        focusFirst,
+        referralSources,
+        onboardingCompleted: true,
+      })
+      .where("email", "=", email)
+      .returningAll()
+      .executeTakeFirstOrThrow()
+
+    if (!updatedProfile) {
+      throw new ServerError("Failed to create Profile")
+    }
+
+    return c.json({ ...updatedProfile, name: updatedProfile.fullName }, 200)
+  } catch (error) {
+    return await processError<typeof userOnboarding>(c, error, [
+      "{{ default }}",
+      "user-onboarding",
     ])
   }
 })

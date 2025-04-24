@@ -53,7 +53,7 @@ export const createUserProfile = createRoute({
     body: {
       content: {
         "application/json": {
-          schema: OnboardingSchema,
+          schema: UserProfileSchema,
         },
       },
     },
@@ -63,6 +63,47 @@ export const createUserProfile = createRoute({
       content: {
         "application/json": {
           schema: UserProfileSchema,
+        },
+      },
+      description: "Creates a new User account",
+    },
+    500: {
+      content: {
+        "application/json": {
+          schema: MessageResponseSchema,
+        },
+      },
+      description: "Internal Server Error",
+    },
+    409: {
+      content: {
+        "application/json": {
+          schema: MessageResponseSchema,
+        },
+      },
+      description: "Error response when signup fails",
+    },
+  },
+})
+export const userOnboarding = createRoute({
+  method: "post",
+  path: "",
+  summary: "User Onboarding",
+  tags: ["Users"],
+  request: {
+    body: {
+      content: {
+        "application/json": {
+          schema: OnboardingSchema,
+        },
+      },
+    },
+  },
+  responses: {
+    200: {
+      content: {
+        "application/json": {
+          schema: OnboardingSchema,
         },
       },
       description: "Creates a new User account",

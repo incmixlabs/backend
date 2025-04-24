@@ -112,19 +112,7 @@ authRoutes.openapi(getUser, async (c) => {
 })
 
 authRoutes.openapi(signup, async (c) => {
-  const {
-    fullName,
-    email,
-    password,
-    companyName,
-    companySize,
-    teamSize,
-    purpose,
-    role,
-    manageFirst,
-    focusFirst,
-    referralSources,
-  } = c.req.valid("json")
+  const { fullName, email, password } = c.req.valid("json")
   try {
     const existing = await db
       .selectFrom("users")
@@ -152,17 +140,7 @@ authRoutes.openapi(signup, async (c) => {
         userType: UserRoles.ROLE_MEMBER,
       },
       fullName,
-      password,
-      {
-        companyName,
-        companySize,
-        teamSize,
-        purpose,
-        role,
-        manageFirst,
-        focusFirst,
-        referralSources,
-      }
+      password
     )
 
     return c.json(
