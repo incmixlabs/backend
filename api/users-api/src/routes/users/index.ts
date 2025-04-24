@@ -122,69 +122,70 @@ userRoutes.openapi(createUserProfile, async (c) => {
 
     return c.json({ ...newProfile, name: newProfile.fullName }, 201)
   } catch (error) {
+    console.error(error)
     return await processError<typeof createUserProfile>(c, error, [
       "{{ default }}",
       "create-user-profile",
     ])
   }
 })
-userRoutes.openapi(userOnboarding, async (c) => {
-  try {
-    const {
-      email,
-      companyName,
-      companySize,
-      teamSize,
-      purpose,
-      role,
-      manageFirst,
-      focusFirst,
-      referralSources,
-    } = c.req.valid("json")
+// userRoutes.openapi(userOnboarding, async (c) => {
+//   try {
+//     const {
+//       email,
+//       companyName,
+//       companySize,
+//       teamSize,
+//       purpose,
+//       role,
+//       manageFirst,
+//       focusFirst,
+//       referralSources,
+//     } = c.req.valid("json")
 
-    const t = await useTranslation(c)
+//     const t = await useTranslation(c)
 
-    const existingProfile = await db
-      .selectFrom("userProfiles")
-      .selectAll()
-      .where("email", "=", email)
-      .executeTakeFirst()
+//     const existingProfile = await db
+//       .selectFrom("userProfiles")
+//       .selectAll()
+//       .where("email", "=", email)
+//       .executeTakeFirst()
 
-    if (!existingProfile) {
-      const msg = await t.text(ERROR_USER_NOT_FOUND)
-      throw new NotFoundError(msg)
-    }
+//     if (!existingProfile) {
+//       const msg = await t.text(ERROR_USER_NOT_FOUND)
+//       throw new NotFoundError(msg)
+//     }
 
-    const updatedProfile = await db
-      .updateTable("userProfiles")
-      .set({
-        id: existingProfile.id,
-        companyName,
-        companySize,
-        teamSize,
-        purpose,
-        role,
-        manageFirst,
-        focusFirst,
-        referralSources,
-        onboardingCompleted: true,
-      })
-      .where("email", "=", email)
-      .returningAll()
-      .executeTakeFirstOrThrow()
+//     const updatedProfile = await db
+//       .updateTable("userProfiles")
+//       .set({
+//         id: existingProfile.id,
+//         companyName,
+//         companySize,
+//         teamSize,
+//         purpose,
+//         role,
+//         manageFirst,
+//         focusFirst,
+//         referralSources,
+//         onboardingCompleted: true,
+//       })
+//       .where("email", "=", email)
+//       .returningAll()
+//       .executeTakeFirstOrThrow()
 
-    if (!updatedProfile) {
-      throw new ServerError("Failed to create Profile")
-    }
+//     if (!updatedProfile) {
+//       throw new ServerError("Failed to create Profile")
+//     }
 
-    return c.json({ ...updatedProfile, name: updatedProfile.fullName }, 200)
-  } catch (error) {
-    return await processError<typeof userOnboarding>(c, error, [
-      "{{ default }}",
-      "user-onboarding",
-    ])
-  }
-})
+//     return c.json({ ...updatedProfile, name: updatedProfile.fullName }, 200)
+//   } catch (error) {
+//     return await processError<typeof userOnboarding>(c, error, [
+//       "{{ default }}",
+//       "user-onboarding",
+//     ])
+//   }
+// })
 
 userRoutes.openapi(getCurrentUser, async (c) => {
   try {

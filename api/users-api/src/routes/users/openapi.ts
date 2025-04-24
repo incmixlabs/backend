@@ -87,7 +87,7 @@ export const createUserProfile = createRoute({
 })
 export const userOnboarding = createRoute({
   method: "post",
-  path: "",
+  path: "/onboarding",
   summary: "User Onboarding",
   tags: ["Users"],
   request: {
@@ -129,7 +129,7 @@ export const userOnboarding = createRoute({
 
 export const getUser = createRoute({
   method: "get",
-  path: "/",
+  path: "",
   security: [{ cookieAuth: [] }],
   summary: "Get User",
   tags: ["Users"],

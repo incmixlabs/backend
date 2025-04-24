@@ -41,7 +41,7 @@ export async function createUserProfile(
     body: JSON.stringify({
       id,
       email,
-      fullName,
+      name: fullName,
       localeId,
     }),
   })
