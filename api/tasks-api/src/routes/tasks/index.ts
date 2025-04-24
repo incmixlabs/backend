@@ -9,14 +9,15 @@ import {
   ERROR_USER_STORY_GENERATION_FAILED,
 } from "@/lib/constants"
 import { db } from "@/lib/db"
+import { generateReactFromFigma, getFigmaFile } from "@/lib/figma"
 import {
   generateUserStory as aiGenerateUserStory,
   generateUserStoryFromImage,
-  getFigmaFile,
 } from "@/lib/services"
 import {
   createTask,
   deleteTask,
+  generateCodeFromFigma,
   generateFromFigma,
   generateUserStory,
   listTasks,
@@ -327,6 +328,28 @@ tasksRoutes.openapi(generateFromFigma, async (c) => {
     return await processError<typeof generateFromFigma>(c, error, [
       "{{ default }}",
       "genrate-from-figma",
+    ])
+  }
+})
+
+tasksRoutes.openapi(generateCodeFromFigma, async (c) => {
+  try {
+    const user = c.get("user")
+    const t = await useTranslation(c)
+    if (!user) {
+      const msg = await t.text(ERROR_UNAUTHORIZED)
+      return c.json({ message: msg }, 401)
+    }
+
+    const { url } = c.req.valid("json")
+
+    const reactCode = await generateReactFromFigma(url)
+
+    return c.json({ reactCode }, 200)
+  } catch (error) {
+    return await processError<typeof generateCodeFromFigma>(c, error, [
+      "{{ default }}",
+      "generate-code-from-figma",
     ])
   }
 })
