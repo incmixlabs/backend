@@ -9,13 +9,13 @@ type FigmaNode = {
   name: string
   type: string
   visible: boolean
-  absoluteBoundingBox: {
+  absoluteBoundingBox?: {
     x: number
     y: number
     width: number
     height: number
   }
-  layoutMode: string
+  layoutMode?: string
   paddingLeft: number
   paddingRight: number
   paddingTop: number
@@ -26,22 +26,22 @@ type FigmaNode = {
     b: number
     a: number
   }
-  style: {
+  style?: {
     fontFamily: string
     fontSize: number
     fontWeight: number
     textAlignHorizontal: string
     textAlignVertical: string
   }
-  fills: {
+  fills?: {
     color: string
   }[]
-  strokes: {
+  strokes?: {
     color: string
   }[]
-  cornerRadius: number
-  children: FigmaNode[]
-  characters: string
+  cornerRadius?: number
+  children?: FigmaNode[]
+  characters?: string
 }
 
 type FigmaFileData = {
