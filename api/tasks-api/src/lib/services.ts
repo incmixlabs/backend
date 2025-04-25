@@ -7,7 +7,7 @@ import {
   createPartFromUri,
   createUserContent,
 } from "@google/genai"
-import { MODEL_MAP, type AIModel } from "./constants"
+import { type AIModel, MODEL_MAP } from "./constants"
 
 export async function getOrganizationById(c: Context, id: string) {
   const url = `${envVars.ORG_URL}/id/${id}`
