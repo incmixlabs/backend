@@ -27,11 +27,11 @@ type FigmaNode = {
     a: number
   }
   style?: {
-    fontFamily: string
-    fontSize: number
-    fontWeight: number
-    textAlignHorizontal: string
-    textAlignVertical: string
+    fontFamily?: string
+    fontSize?: number
+    fontWeight?: number
+    textAlignHorizontal?: string
+    textAlignVertical?: string
   }
   fills?: {
     color: string
@@ -63,41 +63,41 @@ type DesignElement = {
   visible: boolean
   path: string[]
   size?: {
-    width: number
-    height: number
+    width?: number
+    height?: number
   }
   position?: {
-    x: number
-    y: number
+    x?: number
+    y?: number
   }
   layout?: string
   padding?: {
-    left: number
-    right: number
-    top: number
-    bottom: number
+    left?: number
+    right?: number
+    top?: number
+    bottom?: number
   }
   backgroundColor?: {
-    r: number
-    g: number
-    b: number
-    a: number
+    r?: number
+    g?: number
+    b?: number
+    a?: number
   }
   children?: DesignElement[]
   characters?: string
   style?: {
-    fontFamily: string
-    fontSize: number
-    fontWeight: number
-    textAlignHorizontal: string
-    textAlignVertical: string
-    color: string
+    fontFamily?: string
+    fontSize?: number
+    fontWeight?: number
+    textAlignHorizontal?: string
+    textAlignVertical?: string
+    color?: string
   }
   fills?: {
-    color: string
+    color?: string
   }[]
   strokes?: {
-    color: string
+    color?: string
   }[]
   cornerRadius?: number
 }
@@ -198,7 +198,7 @@ export class FigmaService {
 
       // If node ID is provided, fetch just that node
       if (nodeId) {
-        url = `${url}/nodes?ids=${nodeId}`
+        url = `${url}/nodes?ids=${encodeURIComponent(nodeId)}`
       }
 
       const response = await fetch(url, {
@@ -285,15 +285,12 @@ export class FigmaService {
               y: node.absoluteBoundingBox?.y,
             },
             layout: node.layoutMode,
-            padding:
-              node.paddingLeft !== undefined
-                ? {
-                    left: node.paddingLeft,
-                    right: node.paddingRight,
-                    top: node.paddingTop,
-                    bottom: node.paddingBottom,
-                  }
-                : undefined,
+            padding: {
+              left: node.paddingLeft,
+              right: node.paddingRight,
+              top: node.paddingTop,
+              bottom: node.paddingBottom,
+            },
             backgroundColor: node.backgroundColor,
             children: (node.children || []).map((child) =>
               processNode(child, [...path, node.name])
