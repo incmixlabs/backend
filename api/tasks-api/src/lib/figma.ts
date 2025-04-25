@@ -4,19 +4,7 @@ import { GoogleGenAI } from "@google/genai"
 import { ServerError } from "@incmix-api/utils/errors"
 import { type AIModel, MODEL_MAP } from "./constants"
 
-type FigmaFileData = {
-  name: string
-  lastModified: string
-  version: string
-  document?: Node
-  nodes?: {
-    [key: string]: {
-      document: Node
-    }
-  }
-}
-
-type Node = {
+type FigmaNode = {
   id: string
   name: string
   type: string
@@ -52,8 +40,20 @@ type Node = {
     color: string
   }[]
   cornerRadius: number
-  children: Node[]
+  children: FigmaNode[]
   characters: string
+}
+
+type FigmaFileData = {
+  name: string
+  lastModified: string
+  version: string
+  document?: FigmaNode
+  nodes?: {
+    [key: string]: {
+      document: FigmaNode
+    }
+  }
 }
 
 type DesignElement = {
@@ -170,7 +170,7 @@ export class FigmaService {
     }
 
     const imageResponse = await fetch(
-      `${this.figmaApiUrl}/images/${fileKey}?ids=${nodeId}&format=jpg`,
+      `${this.figmaApiUrl}/images/${fileKey}?ids=${encodeURIComponent(nodeId)}&format=jpg`,
       {
         method: "get",
         headers: {
@@ -207,6 +207,10 @@ export class FigmaService {
         },
       })
 
+      if (!response.ok) {
+        throw new Error("Failed to fetch Figma file data")
+      }
+
       return response.json() as Promise<FigmaFileData>
     } catch (error) {
       console.error("Error fetching Figma file data:", error)
@@ -221,7 +225,7 @@ export class FigmaService {
     nodeId: string | null
   ) {
     // This is a simplified version - in production, you'd implement a more robust parser
-    let document: Node
+    let document: FigmaNode
 
     if (nodeId && fileData.nodes) {
       // If we requested specific nodes
@@ -250,11 +254,11 @@ export class FigmaService {
     }
   }
 
-  processDocument(document: Node) {
+  processDocument(document: FigmaNode) {
     // This is a simplified implementation
     // A production version would recursively parse the Figma node tree
 
-    function processNode(node: Node, path: string[] = []): DesignElement {
+    function processNode(node: FigmaNode, path: string[] = []): DesignElement {
       const basicInfo = {
         id: node.id,
         name: node.name,
