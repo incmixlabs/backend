@@ -363,9 +363,7 @@ export const generateCodeFromFigma = createRoute({
     body: {
       content: {
         "application/json": {
-          schema: z.object({
-            url: z.string().url(),
-          }),
+          schema: FigmaSchema,
         },
       },
     },
