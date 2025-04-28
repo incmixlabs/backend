@@ -2,8 +2,8 @@ import { envVars } from "@/env-vars"
 import Anthropic from "@anthropic-ai/sdk"
 import { GoogleGenAI } from "@google/genai"
 import { ServerError } from "@incmix-api/utils/errors"
+import type { SSEStreamingApi } from "hono/streaming"
 import { type AIModel, MODEL_MAP } from "./constants"
-
 type FigmaNode = {
   id: string
   name: string
@@ -358,7 +358,7 @@ export class FigmaService {
   }
 }
 
-async function generateUsingClaude(designElements: DesignData) {
+function generateUsingClaude(designElements: DesignData) {
   try {
     // Create prompt for Claude
     const prompt = createPrompt(designElements)
@@ -371,17 +371,19 @@ async function generateUsingClaude(designElements: DesignData) {
       apiKey: envVars.ANTHROPIC_API_KEY,
     })
 
-    // Call Claude API
-    const response = await anthropicClient.messages.create({
-      model: MODEL_MAP.claude,
-      max_tokens: 4000,
-      messages: [
-        {
-          role: "user",
-          content: prompt,
-        },
-      ],
-      system: `You are an expert React developer specializing in converting Figma designs to clean, maintainable React code.
+    return async (stream: SSEStreamingApi) => {
+      // Call Claude API
+      const response = await anthropicClient.messages.create({
+        model: MODEL_MAP.claude,
+        max_tokens: 40000,
+        messages: [
+          {
+            role: "user",
+            content: prompt,
+          },
+        ],
+        stream: true,
+        system: `You are an expert React developer specializing in converting Figma designs to clean, maintainable React code.
               Your task is to analyze the provided Figma design elements and generate high-quality React components.
               Follow these guidelines:
               1. Use modern React best practices with functional components and hooks
@@ -392,21 +394,27 @@ async function generateUsingClaude(designElements: DesignData) {
               6. Use TypeScript type definitions when specified
               7. Focus on accessibility and semantic HTML
               8. Return only the code without additional explanations`,
-    })
+      })
 
-    // Extract the code from Claude's response
-    if (Array.isArray(response.content)) {
-      // Join all text blocks from the content array
-      return response.content
-        .filter((block: any) => block.type === "text")
-        .map((block: any) => block.text)
-        .join("\n")
+      for await (const chunk of response) {
+        if (
+          chunk.type === "content_block_delta" &&
+          chunk.delta.type === "text_delta"
+        ) {
+          await stream.writeSSE({
+            event: "message",
+            data: JSON.stringify({
+              content: chunk.delta.text,
+            }),
+          })
+        }
+      }
+      // Signal end of stream
+      await stream.writeSSE({
+        event: "done",
+        data: JSON.stringify({ done: true }),
+      })
     }
-
-    // Fallback in case content structure changes
-    return typeof response.content === "string"
-      ? response.content
-      : JSON.stringify(response.content)
   } catch (error) {
     console.error("Error calling Claude API:", error)
     throw new Error(
@@ -415,7 +423,7 @@ async function generateUsingClaude(designElements: DesignData) {
   }
 }
 
-async function generateUsingGemini(designElements: DesignData) {
+function generateUsingGemini(designElements: DesignData) {
   try {
     // Create prompt for Gemini
     const prompt = createPrompt(designElements)
@@ -427,13 +435,14 @@ async function generateUsingGemini(designElements: DesignData) {
     // Initialize the Gemini API client
     const genAI = new GoogleGenAI({ apiKey: envVars.GOOGLE_AI_API_KEY })
 
-    const result = await genAI.models.generateContent({
-      model: MODEL_MAP.gemini,
-      contents: [
-        {
-          parts: [
-            {
-              text: `You are an expert React developer specializing in converting Figma designs to clean, maintainable React code.
+    return async (stream: SSEStreamingApi) => {
+      const result = await genAI.models.generateContentStream({
+        model: MODEL_MAP.gemini,
+        contents: [
+          {
+            parts: [
+              {
+                text: `You are an expert React developer specializing in converting Figma designs to clean, maintainable React code.
         Your task is to analyze the provided Figma design elements and generate high-quality React components.
         Follow these guidelines:
         1. Use modern React best practices with functional components and hooks
@@ -444,16 +453,28 @@ async function generateUsingGemini(designElements: DesignData) {
         6. Use TypeScript type definitions when specified
         7. Focus on accessibility and semantic HTML
         8. Return only the code without additional explanations`,
-            },
-            { text: prompt },
-          ],
-        },
-      ],
-    })
+              },
+              { text: prompt },
+            ],
+          },
+        ],
+      })
 
-    if (result.text?.length) return result.text
-
-    throw new Error("No response from AI")
+      for await (const chunk of result) {
+        const text = chunk.text
+        await stream.writeSSE({
+          event: "message",
+          data: JSON.stringify({
+            content: text,
+          }),
+        })
+      }
+      // Signal end of stream
+      await stream.writeSSE({
+        event: "done",
+        data: JSON.stringify({ done: true }),
+      })
+    }
   } catch (error) {
     console.error("Error calling Gemini API:", error)
     throw new Error(

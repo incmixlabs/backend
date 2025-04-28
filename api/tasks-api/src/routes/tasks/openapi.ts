@@ -371,7 +371,7 @@ export const generateCodeFromFigma = createRoute({
   responses: {
     200: {
       content: {
-        "application/json": {
+        "text/event-stream": {
           schema: z.object({
             reactCode: z.string(),
           }),

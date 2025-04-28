@@ -34,6 +34,7 @@ import {
   zodError,
 } from "@incmix-api/utils/errors"
 import { useTranslation } from "@incmix-api/utils/middleware"
+import { streamSSE } from "hono/streaming"
 import { nanoid } from "nanoid"
 const tasksRoutes = new OpenAPIHono<HonoApp>({
   defaultHook: zodError,
@@ -345,9 +346,10 @@ tasksRoutes.openapi(generateCodeFromFigma, async (c) => {
     const { url, userTier } = c.req.valid("json")
     const figmaService = new FigmaService()
 
-    const reactCode = await figmaService.generateReactFromFigma(url, userTier)
-
-    return c.json({ reactCode }, 200)
+    return streamSSE(
+      c,
+      await figmaService.generateReactFromFigma(url, userTier)
+    )
   } catch (error) {
     return await processError<typeof generateCodeFromFigma>(c, error, [
       "{{ default }}",
