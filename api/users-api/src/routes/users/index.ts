@@ -48,10 +48,10 @@ import { envVars } from "@/env-vars"
 import { UserRoles } from "@incmix/utils/types"
 import type { ContentfulStatusCode } from "hono/utils/http-status"
 import {
-  sql,
   type ExpressionWrapper,
   type OrderByExpression,
   type SqlBool,
+  sql,
 } from "kysely"
 import {
   addProfilePicture,
