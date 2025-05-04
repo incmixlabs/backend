@@ -47,7 +47,12 @@ import type {
 import { envVars } from "@/env-vars"
 import { UserRoles } from "@incmix/utils/types"
 import type { ContentfulStatusCode } from "hono/utils/http-status"
-import type { ExpressionWrapper, OrderByExpression, SqlBool } from "kysely"
+import {
+  type ExpressionWrapper,
+  type OrderByExpression,
+  type SqlBool,
+  sql,
+} from "kysely"
 import {
   addProfilePicture,
   createUserProfile,
@@ -129,63 +134,96 @@ userRoutes.openapi(createUserProfile, async (c) => {
     ])
   }
 })
-// userRoutes.openapi(userOnboarding, async (c) => {
-//   try {
-//     const {
-//       email,
-//       companyName,
-//       companySize,
-//       teamSize,
-//       purpose,
-//       role,
-//       manageFirst,
-//       focusFirst,
-//       referralSources,
-//     } = c.req.valid("json")
 
-//     const t = await useTranslation(c)
+userRoutes.openapi(userOnboarding, async (c) => {
+  try {
+    const {
+      email,
+      companyName,
+      companySize,
+      teamSize,
+      purpose,
+      role,
+      manageFirst,
+      focusFirst,
+      referralSources,
+    } = c.req.valid("json")
 
-//     const existingProfile = await db
-//       .selectFrom("userProfiles")
-//       .selectAll()
-//       .where("email", "=", email)
-//       .executeTakeFirst()
+    const t = await useTranslation(c)
 
-//     if (!existingProfile) {
-//       const msg = await t.text(ERROR_USER_NOT_FOUND)
-//       throw new NotFoundError(msg)
-//     }
+    console.log("Received referralSources:", referralSources)
+    console.log("Type:", typeof referralSources)
 
-//     const updatedProfile = await db
-//       .updateTable("userProfiles")
-//       .set({
-//         id: existingProfile.id,
-//         companyName,
-//         companySize,
-//         teamSize,
-//         purpose,
-//         role,
-//         manageFirst,
-//         focusFirst,
-//         referralSources,
-//         onboardingCompleted: true,
-//       })
-//       .where("email", "=", email)
-//       .returningAll()
-//       .executeTakeFirstOrThrow()
+    let normalizedSources: string[] = []
 
-//     if (!updatedProfile) {
-//       throw new ServerError("Failed to create Profile")
-//     }
+    if (referralSources) {
+      if (Array.isArray(referralSources)) {
+        normalizedSources = referralSources.map((item) => String(item))
+      } else if (typeof referralSources === "string") {
+        try {
+          const parsed = JSON.parse(referralSources)
+          normalizedSources = Array.isArray(parsed)
+            ? parsed.map(String)
+            : [referralSources]
+        } catch {
+          normalizedSources = [referralSources]
+        }
+      } else if (typeof referralSources === "object") {
+        normalizedSources = Object.keys(referralSources)
+      }
+    }
 
-//     return c.json({ ...updatedProfile, name: updatedProfile.fullName }, 200)
-//   } catch (error) {
-//     return await processError<typeof userOnboarding>(c, error, [
-//       "{{ default }}",
-//       "user-onboarding",
-//     ])
-//   }
-// })
+    console.log("Normalized sources:", normalizedSources)
+
+    const existingProfile = await db
+      .selectFrom("userProfiles")
+      .selectAll()
+      .where("email", "=", email)
+      .executeTakeFirst()
+
+    if (!existingProfile) {
+      const msg = await t.text(ERROR_USER_NOT_FOUND)
+      throw new NotFoundError(msg)
+    }
+
+    console.log(
+      "Existing profile referralSources type:",
+      typeof existingProfile.referralSources
+    )
+    console.log("Existing value:", existingProfile.referralSources)
+
+    const updatedProfile = await db
+      .updateTable("userProfiles")
+      .set({
+        id: existingProfile.id,
+        companyName,
+        companySize,
+        teamSize,
+        purpose,
+        role,
+        manageFirst,
+        focusFirst,
+
+        referralSources: sql`CAST(${JSON.stringify(normalizedSources)} AS JSONB)`,
+        onboardingCompleted: true,
+      })
+      .where("email", "=", email)
+      .returningAll()
+      .executeTakeFirstOrThrow()
+
+    if (!updatedProfile) {
+      throw new ServerError("Failed to create Profile")
+    }
+
+    return c.json({ ...updatedProfile, name: updatedProfile.fullName }, 200)
+  } catch (error) {
+    console.error("Full error:", error)
+    return await processError<typeof userOnboarding>(c, error, [
+      "{{ default }}",
+      "user-onboarding",
+    ])
+  }
+})
 
 userRoutes.openapi(getCurrentUser, async (c) => {
   try {
