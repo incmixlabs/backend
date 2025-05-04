@@ -9,7 +9,8 @@ import {
   ERROR_USER_STORY_GENERATION_FAILED,
 } from "@/lib/constants"
 import { db } from "@/lib/db"
-import { generateReactFromFigma, getFigmaFile } from "@/lib/figma"
+import { FigmaService } from "@/lib/figma"
+
 import {
   generateUserStory as aiGenerateUserStory,
   generateUserStoryFromImage,
@@ -33,6 +34,7 @@ import {
   zodError,
 } from "@incmix-api/utils/errors"
 import { useTranslation } from "@incmix-api/utils/middleware"
+import { streamSSE } from "hono/streaming"
 import { nanoid } from "nanoid"
 const tasksRoutes = new OpenAPIHono<HonoApp>({
   defaultHook: zodError,
@@ -313,17 +315,17 @@ tasksRoutes.openapi(generateFromFigma, async (c) => {
       return c.json({ message: msg }, 401)
     }
 
-    const { url, layerName, prompt, userTier } = c.req.valid("json")
-
-    const figmaFile = await getFigmaFile(url, layerName)
+    const { url, prompt, userTier } = c.req.valid("json")
+    const figmaService = new FigmaService()
+    const figmaImage = await figmaService.getFigmaImage(url)
 
     const userStory = await generateUserStoryFromImage(
+      figmaImage,
       prompt,
-      figmaFile,
       userTier
     )
 
-    return c.json({ userStory, imageUrl: figmaFile }, 200)
+    return c.json({ userStory, imageUrl: figmaImage }, 200)
   } catch (error) {
     return await processError<typeof generateFromFigma>(c, error, [
       "{{ default }}",
@@ -341,11 +343,13 @@ tasksRoutes.openapi(generateCodeFromFigma, async (c) => {
       return c.json({ message: msg }, 401)
     }
 
-    const { url } = c.req.valid("json")
+    const { url, userTier } = c.req.valid("json")
+    const figmaService = new FigmaService()
 
-    const reactCode = await generateReactFromFigma(url)
-
-    return c.json({ reactCode }, 200)
+    return streamSSE(
+      c,
+      await figmaService.generateReactFromFigma(url, userTier)
+    )
   } catch (error) {
     return await processError<typeof generateCodeFromFigma>(c, error, [
       "{{ default }}",

@@ -57,11 +57,7 @@ export const FigmaSchema = z
     url: z.string().url().openapi({
       example: "https://www.figma.com/design/1234567890/1234567890",
     }),
-    layerName: z.string().openapi({
-      example: "Dashboard Page",
-      description: "Name of the layer to generate task for",
-    }),
-    prompt: z.string().openapi({
+    prompt: z.string().optional().openapi({
       example: "create a dashboard",
       description:
         "A short description of the feature for user story generation",

@@ -7,6 +7,7 @@ import {
   createPartFromUri,
   createUserContent,
 } from "@google/genai"
+import { type AIModel, MODEL_MAP } from "./constants"
 
 export async function getOrganizationById(c: Context, id: string) {
   const url = `${envVars.ORG_URL}/id/${id}`
@@ -27,13 +28,6 @@ export async function getOrganizationById(c: Context, id: string) {
 
   return res.json()
 }
-
-const MODEL_MAP = {
-  claude: "claude-3-5-sonnet-20240620",
-  gemini: "gemini-1.5-flash-latest",
-}
-
-export type AIModel = keyof typeof MODEL_MAP
 
 export async function generateUserStory(
   _c: Context,
@@ -142,16 +136,14 @@ async function getAiResponseUsingTextPrompt(
 }
 
 export async function generateUserStoryFromImage(
-  prompt: string,
   imageUrl: string,
+  prompt = "create a user story for a kanban board based on the image provided",
   userTier: "free" | "paid" = "free"
 ): Promise<string> {
   const enhancedPrompt = `
     Create a user story for Kanban board based on the following prompt: "${prompt}"
 
-    The user story should be based on the image provided.
-
-     Format as:
+    Format as:
     As a [type of user], I want [goal] so that [benefit/value].
 
     [Design Description]
