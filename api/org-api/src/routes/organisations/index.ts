@@ -283,7 +283,8 @@ orgRoutes.openapi(addMember, async (c) => {
 
     const { handle } = c.req.valid("param")
     const { role, email } = c.req.valid("json")
-    const org = await findOrganisationByHandle(c, handle)
+    // Use findOrganisationById since the "handle" parameter is actually the ID
+    const org = await findOrganisationById(c, handle)
 
     await throwUnlessUserCan({
       c,
@@ -345,10 +346,19 @@ orgRoutes.openapi(updateOrganisation, async (c) => {
       throw new UnauthorizedError(msg)
     }
 
+    // Log request parameters
+    console.log("Request parameters:", c.req.valid("param"))
     const { handle } = c.req.valid("param")
-    const { name } = c.req.valid("json")
-    const org = await findOrganisationByHandle(c, handle)
 
+    // Log request body
+    console.log("Request body:", c.req.valid("json"))
+    const { name } = c.req.valid("json")
+    // frontend is passing the ID as the handle hence the error
+    // Use findOrganisationById since the "handle" parameter is actually the ID
+    const org = await findOrganisationById(c, handle)
+    console.log("Found organization by id:", org)
+
+    console.log("User attempting authorization:", user)
     await throwUnlessUserCan({
       c,
       user,
@@ -356,20 +366,29 @@ orgRoutes.openapi(updateOrganisation, async (c) => {
       action: "update",
       subject: "Organisation",
     })
+    console.log("Authorization successful for user:", user.id)
 
     const orgExists = await doesOrganisationExist(name, user.id)
+    console.log("Organization with this name exists:", orgExists)
 
     if (orgExists) {
       const msg = await t.text(ERROR_ORG_EXIST)
       throw new ConflictError(msg)
     }
 
+    console.log(
+      "Attempting to update organization with ID:",
+      org.id,
+      "to new name:",
+      name
+    )
     const updatedOrg = await db
       .updateTable("organisations")
       .set({ name: name })
       .where("id", "=", org.id)
       .returningAll()
       .executeTakeFirst()
+    console.log("Updated organization data:", updatedOrg)
 
     if (!updatedOrg) {
       const msg = await t.text(ERROR_ORG_UPDATE_FAIL)
@@ -377,16 +396,16 @@ orgRoutes.openapi(updateOrganisation, async (c) => {
     }
 
     const members = await findOrgMembers(org.id)
+    console.log("Organization members:", members)
 
-    return c.json(
-      {
-        id: org.id,
-        name: name,
-        handle: org.handle,
-        members: members.map((m) => ({ userId: m.userId, role: m.role })),
-      },
-      200
-    )
+    const responseData = {
+      id: org.id,
+      name: name,
+      handle: org.handle,
+      members: members.map((m) => ({ userId: m.userId, role: m.role })),
+    }
+    console.log("Response data being sent to frontend:", responseData)
+    return c.json(responseData, 200)
   } catch (error) {
     return await processError<typeof updateOrganisation>(c, error, [
       "{{ default }}",
@@ -465,7 +484,7 @@ orgRoutes.openapi(removeMembers, async (c) => {
     const { handle } = c.req.valid("param")
     const { userIds } = c.req.valid("json")
 
-    const org = await findOrganisationByHandle(c, handle)
+    const org = await findOrganisationById(c, handle)
 
     await throwUnlessUserCan({
       c,
@@ -515,7 +534,7 @@ orgRoutes.openapi(updateMemberRole, async (c) => {
     const { handle } = c.req.valid("param")
     const { role: newRole, userId } = c.req.valid("json")
 
-    const org = await findOrganisationByHandle(c, handle)
+    const org = await findOrganisationById(c, handle)
 
     await throwUnlessUserCan({
       c,
