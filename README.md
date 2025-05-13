@@ -59,4 +59,5 @@ If you're working on a service that hasn't been migrated yet:
 1. Install Docker
 2. Run ```docker compose up -d``` to start database containers
 3. Update environment variable.
-4. Run ```pnpm dev``` to start APIs
+4. Run ```cd ./api/org-api && npx kysely seed:run && cd ../..```
+5. Run ```pnpm dev``` to start APIs
