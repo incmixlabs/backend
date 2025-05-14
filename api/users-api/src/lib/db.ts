@@ -20,7 +20,7 @@ export const db = new Kysely<Database>({
 })
 
 export async function getUserByEmail(c: Context, email: string) {
-  const sessionId = getCookie(c, c.env.COOKIE_NAME) ?? null
+  const sessionId = getCookie(c, envVars.COOKIE_NAME) ?? null
 
   if (!sessionId) {
     throw new UnauthorizedError()
