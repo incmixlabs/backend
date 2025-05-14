@@ -1,11 +1,14 @@
 import {
   ERROR_COLUMN_CREATE_FAILED,
   ERROR_COLUMN_EXISTS,
+  ERROR_COLUMN_NOT_FOUND,
+  ERROR_COLUMN_UPDATE_FAILED,
   ERROR_ORG_NOT_FOUND,
   ERROR_PARENT_NOT_FOUND,
   ERROR_PROJECT_CREATE_FAILED,
   ERROR_PROJECT_EXISTS,
   ERROR_PROJECT_NOT_FOUND,
+  ERROR_PROJECT_UPDATE_FAILED,
 } from "@/lib/constants"
 import { db, generateBoard } from "@/lib/db"
 import { getOrganizationById } from "@/lib/services"
@@ -15,6 +18,7 @@ import { ERROR_UNAUTHORIZED } from "@incmix-api/utils"
 import {
   BadRequestError,
   ConflictError,
+  UnauthorizedError,
   UnprocessableEntityError,
   processError,
   zodError,
@@ -24,9 +28,13 @@ import { nanoid } from "nanoid"
 import {
   createColumn,
   createProject,
+  deleteColumn,
+  deleteProject,
   getBoard,
   getColumns,
   getProjects,
+  updateColumn,
+  updateProject,
 } from "./openapi"
 
 const projectRoutes = new OpenAPIHono<HonoApp>({
@@ -81,6 +89,74 @@ projectRoutes.openapi(createProject, async (c) => {
     return await processError<typeof createProject>(c, error, [
       "{{ default }}",
       "create-project",
+    ])
+  }
+})
+
+projectRoutes.openapi(updateProject, async (c) => {
+  try {
+    const user = c.get("user")
+    const t = await useTranslation(c)
+    if (!user) {
+      const msg = await t.text(ERROR_UNAUTHORIZED)
+      throw new UnauthorizedError(msg)
+    }
+    const { id, name } = c.req.valid("json")
+    const existingProject = await db
+      .selectFrom("projects")
+      .selectAll()
+      .where("id", "=", id)
+      .executeTakeFirst()
+    if (!existingProject) {
+      const msg = await t.text(ERROR_PROJECT_NOT_FOUND)
+      throw new UnprocessableEntityError(msg)
+    }
+    const project = await db
+      .updateTable("projects")
+      .set({ name, updatedBy: user.id, updatedAt: new Date().toISOString() })
+      .where("id", "=", id)
+      .returningAll()
+      .executeTakeFirst()
+    if (!project) {
+      const msg = await t.text(ERROR_PROJECT_UPDATE_FAILED)
+      throw new BadRequestError(msg)
+    }
+    return c.json(project, 200)
+  } catch (error) {
+    return await processError<typeof updateProject>(c, error, [
+      "{{ default }}",
+      "update-project",
+    ])
+  }
+})
+
+projectRoutes.openapi(deleteProject, async (c) => {
+  try {
+    const user = c.get("user")
+    const t = await useTranslation(c)
+    if (!user) {
+      const msg = await t.text(ERROR_UNAUTHORIZED)
+      throw new UnauthorizedError(msg)
+    }
+    const { projectId } = c.req.valid("param")
+    const existingProject = await db
+      .selectFrom("projects")
+      .selectAll()
+      .where("id", "=", projectId)
+      .executeTakeFirst()
+    if (!existingProject) {
+      const msg = await t.text(ERROR_PROJECT_NOT_FOUND)
+      throw new UnprocessableEntityError(msg)
+    }
+    await db
+      .deleteFrom("projects")
+      .where("id", "=", projectId)
+      .executeTakeFirst()
+    return c.json({ message: "Project deleted" }, 200)
+  } catch (error) {
+    return await processError<typeof deleteProject>(c, error, [
+      "{{ default }}",
+      "delete-project",
     ])
   }
 })
@@ -167,6 +243,84 @@ projectRoutes.openapi(createColumn, async (c) => {
     return await processError<typeof createColumn>(c, error, [
       "{{ default }}",
       "create-column",
+    ])
+  }
+})
+
+projectRoutes.openapi(updateColumn, async (c) => {
+  try {
+    const user = c.get("user")
+    const t = await useTranslation(c)
+    if (!user) {
+      const msg = await t.text(ERROR_UNAUTHORIZED)
+      throw new UnauthorizedError(msg)
+    }
+
+    const { id, name, order, parentId } = c.req.valid("json")
+
+    const existingColumn = await db
+      .selectFrom("columns")
+      .selectAll()
+      .where("id", "=", id)
+      .executeTakeFirst()
+    if (!existingColumn) {
+      const msg = await t.text(ERROR_COLUMN_NOT_FOUND)
+      throw new UnprocessableEntityError(msg)
+    }
+
+    const column = await db
+      .updateTable("columns")
+      .set({
+        label: name,
+        columnOrder: order,
+        parentId,
+        updatedBy: user.id,
+        updatedAt: new Date().toISOString(),
+      })
+      .where("id", "=", id)
+      .returningAll()
+      .executeTakeFirst()
+    if (!column) {
+      const msg = await t.text(ERROR_COLUMN_UPDATE_FAILED)
+      throw new BadRequestError(msg)
+    }
+    return c.json(column, 200)
+  } catch (error) {
+    return await processError<typeof updateColumn>(c, error, [
+      "{{ default }}",
+      "update-column",
+    ])
+  }
+})
+
+projectRoutes.openapi(deleteColumn, async (c) => {
+  try {
+    const user = c.get("user")
+    const t = await useTranslation(c)
+    if (!user) {
+      const msg = await t.text(ERROR_UNAUTHORIZED)
+      throw new UnauthorizedError(msg)
+    }
+    const { columnId } = c.req.valid("param")
+    if (!columnId) {
+      const msg = await t.text(ERROR_COLUMN_NOT_FOUND)
+      throw new UnprocessableEntityError(msg)
+    }
+    const existingColumn = await db
+      .selectFrom("columns")
+      .selectAll()
+      .where("id", "=", columnId)
+      .executeTakeFirst()
+    if (!existingColumn) {
+      const msg = await t.text(ERROR_COLUMN_NOT_FOUND)
+      throw new UnprocessableEntityError(msg)
+    }
+    await db.deleteFrom("columns").where("id", "=", columnId).executeTakeFirst()
+    return c.json({ message: "Column deleted" }, 200)
+  } catch (error) {
+    return await processError<typeof deleteColumn>(c, error, [
+      "{{ default }}",
+      "delete-column",
     ])
   }
 })
