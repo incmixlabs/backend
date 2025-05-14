@@ -153,6 +153,9 @@ projectRoutes.openapi(deleteProject, async (c) => {
       .deleteFrom("projects")
       .where("id", "=", projectId)
       .executeTakeFirst()
+
+    await db.deleteFrom("columns").where("projectId", "=", projectId).execute()
+
     return c.json({ message: "Project deleted" }, 200)
   } catch (error) {
     return await processError<typeof deleteProject>(c, error, [
