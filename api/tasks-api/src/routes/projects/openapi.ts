@@ -185,30 +185,31 @@ export const updateProject = createRoute({
       },
       description: "Updated Project",
     },
-  },
-  401: {
-    content: {
-      "application/json": {
-        schema: ResponseSchema,
+
+    401: {
+      content: {
+        "application/json": {
+          schema: ResponseSchema,
+        },
       },
+      description: "Error response when not authenticated",
     },
-    description: "Error response when not authenticated",
-  },
-  404: {
-    content: {
-      "application/json": {
-        schema: ResponseSchema,
+    404: {
+      content: {
+        "application/json": {
+          schema: ResponseSchema,
+        },
       },
+      description: "Error response when Project does not exist",
     },
-    description: "Error response when Project does not exist",
-  },
-  500: {
-    content: {
-      "application/json": {
-        schema: ResponseSchema,
+    500: {
+      content: {
+        "application/json": {
+          schema: ResponseSchema,
+        },
       },
+      description: "Internal Server Error",
     },
-    description: "Internal Server Error",
   },
 })
 
@@ -231,30 +232,31 @@ export const deleteProject = createRoute({
       },
       description: "Deleted Project",
     },
-  },
-  401: {
-    content: {
-      "application/json": {
-        schema: ResponseSchema,
+
+    401: {
+      content: {
+        "application/json": {
+          schema: ResponseSchema,
+        },
       },
+      description: "Error response when not authenticated",
     },
-    description: "Error response when not authenticated",
-  },
-  404: {
-    content: {
-      "application/json": {
-        schema: ResponseSchema,
+    404: {
+      content: {
+        "application/json": {
+          schema: ResponseSchema,
+        },
       },
+      description: "Error response when Project does not exist",
     },
-    description: "Error response when Project does not exist",
-  },
-  500: {
-    content: {
-      "application/json": {
-        schema: ResponseSchema,
+    500: {
+      content: {
+        "application/json": {
+          schema: ResponseSchema,
+        },
       },
+      description: "Internal Server Error",
     },
-    description: "Internal Server Error",
   },
 })
 
@@ -331,30 +333,31 @@ export const updateColumn = createRoute({
       },
       description: "Updated Column",
     },
-  },
-  401: {
-    content: {
-      "application/json": {
-        schema: ResponseSchema,
+
+    401: {
+      content: {
+        "application/json": {
+          schema: ResponseSchema,
+        },
       },
+      description: "Error response when not authenticated",
     },
-    description: "Error response when not authenticated",
-  },
-  404: {
-    content: {
-      "application/json": {
-        schema: ResponseSchema,
+    404: {
+      content: {
+        "application/json": {
+          schema: ResponseSchema,
+        },
       },
+      description: "Error response when Column does not exist",
     },
-    description: "Error response when Column does not exist",
-  },
-  500: {
-    content: {
-      "application/json": {
-        schema: ResponseSchema,
+    500: {
+      content: {
+        "application/json": {
+          schema: ResponseSchema,
+        },
       },
+      description: "Internal Server Error",
     },
-    description: "Internal Server Error",
   },
 })
 
@@ -377,28 +380,30 @@ export const deleteColumn = createRoute({
       },
       description: "Deleted Column",
     },
-  },
-  401: {
-    content: {
-      "application/json": {
-        schema: ResponseSchema,
+
+    401: {
+      content: {
+        "application/json": {
+          schema: ResponseSchema,
+        },
       },
+      description: "Error response when not authenticated",
     },
-    description: "Error response when not authenticated",
-  },
-  404: {
-    content: {
-      "application/json": {
-        schema: ResponseSchema,
+    404: {
+      content: {
+        "application/json": {
+          schema: ResponseSchema,
+        },
       },
+      description: "Error response when Column does not exist",
     },
-    description: "Error response when Column does not exist",
-  },
-  500: {
-    content: {
-      "application/json": {
-        schema: ResponseSchema,
+    500: {
+      content: {
+        "application/json": {
+          schema: ResponseSchema,
+        },
       },
+      description: "Internal Server Error",
     },
   },
 })
