@@ -1,3 +1,4 @@
+import type { UpdatedColumn } from "@/dbSchema"
 import {
   ERROR_COLUMN_CREATE_FAILED,
   ERROR_COLUMN_EXISTS,
@@ -36,7 +37,6 @@ import {
   updateColumn,
   updateProject,
 } from "./openapi"
-import type { UpdatedColumn } from "@/dbSchema"
 
 const projectRoutes = new OpenAPIHono<HonoApp>({
   defaultHook: zodError,
