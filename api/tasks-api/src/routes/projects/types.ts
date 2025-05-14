@@ -34,7 +34,7 @@ export const CreateColumnSchema = ColumnSchema.omit({
 
 export const UpdateColumnSchema = z.object({
   id: z.string(),
-  name: z.string(),
+  label: z.string(),
   order: z.number().optional(),
   parentId: z.string().optional(),
 })
