@@ -36,6 +36,7 @@ import {
   updateColumn,
   updateProject,
 } from "./openapi"
+import type { UpdatedColumn } from "@/dbSchema"
 
 const projectRoutes = new OpenAPIHono<HonoApp>({
   defaultHook: zodError,
@@ -256,7 +257,7 @@ projectRoutes.openapi(updateColumn, async (c) => {
       throw new UnauthorizedError(msg)
     }
 
-    const { id, name, order, parentId } = c.req.valid("json")
+    const { id, label, order, parentId } = c.req.valid("json")
 
     const existingColumn = await db
       .selectFrom("columns")
@@ -270,12 +271,21 @@ projectRoutes.openapi(updateColumn, async (c) => {
 
     const column = await db
       .updateTable("columns")
-      .set({
-        label: name,
-        columnOrder: order,
-        parentId,
-        updatedBy: user.id,
-        updatedAt: new Date().toISOString(),
+      .set(() => {
+        const updates: UpdatedColumn = {
+          updatedBy: user.id,
+          updatedAt: new Date().toISOString(),
+        }
+        if (label !== undefined) {
+          updates.label = label
+        }
+        if (order !== undefined) {
+          updates.columnOrder = order
+        }
+        if (parentId !== undefined) {
+          updates.parentId = parentId
+        }
+        return updates
       })
       .where("id", "=", id)
       .returningAll()
