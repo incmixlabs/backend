@@ -39,6 +39,14 @@ export const ERROR_PROJECT_CREATE_FAILED = {
   namespace: "errors",
   key: "project_create_failed",
 }
+export const ERROR_PROJECT_UPDATE_FAILED = {
+  namespace: "errors",
+  key: "project_update_failed",
+}
+export const ERROR_PROJECT_DELETE_FAILED = {
+  namespace: "errors",
+  key: "project_delete_failed",
+}
 export const ERROR_COLUMN_CREATE_FAILED = {
   namespace: "errors",
   key: "column_create_failed",
@@ -46,6 +54,10 @@ export const ERROR_COLUMN_CREATE_FAILED = {
 export const ERROR_COLUMN_EXISTS = {
   namespace: "errors",
   key: "column_exists",
+}
+export const ERROR_COLUMN_UPDATE_FAILED = {
+  namespace: "errors",
+  key: "column_update_failed",
 }
 export const ERROR_PARENT_NOT_FOUND = {
   namespace: "errors",
