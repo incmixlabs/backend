@@ -297,7 +297,7 @@ userRoutes.openapi(getUserpermissions, async (c) => {
     if (user.userType === UserRoles.ROLE_MEMBER) {
       const { orgId } = c.req.valid("query")
       if (!orgId) throw new BadRequestError("orgId is required")
-      const url = `${c.env.ORG_URL}/${orgId}/permissions`
+      const url = `${envVars.ORG_API_URL}/${orgId}/permissions`
       const cookie = c.req.header("Cookie") || ""
       const res = await fetch(url, {
         headers: { cookie },

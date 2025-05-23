@@ -19,10 +19,22 @@ export const CreateProjectSchema = ProjectSchema.omit({
   updatedBy: true,
 })
 
+export const UpdateProjectSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+})
+
 export const CreateColumnSchema = ColumnSchema.omit({
   id: true,
   createdAt: true,
   updatedAt: true,
   createdBy: true,
   updatedBy: true,
+})
+
+export const UpdateColumnSchema = z.object({
+  id: z.string(),
+  label: z.string(),
+  order: z.number().optional(),
+  parentId: z.string().optional(),
 })
