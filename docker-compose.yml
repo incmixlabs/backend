@@ -1,12 +1,10 @@
-version: "3.9"
 name: "incmix"
-
 services:
   postgres:
     build:
       context: .
       dockerfile: db/Dockerfile
-    image: sibedge/postgres-plv8-bigint:17.4-3.2.3
+    # image: sibedge/postgres-plv8-bigint:17.4-3.2.3
     restart: always
     environment:
       POSTGRES_DB: incmix
@@ -16,15 +14,15 @@ services:
       POSTGRES_EXTENSIONS: plv8, btree_gist, hstore, pgvector, pgcrypto, CITEXT, pg_trgm, pg_cron, plpython3u
     ports:
       - 54321:5432
-    volumes:
-      - ./postgres.conf:/etc/postgresql/postgresql.conf:ro
+    # volumes:
+    #   - ./postgres.conf:/etc/postgresql/postgresql.conf:ro
     tmpfs:
       - /var/lib/postgresql/data
       - /tmp
-    command:
-      - postgres
-      - -c
-      - config_file=/etc/postgresql/postgresql.conf
+    # command:
+    #   - postgres
+    #   - -c
+    #   - config_file=/etc/postgresql/postgresql.conf
   backend:
     image: electricsql/electric
     environment:
@@ -34,44 +32,3 @@ services:
       - 3000:3000
     depends_on:
       - postgres
-
-
-  # minio:
-  #   image: minio/minio:latest
-  #   platform: linux/amd64
-  #   environment:
-  #     - MINIO_ROOT_USER=minioadmin
-  #     - MINIO_ROOT_PASSWORD=minioadmin
-  #   ports:
-  #     - "9000:9000"
-  #     - "9001:9001"
-  #   volumes:
-  #     - minio_data:/data
-  #   command: server /data --console-address ":9001"
-  #   networks:
-  #     - files_network
-  # intl_api:
-  #   build:
-  #     context: .
-  #     dockerfile: api/intl-api/Dockerfile
-  #   environment:
-  #     - DATABASE_URL=postgresql://postgres:postgres@postgres_intl_api:5432/intl
-  #   depends_on:
-  #     - postgres_intl_api
-  #   ports:
-  #     - "9090:9090"
-  #   networks:
-  #     - intl_network
-
-  # auth_api:
-  #   build:
-  #     context: .
-  #     dockerfile: api/auth/Dockerfile
-  #   environment:
-  #     - DATABASE_URL=postgresql://postgres:postgres@postgres_auth_api:5432/auth
-  #   depends_on:
-  #     - postgres_auth_api
-  #   ports:
-  #     - "8787:8787"
-  #   networks:
-  #     - auth_network
