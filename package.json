@@ -6,6 +6,9 @@
   "scripts": {
     "build": "turbo build",
     "clean": "turbo clean",
+    "db:migrate": "dotenv -e ../../.env.dev -- pnpm exec pg-migrations apply --directory ./db/migrations-server",
+    "db:load-data": "dotenv -e ../../.env.dev -- node ./db/load_data.js",
+    "reset": "pnpm backend:down && pnpm backend:up && pnpm db:migrate && pnpm db:load-data",
     "dev": "turbo dev --parallel --ui tui",
     "lint": "biome check .",
     "lint:fix": "biome check --fix --unsafe",
@@ -26,8 +29,11 @@
     "@biomejs/biome": "1.9.4",
     "@commitlint/cli": "19.6.1",
     "@commitlint/config-conventional": "19.6.0",
+    "@databases/pg-migrations": "5.0.3",
+    "@faker-js/faker" : "9.8.0",
     "@flydotio/dockerfile": "^0.7.8",
     "@turbo/gen": "2.3.3",
+    "dotenv": "16.4.5",
     "lefthook": "1.10.4",
     "turbo": "2.3.3"
   },
