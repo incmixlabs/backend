@@ -14,12 +14,12 @@ const app = new OpenAPIHono<HonoApp>()
 setupCors(app, "/api")
 
 app.use("*", compress({ encoding: "gzip" }))
-app.get('/api/timestamp', (c) => {
-  return c.json({ time: Date.now() });
-});
+app.get("/api/timestamp", (c) => {
+  return c.json({ time: Date.now() })
+})
 app.get("/api/timestamp-nano", (c) => {
-  const [seconds, nanoseconds] = process.hrtime();
-  const currentTimeInNanoseconds = seconds * 1e9 + nanoseconds;
+  const [seconds, nanoseconds] = process.hrtime()
+  const currentTimeInNanoseconds = seconds * 1e9 + nanoseconds
   return c.json({ time: currentTimeInNanoseconds })
 })
 app.get("/api/healthcheck", async (c) => {
