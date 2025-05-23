@@ -4,6 +4,13 @@
 
 We've recently standardized the health check implementation across all microservices. Now all services use a shared utility for health checks, providing consistent behavior and reducing code duplication.
 
+### Connecting to local DB
+
+```
+psql -h localhost -p 54321 -U postgres  -d incmix
+or
+psql postgresql://postgres:password@localhost:54321/incmix
+```
 ### Migration Guide
 
 If you're working on a service that hasn't been migrated yet:
