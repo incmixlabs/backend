@@ -1,7 +1,7 @@
-import Postgrator from "postgrator"
-import pg from "pg"
 import { dirname } from "node:path"
 import { fileURLToPath } from "node:url"
+import pg from "pg"
+import Postgrator from "postgrator"
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 
