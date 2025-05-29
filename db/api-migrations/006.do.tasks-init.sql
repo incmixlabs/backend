@@ -41,12 +41,20 @@ CREATE INDEX idx_columns_parent_id ON columns(parent_id);
 CREATE INDEX idx_columns_created_by ON columns(created_by);
 
 CREATE INDEX idx_columns_updated_by ON columns(updated_by);
+CREATE TYPE CHECKLIST {
+  done boolean,
+  item Text
 
+}
 -- Create tasks table
 CREATE TABLE tasks (
   id TEXT PRIMARY KEY,
   content TEXT,
   task_order INTEGER NOT NULL DEFAULT 0,
+  figma_link TEXT,
+  code_snippets TEXT[],
+  title text,
+  checklist CHECKLIST[],
   project_id TEXT NOT NULL REFERENCES projects(id),
   column_id TEXT NOT NULL REFERENCES columns(id),
   assigned_to TEXT REFERENCES users(id),
