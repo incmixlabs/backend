@@ -15,7 +15,7 @@ import { z } from "zod"
 const EnvSchema = z.object({
   NODE_ENV: z.string().default("development"),
   PORT: z.coerce.number().default(8787),
-  INTL_URL: z.string().url(),
+  INTL_API_URL: z.string().url(),
   COOKIE_NAME: z.string().default("incmix_session"),
   DOMAIN: z.string().default("localhost"),
   WEATHER_URL: z.string().url(),

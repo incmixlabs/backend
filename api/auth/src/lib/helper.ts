@@ -1,20 +1,23 @@
-import type { Provider, TokenType } from "@/dbSchema"
 import type { Context } from "@/types"
+import type { Provider, TokenType } from "@incmix-api/utils/db-schema"
 
-import { envVars } from "@/env-vars"
 import { generateSentryHeaders } from "@incmix-api/utils"
 import { ServerError } from "@incmix-api/utils/errors"
 import { UserRoles } from "@incmix/utils/types"
+import { env } from "hono/adapter"
 import { generateId } from "lucia"
 import { TimeSpan, createDate, isWithinExpirationDate } from "oslo"
 import { alphabet, generateRandomString } from "oslo/crypto"
-import { db, insertUser } from "./db"
+import { insertUser } from "./db"
+
 export async function verifyVerificationCode(
+  c: Context,
   user: { id: string; email: string },
   code: string,
   type: TokenType
 ) {
-  const databaseCode = await db
+  const databaseCode = await c
+    .get("db")
     .selectFrom("verificationCodes")
     .selectAll()
     .where((eb) =>
@@ -22,7 +25,7 @@ export async function verifyVerificationCode(
         eb("userId", "=", user.id),
         eb("email", "=", user.email),
         eb("code", "=", code),
-        eb("description", "=", type),
+        eb("codeType", "=", type),
       ])
     )
     .executeTakeFirst()
@@ -32,26 +35,28 @@ export async function verifyVerificationCode(
   }
 
   if (!isWithinExpirationDate(new Date(databaseCode.expiresAt))) {
-    await db
+    await c
+      .get("db")
       .deleteFrom("verificationCodes")
       .where((eb) =>
         eb.and([
           eb("userId", "=", user.id),
           eb("code", "=", code),
-          eb("description", "=", type),
+          eb("codeType", "=", type),
         ])
       )
       .execute()
     return false
   }
 
-  await db
+  await c
+    .get("db")
     .deleteFrom("verificationCodes")
     .where((eb) =>
       eb.and([
         eb("userId", "=", user.id),
         eb("code", "=", code),
-        eb("description", "=", type),
+        eb("codeType", "=", type),
       ])
     )
     .execute()
@@ -65,13 +70,15 @@ export async function insertOAuthUser(
   accountId: string,
   c: Context
 ) {
-  const existingUser = await db
+  const existingUser = await c
+    .get("db")
     .selectFrom("users")
     .selectAll()
     .where("email", "=", user.email)
     .executeTakeFirst()
 
-  const existingAccount = await db
+  const existingAccount = await c
+    .get("db")
     .selectFrom("accounts")
     .selectAll()
     .where((eb) =>
@@ -82,7 +89,8 @@ export async function insertOAuthUser(
   if (existingAccount && existingUser) return existingUser
 
   if (existingUser && !existingAccount) {
-    await db
+    await c
+      .get("db")
       .insertInto("accounts")
       .values({ accountId, provider, userId: existingUser.id })
       .execute()
@@ -106,7 +114,8 @@ export async function insertOAuthUser(
 
   if (!newUser) throw new Error("Failed to insert User")
 
-  await db
+  await c
+    .get("db")
     .insertInto("accounts")
     .values({ accountId, provider, userId: newUser.id })
     .execute()
@@ -115,43 +124,46 @@ export async function insertOAuthUser(
 }
 
 export async function generateVerificationCode(
+  c: Context,
   userId: string,
   email: string,
   type: TokenType
 ) {
-  await db
+  await c
+    .get("db")
     .deleteFrom("verificationCodes")
     .where((eb) =>
       eb.and([
         eb("userId", "=", userId),
         eb("email", "=", email),
-        eb("description", "=", type),
+        eb("codeType", "=", type),
       ])
     )
     .execute()
 
   const code = generateRandomString(8, alphabet("0-9"))
-  await db
+  await c
+    .get("db")
     .insertInto("verificationCodes")
     .values({
       userId,
       email,
       expiresAt: createDate(new TimeSpan(7, "d")).toISOString(),
       code,
-      description: type,
+      codeType: type,
     })
     .execute()
 
   return code
 }
 
-export const sendVerificationEmailOrLog = (
+export const sendVerificationEmail = (
   c: Context,
   recipient: string,
   verificationCode: string
 ) => {
-  const verificationLink = `${envVars.FRONTEND_URL}/email-verification?code=${verificationCode}&email=${recipient}`
-  const emailUrl = `${envVars.EMAIL_URL}`
+  const verificationLink = `${env(c).FRONTEND_URL}/email-verification?code=${verificationCode}&email=${recipient}`
+  const emailUrl = `${env(c).EMAIL_URL}`
   console.log({
     recipient,
     verificationLink,
@@ -173,15 +185,15 @@ export const sendVerificationEmailOrLog = (
   })
 }
 
-export const sendForgetPasswordEmailOrLog = async (
+export const sendForgetPasswordEmail = async (
   c: Context,
   recipient: string,
   verificationCode: string
 ) => {
   console.log(recipient)
-  const emailUrl = envVars.EMAIL_URL
+  const emailUrl = env(c).EMAIL_API_URL
   const [username] = recipient.split("@")
-  const resetPasswordLink = `${envVars.FRONTEND_URL}/reset-password?code=${verificationCode}&email=${recipient}`
+  const resetPasswordLink = `${env(c).FRONTEND_URL}/reset-password?code=${verificationCode}&email=${recipient}`
 
   const sentryHeaders = generateSentryHeaders(c)
   const request = new Request(emailUrl, {

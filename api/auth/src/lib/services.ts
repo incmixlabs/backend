@@ -1,18 +1,17 @@
-import { envVars } from "@/env-vars"
 import type { MessageResponse } from "@/routes/types"
 import type { Context } from "@/types"
 import { generateSentryHeaders } from "@incmix-api/utils"
 import { BadRequestError, ServerError } from "@incmix-api/utils/errors"
 import type { UserProfile } from "@incmix/utils/types"
+import { env } from "hono/adapter"
 
 export async function getUserProfile(c: Context, id: string, cookie: string) {
-  const sentryHeaders = generateSentryHeaders(c)
-  const res = await fetch(`${envVars.USERS_API_URL}?id=${id}`, {
+  const res = await fetch(`${env(c).USERS_API_URL}?id=${id}`, {
     method: "GET",
     headers: {
       "content-type": "application/json",
       cookie,
-      ...sentryHeaders,
+      ...generateSentryHeaders(c),
     },
   })
 
@@ -30,13 +29,12 @@ export async function createUserProfile(
   email: string,
   localeId: number
 ) {
-  const sentryHeaders = generateSentryHeaders(c)
-  const res = await fetch(`${envVars.USERS_API_URL}`, {
+  const res = await fetch(`${env(c).USERS_API_URL}`, {
     method: "POST",
     headers: {
       "content-type": "application/json",
       cookie: c.req.header("cookie") ?? "",
-      ...sentryHeaders,
+      ...generateSentryHeaders(c),
     },
     body: JSON.stringify({
       id,
@@ -54,13 +52,12 @@ export async function createUserProfile(
   return (await res.json()) as UserProfile
 }
 export async function deleteUserProfile(c: Context, id: string) {
-  const sentryHeaders = generateSentryHeaders(c)
-  const res = await fetch(`${envVars.USERS_API_URL}/${id}`, {
+  const res = await fetch(`${env(c).USERS_API_URL}/${id}`, {
     method: "delete",
     headers: {
       "content-type": "application/json",
       cookie: c.req.header("cookie") ?? "",
-      ...sentryHeaders,
+      ...generateSentryHeaders(c),
     },
   })
 

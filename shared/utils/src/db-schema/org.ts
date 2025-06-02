@@ -1,15 +1,8 @@
-import type { MongoQuery } from "@casl/ability"
-import {
-  type Action,
-  type Subject,
-  type UserRole,
-  UserRoles,
-} from "@incmix/utils/types"
+import { type Action, type Subject, UserRoles } from "@incmix/utils/types"
 import type {
   ColumnType,
   Generated,
   Insertable,
-  JSONColumnType,
   Selectable,
   Updateable,
 } from "kysely"
@@ -41,31 +34,12 @@ type RoleTable = {
   name: ColumnType<MemberRole, string, string>
 }
 
-type SubjectTable = {
-  id: Generated<number>
-  name: string
-  editable: boolean
-}
-
-type ActionTable = {
-  id: Generated<number>
-  name: string
-}
 export type PermissionTable = {
   id: Generated<number>
   roleId: number
   action: ColumnType<Action>
   subject: ColumnType<Subject>
   conditions: string | null
-}
-
-export type Database = {
-  organisations: OrganisationTable
-  members: MemberTable
-  roles: RoleTable
-  permissions: PermissionTable
-  subjects: SubjectTable
-  actions: ActionTable
 }
 
 export type Organisation = Selectable<OrganisationTable>
@@ -83,3 +57,10 @@ export type UpdatedRole = Updateable<RoleTable>
 export type Permission = Selectable<PermissionTable>
 export type NewPermission = Insertable<PermissionTable>
 export type UpdatedPermission = Updateable<PermissionTable>
+
+export type OrgTables = {
+  organisations: OrganisationTable
+  members: MemberTable
+  roles: RoleTable
+  permissions: PermissionTable
+}

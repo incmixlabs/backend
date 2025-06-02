@@ -1,29 +1,29 @@
 import type { Context } from "@/types"
-import { ServerError } from "@incmix-api/utils/errors"
-import type { Locale } from "@incmix-api/utils/types"
-import { db } from "./db"
 
-export async function getDefaultLocale() {
-  const locale = await db
+export async function getDefaultLocale(c: Context) {
+  const locale = await c
+    .get("db")
     .selectFrom("locales")
     .selectAll()
     .where("isDefault", "=", true)
     .executeTakeFirst()
 
   if (!locale) return { code: "en", isDefault: true }
-  return { code: locale.langCode, isDefault: true } as Locale
+  return { code: locale.code, isDefault: true }
 }
 export async function getAllMessages(c: Context) {
   const locale = c.get("locale")
-  const dbLocale = await db
+  const dbLocale = await c
+    .get("db")
     .selectFrom("locales")
     .selectAll()
-    .where("langCode", "=", locale)
+    .where("code", "=", locale)
     .executeTakeFirst()
 
   if (!dbLocale) return []
 
-  const messages = await db
+  const messages = await c
+    .get("db")
     .selectFrom("translations")
     .selectAll()
     .where("localeId", "=", dbLocale.id)
@@ -31,8 +31,9 @@ export async function getAllMessages(c: Context) {
 
   return messages
 }
-export async function getDefaultMessages() {
-  const dbLocale = await db
+export async function getDefaultMessages(c: Context) {
+  const dbLocale = await c
+    .get("db")
     .selectFrom("locales")
     .where("isDefault", "=", true)
     .selectAll()
@@ -40,7 +41,8 @@ export async function getDefaultMessages() {
 
   if (!dbLocale) return []
 
-  const messages = await db
+  const messages = await c
+    .get("db")
     .selectFrom("translations")
     .selectAll()
     .where("localeId", "=", dbLocale.id)

@@ -3,9 +3,9 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "kysely migrate:up && tsx watch --env-file=.env src/index.ts",
+    "dev": "tsx watch --env-file=.env src/index.ts",
     "build": "tsc && tsc-alias",
-    "start": "kysely migrate:up && node dist/src/index.js",
+    "start": "node dist/src/index.js",
     "migrate:local": "kysely migrate:up",
     "deploy": "wrangler deploy dist/index.js --no-bundle"
   },

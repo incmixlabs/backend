@@ -1,26 +1,13 @@
-import type { Database, NewUser } from "@/dbSchema"
-import { envVars } from "@/env-vars"
 import { ERROR_USER_NOT_FOUND } from "@/lib/constants"
 import type { Context } from "@/types"
+import type { KyselyDb, NewUser } from "@incmix-api/utils/db-schema"
 import { NotFoundError, ServerError } from "@incmix-api/utils/errors"
 import { useTranslation } from "@incmix-api/utils/middleware"
-import { CamelCasePlugin, Kysely, PostgresDialect } from "kysely"
 import { Scrypt } from "lucia"
-import pg from "pg"
-import { createUserProfile } from "./services"
-const dialect = new PostgresDialect({
-  pool: new pg.Pool({
-    connectionString: envVars.DATABASE_URL,
-    max: 10,
-  }),
-})
-export const db = new Kysely<Database>({
-  dialect,
-  plugins: [new CamelCasePlugin()],
-})
 
 export async function findUserByEmail(c: Context, email: string) {
-  const user = await db
+  const user = await c
+    .get("db")
     .selectFrom("users")
     .selectAll()
     .where("email", "=", email)
@@ -36,7 +23,8 @@ export async function findUserByEmail(c: Context, email: string) {
 }
 
 export async function findUserById(c: Context, id: string) {
-  const user = await db
+  const user = await c
+    .get("db")
     .selectFrom("users")
     .selectAll()
     .where("id", "=", id)
@@ -54,15 +42,28 @@ export async function insertUser(
   c: Context,
   newUser: NewUser,
   fullName: string,
-  password?: string
+  password?: string,
+  dbInstance?: KyselyDb
 ) {
-  const profile = await createUserProfile(
-    c,
-    newUser.id,
-    fullName,
-    newUser.email,
-    1
-  )
+  const db = dbInstance ?? c.get("db")
+
+  const locale = await db
+    .selectFrom("locales")
+    .selectAll()
+    .where("isDefault", "=", true)
+    .executeTakeFirst()
+
+  const profile = await db
+    .insertInto("userProfiles")
+    .values({
+      id: newUser.id,
+      fullName,
+      email: newUser.email,
+      localeId: locale?.id,
+      onboardingCompleted: false,
+    })
+    .returningAll()
+    .executeTakeFirst()
 
   let hashedPassword: string | null = null
   if (password?.length) hashedPassword = await new Scrypt().hash(password)
@@ -77,8 +78,9 @@ export async function insertUser(
   return { ...user, profile }
 }
 
-export async function deleteUserById(id: string) {
-  const deletedUser = await db
+export async function deleteUserById(c: Context, id: string) {
+  const deletedUser = await c
+    .get("db")
     .deleteFrom("users")
     .where("id", "=", id)
     .returningAll()

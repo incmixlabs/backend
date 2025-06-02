@@ -9,8 +9,6 @@ import {
   zodError,
 } from "@incmix-api/utils/errors"
 
-import { type Database, type MessageColumn, columns } from "@/db-schema"
-import { db } from "@/lib/db"
 import {
   addMessage,
   deleteMessages,
@@ -22,6 +20,11 @@ import {
   updateMessage,
 } from "@/routes/messages/openapi"
 import { createKyselyFilter, parseQueryParams } from "@incmix-api/utils"
+import type { Database, KyselyDb } from "@incmix-api/utils/db-schema"
+import {
+  type TranslationColumn,
+  translationColumns,
+} from "@incmix-api/utils/db-schema"
 import type { ExpressionWrapper, OrderByExpression, SqlBool } from "kysely"
 
 const messageRoutes = new OpenAPIHono<HonoApp>({
@@ -32,13 +35,15 @@ messageRoutes.openapi(getMessage, async (c) => {
   try {
     const { key, locale } = c.req.valid("param")
 
-    const dbLocale = await db
+    const dbLocale = await c
+      .get("db")
       .selectFrom("locales")
       .selectAll()
-      .where("langCode", "=", locale)
+      .where("code", "=", locale)
       .executeTakeFirstOrThrow()
 
-    const message = await db
+    const message = await c
+      .get("db")
       .selectFrom("translations")
       .selectAll()
       .where("key", "=", key)
@@ -64,7 +69,7 @@ messageRoutes.openapi(deleteMessages, async (c) => {
 
     await Promise.all(
       items.map((item) =>
-        db
+        (c.get("db") as KyselyDb)
           .deleteFrom("translations")
           .where((eb) => {
             return eb.and([
@@ -75,7 +80,7 @@ messageRoutes.openapi(deleteMessages, async (c) => {
                 eb
                   .selectFrom("locales")
                   .select("id")
-                  .where("langCode", "=", item.locale)
+                  .where("code", "=", item.locale)
               ),
             ])
           })
@@ -95,15 +100,17 @@ messageRoutes.openapi(getMessagesByNamespace, async (c) => {
   try {
     const { locale, namespace } = c.req.valid("param")
 
-    const dbLocale = await db
+    const dbLocale = await c
+      .get("db")
       .selectFrom("locales")
       .selectAll()
-      .where("langCode", "=", locale)
+      .where("code", "=", locale)
       .executeTakeFirstOrThrow()
 
     if (!dbLocale) throw new NotFoundError(`Locale ${locale} not found`)
 
-    const messages = await db
+    const messages = await c
+      .get("db")
       .selectFrom("translations")
       .selectAll()
       .where("namespace", "=", namespace)
@@ -129,7 +136,8 @@ messageRoutes.openapi(getMessagesByNamespace, async (c) => {
 
 messageRoutes.openapi(getDefaultMessages, async (c) => {
   try {
-    const dbLocale = await db
+    const dbLocale = await c
+      .get("db")
       .selectFrom("locales")
       .selectAll()
       .where("isDefault", "=", true)
@@ -137,7 +145,8 @@ messageRoutes.openapi(getDefaultMessages, async (c) => {
 
     if (!dbLocale) throw new ServerError("Default Locale not set")
 
-    const messages = await db
+    const messages = await c
+      .get("db")
       .selectFrom("translations")
       .selectAll()
       .where("localeId", "=", dbLocale.id)
@@ -146,7 +155,7 @@ messageRoutes.openapi(getDefaultMessages, async (c) => {
     return c.json(
       messages.map((m) => ({
         ...m,
-        locale: dbLocale.langCode,
+        locale: dbLocale.code,
       })),
       200
     )
@@ -162,15 +171,17 @@ messageRoutes.openapi(getAllMessagesByLocale, async (c) => {
   try {
     const { locale } = c.req.valid("param")
 
-    const dbLocale = await db
+    const dbLocale = await c
+      .get("db")
       .selectFrom("locales")
       .selectAll()
-      .where("langCode", "=", locale)
+      .where("code", "=", locale)
       .executeTakeFirstOrThrow()
 
     if (!dbLocale) throw new NotFoundError("Locale not found")
 
-    const messages = await db
+    const messages = await c
+      .get("db")
       .selectFrom("translations")
       .selectAll()
       .where("localeId", "=", dbLocale.id)
@@ -196,9 +207,10 @@ messageRoutes.openapi(getAllMessages, async (c) => {
     const queryParams = c.req.query()
 
     const { filters, sort, pagination, joinOperator } =
-      parseQueryParams<MessageColumn>(queryParams, columns)
+      parseQueryParams<TranslationColumn>(queryParams, translationColumns)
 
-    let query = db
+    let query = c
+      .get("db")
       .selectFrom("translations")
       .innerJoin("locales", "locales.id", "translations.localeId")
       .select([
@@ -207,7 +219,7 @@ messageRoutes.openapi(getAllMessages, async (c) => {
         "translations.value",
         "translations.type",
         "translations.namespace",
-        "locales.langCode as locale",
+        "locales.code as locale",
       ])
 
     if (filters.length) {
@@ -220,7 +232,7 @@ messageRoutes.openapi(getAllMessages, async (c) => {
 
         for (const filter of filters) {
           const kf = createKyselyFilter<
-            MessageColumn,
+            TranslationColumn,
             Database,
             "translations"
           >(filter, eb)
@@ -252,7 +264,7 @@ messageRoutes.openapi(getAllMessages, async (c) => {
 
     const total = await query
       .select(({ fn }) => fn.count<number>("translations.id").as("count"))
-      .groupBy(["translations.id", "locales.langCode"])
+      .groupBy(["translations.id", "locales.code"])
       .executeTakeFirst()
 
     if (pagination) {
@@ -297,15 +309,17 @@ messageRoutes.openapi(addMessage, async (c) => {
     if (!user) throw new UnauthorizedError()
 
     const { key, locale, type, value, namespace } = c.req.valid("json")
-    const dbLocale = await db
+    const dbLocale = await c
+      .get("db")
       .selectFrom("locales")
       .selectAll()
-      .where("langCode", "=", locale)
+      .where("code", "=", locale)
       .executeTakeFirstOrThrow()
 
     if (!dbLocale) throw new NotFoundError(`Locale '${locale}' not found`)
 
-    const keyExists = await db
+    const keyExists = await c
+      .get("db")
       .selectFrom("translations")
       .selectAll()
       .where("localeId", "=", dbLocale.id)
@@ -317,7 +331,8 @@ messageRoutes.openapi(addMessage, async (c) => {
         `Key '${key}' already exists for locale '${locale}'`
       )
 
-    const insertedMessage = await db
+    const insertedMessage = await c
+      .get("db")
       .insertInto("translations")
       .values({ localeId: dbLocale.id, key, value, type, namespace })
       .returningAll()
@@ -340,15 +355,17 @@ messageRoutes.openapi(updateMessage, async (c) => {
     if (!user) throw new UnauthorizedError()
 
     const { key, locale, type, value } = c.req.valid("json")
-    const dbLocale = await db
+    const dbLocale = await c
+      .get("db")
       .selectFrom("locales")
       .selectAll()
-      .where("langCode", "=", locale)
+      .where("code", "=", locale)
       .executeTakeFirstOrThrow()
 
     if (!dbLocale) throw new NotFoundError(`Locale '${locale}' not found`)
 
-    const keyExists = await db
+    const keyExists = await c
+      .get("db")
       .selectFrom("translations")
       .selectAll()
       .where("localeId", "=", dbLocale.id)
@@ -360,7 +377,8 @@ messageRoutes.openapi(updateMessage, async (c) => {
         `Key '${key}' does not exist for locale '${locale}'`
       )
 
-    const updatedMessage = await db
+    const updatedMessage = await c
+      .get("db")
       .updateTable("translations")
       .set({ value, type })
       .where("localeId", "=", dbLocale.id)

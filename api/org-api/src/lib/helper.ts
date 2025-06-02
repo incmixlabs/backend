@@ -1,7 +1,9 @@
-import type { Role } from "@/dbSchema"
+import type { Context } from "@/types"
 import type { UserRole } from "@incmix/utils/types"
+import { findAllRoles } from "./db"
 
-export function getRoleIdByName(dbRoles: Role[], name: UserRole) {
+export async function getRoleIdByName(c: Context, name: UserRole) {
+  const dbRoles = await findAllRoles(c)
   const role = dbRoles.find((r) => r.name === name)
 
   return role?.id

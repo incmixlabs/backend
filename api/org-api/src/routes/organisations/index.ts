@@ -1,4 +1,3 @@
-import type { NewMember } from "@/dbSchema"
 import {
   ERROR_INVALID_USER,
   ERROR_MEMBER_EXIST,
@@ -13,7 +12,6 @@ import {
 } from "@/lib/constants"
 import {
   checkHandleAvailability,
-  db,
   doesOrganisationExist,
   ensureAtLeastOneOwner,
   findAllRoles,
@@ -58,6 +56,7 @@ import {
   zodError,
 } from "@incmix-api/utils/errors"
 import { useTranslation } from "@incmix-api/utils/middleware"
+import type { UserRole } from "@incmix/utils/types"
 import { UserRoles } from "@incmix/utils/types"
 
 import { generateId } from "lucia"
@@ -148,7 +147,7 @@ orgRoutes.openapi(getUserOrganisations, async (c) => {
       throw new UnauthorizedError(msg)
     }
 
-    const userOrgs = await findOrganisationByUserId(user.id)
+    const userOrgs = await findOrganisationByUserId(c, user.id)
 
     return c.json(userOrgs, 200)
   } catch (error) {
@@ -169,7 +168,7 @@ orgRoutes.openapi(validateHandle, async (c) => {
     }
 
     const { handle } = c.req.valid("json")
-    const handleExists = await checkHandleAvailability(handle)
+    const handleExists = await checkHandleAvailability(c, handle)
 
     return c.json(
       {
@@ -196,13 +195,13 @@ orgRoutes.openapi(createOrganisation, async (c) => {
 
     const { members, name, handle } = c.req.valid("json")
 
-    const handleAvailable = await checkHandleAvailability(handle)
+    const handleAvailable = await checkHandleAvailability(c, handle)
     if (!handleAvailable) {
       const msg = await t.text(ERROR_ORG_EXIST)
       throw new ConflictError(msg)
     }
 
-    const orgExists = await doesOrganisationExist(name, user.id)
+    const orgExists = await doesOrganisationExist(c, name, user.id)
 
     if (orgExists) {
       const msg = await t.text(ERROR_ORG_EXIST)
@@ -210,7 +209,7 @@ orgRoutes.openapi(createOrganisation, async (c) => {
     }
 
     const invalidMembers = (
-      await Promise.all(members.map((m) => isValidUser(c, m.userId)))
+      await Promise.all(members.map((m) => isValidUser(c, m.userId as string)))
     ).some((r) => !r)
 
     if (invalidMembers) {
@@ -219,37 +218,41 @@ orgRoutes.openapi(createOrganisation, async (c) => {
     }
 
     const orgId = generateId(15)
-    const dbRoles = await findAllRoles()
+    const dbRoles = await findAllRoles(c)
 
     if (!dbRoles.length) {
       const msg = await t.text(ERROR_NO_ROLES)
       throw new ServerError(msg)
     }
 
-    const newOrg = await insertOrganisation({ id: orgId, name, handle })
+    const newOrg = await insertOrganisation(c, { id: orgId, name, handle })
 
     if (!newOrg) {
       const msg = await t.text(ERROR_ORG_CREATE_FAIL)
       throw new ServerError(msg)
     }
 
-    const ownerRole = getRoleIdByName(dbRoles, UserRoles.ROLE_OWNER)
+    const ownerRole = await getRoleIdByName(c, UserRoles.ROLE_OWNER)
     if (!ownerRole) {
       const msg = await t.text(ERROR_NO_ROLES)
       throw new ServerError(msg)
     }
 
-    await insertMembers([
+    const orgMembers = await Promise.all(
+      members.map(async (m) => ({
+        userId: m.userId as string,
+        orgId: newOrg.id,
+        roleId: (await getRoleIdByName(c, m.role as UserRole)) ?? 3,
+      }))
+    )
+
+    await insertMembers(c, [
       {
         userId: user.id,
         orgId: orgId,
         roleId: ownerRole,
       },
-      ...members.map<NewMember>((m) => ({
-        userId: m.userId,
-        orgId: newOrg.id,
-        roleId: getRoleIdByName(dbRoles, m.role) ?? 3,
-      })),
+      ...orgMembers,
     ])
 
     return c.json(
@@ -295,21 +298,25 @@ orgRoutes.openapi(addMember, async (c) => {
     })
 
     const existingUser = await getUserByEmail(c, email)
+    if (!existingUser) {
+      const msg = await t.text(ERROR_INVALID_USER)
+      throw new UnprocessableEntityError(msg)
+    }
     const userId = existingUser.id
 
-    const isMember = await isOrgMember(userId, org.id)
+    const isMember = await isOrgMember(c, userId, org.id)
     if (isMember) {
       const msg = await t.text(ERROR_MEMBER_EXIST)
       throw new ConflictError(msg)
     }
-    const dbRoles = await findAllRoles()
-    const dbRole = getRoleIdByName(dbRoles, role)
+
+    const dbRole = await getRoleIdByName(c, role)
     if (!dbRole) {
       const msg = await t.text(ERROR_NO_ROLES)
       throw new ServerError(msg)
     }
 
-    const [newMember] = await insertMembers([
+    const [newMember] = await insertMembers(c, [
       { userId, orgId: org.id, roleId: dbRole },
     ])
 
@@ -318,7 +325,7 @@ orgRoutes.openapi(addMember, async (c) => {
       throw new ServerError(msg)
     }
 
-    const members = await findOrgMembers(org.id)
+    const members = await findOrgMembers(c, org.id)
 
     return c.json(
       {
@@ -368,7 +375,7 @@ orgRoutes.openapi(updateOrganisation, async (c) => {
     })
     console.log("Authorization successful for user:", user.id)
 
-    const orgExists = await doesOrganisationExist(name, user.id)
+    const orgExists = await doesOrganisationExist(c, name, user.id)
     console.log("Organization with this name exists:", orgExists)
 
     if (orgExists) {
@@ -382,7 +389,8 @@ orgRoutes.openapi(updateOrganisation, async (c) => {
       "to new name:",
       name
     )
-    const updatedOrg = await db
+    const updatedOrg = await c
+      .get("db")
       .updateTable("organisations")
       .set({ name: name })
       .where("id", "=", org.id)
@@ -395,7 +403,7 @@ orgRoutes.openapi(updateOrganisation, async (c) => {
       throw new ServerError(msg)
     }
 
-    const members = await findOrgMembers(org.id)
+    const members = await findOrgMembers(c, org.id)
     console.log("Organization members:", members)
 
     const responseData = {
@@ -435,7 +443,8 @@ orgRoutes.openapi(deleteOrganisation, async (c) => {
       subject: "Organisation",
     })
 
-    const deletedMembers = await db
+    const deletedMembers = await c
+      .get("db")
       .deleteFrom("members")
       .where("orgId", "=", org.id)
       .returningAll()
@@ -446,7 +455,8 @@ orgRoutes.openapi(deleteOrganisation, async (c) => {
       throw new ServerError(msg)
     }
 
-    const deletedOrg = await db
+    const deletedOrg = await c
+      .get("db")
       .deleteFrom("organisations")
       .where("id", "=", org.id)
       .returningAll()
@@ -495,7 +505,8 @@ orgRoutes.openapi(removeMembers, async (c) => {
     })
     await ensureAtLeastOneOwner(c, org.id, userIds, "remove")
 
-    await db
+    await c
+      .get("db")
       .deleteFrom("members")
       .where((eb) =>
         eb.and([eb("orgId", "=", org.id), eb("userId", "in", userIds)])
@@ -503,7 +514,7 @@ orgRoutes.openapi(removeMembers, async (c) => {
       .returningAll()
       .execute()
 
-    const members = await findOrgMembers(org.id)
+    const members = await findOrgMembers(c, org.id)
 
     return c.json(
       {
@@ -553,14 +564,14 @@ orgRoutes.openapi(updateMemberRole, async (c) => {
       await ensureAtLeastOneOwner(c, org.id, [userId], "update")
     }
 
-    const dbRoles = await findAllRoles()
-    const dbRole = getRoleIdByName(dbRoles, newRole)
+    const dbRole = await getRoleIdByName(c, newRole)
     if (!dbRole) {
       const msg = await t.text(ERROR_NO_ROLES)
       throw new ServerError(msg)
     }
 
-    const updated = await db
+    const updated = await c
+      .get("db")
       .updateTable("members")
       .set({ roleId: dbRole })
       .where((eb) =>
@@ -572,7 +583,7 @@ orgRoutes.openapi(updateMemberRole, async (c) => {
       const msg = await t.text(ERROR_MEMBER_UPDATE_FAIL)
       throw new ServerError(msg)
     }
-    const members = await findOrgMembers(org.id)
+    const members = await findOrgMembers(c, org.id)
 
     return c.json(
       {
@@ -611,16 +622,20 @@ orgRoutes.openapi(getOrganizationMembers, async (c) => {
       subject: "Member",
     })
 
-    const members = await findOrgMembers(org.id)
+    const members = await findOrgMembers(c, org.id)
     const memberDetails = await Promise.all(
       members.map(async (member) => {
         const userDetails = await getUserById(c, member.userId)
+        if (!userDetails) {
+          const msg = await t.text(ERROR_INVALID_USER)
+          throw new UnprocessableEntityError(msg)
+        }
         return {
           userId: member.userId,
-          fullName: userDetails.name,
+          fullName: userDetails.fullName,
           email: userDetails.email,
-          profileImage: userDetails.profileImage,
-          avatar: userDetails.avatar,
+          profileImage: userDetails.profileImage ?? null,
+          avatar: userDetails.avatar ?? null,
           role: member.role,
         }
       })

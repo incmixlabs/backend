@@ -1,5 +1,4 @@
 import {
-  db,
   deletePermission,
   deleteRoleById,
   findAllPermissions,
@@ -72,9 +71,9 @@ permissionRoutes.openapi(getRolesPermissions, async (c) => {
       }
     }
 
-    const roles = await findAllRoles()
+    const roles = await findAllRoles(c)
 
-    const permissions = await findAllPermissions()
+    const permissions = await findAllPermissions(c)
 
     // Create a map of role IDs to their names for easier lookup
     const roleMap = new Map(roles.map((role) => [role.id, role.name]))
@@ -160,48 +159,58 @@ permissionRoutes.openapi(updatePermissions, async (c) => {
       const msg = await t.text(ERROR_BAD_REQUEST)
       throw new UnprocessableEntityError(msg)
     }
-    await db.transaction().execute(async (tx) => {
-      for (const update of updates) {
-        const { subject, action, roleId, allowed } = update
+    await c
+      .get("db")
+      .transaction()
+      .execute(async (tx) => {
+        for (const update of updates) {
+          const { subject, action, roleId, allowed } = update
 
-        const permission = await findPermissionBySubjectAndAction(
-          subject,
-          action,
-          roleId,
-          tx
-        )
-
-        if (!permission && allowed) {
-          const newPermission = await insertPermission(
-            {
-              subject,
-              action,
-              roleId,
-            },
+          const permission = await findPermissionBySubjectAndAction(
+            c,
+            subject,
+            action,
+            roleId,
             tx
           )
 
-          if (!newPermission) {
-            // const msg = await t.text(ERROR_PERMISSION_INSERT_FAIL)
-            throw new ServerError("Failed to update permissions")
-          }
-        }
+          if (!permission && allowed) {
+            const newPermission = await insertPermission(
+              c,
+              {
+                subject,
+                action,
+                roleId,
+              },
+              tx
+            )
 
-        if (permission && !allowed) {
-          const deleted = await deletePermission(permission.id, tx)
-          if (!deleted) {
-            throw new ServerError("Failed to Update permission")
+            if (!newPermission) {
+              // const msg = await t.text(ERROR_PERMISSION_INSERT_FAIL)
+              throw new ServerError("Failed to update permissions")
+            }
           }
-        }
 
-        if (permission && allowed) {
-          const updated = await updatePermission(permission, permission.id, tx)
-          if (!updated) {
-            throw new ServerError("Failed to update permission")
+          if (permission && !allowed) {
+            const deleted = await deletePermission(c, permission.id, tx)
+            if (!deleted) {
+              throw new ServerError("Failed to Update permission")
+            }
+          }
+
+          if (permission && allowed) {
+            const updated = await updatePermission(
+              c,
+              permission,
+              permission.id,
+              tx
+            )
+            if (!updated) {
+              throw new ServerError("Failed to update permission")
+            }
           }
         }
-      }
-    })
+      })
 
     return c.json({ message: "Permissions updated" }, 200)
   } catch (error) {
@@ -227,14 +236,14 @@ permissionRoutes.openapi(addNewRole, async (c) => {
 
     const { name } = c.req.valid("json")
 
-    const existingRole = await findRoleByName(name)
+    const existingRole = await findRoleByName(c, name)
 
     if (existingRole) {
       const msg = await t.text(ERROR_ROLE_ALREADY_EXISTS)
       throw new ConflictError(msg)
     }
 
-    const newRole = await insertRole({ name })
+    const newRole = await insertRole(c, { name })
 
     if (!newRole) {
       throw new ServerError("Failed to add new role")
@@ -263,14 +272,14 @@ permissionRoutes.openapi(updateRole, async (c) => {
 
     const { name, id } = c.req.valid("json")
 
-    const existingRole = await findRoleById(id)
+    const existingRole = await findRoleById(c, id)
 
     if (!existingRole) {
       const msg = await t.text(ERROR_ROLE_NOT_FOUND)
       throw new NotFoundError(msg)
     }
 
-    const updatedRole = await updateRoleById({ name }, existingRole.id)
+    const updatedRole = await updateRoleById(c, { name }, existingRole.id)
 
     if (!updatedRole) {
       throw new ServerError("Failed to update role")
@@ -300,7 +309,7 @@ permissionRoutes.openapi(deleteRole, async (c) => {
 
     const { id } = c.req.valid("param")
 
-    const deletedRole = await deleteRoleById(id)
+    const deletedRole = await deleteRoleById(c, id)
 
     if (!deletedRole) {
       throw new ServerError("Failed to delete role")

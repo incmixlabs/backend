@@ -21,13 +21,11 @@ import {
 
 import {
   type Database,
-  type UserProfileColumn,
-  type UserProfileTable,
-  columns,
-} from "@/dbSchema"
+  type UserProfileColumns,
+  userProfileColumns,
+} from "@incmix-api/utils/db-schema"
 
 import { adminPermissions, userPermissions } from "@/lib/casl"
-import { db } from "@/lib/db"
 import {
   ERROR_CASL_FORBIDDEN,
   ERROR_FORBIDDEN,
@@ -46,6 +44,7 @@ import type {
 
 import { envVars } from "@/env-vars"
 import { UserRoles } from "@incmix/utils/types"
+import { env } from "hono/adapter"
 import type { ContentfulStatusCode } from "hono/utils/http-status"
 import {
   type ExpressionWrapper,
@@ -75,14 +74,16 @@ userRoutes.openapi(createUserProfile, async (c) => {
   try {
     const { id, email, name, localeId } = c.req.valid("json")
 
-    const existingProfile = await db
+    const existingProfile = await c
+      .get("db")
       .selectFrom("userProfiles")
       .selectAll()
       .where("email", "=", email)
       .executeTakeFirst()
 
     if (existingProfile) {
-      const updatedProfile = await db
+      const updatedProfile = await c
+        .get("db")
         .updateTable("userProfiles")
         .set({
           id: existingProfile.id,
@@ -98,10 +99,20 @@ userRoutes.openapi(createUserProfile, async (c) => {
         throw new ServerError("Failed to create Profile")
       }
 
-      return c.json({ ...updatedProfile, name: updatedProfile.fullName }, 201)
+      return c.json(
+        {
+          ...updatedProfile,
+          name: updatedProfile.fullName,
+          avatar: updatedProfile.avatar || null,
+          profileImage: updatedProfile.profileImage || null,
+          localeId: updatedProfile.localeId || 0,
+        },
+        201
+      )
     }
 
-    const newProfile = await db
+    const newProfile = await c
+      .get("db")
       .insertInto("userProfiles")
       .values({
         id,
@@ -109,14 +120,6 @@ userRoutes.openapi(createUserProfile, async (c) => {
         fullName: name,
         localeId,
         onboardingCompleted: false,
-        companyName: "",
-        companySize: "",
-        teamSize: "",
-        purpose: "",
-        role: "",
-        manageFirst: "",
-        focusFirst: "",
-        referralSources: [],
       })
       .returningAll()
       .executeTakeFirst()
@@ -125,7 +128,16 @@ userRoutes.openapi(createUserProfile, async (c) => {
       throw new ServerError("Failed to create Profile")
     }
 
-    return c.json({ ...newProfile, name: newProfile.fullName }, 201)
+    return c.json(
+      {
+        ...newProfile,
+        name: newProfile.fullName,
+        avatar: null,
+        profileImage: null,
+        localeId: newProfile.localeId || 1,
+      },
+      201
+    )
   } catch (error) {
     console.error(error)
     return await processError<typeof createUserProfile>(c, error, [
@@ -175,7 +187,8 @@ userRoutes.openapi(userOnboarding, async (c) => {
 
     console.log("Normalized sources:", normalizedSources)
 
-    const existingProfile = await db
+    const existingProfile = await c
+      .get("db")
       .selectFrom("userProfiles")
       .selectAll()
       .where("email", "=", email)
@@ -192,7 +205,8 @@ userRoutes.openapi(userOnboarding, async (c) => {
     )
     console.log("Existing value:", existingProfile.referralSources)
 
-    const updatedProfile = await db
+    const updatedProfile = await c
+      .get("db")
       .updateTable("userProfiles")
       .set({
         id: existingProfile.id,
@@ -215,7 +229,13 @@ userRoutes.openapi(userOnboarding, async (c) => {
       throw new ServerError("Failed to create Profile")
     }
 
-    return c.json({ ...updatedProfile, name: updatedProfile.fullName }, 200)
+    return c.json(
+      {
+        ...updatedProfile,
+        name: updatedProfile.fullName,
+      },
+      200
+    )
   } catch (error) {
     console.error("Full error:", error)
     return await processError<typeof userOnboarding>(c, error, [
@@ -232,7 +252,8 @@ userRoutes.openapi(getCurrentUser, async (c) => {
       throw new UnauthorizedError()
     }
 
-    const profile = await db
+    const profile = await c
+      .get("db")
       .selectFrom("userProfiles")
       .selectAll()
       .where("id", "=", user.id)
@@ -241,7 +262,14 @@ userRoutes.openapi(getCurrentUser, async (c) => {
     if (!profile) {
       throw new NotFoundError("user not found")
     }
-    return c.json({ ...profile, name: profile.fullName }, 200)
+    return c.json(
+      {
+        ...profile,
+        name: profile.fullName,
+        localeId: profile.localeId || 1,
+      },
+      200
+    )
   } catch (error) {
     return await processError<typeof getUser>(c, error, [
       "{{ default }}",
@@ -259,7 +287,7 @@ userRoutes.openapi(getUser, async (c) => {
 
     const { id, email } = c.req.valid("query")
 
-    let query = db.selectFrom("userProfiles").selectAll()
+    let query = c.get("db").selectFrom("userProfiles").selectAll()
 
     if (id?.length) {
       query = query.where("id", "=", id)
@@ -273,7 +301,10 @@ userRoutes.openapi(getUser, async (c) => {
       throw new NotFoundError("user not found")
     }
 
-    return c.json({ ...profile, name: profile.fullName }, 200)
+    return c.json(
+      { ...profile, name: profile.fullName, localeId: profile.localeId || 1 },
+      200
+    )
   } catch (error) {
     return await processError<typeof getUser>(c, error, [
       "{{ default }}",
@@ -297,7 +328,7 @@ userRoutes.openapi(getUserpermissions, async (c) => {
     if (user.userType === UserRoles.ROLE_MEMBER) {
       const { orgId } = c.req.valid("query")
       if (!orgId) throw new BadRequestError("orgId is required")
-      const url = `${c.env.ORG_URL}/${orgId}/permissions`
+      const url = `${env(c).ORG_API_URL}/${orgId}/permissions`
       const cookie = c.req.header("Cookie") || ""
       const res = await fetch(url, {
         headers: { cookie },
@@ -344,9 +375,9 @@ userRoutes.openapi(getAllUsers, async (c) => {
     const queryParams = c.req.query()
 
     const { filters, sort, pagination, joinOperator } =
-      parseQueryParams<UserProfileColumn>(queryParams, columns)
+      parseQueryParams<UserProfileColumns>(queryParams, userProfileColumns)
 
-    let query = db.selectFrom("userProfiles").selectAll()
+    let query = c.get("db").selectFrom("userProfiles").selectAll()
 
     if (filters.length)
       query = query.where(({ eb, and, or }) => {
@@ -358,7 +389,7 @@ userRoutes.openapi(getAllUsers, async (c) => {
 
         for (const filter of filters) {
           const kf = createKyselyFilter<
-            UserProfileColumn,
+            UserProfileColumns,
             Database,
             "userProfiles"
           >(filter, eb)
@@ -374,7 +405,7 @@ userRoutes.openapi(getAllUsers, async (c) => {
     if (sort.length) {
       query = query.orderBy(
         sort.map((s) => {
-          const field = s.id as keyof UserProfileTable
+          const field = s.id
           const order = s.desc ? "desc" : "asc"
           const expression: OrderByExpression<
             Database,
@@ -401,7 +432,7 @@ userRoutes.openapi(getAllUsers, async (c) => {
 
     const profiles = await query.execute()
 
-    const usersFilter: Filter<UserProfileColumn>[] = [
+    const usersFilter: Filter<UserProfileColumns>[] = [
       {
         id: "id",
         value: profiles.map((p) => p.id),
@@ -416,7 +447,7 @@ userRoutes.openapi(getAllUsers, async (c) => {
     })
 
     const { results } = await fetch(
-      `${envVars.AUTH_URL}/users/getAll?${searchParams.toString()}`,
+      `${env(c).AUTH_API_URL}/users/getAll?${searchParams.toString()}`,
       {
         method: "get",
         headers: c.req.raw.headers,
@@ -430,6 +461,7 @@ userRoutes.openapi(getAllUsers, async (c) => {
       return {
         ...p,
         ...user,
+        localeId: p.localeId || 1,
         name: p.fullName,
       }
     })
@@ -478,7 +510,8 @@ userRoutes.openapi(deleteUser, async (c) => {
       throw new ForbiddenError(msg)
     }
 
-    const profile = await db
+    const profile = await c
+      .get("db")
       .selectFrom("userProfiles")
       .selectAll()
       .where("id", "=", id)
@@ -489,7 +522,8 @@ userRoutes.openapi(deleteUser, async (c) => {
       throw new NotFoundError(msg)
     }
 
-    const { numDeletedRows } = await db
+    const { numDeletedRows } = await c
+      .get("db")
       .deleteFrom("userProfiles")
       .where("id", "=", profile.id)
       .executeTakeFirst()
@@ -522,7 +556,8 @@ userRoutes.openapi(updateUser, async (c) => {
       throw new ForbiddenError(msg)
     }
 
-    const profile = await db
+    const profile = await c
+      .get("db")
       .selectFrom("userProfiles")
       .selectAll()
       .where("id", "=", id)
@@ -534,7 +569,8 @@ userRoutes.openapi(updateUser, async (c) => {
     }
 
     const { fullName } = c.req.valid("json")
-    const updatedProfile = await db
+    const updatedProfile = await c
+      .get("db")
       .updateTable("userProfiles")
       .set({ fullName })
       .where("id", "=", profile.id)
@@ -565,7 +601,8 @@ userRoutes.openapi(addProfilePicture, async (c) => {
       throw new ForbiddenError(msg)
     }
 
-    const profile = await db
+    const profile = await c
+      .get("db")
       .selectFrom("userProfiles")
       .selectAll()
       .where("id", "=", id)
@@ -612,7 +649,8 @@ userRoutes.openapi(addProfilePicture, async (c) => {
       throw new ServerError(msg)
     }
 
-    const updatedProfile = await db
+    const updatedProfile = await c
+      .get("db")
       .updateTable("userProfiles")
       .set({ profileImage: fileName })
       .where("id", "=", profile.id)
@@ -623,7 +661,14 @@ userRoutes.openapi(addProfilePicture, async (c) => {
       const msg = await t.text(ERROR_UPLOAD_FAIL)
       throw new ServerError(msg)
     }
-    return c.json({ ...updatedProfile, name: updatedProfile.fullName }, 200)
+    return c.json(
+      {
+        ...updatedProfile,
+        name: updatedProfile.fullName,
+        localeId: updatedProfile.localeId || 1,
+      },
+      200
+    )
   } catch (error) {
     return await processError<typeof addProfilePicture>(c, error, [
       "{{ default }}",
@@ -646,7 +691,8 @@ userRoutes.openapi(deleteProfilePicture, async (c) => {
       throw new ForbiddenError(msg)
     }
 
-    const profile = await db
+    const profile = await c
+      .get("db")
       .selectFrom("userProfiles")
       .selectAll()
       .where("id", "=", id)
@@ -697,7 +743,8 @@ userRoutes.openapi(deleteProfilePicture, async (c) => {
     }
 
     // Update user's profile_image in D1
-    const updatedProfile = await db
+    const updatedProfile = await c
+      .get("db")
       .updateTable("userProfiles")
       .set({ profileImage: null })
       .where("id", "=", profile.id)
@@ -708,7 +755,14 @@ userRoutes.openapi(deleteProfilePicture, async (c) => {
       const msg = await t.text(ERROR_PP_DELETE_FAIL)
       throw new ServerError(msg)
     }
-    return c.json({ ...updatedProfile, name: updatedProfile.fullName }, 200)
+    return c.json(
+      {
+        ...updatedProfile,
+        name: updatedProfile.fullName,
+        localeId: updatedProfile.localeId || 1,
+      },
+      200
+    )
   } catch (error) {
     return await processError<typeof deleteProfilePicture>(c, error, [
       "{{ default }}",
@@ -727,7 +781,8 @@ userRoutes.openapi(getProfilePicture, async (c) => {
     }
     const { id } = c.req.valid("param")
 
-    const profile = await db
+    const profile = await c
+      .get("db")
       .selectFrom("userProfiles")
       .selectAll()
       .where("id", "=", id)

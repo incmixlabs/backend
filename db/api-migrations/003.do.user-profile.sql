@@ -8,17 +8,17 @@ CREATE TABLE "user_profiles" (
   "profile_image" TEXT,
   "locale_id" INTEGER NOT NULL REFERENCES "locales"("id"),
   "avatar" TEXT,
-  "company_name" TEXT NOT NULL,
-  "company_size" TEXT NOT NULL,
-  "team_size" TEXT NOT NULL,
-  "purpose" TEXT NOT NULL,
-  "role" TEXT NOT NULL,
-  "manage_first" TEXT NOT NULL,
-  "focus_first" TEXT NOT NULL,
-  "referral_sources" JSONB NOT NULL DEFAULT '[]' :: jsonb,
-  "onboarding_completed" BOOLEAN NOT NULL DEFAULT false,
-  "created_at" TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  "updated_at" TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  "company_name" TEXT,
+  "company_size" TEXT,
+  "team_size" TEXT,
+  "purpose" TEXT,
+  "role" TEXT,
+  "manage_first" TEXT,
+  "focus_first" TEXT,
+  "referral_sources" JSONB DEFAULT '[]' :: jsonb,
+  "onboarding_completed" BOOLEAN DEFAULT false,
+  "created_at" TIMESTAMPTZ DEFAULT NOW(),
+  "updated_at" TIMESTAMPTZ DEFAULT NOW()
 );
 
 -- Create indexes for better performance

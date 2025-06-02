@@ -1,5 +1,4 @@
 import { ERROR_TEMPLATE_ALREADY_EXISTS } from "@/lib/constants"
-import { db } from "@/lib/db"
 import { generateTemplate } from "@/lib/services"
 import type { HonoApp } from "@/types"
 import { OpenAPIHono } from "@hono/zod-openapi"
@@ -29,7 +28,8 @@ templateRoutes.openapi(getStoryTemplates, async (c) => {
       const msg = await t.text(ERROR_UNAUTHORIZED)
       throw new UnauthorizedError(msg)
     }
-    const storyTemplates = await db
+    const storyTemplates = await c
+      .get("db")
       .selectFrom("storyTemplates")
       .selectAll()
       .execute()
@@ -66,7 +66,8 @@ templateRoutes.openapi(insertStoryTemplate, async (c) => {
     }
     const { name, content } = c.req.valid("json")
 
-    const existingTemplate = await db
+    const existingTemplate = await c
+      .get("db")
       .selectFrom("storyTemplates")
       .selectAll()
       .where("name", "=", name)
@@ -77,7 +78,8 @@ templateRoutes.openapi(insertStoryTemplate, async (c) => {
       throw new ConflictError(msg)
     }
 
-    const template = await db
+    const template = await c
+      .get("db")
       .insertInto("storyTemplates")
       .values({
         name,

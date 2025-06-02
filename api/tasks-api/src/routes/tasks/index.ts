@@ -8,7 +8,6 @@ import {
   ERROR_TEMPLATE_NOT_FOUND,
   ERROR_USER_STORY_GENERATION_FAILED,
 } from "@/lib/constants"
-import { db } from "@/lib/db"
 import { FigmaService } from "@/lib/figma"
 
 import {
@@ -49,7 +48,8 @@ tasksRoutes.openapi(listTasks, async (c) => {
       return c.json({ message: msg }, 401)
     }
 
-    const tasks = await db
+    const tasks = await c
+      .get("db")
       .selectFrom("tasks")
       .selectAll()
       .where("assignedTo", "=", user.id)
@@ -76,7 +76,8 @@ tasksRoutes.openapi(createTask, async (c) => {
     const { columnId, content, projectId, taskOrder, status, assignedTo } =
       c.req.valid("json")
 
-    const project = await db
+    const project = await c
+      .get("db")
       .selectFrom("projects")
       .selectAll()
       .where("id", "=", projectId)
@@ -87,7 +88,8 @@ tasksRoutes.openapi(createTask, async (c) => {
       throw new UnprocessableEntityError(msg)
     }
 
-    const column = await db
+    const column = await c
+      .get("db")
       .selectFrom("columns")
       .selectAll()
       .where("id", "=", columnId)
@@ -100,7 +102,8 @@ tasksRoutes.openapi(createTask, async (c) => {
 
     const taskId = nanoid(7)
 
-    const newTask = await db
+    const newTask = await c
+      .get("db")
       .insertInto("tasks")
       .values({
         id: taskId,
@@ -145,7 +148,8 @@ tasksRoutes.openapi(updateTask, async (c) => {
 
     const { id } = c.req.valid("param")
 
-    const existingTask = await db
+    const existingTask = await c
+      .get("db")
       .selectFrom("tasks")
       .selectAll()
       .where("id", "=", id)
@@ -157,7 +161,8 @@ tasksRoutes.openapi(updateTask, async (c) => {
     }
 
     if (projectId) {
-      const project = await db
+      const project = await c
+        .get("db")
         .selectFrom("projects")
         .selectAll()
         .where("id", "=", projectId)
@@ -170,7 +175,8 @@ tasksRoutes.openapi(updateTask, async (c) => {
     }
 
     if (columnId) {
-      const column = await db
+      const column = await c
+        .get("db")
         .selectFrom("columns")
         .selectAll()
         .where("id", "=", columnId)
@@ -182,7 +188,8 @@ tasksRoutes.openapi(updateTask, async (c) => {
       }
     }
 
-    const updatedTask = await db
+    const updatedTask = await c
+      .get("db")
       .updateTable("tasks")
       .set({
         assignedTo,
@@ -223,7 +230,8 @@ tasksRoutes.openapi(taskById, async (c) => {
 
     const { id } = c.req.valid("param")
 
-    const task = await db
+    const task = await c
+      .get("db")
       .selectFrom("tasks")
       .selectAll()
       .where("id", "=", id)
@@ -254,7 +262,8 @@ tasksRoutes.openapi(deleteTask, async (c) => {
 
     const { id } = c.req.valid("param")
 
-    const task = await db
+    const task = await c
+      .get("db")
       .deleteFrom("tasks")
       .where("id", "=", id)
       .returningAll()
@@ -285,7 +294,8 @@ tasksRoutes.openapi(generateUserStory, async (c) => {
 
     const { prompt, userTier, templateId } = c.req.valid("json")
 
-    const template = await db
+    const template = await c
+      .get("db")
       .selectFrom("storyTemplates")
       .selectAll()
       .where("id", "=", templateId)

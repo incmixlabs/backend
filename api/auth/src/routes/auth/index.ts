@@ -7,8 +7,8 @@ import {
   USER_DEL,
   VERIFIY_REQ,
 } from "@/lib/constants"
-import { db, deleteUserById, findUserByEmail, insertUser } from "@/lib/db"
-import { sendVerificationEmailOrLog } from "@/lib/helper"
+import { deleteUserById, findUserByEmail, insertUser } from "@/lib/db"
+import { sendVerificationEmail } from "@/lib/helper"
 import { generateVerificationCode } from "@/lib/helper"
 import { createSession, initializeLucia } from "@/lib/lucia"
 import { deleteUserProfile } from "@/lib/services"
@@ -84,7 +84,8 @@ authRoutes.openapi(getUser, async (c) => {
       throw new UnauthorizedError()
     }
     const { id, email } = c.req.valid("query")
-    const searchedUser = await db
+    const searchedUser = await c
+      .get("db")
       .selectFrom("users")
       .selectAll()
       .where((eb) => eb.or([eb("id", "=", id), eb("email", "=", email)]))
@@ -114,7 +115,8 @@ authRoutes.openapi(getUser, async (c) => {
 authRoutes.openapi(signup, async (c) => {
   const { fullName, email, password } = c.req.valid("json")
   try {
-    const existing = await db
+    const existing = await c
+      .get("db")
       .selectFrom("users")
       .selectAll()
       .where("email", "=", email)
@@ -126,22 +128,30 @@ authRoutes.openapi(signup, async (c) => {
     const userId = generateId(15)
 
     const verificationCode = await generateVerificationCode(
+      c,
       userId,
       email,
       "email_verification"
     )
-    sendVerificationEmailOrLog(c, email, verificationCode)
-    const { profile, ...user } = await insertUser(
-      c,
-      {
-        id: userId,
-        email,
-        emailVerified: false,
-        userType: UserRoles.ROLE_MEMBER,
-      },
-      fullName,
-      password
-    )
+    sendVerificationEmail(c, email, verificationCode)
+    const db = c.get("db")
+
+    const { profile, user } = await db.transaction().execute(async (tx) => {
+      const { profile, ...user } = await insertUser(
+        c,
+        {
+          id: userId,
+          email,
+          emailVerified: false,
+          userType: UserRoles.ROLE_MEMBER,
+        },
+        fullName,
+        password,
+        tx
+      )
+
+      return { profile, user }
+    })
 
     return c.json(
       {
@@ -150,9 +160,9 @@ authRoutes.openapi(signup, async (c) => {
         email: user.email,
         emailVerified: Boolean(user.emailVerified),
         name: fullName,
-        localeId: 1,
-        profileImage: null,
-        avatar: null,
+        localeId: profile?.localeId ?? 1,
+        profileImage: profile?.profileImage ?? null,
+        avatar: profile?.avatar ?? null,
       },
       201
     )
@@ -215,7 +225,7 @@ authRoutes.openapi(login, async (c) => {
 })
 
 authRoutes.openapi(logout, async (c) => {
-  const lucia = initializeLucia()
+  const lucia = initializeLucia(c)
   const session = c.get("session")
   const t = await useTranslation(c)
 
@@ -243,9 +253,9 @@ authRoutes.openapi(deleteUser, async (c) => {
       throw new UnauthorizedError(msg)
     }
     await deleteUserProfile(c, user.id)
-    const lucia = initializeLucia()
+    const lucia = initializeLucia(c)
     await lucia.invalidateUserSessions(user.id)
-    await deleteUserById(user.id)
+    await deleteUserById(c, user.id)
     const sessionCookie = lucia.createBlankSessionCookie()
     c.header("Set-Cookie", sessionCookie.serialize(), {
       append: false,

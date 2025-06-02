@@ -1,5 +1,5 @@
-import { MessageTypes } from "@/types"
 import { z } from "@hono/zod-openapi"
+import { TranslationTypes } from "@incmix-api/utils/db-schema"
 import { PaginationMeta } from "@incmix/utils/data-table"
 
 export const MessageSchema = z
@@ -17,7 +17,7 @@ export const MessageSchema = z
       .string({ required_error: "Namespace is Required" })
       .openapi({ example: "auth" }),
     type: z
-      .enum(MessageTypes, { required_error: "Type is Required" })
+      .enum(TranslationTypes, { required_error: "Type is Required" })
       .openapi({ example: "label" }),
   })
   .openapi("Intl Message")

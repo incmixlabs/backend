@@ -1,6 +1,7 @@
 import { OpenAPIHono } from "@hono/zod-openapi"
 import { createRoute } from "@hono/zod-openapi"
 import { z } from "@hono/zod-openapi"
+import type { Context, Env } from "hono"
 
 /**
  * Schema for the health check response
@@ -15,7 +16,7 @@ export const HealthCheckSchema = z
 /**
  * Type for the health check configuration
  */
-export type HealthCheckConfig = {
+export type HealthCheckConfig<T extends Env> = {
   /**
    * Environment variables to check
    * Key is the environment variable name, value is the actual value
@@ -29,7 +30,7 @@ export type HealthCheckConfig = {
    */
   checks?: Array<{
     name: string
-    check: () => Promise<boolean>
+    check: (c: Context<T>) => Promise<boolean>
   }>
 
   /**
@@ -46,8 +47,8 @@ export type HealthCheckConfig = {
 /**
  * Create a health check route
  */
-export function createHealthCheckRoute<T extends object = any>(
-  config: HealthCheckConfig
+export function createHealthCheckRoute<T extends Env>(
+  config: HealthCheckConfig<T>
 ) {
   const tags = config.tags || ["Health Check"]
   const security = config.requireAuth ? [{ cookieAuth: [] }] : undefined
@@ -94,7 +95,7 @@ export function createHealthCheckRoute<T extends object = any>(
       if (config.checks) {
         for (const { name, check } of config.checks) {
           try {
-            const isHealthy = await check()
+            const isHealthy = await check(c)
             if (!isHealthy) {
               status = "DOWN"
               checkFailures.push(name)

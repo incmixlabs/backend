@@ -1,5 +1,5 @@
-import type { emailTemplateNames } from "@/types"
 import { z } from "@hono/zod-openapi"
+import type { emailTemplateNames } from "@incmix-api/utils/db-schema"
 
 export const VerificationEmailSchema = z
   .object({

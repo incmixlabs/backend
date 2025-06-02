@@ -1,5 +1,5 @@
-import type { GoogleUser } from "@/dbSchema"
-import { envVars } from "@/env-vars"
+import type { GoogleUser } from "@/types"
+
 import { ACC_DISABLED, VERIFIY_REQ } from "@/lib/constants"
 
 import { insertOAuthUser } from "@/lib/helper"
@@ -18,8 +18,8 @@ import {
 } from "@incmix-api/utils/errors"
 import { useTranslation } from "@incmix-api/utils/middleware"
 import { generateCodeVerifier, generateState } from "arctic"
-import { getCookie, setCookie } from "hono/cookie"
-import type { CookieOptions } from "hono/utils/cookie"
+import { env } from "hono/adapter"
+import { getCookie } from "hono/cookie"
 
 const oAuthRoutes = new OpenAPIHono<HonoApp>({
   defaultHook: zodError,
@@ -28,7 +28,7 @@ const oAuthRoutes = new OpenAPIHono<HonoApp>({
 oAuthRoutes.openapi(googleOAuth, async (c) => {
   try {
     const clientType = c.req.header("X-Client-Type")
-    const google = initializeGoogleAuth(envVars, {
+    const google = initializeGoogleAuth(c, {
       isTauri: clientType === "desktop",
     })
 
@@ -39,18 +39,10 @@ oAuthRoutes.openapi(googleOAuth, async (c) => {
       "profile",
     ])
 
-    // const options: CookieOptions = {
-    //   httpOnly: true,
-    //   path: "/",
-    //   maxAge: 600,
-    //   secure: true,
-    //   sameSite: "none",
-    // }
-
     let options = "Max-Age=600; Path=/; HttpOnly; Secure; SameSite=None "
 
-    if (!envVars.DOMAIN.includes("localhost")) {
-      options += `; Domain=${envVars.DOMAIN}`
+    if (!env(c).DOMAIN.includes("localhost")) {
+      options += `; Domain=${env(c).DOMAIN}`
     }
 
     c.res.headers.append("Set-Cookie", `state=${state}; ${options}`)
@@ -99,7 +91,7 @@ oAuthRoutes.openapi(googleCallback, async (c) => {
 
   try {
     const clientType = c.req.header("X-Client-Type")
-    const google = initializeGoogleAuth(envVars, {
+    const google = initializeGoogleAuth(c, {
       isTauri: clientType === "desktop",
     })
     const tokens = await google.validateAuthorizationCode(

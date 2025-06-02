@@ -1,31 +1,12 @@
-import type { AuthUser as User } from "@incmix/utils/types"
+import type { KyselyDb } from "@incmix-api/utils/db-schema"
 import type { Context as HonoContext } from "hono"
+import type { Env } from "./env-vars"
 
-export type Bindings = {
-  COOKIE_NAME: string
-  AUTH_URL: string
-}
+export type Bindings = Env
 
 export type Variables = {
-  user: User | null
+  db: KyselyDb
 }
 
 export type HonoApp = { Bindings: Bindings; Variables: Variables }
 export type Context = HonoContext<HonoApp>
-
-export type LocaleRow = {
-  id: number
-  lang_code: string
-  is_default: number
-}
-export const MessageTypes = ["frag", "label"] as const
-export type MessageType = (typeof MessageTypes)[number]
-
-export type IntlMessageRow = {
-  id: number
-  locale_id: number
-  key: string
-  value: string
-  type: MessageType
-  namespace: string
-}

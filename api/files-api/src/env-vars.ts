@@ -15,7 +15,7 @@ import { z } from "zod"
 const EnvSchema = z.object({
   NODE_ENV: z.string().default("development"),
   PORT: z.coerce.number().default(8787),
-  INTL_URL: z.string().url(),
+  INTL_API_URL: z.string().url(),
   COOKIE_NAME: z.string().default("incmix_session"),
   DOMAIN: z.string().default("localhost"),
   AWS_ACCESS_KEY_ID: z.string(),
@@ -23,7 +23,7 @@ const EnvSchema = z.object({
   AWS_REGION: z.string(),
   AWS_SECRET_ACCESS_KEY: z.string(),
   BUCKET_NAME: z.string(),
-  AUTH_URL: z.string().url(),
+  AUTH_API_URL: z.string().url(),
 })
 
 export type env = z.infer<typeof EnvSchema>

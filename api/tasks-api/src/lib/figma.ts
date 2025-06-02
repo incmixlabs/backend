@@ -1,4 +1,5 @@
 import { envVars } from "@/env-vars"
+import type { Context } from "@/types"
 import Anthropic from "@anthropic-ai/sdk"
 import { GoogleGenAI } from "@google/genai"
 import { ServerError } from "@incmix-api/utils/errors"
