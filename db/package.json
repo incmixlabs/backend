@@ -1,0 +1,11 @@
+{
+  "name": "@incmix-api/db",
+  "type": "module",
+  "scripts": {
+    "migrate": "node --env-file=.env  migrate.js"
+  },
+  "dependencies": {
+    "pg": "catalog:",
+    "postgrator": "8.0.0"
+  }
+}
