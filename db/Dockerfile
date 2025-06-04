@@ -7,10 +7,14 @@ USER root
 # Set environment variables
 ENV DEBIAN_FRONTEND=noninteractive
 
+
+
 # Install plpython3u extension
 RUN apt-get update && apt-get install -y \
-    postgresql-plpython3-17 \
-    && rm -rf /var/lib/apt/lists/*
+    postgresql-plpython3-17 git curl && \
+    curl -fsSL https://deb.nodesource.com/setup_22.x | bash - && \
+    apt-get install -y nodejs && \
+    rm -rf /var/lib/apt/lists/*
 
 # Ensure proper ownership of PostgreSQL directories
 RUN chown -R postgres:postgres /var/lib/postgresql \
@@ -29,11 +33,35 @@ RETURNS text AS \$\$
 \$\$ LANGUAGE plpython3u;
 EOF
 
-# Switch back to postgres user
-USER postgres
+
+
+WORKDIR /app
+
+# Create and set permissions for npm global directory
+RUN mkdir -p /usr/local/lib/node_modules && \
+    chown -R root:root /usr/local/lib/node_modules && \
+    chmod -R 755 /usr/local/lib/node_modules && \
+    npm install -g pnpm turbo
+
+COPY ./package.json ./pnpm-lock.yaml ./pnpm-workspace.yaml ./turbo.json ./
+
+COPY ./db/package.json ./db/
+
+# Ensure proper permissions for npm cache and pnpm store
+RUN mkdir -p /root/.npm && \
+    mkdir -p /root/.local/share/pnpm/store && \
+    pnpm install --frozen-lockfile --prod=false
+
+COPY ./db/api-migrations ./db/api-migrations
+
+COPY ./db/migrations ./db/migrations
+COPY ./db/migrate.js ./db/migrate.js
 
 # Expose PostgreSQL port
 EXPOSE 5432
+
+# Switch back to postgres user
+USER postgres
 
 # Use the default postgres entrypoint
 CMD ["postgres"]

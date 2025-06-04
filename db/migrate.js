@@ -7,7 +7,11 @@ const __dirname = dirname(fileURLToPath(import.meta.url))
 
 async function main() {
   const client = new pg.Client({
-    connectionString: process.env.DATABASE_URL,
+    user: process.env.POSTGRES_USER,
+    password: process.env.POSTGRES_PASSWORD,
+    host: process.env.HOSTNAME,
+    port: process.env.POSTGRES_PORT,
+    database: process.env.POSTGRES_DB,
   })
 
   try {
@@ -16,7 +20,7 @@ async function main() {
     const postgrator = new Postgrator({
       migrationPattern: `${__dirname}/api-migrations/*`,
       driver: "pg",
-      database: "incmix",
+      database: process.env.POSTGRES_DB,
       schemaTable: "schema_version",
       execQuery: (query) => client.query(query),
       // execSqlScript: (sqlScript) => client.(sqlScript),
