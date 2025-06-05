@@ -4,11 +4,11 @@ import {
   MAIL_SENT,
   PASS_RESET_SUCCESS,
 } from "@/lib/constants"
-import { db, findUserByEmail, findUserById } from "@/lib/db"
+import { findUserByEmail, findUserById } from "@/lib/db"
 
 import {
   generateVerificationCode,
-  sendForgetPasswordEmailOrLog,
+  sendForgetPasswordEmail,
   verifyVerificationCode,
 } from "@/lib/helper"
 import { createSession } from "@/lib/lucia"
@@ -16,7 +16,7 @@ import { createSession } from "@/lib/lucia"
 import {
   forgetPassword,
   resetPassword,
-  sendForgetPasswordEmail,
+  sendForgetPasswordEmail as sendForgetPasswordEmailRoute,
 } from "@/routes/reset-password/openapi"
 import type { HonoApp } from "@/types"
 import { OpenAPIHono } from "@hono/zod-openapi"
@@ -58,7 +58,8 @@ resetPasswordRoutes.openapi(resetPassword, async (c) => {
 
     const newHash = await scrypt.hash(newPassword)
 
-    await db
+    await c
+      .get("db")
       .updateTable("users")
       .set({ hashedPassword: newHash })
       .where("id", "=", currentUser.id)
@@ -76,23 +77,24 @@ resetPasswordRoutes.openapi(resetPassword, async (c) => {
   }
 })
 
-resetPasswordRoutes.openapi(sendForgetPasswordEmail, async (c) => {
+resetPasswordRoutes.openapi(sendForgetPasswordEmailRoute, async (c) => {
   try {
     const { email } = c.req.valid("json")
     const user = await findUserByEmail(c, email)
 
     const verificationCode = await generateVerificationCode(
+      c,
       user.id,
       email,
       "forgot_password"
     )
 
-    await sendForgetPasswordEmailOrLog(c, email, verificationCode)
+    await sendForgetPasswordEmail(c, email, verificationCode)
     const t = await useTranslation(c)
     const msg = await t.text(MAIL_SENT)
     return c.json({ message: msg }, 200)
   } catch (error) {
-    return await processError<typeof sendForgetPasswordEmail>(c, error, [
+    return await processError<typeof sendForgetPasswordEmailRoute>(c, error, [
       "{{ default }}",
       "forget-password-email",
     ])
@@ -106,6 +108,7 @@ resetPasswordRoutes.openapi(forgetPassword, async (c) => {
     const user = await findUserByEmail(c, email)
 
     const validCode = await verifyVerificationCode(
+      c,
       {
         email,
         id: user.id,
@@ -123,7 +126,8 @@ resetPasswordRoutes.openapi(forgetPassword, async (c) => {
 
     const newHash = await scrypt.hash(newPassword)
 
-    await db
+    await c
+      .get("db")
       .updateTable("users")
       .set({ hashedPassword: newHash })
       .where("id", "=", user.id)

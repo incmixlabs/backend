@@ -5,15 +5,15 @@ import {
   MAIL_SENT,
   VERIFY_SUCCESS,
 } from "@/lib/constants"
-import { db, findUserByEmail } from "@/lib/db"
+import { findUserByEmail } from "@/lib/db"
 import {
   generateVerificationCode,
-  sendVerificationEmailOrLog,
+  sendVerificationEmail,
   verifyVerificationCode,
 } from "@/lib/helper"
 import { initializeLucia } from "@/lib/lucia"
 import {
-  sendVerificationEmail,
+  sendVerificationEmail as sendVerificationEmailRoute,
   verifyEmail,
 } from "@/routes/email-verification/openapi"
 import type { HonoApp } from "@/types"
@@ -30,7 +30,7 @@ const emailVerificationRoutes = new OpenAPIHono<HonoApp>({
   defaultHook: zodError,
 })
 
-emailVerificationRoutes.openapi(sendVerificationEmail, async (c) => {
+emailVerificationRoutes.openapi(sendVerificationEmailRoute, async (c) => {
   try {
     const { email } = c.req.valid("json")
     const user = await findUserByEmail(c, email)
@@ -41,16 +41,17 @@ emailVerificationRoutes.openapi(sendVerificationEmail, async (c) => {
     }
 
     const verificationCode = await generateVerificationCode(
+      c,
       user.id,
       email,
       "email_verification"
     )
 
-    await sendVerificationEmailOrLog(c, email, verificationCode)
+    await sendVerificationEmail(c, email, verificationCode)
     const msg = await t.text(MAIL_SENT)
     return c.json({ message: msg }, 200)
   } catch (error) {
-    return await processError<typeof sendVerificationEmail>(c, error, [
+    return await processError<typeof sendVerificationEmailRoute>(c, error, [
       "{{ default }}",
       "send-verification-email",
     ])
@@ -62,7 +63,7 @@ emailVerificationRoutes.openapi(verifyEmail, async (c) => {
     const { code, email } = c.req.valid("json")
     const user = await findUserByEmail(c, email)
 
-    const lucia = initializeLucia()
+    const lucia = initializeLucia(c)
     await lucia.invalidateUserSessions(user.id)
     const sessionCookie = lucia.createBlankSessionCookie()
     c.header("Set-Cookie", sessionCookie.serialize(), {
@@ -76,6 +77,7 @@ emailVerificationRoutes.openapi(verifyEmail, async (c) => {
     }
 
     const validCode = await verifyVerificationCode(
+      c,
       user,
       code,
       "email_verification"
@@ -85,7 +87,8 @@ emailVerificationRoutes.openapi(verifyEmail, async (c) => {
       throw new UnauthorizedError(msg)
     }
 
-    await db
+    await c
+      .get("db")
       .updateTable("users")
       .set({ emailVerified: true })
       .where("id", "=", user.id)

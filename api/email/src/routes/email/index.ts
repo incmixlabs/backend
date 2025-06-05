@@ -1,12 +1,12 @@
-import type { Status } from "@/dbSchema"
 import { envVars } from "@/env-vars"
-import { db } from "@/lib/db"
 import { sendEmail } from "@/lib/helper"
 import type { HonoApp } from "@/types"
 import { OpenAPIHono, type RouteConfigToTypedResponse } from "@hono/zod-openapi"
+import type { Status } from "@incmix-api/utils/db-schema"
 import { processError, zodError } from "@incmix-api/utils/errors"
 import type { ContentfulStatusCode } from "hono/utils/http-status"
 import { sendMail } from "./openapi"
+
 const emailRoutes = new OpenAPIHono<HonoApp>({
   defaultHook: zodError,
 })
@@ -24,7 +24,8 @@ emailRoutes.openapi(sendMail, async (c) => {
       shouldRetry = true
     }
 
-    await db
+    await c
+      .get("db")
       .insertInto("emailQueue")
       .values({
         recipient: params.recipient,

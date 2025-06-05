@@ -1,24 +1,25 @@
+import type { KyselyDb } from "@incmix-api/utils/db-schema"
 import type { AuthUser } from "@incmix/utils/types"
 import type { Context as HonoContext } from "hono"
 import type { Session } from "lucia"
+import type { Env } from "./env-vars"
 
-type EnvVariables = {
-  EMAIL_URL: string
-  FRONTEND_URL: string
-  USERS_API_URL: string
-  INTL_URL: string
-  GOOGLE_CLIENT_ID: string
-  GOOGLE_CLIENT_SECRET: string
-  GOOGLE_REDIRECT_URL: string
-  COOKIE_NAME: string
-  DOMAIN: string
-}
-
-export type Bindings = EnvVariables
+export type Bindings = Env
 
 export type Variables = {
   user: AuthUser | null
   session: Session | null
+  db: KyselyDb
+}
+
+export type GoogleUser = {
+  sub: string
+  name: string
+  given_name: string
+  family_name: string
+  picture: string
+  email: string
+  email_verified: boolean
 }
 
 export type HonoApp = { Bindings: Bindings; Variables: Variables }

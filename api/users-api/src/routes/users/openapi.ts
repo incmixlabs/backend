@@ -11,6 +11,7 @@ import {
   IdOrEmailSchema,
   IdSchema,
   MessageResponseSchema,
+  OnboardingResponseSchema,
   OnboardingSchema,
   OrgIdSchema,
   UploadFileSchema,
@@ -104,7 +105,7 @@ export const userOnboarding = createRoute({
     200: {
       content: {
         "application/json": {
-          schema: OnboardingSchema,
+          schema: OnboardingResponseSchema,
         },
       },
       description: "User Onboarding success",

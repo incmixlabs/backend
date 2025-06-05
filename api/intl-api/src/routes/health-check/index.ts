@@ -1,5 +1,4 @@
 import { envVars } from "@/env-vars"
-import { db } from "@/lib/db"
 import { healthCheck } from "@/routes/health-check/openapi"
 import type { HonoApp } from "@/types"
 import { OpenAPIHono } from "@hono/zod-openapi"
@@ -8,7 +7,11 @@ const healthcheckRoutes = new OpenAPIHono<HonoApp>()
 
 healthcheckRoutes.openapi(healthCheck, async (c) => {
   try {
-    const results = await db.selectFrom("locales").selectAll().execute()
+    const results = await c
+      .get("db")
+      .selectFrom("locales")
+      .selectAll()
+      .execute()
 
     if (!results.length)
       return c.json(
@@ -20,12 +23,12 @@ healthcheckRoutes.openapi(healthCheck, async (c) => {
         200
       )
 
-    const { AUTH_URL, COOKIE_NAME } = envVars
+    const { AUTH_API_URL, COOKIE_NAME } = envVars
 
     let status = "UP"
     const missing: string[] = []
 
-    if (!AUTH_URL) {
+    if (!AUTH_API_URL) {
       status = "DOWN"
       missing.push("AUTH_URL")
     }

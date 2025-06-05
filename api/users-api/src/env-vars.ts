@@ -16,15 +16,15 @@ const EnvSchema = z.object({
   NODE_ENV: z.string().default("development"),
   PORT: z.coerce.number().default(8787),
   DATABASE_URL: z.string().url(),
-  INTL_URL: z.string().url(),
+  INTL_API_URL: z.string().url(),
   COOKIE_NAME: z.string().default("incmix_session"),
   DOMAIN: z.string().default("localhost"),
-  AUTH_URL: z.string().url(),
+  AUTH_API_URL: z.string().url(),
   FILES_API_URL: z.string().url(),
   ORG_API_URL: z.string().url(),
 })
 
-export type env = z.infer<typeof EnvSchema>
+export type ENV = z.infer<typeof EnvSchema>
 
 const { data: env, error } = EnvSchema.safeParse(process.env)
 

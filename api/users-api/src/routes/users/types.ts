@@ -17,6 +17,38 @@ export const OnboardingSchema = z
   })
   .openapi("OnboardingSchema")
 
+export const OnboardingResponseSchema = z.object({
+  email: z
+    .string()
+    .email()
+    .nullable()
+    .openapi({ example: "john.doe@example.com" }),
+  companyName: z
+    .string()
+    .min(1)
+    .nullable()
+    .openapi({ example: "Company Name" }),
+  companySize: z
+    .string()
+    .min(1)
+    .nullable()
+    .openapi({ example: "Company Size" }),
+  teamSize: z.string().min(1).nullable().openapi({ example: "Team Size" }),
+  purpose: z.string().min(1).nullable().openapi({ example: "Purpose" }),
+  role: z.string().min(1).nullable().openapi({ example: "Role" }),
+  manageFirst: z
+    .string()
+    .min(1)
+    .nullable()
+    .openapi({ example: "Manage First" }),
+  focusFirst: z.string().min(1).nullable().openapi({ example: "Focus First" }),
+  referralSources: z
+    .array(z.string())
+    .min(1)
+    .nullable()
+    .openapi({ example: ["Referral Source 1", "Referral Source 2"] }),
+})
+
 export const MessageResponseSchema = z
   .object({
     message: z.string().openapi({

@@ -2,7 +2,8 @@
   "name": "@incmix-api/db",
   "type": "module",
   "scripts": {
-    "migrate": "node --env-file=.env  migrate.js"
+    "migrate:local": "node --env-file=.env  migrate.js",
+    "migrate": "node migrate.js"
   },
   "dependencies": {
     "pg": "catalog:",

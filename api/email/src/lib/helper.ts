@@ -24,6 +24,7 @@ export async function sendEmail(
   switch (type) {
     case "VerificationEmail": {
       const { verificationLink } = body.payload
+
       template = await render(
         emailTemplateMap.VerificationEmail({
           verificationLink,

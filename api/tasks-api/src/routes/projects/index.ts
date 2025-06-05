@@ -11,7 +11,7 @@ import {
   ERROR_PROJECT_NOT_FOUND,
   ERROR_PROJECT_UPDATE_FAILED,
 } from "@/lib/constants"
-import { db, generateBoard } from "@/lib/db"
+import { generateBoard } from "@/lib/db"
 import { getOrganizationById } from "@/lib/services"
 import type { HonoApp } from "@/types"
 import { OpenAPIHono } from "@hono/zod-openapi"
@@ -58,7 +58,8 @@ projectRoutes.openapi(createProject, async (c) => {
       throw new UnprocessableEntityError(msg)
     }
 
-    const existingProject = await db
+    const existingProject = await c
+      .get("db")
       .selectFrom("projects")
       .selectAll()
       .where((eb) => eb.and([eb("name", "=", name), eb("orgId", "=", org.id)]))
@@ -68,7 +69,8 @@ projectRoutes.openapi(createProject, async (c) => {
       throw new ConflictError(msg)
     }
     const id = nanoid(6)
-    const project = await db
+    const project = await c
+      .get("db")
       .insertInto("projects")
       .values({
         id,
@@ -176,7 +178,8 @@ projectRoutes.openapi(createColumn, async (c) => {
 
     const { label, projectId, parentId, columnOrder } = c.req.valid("json")
 
-    const existingProject = await db
+    const existingProject = await c
+      .get("db")
       .selectFrom("projects")
       .selectAll()
       .where("id", "=", projectId)
@@ -186,7 +189,8 @@ projectRoutes.openapi(createColumn, async (c) => {
       throw new UnprocessableEntityError(msg)
     }
     if (parentId) {
-      const existingParent = await db
+      const existingParent = await c
+        .get("db")
         .selectFrom("columns")
         .selectAll()
         .where("id", "=", parentId)
@@ -196,7 +200,8 @@ projectRoutes.openapi(createColumn, async (c) => {
         throw new UnprocessableEntityError(msg)
       }
     }
-    const existingColumn = await db
+    const existingColumn = await c
+      .get("db")
       .selectFrom("columns")
       .selectAll()
       .where((eb) =>
@@ -211,7 +216,8 @@ projectRoutes.openapi(createColumn, async (c) => {
       throw new ConflictError(msg)
     }
     const id = nanoid(6)
-    const column = await db
+    const column = await c
+      .get("db")
       .insertInto("columns")
       .values({
         id,
@@ -231,7 +237,8 @@ projectRoutes.openapi(createColumn, async (c) => {
       throw new BadRequestError(msg)
     }
 
-    await db
+    await c
+      .get("db")
       .updateTable("columns")
       .set((eb) => ({ columnOrder: eb("columnOrder", "+", 1) }))
       .where((eb) =>
@@ -353,7 +360,8 @@ projectRoutes.openapi(getProjects, async (c) => {
       throw new UnprocessableEntityError(msg)
     }
 
-    const projects = await db
+    const projects = await c
+      .get("db")
       .selectFrom("projects")
       .selectAll()
       .where("orgId", "=", orgId)
@@ -378,7 +386,8 @@ projectRoutes.openapi(getColumns, async (c) => {
     }
     const { projectId } = c.req.valid("param")
 
-    const project = await db
+    const project = await c
+      .get("db")
       .selectFrom("projects")
       .selectAll()
       .where("projects.id", "=", projectId)
@@ -389,7 +398,8 @@ projectRoutes.openapi(getColumns, async (c) => {
     }
 
     const { columnId } = c.req.valid("query")
-    const columns = await db
+    const columns = await c
+      .get("db")
       .selectFrom("columns")
       .selectAll()
       .where((eb) => {
@@ -422,7 +432,7 @@ projectRoutes.openapi(getBoard, async (c) => {
     }
     const { projectId } = c.req.valid("param")
 
-    const board = await generateBoard(projectId)
+    const board = await generateBoard(c, projectId)
     if (!board) {
       const msg = await t.text(ERROR_PROJECT_NOT_FOUND)
       throw new UnprocessableEntityError(msg)

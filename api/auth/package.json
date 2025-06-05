@@ -2,9 +2,9 @@
   "name": "@incmix-api/auth",
   "type": "module",
   "scripts": {
-    "dev": "kysely migrate:up && tsx watch --env-file=.env src/index.ts",
+    "dev": "dotenv -e .env tsx watch src/index.ts",
     "build": "tsc && tsc-alias",
-    "start": "kysely migrate:up && node ./dist/src/index.js",
+    "start": "node ./dist/src/index.js",
     "migrate:local": "kysely migrate:up",
     "test": "vitest --run",
     "test:e2e": "playwright test"
@@ -25,7 +25,9 @@
     "mailslurp-client": "15.20.2",
     "oslo": "1.2.1",
     "pg": "catalog:",
-    "zod": "catalog:"
+    "zod": "catalog:",
+    "dotenv": "catalog:",
+    "dotenv-expand": "catalog:"
   },
   "devDependencies": {
     "@incmix-api/config": "workspace:^",

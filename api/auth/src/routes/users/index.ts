@@ -1,5 +1,4 @@
-import { type Database, type UserColumn, columns } from "@/dbSchema"
-import { db, findUserById } from "@/lib/db"
+import { findUserById } from "@/lib/db"
 import { initializeLucia } from "@/lib/lucia"
 import type { HonoApp } from "@/types"
 import { OpenAPIHono } from "@hono/zod-openapi"
@@ -9,6 +8,11 @@ import {
   createKyselyFilter,
   parseQueryParams,
 } from "@incmix-api/utils"
+import {
+  type Database,
+  type UserColumns,
+  userColumns,
+} from "@incmix-api/utils/db-schema"
 import {
   ForbiddenError,
   ServerError,
@@ -44,9 +48,10 @@ userRoutes.openapi(getAllUsers, async (c) => {
 
     const queryParams = c.req.query()
     const { filters, sort, joinOperator, pagination } =
-      parseQueryParams<UserColumn>(queryParams, columns)
+      parseQueryParams<UserColumns>(queryParams, userColumns)
 
-    let query = db
+    let query = c
+      .get("db")
       .selectFrom("users")
       .leftJoin("accounts", "userId", "id")
       .select([
@@ -65,7 +70,7 @@ userRoutes.openapi(getAllUsers, async (c) => {
         >[] = []
 
         for (const filter of filters) {
-          const kf = createKyselyFilter<UserColumn, Database, "users">(
+          const kf = createKyselyFilter<UserColumns, Database, "users">(
             filter,
             eb
           )
@@ -81,7 +86,7 @@ userRoutes.openapi(getAllUsers, async (c) => {
     if (sort.length) {
       query = query.orderBy(
         sort.map((s) => {
-          const field = s.id as UserColumn
+          const field = s.id as UserColumns
           const order = s.desc ? "desc" : "asc"
           const expression: OrderByExpression<Database, "users", typeof order> =
             `${field} ${order}`
@@ -163,7 +168,8 @@ userRoutes.openapi(setVerified, async (c) => {
       throw new ForbiddenError("Cannot update own account")
     }
 
-    const updated = await db
+    const updated = await c
+      .get("db")
       .updateTable("users")
       .set("emailVerified", value)
       .where("id", "=", u.id)
@@ -175,7 +181,7 @@ userRoutes.openapi(setVerified, async (c) => {
     }
 
     // Logout users everywhere
-    const lucia = initializeLucia()
+    const lucia = initializeLucia(c)
     await lucia.invalidateUserSessions(updated.id)
 
     return c.json({ message: "Updated Successfully" }, 200)
@@ -212,7 +218,8 @@ userRoutes.openapi(setEnabled, async (c) => {
       throw new ForbiddenError("Cannot update own account")
     }
 
-    const updated = await db
+    const updated = await c
+      .get("db")
       .updateTable("users")
       .set("isActive", value)
       .where("id", "=", u.id)
@@ -224,7 +231,7 @@ userRoutes.openapi(setEnabled, async (c) => {
     }
 
     // Logout users everywhere
-    const lucia = initializeLucia()
+    const lucia = initializeLucia(c)
     await lucia.invalidateUserSessions(updated.id)
 
     return c.json({ message: "Updated Successfully" }, 200)
@@ -262,7 +269,8 @@ userRoutes.openapi(setPassword, async (c) => {
 
     const newHash = await new Scrypt().hash(value)
 
-    const updated = await db
+    const updated = await c
+      .get("db")
       .updateTable("users")
       .set("hashedPassword", newHash)
       .where("id", "=", u.id)
@@ -274,7 +282,7 @@ userRoutes.openapi(setPassword, async (c) => {
     }
 
     // Logout users everywhere
-    const lucia = initializeLucia()
+    const lucia = initializeLucia(c)
     await lucia.invalidateUserSessions(updated.id)
 
     return c.json({ message: "Updated Successfully" }, 200)

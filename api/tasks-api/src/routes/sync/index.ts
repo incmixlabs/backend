@@ -1,7 +1,6 @@
-import type { Task } from "@/dbSchema"
-import { db } from "@/lib/db"
 import type { HonoApp } from "@/types"
 import { ERROR_UNAUTHORIZED } from "@incmix-api/utils"
+import type { Task } from "@incmix-api/utils/db-schema"
 import { useTranslation } from "@incmix-api/utils/middleware"
 import { Hono } from "hono"
 
@@ -25,7 +24,8 @@ syncRoutes.post("/pull", async (c) => {
       : new Date(0)
 
     // Query builder to get user's tasks
-    let query = db
+    let query = c
+      .get("db")
       .selectFrom("tasks")
       .selectAll()
       .where("assignedTo", "=", user.id)
@@ -113,7 +113,8 @@ syncRoutes.post("/push", async (c) => {
       }
 
       // Get the real current state from the database
-      const realMasterState = await db
+      const realMasterState = await c
+        .get("db")
         .selectFrom("tasks")
         .selectAll()
         .where("id", "=", newDoc.id)
@@ -147,7 +148,8 @@ syncRoutes.post("/push", async (c) => {
           console.log("updating")
           if (realMasterState) {
             // Update existing task
-            const updatedTask = await db
+            const updatedTask = await c
+              .get("db")
               .updateTable("tasks")
               .set({
                 content: newDoc.content,
@@ -182,7 +184,8 @@ syncRoutes.post("/push", async (c) => {
             }
 
             // Verify project and column exist
-            const project = await db
+            const project = await c
+              .get("db")
               .selectFrom("projects")
               .select("id")
               .where("id", "=", newDoc.projectId)
@@ -196,7 +199,8 @@ syncRoutes.post("/push", async (c) => {
               continue
             }
 
-            const column = await db
+            const column = await c
+              .get("db")
               .selectFrom("columns")
               .select("id")
               .where("id", "=", newDoc.columnId)
@@ -211,7 +215,8 @@ syncRoutes.post("/push", async (c) => {
             }
 
             // Insert new task
-            const insertedTask = await db
+            const insertedTask = await c
+              .get("db")
               .insertInto("tasks")
               .values({
                 ...newDoc,

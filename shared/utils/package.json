@@ -4,6 +4,7 @@
   "license": "MIT",
   "type": "module",
   "scripts": {
+    "dev": "tsc && (concurrently \"tsc -w\" \"tsc-alias -w\")",
     "build": "tsc && tsc-alias"
   },
   "exports": {
@@ -23,6 +24,10 @@
     "./types": {
       "default": "./dist/src/types.js",
       "types": "./dist/src/types.d.ts"
+    },
+    "./db-schema": {
+      "default": "./dist/src/db-schema/index.js",
+      "types": "./dist/src/db-schema/index.d.ts"
     }
   },
   "dependencies": {
@@ -37,6 +42,7 @@
     "add": "2.0.6",
     "hono": "catalog:",
     "kysely": "catalog:",
+    "pg": "catalog:",
     "zod": "catalog:"
   },
   "devDependencies": {

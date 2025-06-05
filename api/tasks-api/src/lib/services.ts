@@ -1,4 +1,3 @@
-import type { StoryTemplate } from "@/dbSchema"
 import { envVars } from "@/env-vars"
 import type { Context } from "@/types"
 import Anthropic from "@anthropic-ai/sdk"
@@ -7,26 +6,16 @@ import {
   createPartFromUri,
   createUserContent,
 } from "@google/genai"
+import type { StoryTemplate } from "@incmix-api/utils/db-schema"
 import { type AIModel, MODEL_MAP } from "./constants"
 
-export async function getOrganizationById(c: Context, id: string) {
-  const url = `${envVars.ORG_URL}/id/${id}`
-
-  const res = await fetch(url, {
-    method: "get",
-    headers: c.req.header(),
-  })
-
-  if (res.status !== 200 && res.status !== 404) {
-    const data = (await res.json()) as { message: string }
-    throw new Error(data.message)
-  }
-
-  if (res.status === 404) {
-    return
-  }
-
-  return res.json()
+export function getOrganizationById(c: Context, id: string) {
+  return c
+    .get("db")
+    .selectFrom("organisations")
+    .selectAll()
+    .where("id", "=", id)
+    .executeTakeFirst()
 }
 
 export async function generateUserStory(

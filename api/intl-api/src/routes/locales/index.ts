@@ -1,7 +1,6 @@
 import type { HonoApp } from "@/types"
 import { OpenAPIHono } from "@hono/zod-openapi"
 
-import { db } from "@/lib/db"
 import {
   addLocale,
   deleteLocale,
@@ -10,6 +9,7 @@ import {
   getLocale,
   updateLocale,
 } from "@/routes/locales/openapi"
+import type { KyselyDb } from "@incmix-api/utils/db-schema"
 import {
   ConflictError,
   NotFoundError,
@@ -18,6 +18,7 @@ import {
   processError,
   zodError,
 } from "@incmix-api/utils/errors"
+
 const localeRoutes = new OpenAPIHono<HonoApp>({
   defaultHook: zodError,
 })
@@ -28,24 +29,26 @@ localeRoutes.openapi(addLocale, async (c) => {
     // if (!user) throw new UnauthorizedError()
 
     const { code, isDefault } = c.req.valid("json")
-    const existingLocale = await db
+    const existingLocale = await c
+      .get("db")
       .selectFrom("locales")
       .selectAll()
-      .where("langCode", "=", code)
+      .where("code", "=", code)
       .executeTakeFirst()
 
     if (existingLocale) throw new ConflictError("Locale already exists")
 
-    const insertedLocale = await db
+    const insertedLocale = await c
+      .get("db")
       .insertInto("locales")
-      .values({ langCode: code, isDefault })
+      .values({ code, isDefault })
       .returningAll()
       .executeTakeFirstOrThrow()
 
     if (!insertedLocale) throw new ServerError("Failed to insert Locale")
 
     if (isDefault) {
-      await db
+      await (c.get("db") as KyselyDb)
         .updateTable("locales")
         .set({ isDefault: false })
         .where((eb) =>
@@ -72,26 +75,28 @@ localeRoutes.openapi(updateLocale, async (c) => {
     if (!user) throw new UnauthorizedError()
     const { code } = c.req.valid("param")
     const { code: newCode, isDefault } = c.req.valid("json")
-    const existingLocale = await db
+    const existingLocale = await c
+      .get("db")
       .selectFrom("locales")
       .selectAll()
-      .where("langCode", "=", code)
+      .where("code", "=", code)
       .executeTakeFirst()
 
     if (!existingLocale)
       throw new NotFoundError(`Locale '${code}' doesn't exist`)
 
-    const updatedLocale = await db
+    const updatedLocale = await c
+      .get("db")
       .updateTable("locales")
-      .set({ langCode: newCode, isDefault })
-      .where("langCode", "=", code)
+      .set({ code: newCode, isDefault })
+      .where("code", "=", code)
       .returningAll()
       .executeTakeFirstOrThrow()
 
     if (!updatedLocale) throw new ServerError("Failed to update Locale")
 
     if (isDefault) {
-      await db
+      await (c.get("db") as KyselyDb)
         .updateTable("locales")
         .set({ isDefault: false })
         .where((eb) =>
@@ -114,10 +119,11 @@ localeRoutes.openapi(deleteLocale, async (c) => {
     if (!user) throw new UnauthorizedError()
     const { code } = c.req.valid("param")
 
-    const existingLocale = await db
+    const existingLocale = await c
+      .get("db")
       .selectFrom("locales")
       .selectAll()
-      .where("langCode", "=", code)
+      .where("code", "=", code)
       .executeTakeFirst()
 
     if (!existingLocale)
@@ -126,9 +132,10 @@ localeRoutes.openapi(deleteLocale, async (c) => {
     if (existingLocale.isDefault)
       throw new ConflictError("Default Locale can't be deleted")
 
-    const deletedLocale = await db
+    const deletedLocale = await c
+      .get("db")
       .deleteFrom("locales")
-      .where("langCode", "=", code)
+      .where("code", "=", code)
       .returningAll()
       .executeTakeFirstOrThrow()
 
@@ -136,8 +143,8 @@ localeRoutes.openapi(deleteLocale, async (c) => {
 
     return c.json(
       {
-        code: deletedLocale.langCode,
-        isDefault: Boolean(deletedLocale.langCode),
+        code: deletedLocale.code,
+        isDefault: Boolean(deletedLocale.code),
       },
       200
     )
@@ -151,7 +158,8 @@ localeRoutes.openapi(deleteLocale, async (c) => {
 
 localeRoutes.openapi(getDefaultLocale, async (c) => {
   try {
-    const defaultLocale = await db
+    const defaultLocale = await c
+      .get("db")
       .selectFrom("locales")
       .selectAll()
       .where("isDefault", "=", true)
@@ -161,7 +169,7 @@ localeRoutes.openapi(getDefaultLocale, async (c) => {
 
     return c.json(
       {
-        code: defaultLocale.langCode,
+        code: defaultLocale.code,
         isDefault: Boolean(defaultLocale.isDefault),
       },
       200
@@ -178,10 +186,11 @@ localeRoutes.openapi(getLocale, async (c) => {
   try {
     const { code } = c.req.valid("param")
 
-    const existingLocale = await db
+    const existingLocale = await c
+      .get("db")
       .selectFrom("locales")
       .selectAll()
-      .where("langCode", "=", code)
+      .where("code", "=", code)
       .executeTakeFirstOrThrow()
 
     if (!existingLocale)
@@ -189,7 +198,7 @@ localeRoutes.openapi(getLocale, async (c) => {
 
     return c.json(
       {
-        code: existingLocale.langCode,
+        code: existingLocale.code,
         isDefault: Boolean(existingLocale.isDefault),
       },
       200
@@ -204,11 +213,15 @@ localeRoutes.openapi(getLocale, async (c) => {
 
 localeRoutes.openapi(getAllLocales, async (c) => {
   try {
-    const locales = await db.selectFrom("locales").selectAll().execute()
+    const locales = await c
+      .get("db")
+      .selectFrom("locales")
+      .selectAll()
+      .execute()
 
     return c.json(
       locales.map((l) => ({
-        code: l.langCode,
+        code: l.code,
         isDefault: Boolean(l.isDefault),
       })),
       200

@@ -1,5 +1,5 @@
 import { envVars } from "@/env-vars"
-import { db } from "@/lib/db"
+
 import type { HonoApp } from "@/types"
 import { createHealthCheckRoute } from "@incmix-api/utils"
 
@@ -8,12 +8,12 @@ const healthcheckRoutes = createHealthCheckRoute<HonoApp>({
   envVars: {
     COOKIE_NAME: envVars.COOKIE_NAME,
     DOMAIN: envVars.DOMAIN,
-    EMAIL_URL: envVars.EMAIL_URL,
+    EMAIL_API_URL: envVars.EMAIL_API_URL,
     FRONTEND_URL: envVars.FRONTEND_URL,
     GOOGLE_CLIENT_ID: envVars.GOOGLE_CLIENT_ID,
     GOOGLE_CLIENT_SECRET: envVars.GOOGLE_CLIENT_SECRET,
     GOOGLE_REDIRECT_URL: envVars.GOOGLE_REDIRECT_URL,
-    INTL_URL: envVars.INTL_URL,
+    INTL_API_URL: envVars.INTL_API_URL,
     USERS_API_URL: envVars.USERS_API_URL,
   },
 
@@ -21,10 +21,10 @@ const healthcheckRoutes = createHealthCheckRoute<HonoApp>({
   checks: [
     {
       name: "Database",
-      check: async () => {
+      check: async (c) => {
         try {
           // Simple query to check database connectivity
-          await db.selectFrom("users").selectAll().limit(1).execute()
+          await c.get("db").selectFrom("users").selectAll().limit(1).execute()
           return true
         } catch (_error) {
           return false

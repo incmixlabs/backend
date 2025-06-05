@@ -1,5 +1,31 @@
+import type { Context } from "@/types"
+import { subject as caslSubject } from "@casl/ability"
+import {
+  ForbiddenError,
+  NotFoundError,
+  PreconditionFailedError,
+} from "@incmix-api/utils/errors"
+import { createAbilityFromPermissions } from "@incmix/utils/casl"
+
+import { ERROR_CASL_FORBIDDEN } from "@incmix-api/utils"
+import { useTranslation } from "@incmix-api/utils/middleware"
+import {
+  type Action,
+  type AuthUser,
+  type Permission,
+  type Subject,
+  UserRoles,
+} from "@incmix/utils/types"
+
+import { defaultPermissions, interpolate } from "./casl"
+import {
+  ERROR_LAST_OWNER,
+  ERROR_NOT_MEMBER,
+  ERROR_ORG_NOT_FOUND,
+} from "./constants"
+
 import type {
-  Database,
+  KyselyDb,
   MemberRole,
   NewMember,
   NewOrganisation,
@@ -8,176 +34,89 @@ import type {
   Organisation,
   UpdatedPermission,
   UpdatedRole,
-} from "@/dbSchema"
-import type { Context } from "@/types"
-import { subject as caslSubject } from "@casl/ability"
-import {
-  ForbiddenError,
-  NotFoundError,
-  PreconditionFailedError,
-  ServerError,
-  UnauthorizedError,
-} from "@incmix-api/utils/errors"
-import { createAbilityFromPermissions } from "@incmix/utils/casl"
-
-import { ERROR_CASL_FORBIDDEN, generateSentryHeaders } from "@incmix-api/utils"
-import { useTranslation } from "@incmix-api/utils/middleware"
-import {
-  type Action,
-  type AuthUser,
-  type Permission,
-  type Subject,
-  type UserProfile,
-  UserRoles,
-} from "@incmix/utils/types"
-
-import { getCookie } from "hono/cookie"
-import { defaultPermissions, interpolate } from "./casl"
-import {
-  ERROR_LAST_OWNER,
-  ERROR_NOT_MEMBER,
-  ERROR_ORG_NOT_FOUND,
-} from "./constants"
-
-import { envVars } from "@/env-vars"
-import {
-  CamelCasePlugin,
-  Kysely,
-  ParseJSONResultsPlugin,
-  PostgresDialect,
-} from "kysely"
+} from "@incmix-api/utils/db-schema"
 import { jsonArrayFrom } from "kysely/helpers/postgres"
-import pg from "pg"
-
-const dialect = new PostgresDialect({
-  pool: new pg.Pool({
-    connectionString: envVars.DATABASE_URL,
-    max: 10,
-  }),
-})
-export const db = new Kysely<Database>({
-  dialect,
-  plugins: [new CamelCasePlugin()],
-})
 
 export async function getUserByEmail(c: Context, email: string) {
-  const sessionId = getCookie(c, envVars.COOKIE_NAME) ?? null
-
-  if (!sessionId) {
-    throw new UnauthorizedError()
-  }
-  const url = `${envVars.USERS_URL}?email=${email}`
-  const sentryHeaders = generateSentryHeaders(c)
-  const res = await fetch(url, {
-    method: "GET",
-    headers: {
-      cookie: c.req.header("cookie") || "",
-      ...sentryHeaders,
-    },
-  })
-
-  if (res.status === 500) throw new ServerError()
-  if (res.status === 401) throw new UnauthorizedError()
-  if (res.status === 404) throw new NotFoundError()
-
-  return (await res.json()) as UserProfile
+  return await c
+    .get("db")
+    .selectFrom("userProfiles")
+    .selectAll()
+    .where("email", "=", email)
+    .executeTakeFirst()
 }
 export async function getUserById(c: Context, id: string) {
-  const sessionId = getCookie(c, envVars.COOKIE_NAME) ?? null
-
-  if (!sessionId) {
-    throw new UnauthorizedError()
-  }
-  const url = `${envVars.USERS_URL}?id=${id}`
-  const sentryHeaders = generateSentryHeaders(c)
-
-  const res = await fetch(url, {
-    method: "GET",
-    headers: {
-      cookie: c.req.header("cookie") || "",
-      ...sentryHeaders,
-    },
-  })
-
-  if (!res.ok) throw new ServerError()
-
-  return (await res.json()) as UserProfile
+  return await c
+    .get("db")
+    .selectFrom("userProfiles")
+    .selectAll()
+    .where("id", "=", id)
+    .executeTakeFirst()
 }
+
 export async function isValidUser(c: Context, id: string) {
-  const sessionId = getCookie(c, envVars.COOKIE_NAME) ?? null
-
-  if (!sessionId) {
-    throw new UnauthorizedError()
-  }
-  const url = `${envVars.USERS_URL}?id=${id}`
-  const sentryHeaders = generateSentryHeaders(c)
-  const res = await fetch(url, {
-    method: "GET",
-    headers: {
-      cookie: c.req.header("cookie") || "",
-      ...sentryHeaders,
-    },
-  })
-
-  if (!res.ok) return false
-
-  const user = (await res.json()) as UserProfile
-
-  if (Object.hasOwn(user, "id")) return true
-
-  return false
+  const user = await getUserById(c, id)
+  return !!user
 }
 
-export function findAllRoles() {
-  return db.selectFrom("roles").selectAll().execute()
+export function findAllRoles(c: Context) {
+  return c.get("db").selectFrom("roles").selectAll().execute()
 }
 
-export function insertRole(role: NewRole) {
-  return db
+export function insertRole(c: Context, role: NewRole) {
+  return c
+    .get("db")
     .insertInto("roles")
     .values({ name: role.name })
     .returningAll()
     .executeTakeFirst()
 }
 
-export function findRoleByName(name: string) {
-  return db
+export function findRoleByName(c: Context, name: string) {
+  return c
+    .get("db")
     .selectFrom("roles")
     .selectAll()
     .where("name", "=", name as MemberRole)
     .executeTakeFirst()
 }
-export function findRoleById(id: number) {
-  return db
+export function findRoleById(c: Context, id: number) {
+  return c
+    .get("db")
     .selectFrom("roles")
     .selectAll()
     .where("id", "=", id)
     .executeTakeFirst()
 }
 
-export function updateRoleById(role: UpdatedRole, id: number) {
-  return db
+export function updateRoleById(c: Context, role: UpdatedRole, id: number) {
+  return c
+    .get("db")
     .updateTable("roles")
     .set(role)
     .where("id", "=", id)
     .executeTakeFirst()
 }
 
-export async function deleteRoleById(id: number) {
-  return await db.transaction().execute(async (tx) => {
-    await tx
-      .deleteFrom("permissions")
-      .where("roleId", "=", id)
-      .executeTakeFirstOrThrow()
-    return await tx
-      .deleteFrom("roles")
-      .where("id", "=", id)
-      .executeTakeFirstOrThrow()
-  })
+export async function deleteRoleById(c: Context, id: number) {
+  return await c
+    .get("db")
+    .transaction()
+    .execute(async (tx) => {
+      await tx
+        .deleteFrom("permissions")
+        .where("roleId", "=", id)
+        .executeTakeFirstOrThrow()
+      return await tx
+        .deleteFrom("roles")
+        .where("id", "=", id)
+        .executeTakeFirstOrThrow()
+    })
 }
 
-export function findAllPermissions() {
-  return db
+export function findAllPermissions(c: Context) {
+  return c
+    .get("db")
     .selectFrom("permissions")
     .innerJoin("roles", "roles.id", "permissions.roleId")
     .select([
@@ -192,12 +131,13 @@ export function findAllPermissions() {
 }
 
 export function findPermissionBySubjectAndAction(
+  c: Context,
   subject: Subject,
   action: Action,
   roleId: number,
-  instance?: Kysely<Database>
+  instance?: KyselyDb
 ) {
-  return (instance ?? db)
+  return (instance ?? c.get("db"))
     .selectFrom("permissions")
     .selectAll()
     .where("subject", "=", subject)
@@ -207,10 +147,11 @@ export function findPermissionBySubjectAndAction(
 }
 
 export function insertPermission(
+  c: Context,
   permission: NewPermission,
-  instance?: Kysely<Database>
+  instance?: KyselyDb
 ) {
-  return (instance ?? db)
+  return (instance ?? c.get("db"))
     .insertInto("permissions")
     .values(permission)
     .returningAll()
@@ -218,34 +159,37 @@ export function insertPermission(
 }
 
 export function updatePermission(
+  c: Context,
   permission: UpdatedPermission,
   id: number,
-  instance?: Kysely<Database>
+  instance?: KyselyDb
 ) {
-  return (instance ?? db)
+  return (instance ?? c.get("db"))
     .updateTable("permissions")
     .set(permission)
     .where("id", "=", id)
     .executeTakeFirstOrThrow()
 }
 
-export function deletePermission(id: number, instance?: Kysely<Database>) {
-  return (instance ?? db)
+export function deletePermission(c: Context, id: number, instance?: KyselyDb) {
+  return (instance ?? c.get("db"))
     .deleteFrom("permissions")
     .where("id", "=", id)
     .executeTakeFirstOrThrow()
 }
 
-export function insertOrganisation(org: NewOrganisation) {
-  return db
+export function insertOrganisation(c: Context, org: NewOrganisation) {
+  return c
+    .get("db")
     .insertInto("organisations")
     .values(org)
     .returningAll()
     .executeTakeFirst()
 }
 
-export async function checkHandleAvailability(handle: string) {
-  const org = await db
+export async function checkHandleAvailability(c: Context, handle: string) {
+  const org = await c
+    .get("db")
     .selectFrom("organisations")
     .selectAll()
     .where("handle", "=", handle)
@@ -254,8 +198,9 @@ export async function checkHandleAvailability(handle: string) {
   return false
 }
 export async function findOrganisationByHandle(c: Context, handle: string) {
-  const org = await db
-    .withPlugin(new ParseJSONResultsPlugin())
+  const org = await c
+    .get("db")
+
     .selectFrom("organisations")
     .select((eb) => [
       "organisations.id",
@@ -285,7 +230,8 @@ export async function findOrganisationByHandle(c: Context, handle: string) {
   return { ...org, owners }
 }
 export async function findOrganisationByName(c: Context, name: string) {
-  const org = await db
+  const org = await c
+    .get("db")
     .selectFrom("organisations")
     .selectAll()
     .where("name", "=", name)
@@ -300,9 +246,9 @@ export async function findOrganisationByName(c: Context, name: string) {
   return org
 }
 
-export function findOrganisationByUserId(userId: string) {
-  return db
-    .withPlugin(new ParseJSONResultsPlugin())
+export function findOrganisationByUserId(c: Context, userId: string) {
+  return c
+    .get("db")
     .selectFrom("organisations")
     .innerJoin("members", "members.orgId", "organisations.id")
     .select((eb) => [
@@ -322,8 +268,8 @@ export function findOrganisationByUserId(userId: string) {
 }
 
 export async function findOrganisationById(c: Context, id: string) {
-  const org = await db
-    .withPlugin(new ParseJSONResultsPlugin())
+  const org = await c
+    .get("db")
     .selectFrom("organisations")
     .select((eb) => [
       "organisations.id",
@@ -353,8 +299,13 @@ export async function findOrganisationById(c: Context, id: string) {
   return { ...org, owners }
 }
 
-export function insertMembers(members: NewMember[]) {
-  return db.insertInto("members").values(members).returningAll().execute()
+export function insertMembers(c: Context, members: NewMember[]) {
+  return c
+    .get("db")
+    .insertInto("members")
+    .values(members)
+    .returningAll()
+    .execute()
 }
 
 export async function findOrgMemberById(
@@ -362,8 +313,8 @@ export async function findOrgMemberById(
   userId: string,
   orgId: string
 ) {
-  const member = await db
-    .withPlugin(new ParseJSONResultsPlugin())
+  const member = await c
+    .get("db")
     .selectFrom("members")
     .innerJoin("roles", "roles.id", "members.roleId")
     .select(["orgId", "roleId", "userId", "roles.name as role"])
@@ -388,8 +339,8 @@ export async function findOrgMemberPermissions(
   user: AuthUser,
   org: Organisation & { owners: string[] }
 ) {
-  const member = await db
-    .withPlugin(new ParseJSONResultsPlugin())
+  const member = await c
+    .get("db")
     .selectFrom("members")
     .innerJoin("roles", "roles.id", "members.roleId")
     .select((eb) => [
@@ -435,8 +386,9 @@ export async function findOrgMemberPermissions(
   return { member, permissions: interpolatedPermissions }
 }
 
-export function findOrgMembers(orgId: string) {
-  return db
+export function findOrgMembers(c: Context, orgId: string) {
+  return c
+    .get("db")
     .selectFrom("members")
     .innerJoin("roles", "roles.id", "members.roleId")
     .select(["members.userId", "members.orgId", "roles.name as role"])
@@ -451,7 +403,7 @@ export async function ensureAtLeastOneOwner(
   operation: "remove" | "update"
 ): Promise<void> {
   const t = await useTranslation(c)
-  const currentMembers = await findOrgMembers(orgId)
+  const currentMembers = await findOrgMembers(c, orgId)
   const adminMembers = currentMembers.filter(
     (m) => m.role === UserRoles.ROLE_OWNER
   )
@@ -476,10 +428,12 @@ export async function ensureAtLeastOneOwner(
 }
 
 export async function isOrgMember(
+  c: Context,
   userId: string,
   orgId: string
 ): Promise<boolean> {
-  const member = await db
+  const member = await c
+    .get("db")
     .selectFrom("members")
     .select("userId")
     .where((eb) =>
@@ -494,10 +448,12 @@ export async function isOrgMember(
 }
 
 export async function doesOrganisationExist(
+  c: Context,
   name: string,
   userId: string
 ): Promise<boolean> {
-  const org = await db
+  const org = await c
+    .get("db")
     .selectFrom("organisations")
     .select("id")
     .where((eb) => eb.and([eb("name", "=", name)]))
@@ -505,7 +461,7 @@ export async function doesOrganisationExist(
 
   if (!org) return false
 
-  const members = await findOrgMembers(org.id)
+  const members = await findOrgMembers(c, org.id)
   return members.some((m) => m.userId === userId)
 }
 
