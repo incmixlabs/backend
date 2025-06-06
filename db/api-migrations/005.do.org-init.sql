@@ -4,7 +4,8 @@ BEGIN;
 CREATE TABLE organisations (
   id TEXT PRIMARY KEY NOT NULL,
   name TEXT NOT NULL,
-  handle TEXT NOT NULL UNIQUE
+  handle TEXT NOT NULL UNIQUE,
+  timestamps TIMESTAMPS NOT NULL DEFAULT (NOW(), NOW())
 );
 
 -- Create roles table (without the check constraint that was later dropped)

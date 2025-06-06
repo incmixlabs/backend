@@ -2,7 +2,7 @@
   "name": "@incmix-api/auth",
   "type": "module",
   "scripts": {
-    "dev": "dotenv -e .env tsx watch src/index.ts",
+    "dev": "tsx watch --env-file .env src/index.ts",
     "build": "tsc && tsc-alias",
     "start": "node ./dist/src/index.js",
     "migrate:local": "kysely migrate:up",
@@ -25,9 +25,7 @@
     "mailslurp-client": "15.20.2",
     "oslo": "1.2.1",
     "pg": "catalog:",
-    "zod": "catalog:",
-    "dotenv": "catalog:",
-    "dotenv-expand": "catalog:"
+    "zod": "catalog:"
   },
   "devDependencies": {
     "@incmix-api/config": "workspace:^",

@@ -14,15 +14,12 @@ CREATE TABLE email_queue (
   sg_id TEXT,
   should_retry BOOLEAN NOT NULL DEFAULT false,
   sendgrid_data TEXT,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+  timestamps TIMESTAMPS NOT NULL DEFAULT (NOW(), NOW())
 );
 
 -- Create indexes for email queue
 CREATE INDEX idx_email_queue_user_id ON email_queue(user_id);
 
 CREATE INDEX idx_email_queue_status ON email_queue(status);
-
-CREATE INDEX idx_email_queue_created_at ON email_queue(created_at);
 
 COMMIT;

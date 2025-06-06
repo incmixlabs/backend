@@ -1,18 +1,29 @@
 import type { TaskStatus } from "@incmix/utils/types"
 import type { ColumnType, Insertable, Selectable, Updateable } from "kysely"
+import type {
+  Checklist,
+  CreatedByUpdatedBy,
+  ProjectStatus,
+  Timeline,
+  Timestamps,
+} from "./custom-types"
 
 type TasksTable = {
   id: string
+  title: string
   content: string
   status: TaskStatus
   taskOrder: number
+  figmaLink: string
+  codeSnippets: string[]
   projectId: string
   columnId: string
   assignedTo: string
-  createdBy: string
-  updatedBy: string
-  createdAt: ColumnType<Date, string, never>
-  updatedAt: ColumnType<Date, string, string>
+  createdByUpdatedBy: CreatedByUpdatedBy
+  timestamps: Timestamps
+  currentTimeline: Timeline
+  actualTimeline: Timeline
+  checklists: Checklist[]
 }
 
 type ColumnsTable = {
@@ -21,20 +32,24 @@ type ColumnsTable = {
   columnOrder: number
   projectId: string
   parentId: string | null
-  createdBy: string
-  updatedBy: string
-  createdAt: ColumnType<Date, string, never>
-  updatedAt: ColumnType<Date, string, string>
+  createdByUpdatedBy: CreatedByUpdatedBy
+  timestamps: Timestamps
 }
 
 type ProjectsTable = {
   id: string
   name: string
   orgId: string
-  createdBy: string
-  updatedBy: string
-  createdAt: ColumnType<Date, string, never>
-  updatedAt: ColumnType<Date, string, string>
+  createdByUpdatedBy: CreatedByUpdatedBy
+  timestamps: Timestamps
+  status: ProjectStatus
+  currentTimeline: Timeline
+  actualTimeline: Timeline
+  checklists: Checklist[]
+  budgetEstimate: number
+  budgetActual: number
+  description: string
+  company: string
 }
 
 export type Task = Selectable<TasksTable>
