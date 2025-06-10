@@ -1,4 +1,7 @@
-import type { UpdatedColumn } from "@/dbSchema"
+import type {
+  NewProjectMember,
+  UpdatedColumn,
+} from "@incmix-api/utils/db-schema"
 import {
   ERROR_COLUMN_CREATE_FAILED,
   ERROR_COLUMN_EXISTS,
@@ -8,6 +11,7 @@ import {
   ERROR_PARENT_NOT_FOUND,
   ERROR_PROJECT_CREATE_FAILED,
   ERROR_PROJECT_EXISTS,
+  ERROR_PROJECT_MEMBER_CREATE_FAILED,
   ERROR_PROJECT_NOT_FOUND,
   ERROR_PROJECT_UPDATE_FAILED,
 } from "@/lib/constants"
@@ -50,7 +54,16 @@ projectRoutes.openapi(createProject, async (c) => {
       const msg = await t.text(ERROR_UNAUTHORIZED)
       return c.json({ message: msg }, 401)
     }
-    const { name, orgId } = c.req.valid("json")
+    const {
+      name,
+      orgId,
+      description,
+      logo,
+      members,
+      budgetEstimate,
+      timeline,
+      company,
+    } = c.req.valid("json")
 
     const org = await getOrganizationById(c, orgId)
     if (!org) {
@@ -69,25 +82,105 @@ projectRoutes.openapi(createProject, async (c) => {
       throw new ConflictError(msg)
     }
     const id = nanoid(6)
-    const project = await c
+    const createdProject = await c
       .get("db")
-      .insertInto("projects")
-      .values({
-        id,
-        name,
-        orgId,
-        createdBy: user.id,
-        updatedBy: user.id,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
+      .transaction()
+      .execute(async (tx) => {
+        const project = await tx
+          .insertInto("projects")
+          .values({
+            id,
+            name,
+            orgId,
+            createdByUpdatedBy: {
+              createdBy: user.id,
+              updatedBy: user.id,
+            },
+            timestamps: {
+              createdAt: new Date(),
+              updatedAt: new Date(),
+            },
+            currentTimeline: {
+              startDate: timeline.startDate,
+              endDate: timeline.endDate,
+            },
+            actualTimeline: {
+              startDate: timeline.startDate,
+              endDate: timeline.endDate,
+            },
+            budgetEstimate,
+            budgetActual: budgetEstimate,
+            description,
+            company,
+            status: "todo",
+            checklists: [],
+            logo: null,
+          })
+          .returningAll()
+          .executeTakeFirst()
+
+        if (!project) {
+          const msg = await t.text(ERROR_PROJECT_CREATE_FAILED)
+          throw new BadRequestError(msg)
+        }
+
+        const insertableMembers = members
+          .map<NewProjectMember>((member) => ({
+            projectId: id,
+            userId: member.id,
+            role: member.role,
+            isOwner: false,
+            createdByUpdatedBy: {
+              createdBy: user.id,
+              updatedBy: user.id,
+            },
+            timestamps: {
+              createdAt: new Date(),
+              updatedAt: new Date(),
+            },
+          }))
+          .concat([
+            {
+              projectId: id,
+              userId: user.id,
+              role: "owner",
+              isOwner: true,
+              createdByUpdatedBy: {
+                createdBy: user.id,
+                updatedBy: user.id,
+              },
+              timestamps: {
+                createdAt: new Date(),
+                updatedAt: new Date(),
+              },
+            },
+          ])
+
+        const insertedMembers = await tx
+          .insertInto("projectMembers")
+          .values(insertableMembers)
+          .returningAll()
+          .execute()
+
+        if (insertedMembers.length !== insertableMembers.length) {
+          const msg = await t.text(ERROR_PROJECT_MEMBER_CREATE_FAILED)
+          throw new BadRequestError(msg)
+        }
+
+        return {
+          ...project,
+          progress: 0,
+          members: insertedMembers.map((member) => ({
+            id: member.userId,
+            name: member.userId,
+            role: member.role,
+            isOwner: member.isOwner,
+            avatar: null,
+          })),
+        }
       })
-      .returningAll()
-      .executeTakeFirst()
-    if (!project) {
-      const msg = await t.text(ERROR_PROJECT_CREATE_FAILED)
-      throw new BadRequestError(msg)
-    }
-    return c.json(project, 201)
+
+    return c.json(createdProject, 201)
   } catch (error) {
     return await processError<typeof createProject>(c, error, [
       "{{ default }}",

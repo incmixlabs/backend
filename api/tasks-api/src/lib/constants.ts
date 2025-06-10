@@ -39,6 +39,10 @@ export const ERROR_PROJECT_CREATE_FAILED = {
   namespace: "errors",
   key: "project_create_failed",
 }
+export const ERROR_PROJECT_MEMBER_CREATE_FAILED = {
+  namespace: "errors",
+  key: "project_member_create_failed",
+}
 export const ERROR_PROJECT_UPDATE_FAILED = {
   namespace: "errors",
   key: "project_update_failed",

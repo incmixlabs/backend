@@ -6,13 +6,13 @@ export type CreatedByUpdatedBy = {
 }
 
 export type Timestamps = {
-  createdAt: ColumnType<Date, string, never>
-  updatedAt: ColumnType<Date, string, string>
+  createdAt: Date
+  updatedAt: Date
 }
 
 export type Timeline = {
-  startDate: ColumnType<Date, string, never>
-  endDate: ColumnType<Date, string, string>
+  startDate: Date
+  endDate: Date
 }
 
 export type Checklist = {

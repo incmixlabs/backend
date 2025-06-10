@@ -35,6 +35,7 @@ CREATE TABLE projects (
   budget_actual integer,
   description text,
   company text,
+  logo text,
   created_by_updated_by CREATED_BY_UPDATED_BY NOT NULL,
   timestamps TIMESTAMPS NOT NULL DEFAULT (NOW(), NOW()),
   UNIQUE(name, org_id)
