@@ -2,6 +2,11 @@ import { API } from "@incmix/utils/env"
 
 export const BASE_PATH = API.TASKS
 
+export const ERROR_PRESIGNED_URL = {
+  namespace: "errors",
+  key: "presigned_url",
+}
+
 export const ERROR_PROJECT_NOT_FOUND = {
   namespace: "errors",
   key: "project_not_found",

@@ -1,5 +1,5 @@
 import type { Context } from "@/types"
-import type { Provider, TokenType } from "@incmix-api/utils/db-schema"
+import type { KyselyDb, Provider, TokenType } from "@incmix-api/utils/db-schema"
 
 import { generateSentryHeaders } from "@incmix-api/utils"
 import { ServerError } from "@incmix-api/utils/errors"
@@ -104,10 +104,10 @@ export async function insertOAuthUser(
     {
       id: userId,
       email: user.email,
-      emailVerified: true,
       userType: UserRoles.ROLE_MEMBER,
       isActive: true,
       hashedPassword: null,
+      emailVerifiedAt: new Date().toISOString(),
     },
     user.fullName
   )
@@ -127,10 +127,11 @@ export async function generateVerificationCode(
   c: Context,
   userId: string,
   email: string,
-  type: TokenType
+  type: TokenType,
+  dbInstance?: KyselyDb
 ) {
-  await c
-    .get("db")
+  const db = dbInstance ?? c.get("db")
+  await db
     .deleteFrom("verificationCodes")
     .where((eb) =>
       eb.and([
@@ -142,8 +143,7 @@ export async function generateVerificationCode(
     .execute()
 
   const code = generateRandomString(8, alphabet("0-9"))
-  await c
-    .get("db")
+  await db
     .insertInto("verificationCodes")
     .values({
       userId,
@@ -163,7 +163,7 @@ export const sendVerificationEmail = (
   verificationCode: string
 ) => {
   const verificationLink = `${env(c).FRONTEND_URL}/email-verification?code=${verificationCode}&email=${recipient}`
-  const emailUrl = `${env(c).EMAIL_URL}`
+  const emailUrl = `${env(c).EMAIL_API_URL}`
   console.log({
     recipient,
     verificationLink,

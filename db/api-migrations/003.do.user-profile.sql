@@ -17,7 +17,8 @@ CREATE TABLE "user_profiles" (
   "focus_first" TEXT,
   "referral_sources" JSONB DEFAULT '[]' :: jsonb,
   "onboarding_completed" BOOLEAN DEFAULT false,
-  "timestamps" TIMESTAMPS NOT NULL DEFAULT (NOW(), NOW())
+  "created_at" TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  "updated_at" TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
 -- Create indexes for better performance

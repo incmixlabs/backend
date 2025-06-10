@@ -1,11 +1,17 @@
-import type { Generated, Insertable, Selectable, Updateable } from "kysely"
-import type { Timestamps } from "./custom-types"
+import type {
+  ColumnType,
+  Generated,
+  Insertable,
+  Selectable,
+  Updateable,
+} from "kysely"
 
 type LocaleTable = {
   id: Generated<number>
   code: string
   isDefault: boolean | null
-  timestamps: Timestamps
+  createdAt: ColumnType<Date, string, never>
+  updatedAt: ColumnType<Date, string, never>
 }
 
 export const TranslationTypes = ["frag", "label"] as const
@@ -18,7 +24,8 @@ type TranslationsTable = {
   value: string
   type: TranslationType
   namespace: string
-  timestamps: Timestamps
+  createdAt: ColumnType<Date, string, never>
+  updatedAt: ColumnType<Date, string, never>
 }
 
 export type Message = Selectable<TranslationsTable>

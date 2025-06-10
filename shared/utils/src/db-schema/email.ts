@@ -1,5 +1,10 @@
-import type { Generated, Insertable, Selectable, Updateable } from "kysely"
-import type { Timestamps } from "./custom-types"
+import type {
+  ColumnType,
+  Generated,
+  Insertable,
+  Selectable,
+  Updateable,
+} from "kysely"
 
 export const emailTemplateNames = [
   "VerificationEmail",
@@ -18,7 +23,8 @@ type EmailQueueTable = {
   sgId: string | null
   sendgridData: string | null
   shouldRetry: boolean
-  timestamps: Timestamps
+  createdAt: ColumnType<Date, string, never>
+  updatedAt: ColumnType<Date, string, never>
 }
 
 export type EmailQueue = Selectable<EmailQueueTable>

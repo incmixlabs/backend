@@ -1,18 +1,6 @@
-import type { ColumnType } from "kysely"
-
-export type CreatedByUpdatedBy = {
-  createdBy: string
-  updatedBy: string
-}
-
-export type Timestamps = {
-  createdAt: Date
-  updatedAt: Date
-}
-
 export type Timeline = {
-  startDate: Date
-  endDate: Date
+  startDate: string
+  endDate: string
 }
 
 export type Checklist = {

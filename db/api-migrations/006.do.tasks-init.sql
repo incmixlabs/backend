@@ -28,16 +28,20 @@ CREATE TABLE projects (
   name TEXT,
   org_id TEXT NOT NULL REFERENCES organisations(id),
   status project_status default 'todo' not null,
-  current_timeline TIMELINE,
-  actual_timeline TIMELINE,
+  current_timeline_start_date TIMESTAMPTZ,
+  current_timeline_end_date TIMESTAMPTZ,
+  actual_timeline_start_date TIMESTAMPTZ,
+  actual_timeline_end_date TIMESTAMPTZ,
   checklists CHECKLIST [],
   budget_estimate integer,
   budget_actual integer,
   description text,
   company text,
   logo text,
-  created_by_updated_by CREATED_BY_UPDATED_BY NOT NULL,
-  timestamps TIMESTAMPS NOT NULL DEFAULT (NOW(), NOW()),
+  created_by text references users(id) on delete cascade,
+  updated_by text references users(id) on delete cascade,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   UNIQUE(name, org_id)
 );
 
@@ -48,8 +52,10 @@ CREATE TABLE columns (
   column_order INTEGER NOT NULL DEFAULT 0,
   project_id TEXT NOT NULL REFERENCES projects(id),
   parent_id TEXT REFERENCES columns(id),
-  created_by_updated_by CREATED_BY_UPDATED_BY NOT NULL,
-  timestamps TIMESTAMPS NOT NULL DEFAULT (NOW(), NOW()),
+  created_by text references users(id) on delete cascade,
+  updated_by text references users(id) on delete cascade,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   UNIQUE(label, project_id)
 );
 
@@ -67,14 +73,18 @@ CREATE TABLE tasks (
   figma_link TEXT,
   code_snippets TEXT [],
   status task_status default 'backlog' not null,
-  checklist CHECKLIST [],
+  checklists CHECKLIST [],
   project_id TEXT NOT NULL REFERENCES projects(id),
-  column_id TEXT NOT NULL REFERENCES columns(id),
+  column_id TEXT REFERENCES columns(id),
   assigned_to TEXT REFERENCES users(id),
-  created_by_updated_by CREATED_BY_UPDATED_BY NOT NULL,
-  current_timeline TIMELINE,
-  actual_timeline TIMELINE,
-  timestamps TIMESTAMPS NOT NULL DEFAULT (NOW(), NOW())
+  created_by text references users(id) on delete cascade,
+  updated_by text references users(id) on delete cascade,
+  current_timeline_start_date TIMESTAMPTZ,
+  current_timeline_end_date TIMESTAMPTZ,
+  actual_timeline_start_date TIMESTAMPTZ,
+  actual_timeline_end_date TIMESTAMPTZ,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
 create table project_members (
@@ -82,8 +92,10 @@ create table project_members (
   user_id text references users(id) on delete cascade,
   is_owner boolean default false,
   role text,
-  timestamps TIMESTAMPS NOT NULL DEFAULT (NOW(), NOW()),
-  created_by_updated_by CREATED_BY_UPDATED_BY NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  created_by text references users(id) on delete cascade,
+  updated_by text references users(id) on delete cascade,
   primary key (project_id, user_id)
 );
 
@@ -91,8 +103,10 @@ create table comments (
   id text primary key,
   user_id text references users(id) on delete cascade,
   content text,
-  timestamps TIMESTAMPS NOT NULL DEFAULT (NOW(), NOW()),
-  created_by_updated_by CREATED_BY_UPDATED_BY NOT NULL
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  created_by text references users(id) on delete cascade,
+  updated_by text references users(id) on delete cascade
 );
 
 create table project_comments (

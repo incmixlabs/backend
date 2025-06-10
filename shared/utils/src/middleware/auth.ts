@@ -19,7 +19,7 @@ export function createAuthMiddleware(): MiddlewareHandler {
       return next()
     }
 
-    const authUrl = `${process.env["AUTH_URL"]}/validate-session`
+    const authUrl = `${process.env["AUTH_API_URL"]}/validate-session`
     const sentryHeaders = generateSentryHeaders(c)
     const res = await fetch(authUrl, {
       method: "get",

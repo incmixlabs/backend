@@ -21,6 +21,8 @@ type OrganisationTable = {
   id: string
   name: string
   handle: string
+  createdAt: ColumnType<Date, string, never>
+  updatedAt: ColumnType<Date, string, never>
 }
 
 type MemberTable = {

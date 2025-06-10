@@ -14,7 +14,8 @@ CREATE TABLE email_queue (
   sg_id TEXT,
   should_retry BOOLEAN NOT NULL DEFAULT false,
   sendgrid_data TEXT,
-  timestamps TIMESTAMPS NOT NULL DEFAULT (NOW(), NOW())
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
 -- Create indexes for email queue

@@ -30,6 +30,7 @@ export function initDb(connectionString: string) {
       max: 10,
     }),
   })
+
   return new Kysely<Database>({
     dialect,
     plugins: [

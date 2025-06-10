@@ -1,7 +1,3 @@
-import type {
-  NewProjectMember,
-  UpdatedColumn,
-} from "@incmix-api/utils/db-schema"
 import {
   ERROR_COLUMN_CREATE_FAILED,
   ERROR_COLUMN_EXISTS,
@@ -9,17 +5,22 @@ import {
   ERROR_COLUMN_UPDATE_FAILED,
   ERROR_ORG_NOT_FOUND,
   ERROR_PARENT_NOT_FOUND,
+  ERROR_PRESIGNED_URL,
   ERROR_PROJECT_CREATE_FAILED,
   ERROR_PROJECT_EXISTS,
   ERROR_PROJECT_MEMBER_CREATE_FAILED,
   ERROR_PROJECT_NOT_FOUND,
   ERROR_PROJECT_UPDATE_FAILED,
 } from "@/lib/constants"
-import { generateBoard } from "@/lib/db"
+import { generateBoard, getProjectWithMembers } from "@/lib/db"
 import { getOrganizationById } from "@/lib/services"
 import type { HonoApp } from "@/types"
 import { OpenAPIHono } from "@hono/zod-openapi"
 import { ERROR_UNAUTHORIZED } from "@incmix-api/utils"
+import type {
+  NewProjectMember,
+  UpdatedColumn,
+} from "@incmix-api/utils/db-schema"
 import {
   BadRequestError,
   ConflictError,
@@ -29,6 +30,7 @@ import {
   zodError,
 } from "@incmix-api/utils/errors"
 import { useTranslation } from "@incmix-api/utils/middleware"
+import { env } from "hono/adapter"
 import { nanoid } from "nanoid"
 import {
   createColumn,
@@ -59,11 +61,11 @@ projectRoutes.openapi(createProject, async (c) => {
       orgId,
       description,
       logo,
-      members,
       budgetEstimate,
-      timeline,
+      startDate,
+      endDate,
       company,
-    } = c.req.valid("json")
+    } = c.req.valid("form")
 
     const org = await getOrganizationById(c, orgId)
     if (!org) {
@@ -86,35 +88,60 @@ projectRoutes.openapi(createProject, async (c) => {
       .get("db")
       .transaction()
       .execute(async (tx) => {
+        let logoUrl: string | null = null
+        if (logo) {
+          const fileName = `projects/${id}.jpg`
+          const presignedUrlResponse = await fetch(
+            `${env(c).FILES_API_URL}/presigned-upload?fileName=${encodeURIComponent(
+              fileName
+            )}`,
+            {
+              method: "GET",
+              headers: c.req.raw.headers,
+            }
+          )
+
+          if (!presignedUrlResponse.ok) {
+            const msg = await t.text(ERROR_PRESIGNED_URL)
+            throw new UnprocessableEntityError(msg)
+          }
+
+          const presignedUrl = (await presignedUrlResponse.json()) as {
+            url: string
+          }
+
+          await fetch(presignedUrl.url, {
+            method: "PUT",
+            body: logo,
+            headers: {
+              "Content-Type": logo.type,
+            },
+          })
+
+          const [url] = presignedUrl.url.split("?")
+          logoUrl = url
+        }
         const project = await tx
           .insertInto("projects")
           .values({
             id,
             name,
             orgId,
-            createdByUpdatedBy: {
-              createdBy: user.id,
-              updatedBy: user.id,
-            },
-            timestamps: {
-              createdAt: new Date(),
-              updatedAt: new Date(),
-            },
-            currentTimeline: {
-              startDate: timeline.startDate,
-              endDate: timeline.endDate,
-            },
-            actualTimeline: {
-              startDate: timeline.startDate,
-              endDate: timeline.endDate,
-            },
+            createdBy: user.id,
+            updatedBy: user.id,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+            currentTimelineStartDate: startDate,
+            currentTimelineEndDate: endDate,
+            actualTimelineStartDate: startDate,
+            actualTimelineEndDate: endDate,
             budgetEstimate,
             budgetActual: budgetEstimate,
             description,
             company,
             status: "todo",
             checklists: [],
-            logo: null,
+            logo: logoUrl,
           })
           .returningAll()
           .executeTakeFirst()
@@ -124,59 +151,44 @@ projectRoutes.openapi(createProject, async (c) => {
           throw new BadRequestError(msg)
         }
 
-        const insertableMembers = members
-          .map<NewProjectMember>((member) => ({
-            projectId: id,
-            userId: member.id,
-            role: member.role,
-            isOwner: false,
-            createdByUpdatedBy: {
-              createdBy: user.id,
-              updatedBy: user.id,
-            },
-            timestamps: {
-              createdAt: new Date(),
-              updatedAt: new Date(),
-            },
-          }))
-          .concat([
-            {
-              projectId: id,
-              userId: user.id,
-              role: "owner",
-              isOwner: true,
-              createdByUpdatedBy: {
-                createdBy: user.id,
-                updatedBy: user.id,
-              },
-              timestamps: {
-                createdAt: new Date(),
-                updatedAt: new Date(),
-              },
-            },
-          ])
+        // const insertableMembers = members
+        //   .map<NewProjectMember>((member) => ({
+        //     projectId: id,
+        //     userId: member.id,
+        //     role: member.role,
+        //     isOwner: false,
+        //     createdBy: user.id,
+        //     updatedBy: user.id,
+        //     createdAt: new Date().toISOString(),
+        //     updatedAt: new Date().toISOString(),
+        //   }))
+        //   .concat([
+        //     {
+        //       projectId: id,
+        //       userId: user.id,
+        //       role: "owner",
+        //       isOwner: true,
+        //       createdBy: user.id,
+        //       updatedBy: user.id,
+        //       createdAt: new Date().toISOString(),
+        //       updatedAt: new Date().toISOString(),
+        //     },
+        //   ])
 
-        const insertedMembers = await tx
-          .insertInto("projectMembers")
-          .values(insertableMembers)
-          .returningAll()
-          .execute()
+        // const insertedMembers = await tx
+        //   .insertInto("projectMembers")
+        //   .values(insertableMembers)
+        //   .returningAll()
+        //   .execute()
 
-        if (insertedMembers.length !== insertableMembers.length) {
-          const msg = await t.text(ERROR_PROJECT_MEMBER_CREATE_FAILED)
-          throw new BadRequestError(msg)
-        }
+        // if (insertedMembers.length !== insertableMembers.length) {
+        //   const msg = await t.text(ERROR_PROJECT_MEMBER_CREATE_FAILED)
+        //   throw new BadRequestError(msg)
+        // }
 
         return {
           ...project,
-          progress: 0,
-          members: insertedMembers.map((member) => ({
-            id: member.userId,
-            name: member.userId,
-            role: member.role,
-            isOwner: member.isOwner,
-            avatar: null,
-          })),
+          members: [],
         }
       })
 
@@ -197,27 +209,47 @@ projectRoutes.openapi(updateProject, async (c) => {
       const msg = await t.text(ERROR_UNAUTHORIZED)
       throw new UnauthorizedError(msg)
     }
-    const { id, name } = c.req.valid("json")
-    const existingProject = await db
-      .selectFrom("projects")
-      .selectAll()
-      .where("id", "=", id)
-      .executeTakeFirst()
+    const {
+      id,
+      name,
+      description,
+      budgetEstimate,
+      company,
+      currentTimelineEndDate,
+      currentTimelineStartDate,
+    } = c.req.valid("json")
+    if (!id) {
+      const msg = await t.text(ERROR_PROJECT_NOT_FOUND)
+      throw new UnprocessableEntityError(msg)
+    }
+    const existingProject = await getProjectWithMembers(c, id)
+
     if (!existingProject) {
       const msg = await t.text(ERROR_PROJECT_NOT_FOUND)
       throw new UnprocessableEntityError(msg)
     }
-    const project = await db
+    const project = await c
+      .get("db")
       .updateTable("projects")
-      .set({ name, updatedBy: user.id, updatedAt: new Date().toISOString() })
-      .where("id", "=", id)
+      .set({
+        name,
+        description,
+        budgetEstimate,
+        currentTimelineStartDate,
+        currentTimelineEndDate,
+        company,
+        updatedBy: user.id,
+        updatedAt: new Date().toISOString(),
+      })
+      .where("id", "=", existingProject.id)
       .returningAll()
       .executeTakeFirst()
+
     if (!project) {
       const msg = await t.text(ERROR_PROJECT_UPDATE_FAILED)
       throw new BadRequestError(msg)
     }
-    return c.json(project, 200)
+    return c.json({ ...project, members: existingProject.members }, 200)
   } catch (error) {
     return await processError<typeof updateProject>(c, error, [
       "{{ default }}",
@@ -235,21 +267,17 @@ projectRoutes.openapi(deleteProject, async (c) => {
       throw new UnauthorizedError(msg)
     }
     const { projectId } = c.req.valid("param")
-    const existingProject = await db
-      .selectFrom("projects")
-      .selectAll()
+
+    const deletedProject = await c
+      .get("db")
+      .deleteFrom("projects")
       .where("id", "=", projectId)
-      .executeTakeFirst()
-    if (!existingProject) {
+      .execute()
+
+    if (!deletedProject) {
       const msg = await t.text(ERROR_PROJECT_NOT_FOUND)
       throw new UnprocessableEntityError(msg)
     }
-    await db
-      .deleteFrom("projects")
-      .where("id", "=", projectId)
-      .executeTakeFirst()
-
-    await db.deleteFrom("columns").where("projectId", "=", projectId).execute()
 
     return c.json({ message: "Project deleted" }, 200)
   } catch (error) {
@@ -362,17 +390,19 @@ projectRoutes.openapi(updateColumn, async (c) => {
 
     const { id, label, order, parentId } = c.req.valid("json")
 
-    const existingColumn = await db
+    const existingColumn = await c
+      .get("db")
       .selectFrom("columns")
       .selectAll()
       .where("id", "=", id)
-      .executeTakeFirst()
+      .executeTakeFirstOrThrow()
     if (!existingColumn) {
       const msg = await t.text(ERROR_COLUMN_NOT_FOUND)
       throw new UnprocessableEntityError(msg)
     }
 
-    const column = await db
+    const column = await c
+      .get("db")
       .updateTable("columns")
       .set(() => {
         const updates: UpdatedColumn = {
@@ -419,7 +449,8 @@ projectRoutes.openapi(deleteColumn, async (c) => {
       const msg = await t.text(ERROR_COLUMN_NOT_FOUND)
       throw new UnprocessableEntityError(msg)
     }
-    const existingColumn = await db
+    const existingColumn = await c
+      .get("db")
       .selectFrom("columns")
       .selectAll()
       .where("id", "=", columnId)
@@ -428,7 +459,11 @@ projectRoutes.openapi(deleteColumn, async (c) => {
       const msg = await t.text(ERROR_COLUMN_NOT_FOUND)
       throw new UnprocessableEntityError(msg)
     }
-    await db.deleteFrom("columns").where("id", "=", columnId).executeTakeFirst()
+    await c
+      .get("db")
+      .deleteFrom("columns")
+      .where("id", "=", columnId)
+      .executeTakeFirst()
     return c.json({ message: "Column deleted" }, 200)
   } catch (error) {
     return await processError<typeof deleteColumn>(c, error, [

@@ -8,8 +8,8 @@ import syncRoutes from "./sync"
 import templateRoutes from "./templates"
 export const routes = (app: OpenAPIHono<HonoApp>) => {
   app.route(`${BASE_PATH}/healthcheck`, healthcheckRoutes)
-  app.route(BASE_PATH, tasksRoutes)
   app.route(`${BASE_PATH}/projects`, projectRoutes)
+  app.route(BASE_PATH, tasksRoutes)
   app.route(`${BASE_PATH}/templates`, templateRoutes)
   app.route(`${BASE_PATH}/sync`, syncRoutes)
 }

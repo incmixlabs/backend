@@ -15,6 +15,8 @@ export function getProjectById(c: Context, projectId: string) {
       "updatedBy",
       "createdAt",
       "updatedAt",
+      "createdBy",
+      "updatedBy",
       jsonArrayFrom(
         eb
           .selectFrom("columns")
@@ -23,11 +25,11 @@ export function getProjectById(c: Context, projectId: string) {
             "columnOrder",
             "createdAt",
             "updatedAt",
+            "createdBy",
+            "updatedBy",
             "parentId",
             "projectId",
             "label",
-            "updatedBy",
-            "createdBy",
           ])
           .whereRef("projectId", "=", "projects.id")
       ).as("columns"),
@@ -39,10 +41,10 @@ export function getProjectById(c: Context, projectId: string) {
             "taskOrder",
             "createdAt",
             "updatedAt",
+            "createdBy",
+            "updatedBy",
             "columnId",
             "content",
-            "updatedBy",
-            "createdBy",
             "assignedTo",
             "projectId",
             "status",
@@ -90,12 +92,56 @@ export async function generateBoard(
     tasks: data.tasks,
     project: {
       id: data.id,
-      createdAt: data.createdAt,
-      updatedAt: data.updatedAt,
       name: data.name,
       orgId: data.orgId,
       createdBy: data.createdBy,
       updatedBy: data.updatedBy,
+      createdAt: data.createdAt,
+      updatedAt: data.updatedAt,
     },
   }
+}
+
+export function getProjectWithMembers(c: Context, projectId: string) {
+  return c
+    .get("db")
+    .selectFrom("projects")
+    .select((eb) => [
+      "projects.id",
+      "projects.name",
+      "projects.orgId",
+      "projects.createdBy",
+      "projects.updatedBy",
+      "projects.createdAt",
+      "projects.updatedAt",
+      "projects.currentTimelineStartDate",
+      "projects.currentTimelineEndDate",
+      "projects.actualTimelineStartDate",
+      "projects.actualTimelineEndDate",
+      "projects.budgetEstimate",
+      "projects.budgetActual",
+      "projects.description",
+      "projects.company",
+      "projects.status",
+      jsonArrayFrom(
+        eb
+          .selectFrom("projectMembers")
+          .innerJoin(
+            "userProfiles as users",
+            "projectMembers.userId",
+            "users.id"
+          )
+          .select([
+            "projectMembers.userId as id",
+            "projectMembers.role",
+            "projectMembers.isOwner",
+            "users.fullName as name",
+            "users.email",
+            "users.avatar",
+          ])
+          .whereRef("projectMembers.projectId", "=", "projects.id")
+      ).as("members"),
+    ])
+    .where("projects.id", "=", projectId)
+    .executeTakeFirst()
 }

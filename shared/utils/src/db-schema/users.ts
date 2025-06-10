@@ -13,7 +13,7 @@ type UsersTable = {
   id: string
   email: string
   hashedPassword: string | null
-  emailVerified: boolean
+  emailVerifiedAt: ColumnType<Date, string | null, string>
   userType: UserType
   isActive: boolean | null
   lastLoggedIn: ColumnType<Date, null, string>
@@ -86,7 +86,7 @@ export type UserColumns = keyof User
 
 export const userColumns: UserColumns[] = [
   "email",
-  "emailVerified",
+  "emailVerifiedAt",
   "id",
   "userType",
 ] as const

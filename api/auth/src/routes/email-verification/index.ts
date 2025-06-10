@@ -35,7 +35,7 @@ emailVerificationRoutes.openapi(sendVerificationEmailRoute, async (c) => {
     const { email } = c.req.valid("json")
     const user = await findUserByEmail(c, email)
     const t = await useTranslation(c)
-    if (user.emailVerified) {
+    if (user.emailVerifiedAt) {
       const msg = await t.text(EMAIL_ALREADY_VERIFIED)
       return c.json({ message: msg }, 200)
     }
@@ -90,7 +90,7 @@ emailVerificationRoutes.openapi(verifyEmail, async (c) => {
     await c
       .get("db")
       .updateTable("users")
-      .set({ emailVerified: true })
+      .set({ emailVerifiedAt: new Date().toISOString() })
       .where("id", "=", user.id)
       .execute()
 

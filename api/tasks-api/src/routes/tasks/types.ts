@@ -1,5 +1,3 @@
-import { TaskSchema } from "@incmix/utils/types"
-
 import { z } from "@hono/zod-openapi"
 
 export const ParamSchema = z
@@ -8,15 +6,65 @@ export const ParamSchema = z
   })
   .openapi("Params")
 
+export const ChecklistSchema = z.object({
+  done: z.boolean(),
+  item: z.string(),
+})
+
+export const TimelineSchema = z.object({
+  startDate: z.string().datetime(),
+  endDate: z.string().datetime(),
+})
+
+export const TaskSchema = z.object({
+  id: z.string().openapi({ example: "1" }),
+  title: z.string().openapi({ example: "Create a dashboard" }),
+  content: z.string().openapi({ example: "Detailed description of the task" }),
+  taskOrder: z.number().openapi({ example: 1 }),
+  figmaLink: z
+    .string()
+    .url()
+    .nullish()
+    .openapi({ example: "https://figma.com/file/123" }),
+  codeSnippets: z.array(z.string()).nullish(),
+  status: z
+    .enum(["backlog", "active", "on_hold", "cancelled", "archived"])
+    .openapi({ example: "backlog" })
+    .default("backlog"),
+  checklists: z.array(ChecklistSchema).nullish().default([]),
+  projectId: z.string().openapi({ example: "proj_123" }),
+  columnId: z.string().nullish().openapi({ example: "col_123" }),
+  assignedTo: z.string().nullish().openapi({ example: "user_123" }),
+  currentTimelineStartDate: z.string().datetime().nullish(),
+  currentTimelineEndDate: z.string().datetime().nullish(),
+  actualTimelineStartDate: z.string().datetime().nullish(),
+  actualTimelineEndDate: z.string().datetime().nullish(),
+  createdAt: z.string().datetime(),
+  updatedAt: z.string().datetime(),
+  createdBy: z.string(),
+  updatedBy: z.string(),
+})
+
 export const TaskListSchema = z.array(TaskSchema)
 
 export const CreateTaskSchema = TaskSchema.omit({
+  id: true,
   createdAt: true,
   updatedAt: true,
   createdBy: true,
   updatedBy: true,
-  id: true,
+  currentTimelineStartDate: true,
+  currentTimelineEndDate: true,
+  actualTimelineStartDate: true,
+  actualTimelineEndDate: true,
+  codeSnippets: true,
+  figmaLink: true,
+  status: true,
+  checklists: true,
+  projectId: true,
+  columnId: true,
 })
+
 export const UpdateTaskSchema = CreateTaskSchema.partial()
 
 export const GenerateUserStorySchema = z

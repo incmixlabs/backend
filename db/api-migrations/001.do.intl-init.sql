@@ -9,7 +9,8 @@ CREATE TABLE locales (
   code TEXT NOT NULL UNIQUE,
   name TEXT NOT NULL,
   is_default BOOLEAN DEFAULT FALSE,
-  timestamps TIMESTAMPS NOT NULL DEFAULT (NOW(), NOW())
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
 -- Create translations table
@@ -20,7 +21,8 @@ CREATE TABLE translations (
   value TEXT NOT NULL,
   type translation_type NOT NULL DEFAULT 'label',
   namespace TEXT NOT NULL,
-  timestamps TIMESTAMPS NOT NULL DEFAULT (NOW(), NOW()),
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   UNIQUE (locale_id, key, namespace)
 );
 

@@ -22,7 +22,7 @@ export const createProject = createRoute({
   request: {
     body: {
       content: {
-        "application/json": {
+        "multipart/form-data": {
           schema: CreateProjectSchema,
         },
       },
@@ -129,7 +129,7 @@ export const getProjects = createRoute({
     200: {
       content: {
         "application/json": {
-          schema: ProjectSchema.array(),
+          schema: ProjectSchema.omit({ members: true }).array(),
         },
       },
       description: "Returs list of projects",

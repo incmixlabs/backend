@@ -1,29 +1,27 @@
 import type { TaskStatus } from "@incmix/utils/types"
 import type { ColumnType, Insertable, Selectable, Updateable } from "kysely"
-import type {
-  Checklist,
-  CreatedByUpdatedBy,
-  ProjectStatus,
-  Timeline,
-  Timestamps,
-} from "./custom-types"
+import type { Checklist, ProjectStatus } from "./custom-types"
 
 type TasksTable = {
   id: string
   title: string
   content: string
-  status: TaskStatus
   taskOrder: number
-  figmaLink: string
-  codeSnippets: string[]
+  figmaLink: string | null
+  codeSnippets: string[] | null
+  status: TaskStatus
+  checklists: Checklist[] | null
   projectId: string
   columnId: string
-  assignedTo: string
-  createdByUpdatedBy: ColumnType<CreatedByUpdatedBy>
-  timestamps: ColumnType<Timestamps>
-  currentTimeline: Timeline
-  actualTimeline: Timeline
-  checklists: Checklist[]
+  assignedTo: string | null
+  createdBy: ColumnType<string, string, never>
+  updatedBy: ColumnType<string, string, string>
+  createdAt: ColumnType<Date, string, never>
+  updatedAt: ColumnType<Date, string, string>
+  currentTimelineStartDate: ColumnType<Date, string, string>
+  currentTimelineEndDate: ColumnType<Date, string, string>
+  actualTimelineStartDate: ColumnType<Date, string, string>
+  actualTimelineEndDate: ColumnType<Date, string, string>
 }
 
 type ColumnsTable = {
@@ -32,19 +30,25 @@ type ColumnsTable = {
   columnOrder: number
   projectId: string
   parentId: string | null
-  createdByUpdatedBy: ColumnType<CreatedByUpdatedBy>
-  timestamps: ColumnType<Timestamps>
+  createdBy: ColumnType<string, string, never>
+  updatedBy: ColumnType<string, string, string>
+  createdAt: ColumnType<Date, string, never>
+  updatedAt: ColumnType<Date, string, string>
 }
 
 type ProjectsTable = {
   id: string
   name: string
   orgId: string
-  createdByUpdatedBy: ColumnType<CreatedByUpdatedBy>
-  timestamps: ColumnType<Timestamps>
+  createdBy: ColumnType<string, string, never>
+  updatedBy: ColumnType<string, string, string>
+  createdAt: ColumnType<Date, string, never>
+  updatedAt: ColumnType<Date, string, string>
   status: ProjectStatus
-  currentTimeline: Timeline
-  actualTimeline: Timeline
+  currentTimelineStartDate: ColumnType<Date, string, string>
+  currentTimelineEndDate: ColumnType<Date, string, string>
+  actualTimelineStartDate: ColumnType<Date, string, string>
+  actualTimelineEndDate: ColumnType<Date, string, string>
   checklists: Checklist[]
   budgetEstimate: number
   budgetActual: number
@@ -58,8 +62,10 @@ type ProjectMembersTable = {
   userId: string
   role: string
   isOwner: boolean
-  createdByUpdatedBy: ColumnType<CreatedByUpdatedBy>
-  timestamps: ColumnType<Timestamps>
+  createdBy: ColumnType<string, string, never>
+  updatedBy: ColumnType<string, string, string>
+  createdAt: ColumnType<Date, string, never>
+  updatedAt: ColumnType<Date, string, string>
 }
 
 export type Task = Selectable<TasksTable>
