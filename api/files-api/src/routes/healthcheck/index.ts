@@ -9,11 +9,11 @@ const healthcheckRoutes = new OpenAPIHono<HonoApp>()
 healthcheckRoutes.openapi(healthCheck, async (c) => {
   try {
     const {
-      AUTH_URL,
+      AUTH_API_URL,
       BUCKET_NAME,
       COOKIE_NAME,
       DOMAIN,
-      INTL_URL,
+      INTL_API_URL,
       AWS_ACCESS_KEY_ID,
       AWS_SECRET_ACCESS_KEY,
       AWS_REGION,
@@ -23,9 +23,9 @@ healthcheckRoutes.openapi(healthCheck, async (c) => {
     let status = "UP"
     const missing: string[] = []
 
-    if (!AUTH_URL) {
+    if (!AUTH_API_URL) {
       status = "DOWN"
-      missing.push("AUTH_URL")
+      missing.push("AUTH_API_URL")
     }
 
     if (!BUCKET_NAME) {
@@ -40,9 +40,9 @@ healthcheckRoutes.openapi(healthCheck, async (c) => {
       status = "DOWN"
       missing.push("DOMAIN")
     }
-    if (!INTL_URL) {
+    if (!INTL_API_URL) {
       status = "DOWN"
-      missing.push("INTL_URL")
+      missing.push("INTL_API_URL")
     }
 
     if (!AWS_ACCESS_KEY_ID) {

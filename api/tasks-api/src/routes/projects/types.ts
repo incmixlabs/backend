@@ -1,7 +1,7 @@
 import { z } from "@hono/zod-openapi"
 import {
-  projectStatusEnum,
   checklistStatusEnum,
+  projectStatusEnum,
 } from "@incmix-api/utils/db-schema"
 import { ColumnSchema } from "@incmix/utils/types"
 

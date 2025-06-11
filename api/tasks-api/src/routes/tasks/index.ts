@@ -1,4 +1,7 @@
 import {
+  ERROR_CHECKLIST_CREATE_FAILED,
+  ERROR_CHECKLIST_NOT_FOUND,
+  ERROR_CHECKLIST_UPDATE_FAILED,
   ERROR_COLUMN_NOT_FOUND,
   ERROR_PROJECT_NOT_FOUND,
   ERROR_TASK_DELETE_FAIL,
@@ -7,9 +10,6 @@ import {
   ERROR_TASK_UPDATE_FAIL,
   ERROR_TEMPLATE_NOT_FOUND,
   ERROR_USER_STORY_GENERATION_FAILED,
-  ERROR_CHECKLIST_CREATE_FAILED,
-  ERROR_CHECKLIST_NOT_FOUND,
-  ERROR_CHECKLIST_UPDATE_FAILED,
 } from "@/lib/constants"
 import { getTaskWithChecklists } from "@/lib/db"
 import { FigmaService } from "@/lib/figma"
@@ -19,27 +19,27 @@ import {
   generateUserStoryFromImage,
 } from "@/lib/services"
 import {
+  addTaskChecklist,
   createTask,
   deleteTask,
   generateCodeFromFigma,
   generateFromFigma,
   generateUserStory,
   listTasks,
+  removeTaskChecklist,
   taskById,
   updateTask,
-  addTaskChecklist,
   updateTaskChecklist,
-  removeTaskChecklist,
 } from "@/routes/tasks/openapi"
 import type { HonoApp } from "@/types"
 import { OpenAPIHono } from "@hono/zod-openapi"
 import { ERROR_UNAUTHORIZED } from "@incmix-api/utils"
-import type { TaskStatus, ChecklistStatus } from "@incmix-api/utils/db-schema"
+import type { ChecklistStatus, TaskStatus } from "@incmix-api/utils/db-schema"
 import {
+  BadRequestError,
   NotFoundError,
   UnauthorizedError,
   UnprocessableEntityError,
-  BadRequestError,
   processError,
   zodError,
 } from "@incmix-api/utils/errors"

@@ -56,7 +56,7 @@ userRoutes.openapi(getAllUsers, async (c) => {
       .leftJoin("accounts", "userId", "id")
       .select([
         "id",
-        "emailVerified as verified",
+        "emailVerifiedAt as verified",
         "isActive as enabled",
         "accounts.provider as oauth",
       ])
@@ -171,7 +171,7 @@ userRoutes.openapi(setVerified, async (c) => {
     const updated = await c
       .get("db")
       .updateTable("users")
-      .set("emailVerified", value)
+      .set("emailVerifiedAt", value ? new Date().toISOString() : null)
       .where("id", "=", u.id)
       .returningAll()
       .executeTakeFirst()

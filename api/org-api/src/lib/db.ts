@@ -206,6 +206,8 @@ export async function findOrganisationByHandle(c: Context, handle: string) {
       "organisations.id",
       "organisations.name",
       "organisations.handle",
+      "organisations.createdAt",
+      "organisations.updatedAt",
       jsonArrayFrom(
         eb
           .selectFrom("members")
@@ -275,6 +277,8 @@ export async function findOrganisationById(c: Context, id: string) {
       "organisations.id",
       "organisations.name",
       "organisations.handle",
+      "organisations.createdAt",
+      "organisations.updatedAt",
       jsonArrayFrom(
         eb
           .selectFrom("members")

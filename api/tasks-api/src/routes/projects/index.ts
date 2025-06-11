@@ -1,4 +1,7 @@
 import {
+  ERROR_CHECKLIST_CREATE_FAILED,
+  ERROR_CHECKLIST_NOT_FOUND,
+  ERROR_CHECKLIST_UPDATE_FAILED,
   ERROR_COLUMN_CREATE_FAILED,
   ERROR_COLUMN_EXISTS,
   ERROR_COLUMN_NOT_FOUND,
@@ -10,12 +13,9 @@ import {
   ERROR_PROJECT_EXISTS,
   ERROR_PROJECT_MEMBER_ALREADY_EXISTS,
   ERROR_PROJECT_MEMBER_CREATE_FAILED,
+  ERROR_PROJECT_MEMBER_REMOVE_FAILED,
   ERROR_PROJECT_NOT_FOUND,
   ERROR_PROJECT_UPDATE_FAILED,
-  ERROR_PROJECT_MEMBER_REMOVE_FAILED,
-  ERROR_CHECKLIST_CREATE_FAILED,
-  ERROR_CHECKLIST_UPDATE_FAILED,
-  ERROR_CHECKLIST_NOT_FOUND,
 } from "@/lib/constants"
 import { generateBoard, getProjectWithMembers, isOrgMember } from "@/lib/db"
 import { getOrganizationById } from "@/lib/services"
@@ -23,9 +23,9 @@ import type { HonoApp } from "@/types"
 import { OpenAPIHono } from "@hono/zod-openapi"
 import { ERROR_UNAUTHORIZED } from "@incmix-api/utils"
 import type {
+  NewProjectChecklist,
   NewProjectMember,
   UpdatedColumn,
-  NewProjectChecklist,
   UpdatedProjectChecklist,
 } from "@incmix-api/utils/db-schema"
 import {
@@ -41,6 +41,7 @@ import { useTranslation } from "@incmix-api/utils/middleware"
 import { env } from "hono/adapter"
 import { nanoid } from "nanoid"
 import {
+  addProjectChecklist,
   createColumn,
   createProject,
   deleteColumn,
@@ -48,12 +49,11 @@ import {
   getBoard,
   getColumns,
   getProjects,
+  removeProjectChecklist,
   removeProjectMembers,
   updateColumn,
   updateProject,
-  addProjectChecklist,
   updateProjectChecklist,
-  removeProjectChecklist,
 } from "./openapi"
 import { addProjectMembers } from "./openapi"
 
