@@ -3,10 +3,8 @@ export type Timeline = {
   endDate: string
 }
 
-export type Checklist = {
-  done: boolean
-  item: string
-}
+export const checklistStatusEnum = ["todo", "in_progress", "done"] as const
+export type ChecklistStatus = (typeof checklistStatusEnum)[number]
 
 export const projectStatusEnum = [
   "todo",

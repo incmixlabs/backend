@@ -8,11 +8,16 @@ import {
   ERROR_PRESIGNED_URL,
   ERROR_PROJECT_CREATE_FAILED,
   ERROR_PROJECT_EXISTS,
+  ERROR_PROJECT_MEMBER_ALREADY_EXISTS,
   ERROR_PROJECT_MEMBER_CREATE_FAILED,
   ERROR_PROJECT_NOT_FOUND,
   ERROR_PROJECT_UPDATE_FAILED,
+  ERROR_PROJECT_MEMBER_REMOVE_FAILED,
+  ERROR_CHECKLIST_CREATE_FAILED,
+  ERROR_CHECKLIST_UPDATE_FAILED,
+  ERROR_CHECKLIST_NOT_FOUND,
 } from "@/lib/constants"
-import { generateBoard, getProjectWithMembers } from "@/lib/db"
+import { generateBoard, getProjectWithMembers, isOrgMember } from "@/lib/db"
 import { getOrganizationById } from "@/lib/services"
 import type { HonoApp } from "@/types"
 import { OpenAPIHono } from "@hono/zod-openapi"
@@ -20,10 +25,13 @@ import { ERROR_UNAUTHORIZED } from "@incmix-api/utils"
 import type {
   NewProjectMember,
   UpdatedColumn,
+  NewProjectChecklist,
+  UpdatedProjectChecklist,
 } from "@incmix-api/utils/db-schema"
 import {
   BadRequestError,
   ConflictError,
+  NotFoundError,
   UnauthorizedError,
   UnprocessableEntityError,
   processError,
@@ -40,9 +48,14 @@ import {
   getBoard,
   getColumns,
   getProjects,
+  removeProjectMembers,
   updateColumn,
   updateProject,
+  addProjectChecklist,
+  updateProjectChecklist,
+  removeProjectChecklist,
 } from "./openapi"
+import { addProjectMembers } from "./openapi"
 
 const projectRoutes = new OpenAPIHono<HonoApp>({
   defaultHook: zodError,
@@ -140,7 +153,6 @@ projectRoutes.openapi(createProject, async (c) => {
             description,
             company,
             status: "todo",
-            checklists: [],
             logo: logoUrl,
           })
           .returningAll()
@@ -151,45 +163,33 @@ projectRoutes.openapi(createProject, async (c) => {
           throw new BadRequestError(msg)
         }
 
-        // const insertableMembers = members
-        //   .map<NewProjectMember>((member) => ({
-        //     projectId: id,
-        //     userId: member.id,
-        //     role: member.role,
-        //     isOwner: false,
-        //     createdBy: user.id,
-        //     updatedBy: user.id,
-        //     createdAt: new Date().toISOString(),
-        //     updatedAt: new Date().toISOString(),
-        //   }))
-        //   .concat([
-        //     {
-        //       projectId: id,
-        //       userId: user.id,
-        //       role: "owner",
-        //       isOwner: true,
-        //       createdBy: user.id,
-        //       updatedBy: user.id,
-        //       createdAt: new Date().toISOString(),
-        //       updatedAt: new Date().toISOString(),
-        //     },
-        //   ])
+        const insertableMembers = [
+          {
+            projectId: id,
+            userId: user.id,
+            role: "owner",
+            isOwner: true,
+            createdBy: user.id,
+            updatedBy: user.id,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+          },
+        ]
 
-        // const insertedMembers = await tx
-        //   .insertInto("projectMembers")
-        //   .values(insertableMembers)
-        //   .returningAll()
-        //   .execute()
+        const insertedMembers = await tx
+          .insertInto("projectMembers")
+          .values(insertableMembers)
+          .returningAll()
+          .execute()
 
-        // if (insertedMembers.length !== insertableMembers.length) {
-        //   const msg = await t.text(ERROR_PROJECT_MEMBER_CREATE_FAILED)
-        //   throw new BadRequestError(msg)
-        // }
-
-        return {
-          ...project,
-          members: [],
+        if (insertedMembers.length !== insertableMembers.length) {
+          const msg = await t.text(ERROR_PROJECT_MEMBER_CREATE_FAILED)
+          throw new BadRequestError(msg)
         }
+
+        const newProject = await getProjectWithMembers(c, id)
+
+        return newProject
       })
 
     return c.json(createdProject, 201)
@@ -197,6 +197,111 @@ projectRoutes.openapi(createProject, async (c) => {
     return await processError<typeof createProject>(c, error, [
       "{{ default }}",
       "create-project",
+    ])
+  }
+})
+
+projectRoutes.openapi(addProjectMembers, async (c) => {
+  try {
+    const user = c.get("user")
+    const t = await useTranslation(c)
+    if (!user) {
+      const msg = await t.text(ERROR_UNAUTHORIZED)
+      throw new UnauthorizedError(msg)
+    }
+    const { projectId, members } = c.req.valid("json")
+    const existingProject = await getProjectWithMembers(c, projectId)
+    if (!existingProject) {
+      const msg = await t.text(ERROR_PROJECT_NOT_FOUND)
+      throw new UnprocessableEntityError(msg)
+    }
+
+    const insertableMembers = await Promise.all(
+      members.map<Promise<NewProjectMember>>(async (member) => {
+        const existingMember = existingProject.members.find(
+          (m) => m.id === member.id
+        )
+        if (existingMember) {
+          const msg = await t.text(ERROR_PROJECT_MEMBER_ALREADY_EXISTS, {
+            memberName: existingMember.name,
+          })
+          throw new ConflictError(msg)
+        }
+
+        if (!isOrgMember(c, existingProject.orgId, member.id)) {
+          const msg = await t.text(ERROR_UNAUTHORIZED)
+          throw new UnauthorizedError(msg)
+        }
+
+        return {
+          id: member.id,
+          role: member.role,
+          isOwner: false,
+          projectId,
+          userId: member.id,
+          createdBy: user.id,
+          updatedBy: user.id,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        }
+      })
+    )
+    const insertedMembers = await c
+      .get("db")
+      .insertInto("projectMembers")
+      .values(insertableMembers)
+      .returningAll()
+      .execute()
+
+    if (insertedMembers.length !== insertableMembers.length) {
+      const msg = await t.text(ERROR_PROJECT_MEMBER_CREATE_FAILED)
+      throw new BadRequestError(msg)
+    }
+    const updatedProject = await getProjectWithMembers(c, projectId)
+
+    return c.json(updatedProject, 200)
+  } catch (error) {
+    return await processError<typeof addProjectMembers>(c, error, [
+      "{{ default }}",
+      "add-project-members",
+    ])
+  }
+})
+
+projectRoutes.openapi(removeProjectMembers, async (c) => {
+  try {
+    const user = c.get("user")
+    const t = await useTranslation(c)
+    if (!user) {
+      const msg = await t.text(ERROR_UNAUTHORIZED)
+      throw new UnauthorizedError(msg)
+    }
+    const { projectId, memberIds } = c.req.valid("json")
+    const existingProject = await getProjectWithMembers(c, projectId)
+    if (!existingProject) {
+      const msg = await t.text(ERROR_PROJECT_NOT_FOUND)
+      throw new UnprocessableEntityError(msg)
+    }
+
+    const removedMembers = await c
+      .get("db")
+      .deleteFrom("projectMembers")
+      .where((eb) =>
+        eb.and([eb("projectId", "=", projectId), eb("userId", "in", memberIds)])
+      )
+      .execute()
+
+    if (removedMembers.length !== memberIds.length) {
+      const msg = await t.text(ERROR_PROJECT_MEMBER_REMOVE_FAILED)
+      throw new BadRequestError(msg)
+    }
+    const updatedProject = await getProjectWithMembers(c, projectId)
+
+    return c.json(updatedProject, 200)
+  } catch (error) {
+    return await processError<typeof removeProjectMembers>(c, error, [
+      "{{ default }}",
+      "remove-project-members",
     ])
   }
 })
@@ -249,7 +354,9 @@ projectRoutes.openapi(updateProject, async (c) => {
       const msg = await t.text(ERROR_PROJECT_UPDATE_FAILED)
       throw new BadRequestError(msg)
     }
-    return c.json({ ...project, members: existingProject.members }, 200)
+
+    const updatedProject = await getProjectWithMembers(c, id)
+    return c.json(updatedProject, 200)
   } catch (error) {
     return await processError<typeof updateProject>(c, error, [
       "{{ default }}",
@@ -481,18 +588,31 @@ projectRoutes.openapi(getProjects, async (c) => {
       const msg = await t.text(ERROR_UNAUTHORIZED)
       return c.json({ message: msg }, 401)
     }
-    const { orgId } = c.req.valid("param")
-    const org = await getOrganizationById(c, orgId)
-    if (!org) {
-      const msg = await t.text(ERROR_ORG_NOT_FOUND)
-      throw new UnprocessableEntityError(msg)
-    }
 
     const projects = await c
       .get("db")
       .selectFrom("projects")
-      .selectAll()
-      .where("orgId", "=", orgId)
+      .select([
+        "id",
+        "name",
+        "description",
+        "budgetEstimate",
+        "currentTimelineStartDate",
+        "currentTimelineEndDate",
+        "status",
+        "company",
+        "actualTimelineStartDate",
+        "actualTimelineEndDate",
+        "budgetActual",
+        "createdBy",
+        "updatedBy",
+        "createdAt",
+        "updatedAt",
+        "orgId",
+      ])
+      .innerJoin("projectMembers", "projects.id", "projectMembers.projectId")
+      .where("projectMembers.userId", "=", user.id)
+      .where("projects.status", "!=", "archived")
       .execute()
 
     return c.json(projects, 200)
@@ -571,6 +691,154 @@ projectRoutes.openapi(getBoard, async (c) => {
     return await processError<typeof getBoard>(c, error, [
       "{{ default }}",
       "get-board",
+    ])
+  }
+})
+
+projectRoutes.openapi(addProjectChecklist, async (c) => {
+  try {
+    const user = c.get("user")
+    const t = await useTranslation(c)
+    if (!user) {
+      const msg = await t.text(ERROR_UNAUTHORIZED)
+      throw new UnauthorizedError(msg)
+    }
+
+    const { projectId, checklist } = c.req.valid("json")
+    const existingProject = await getProjectWithMembers(c, projectId)
+    if (!existingProject) {
+      const msg = await t.text(ERROR_PROJECT_NOT_FOUND)
+      throw new UnprocessableEntityError(msg)
+    }
+
+    const id = nanoid(6)
+    const newChecklist: NewProjectChecklist = {
+      id,
+      projectId,
+      title: checklist.title,
+      status: "todo",
+      createdBy: user.id,
+      updatedBy: user.id,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    }
+
+    const createdChecklist = await c
+      .get("db")
+      .insertInto("projectChecklists")
+      .values(newChecklist)
+      .returningAll()
+      .executeTakeFirst()
+
+    if (!createdChecklist) {
+      const msg = await t.text(ERROR_CHECKLIST_CREATE_FAILED)
+      throw new BadRequestError(msg)
+    }
+
+    const updatedProject = await getProjectWithMembers(c, projectId)
+
+    return c.json(updatedProject, 201)
+  } catch (error) {
+    return await processError<typeof addProjectChecklist>(c, error, [
+      "{{ default }}",
+      "add-project-checklist",
+    ])
+  }
+})
+
+projectRoutes.openapi(updateProjectChecklist, async (c) => {
+  try {
+    const user = c.get("user")
+    const t = await useTranslation(c)
+    if (!user) {
+      const msg = await t.text(ERROR_UNAUTHORIZED)
+      throw new UnauthorizedError(msg)
+    }
+
+    const { id, checklist } = c.req.valid("json")
+
+    const existingChecklist = await c
+      .get("db")
+      .selectFrom("projectChecklists")
+      .selectAll()
+      .where("id", "=", id)
+      .executeTakeFirst()
+
+    if (!existingChecklist) {
+      const msg = await t.text(ERROR_CHECKLIST_NOT_FOUND)
+      throw new UnprocessableEntityError(msg)
+    }
+
+    const updates: UpdatedProjectChecklist = {
+      updatedBy: user.id,
+      updatedAt: new Date().toISOString(),
+    }
+
+    if (checklist.title !== undefined) {
+      updates.title = checklist.title
+    }
+    if (checklist.status !== undefined) {
+      updates.status = checklist.status
+    }
+
+    const updatedChecklist = await c
+      .get("db")
+      .updateTable("projectChecklists")
+      .set(updates)
+      .where("id", "=", existingChecklist.id)
+      .returningAll()
+      .executeTakeFirst()
+
+    if (!updatedChecklist) {
+      const msg = await t.text(ERROR_CHECKLIST_UPDATE_FAILED)
+      throw new BadRequestError(msg)
+    }
+
+    const updatedProject = await getProjectWithMembers(
+      c,
+      existingChecklist.projectId
+    )
+
+    return c.json(updatedProject, 200)
+  } catch (error) {
+    return await processError<typeof updateProjectChecklist>(c, error, [
+      "{{ default }}",
+      "update-project-checklist",
+    ])
+  }
+})
+
+projectRoutes.openapi(removeProjectChecklist, async (c) => {
+  try {
+    const user = c.get("user")
+    const t = await useTranslation(c)
+    if (!user) {
+      const msg = await t.text(ERROR_UNAUTHORIZED)
+      throw new UnauthorizedError(msg)
+    }
+
+    const { projectId, checklistIds } = c.req.valid("json")
+    const existingProject = await getProjectWithMembers(c, projectId)
+    if (!existingProject) {
+      const msg = await t.text(ERROR_PROJECT_NOT_FOUND)
+      throw new UnprocessableEntityError(msg)
+    }
+
+    await c
+      .get("db")
+      .deleteFrom("projectChecklists")
+      .where((eb) =>
+        eb.and([eb("projectId", "=", projectId), eb("id", "in", checklistIds)])
+      )
+      .execute()
+
+    const updatedProject = await getProjectWithMembers(c, projectId)
+
+    return c.json(updatedProject, 200)
+  } catch (error) {
+    return await processError<typeof removeProjectChecklist>(c, error, [
+      "{{ default }}",
+      "remove-project-checklist",
     ])
   }
 })

@@ -123,6 +123,13 @@ export function getProjectWithMembers(c: Context, projectId: string) {
       "projects.description",
       "projects.company",
       "projects.status",
+      "projects.logo",
+      jsonArrayFrom(
+        eb
+          .selectFrom("projectChecklists")
+          .select(["id", "status", "title"])
+          .whereRef("projectId", "=", "projects.id")
+      ).as("checklists"),
       jsonArrayFrom(
         eb
           .selectFrom("projectMembers")
@@ -144,4 +151,51 @@ export function getProjectWithMembers(c: Context, projectId: string) {
     ])
     .where("projects.id", "=", projectId)
     .executeTakeFirst()
+}
+
+export function getTaskWithChecklists(c: Context, taskId: string) {
+  return c
+    .get("db")
+    .selectFrom("tasks")
+    .select((eb) => [
+      "tasks.id",
+      "tasks.content",
+      "tasks.status",
+      "tasks.assignedTo",
+      "tasks.createdAt",
+      "tasks.updatedAt",
+      "tasks.currentTimelineStartDate",
+      "tasks.currentTimelineEndDate",
+      "tasks.actualTimelineStartDate",
+      "tasks.actualTimelineEndDate",
+      "tasks.title",
+      "tasks.taskOrder",
+      "tasks.columnId",
+      "tasks.projectId",
+      "tasks.createdBy",
+      "tasks.updatedBy",
+      jsonArrayFrom(
+        eb
+          .selectFrom("taskChecklists")
+          .select([
+            "taskChecklists.id as id",
+            "taskChecklists.status as status",
+            "taskChecklists.title as title",
+          ])
+          .whereRef("taskId", "=", "tasks.id")
+      ).as("checklists"),
+    ])
+    .where("tasks.id", "=", taskId)
+    .executeTakeFirst()
+}
+
+export function isOrgMember(c: Context, orgId: string, userId: string) {
+  const member = c
+    .get("db")
+    .selectFrom("members")
+    .selectAll()
+    .where((eb) => eb.and([eb("orgId", "=", orgId), eb("userId", "=", userId)]))
+    .executeTakeFirst()
+
+  return !!member
 }

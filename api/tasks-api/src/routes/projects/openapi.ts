@@ -5,11 +5,16 @@ import {
   ColumnIdSchema,
   CreateColumnSchema,
   CreateProjectSchema,
+  AddProjectMemberSchema,
   OrgIdSchema,
   ProjectIdSchema,
   ProjectSchema,
   UpdateColumnSchema,
   UpdateProjectSchema,
+  RemoveProjectMemberSchema,
+  AddProjectChecklistSchema,
+  UpdateProjectChecklistSchema,
+  RemoveProjectChecklistSchema,
 } from "./types"
 
 export const createProject = createRoute({
@@ -116,20 +121,20 @@ export const createColumn = createRoute({
 })
 
 export const getProjects = createRoute({
-  path: "/id/{orgId}",
+  path: "/",
   method: "get",
   summary: "Get Projects",
   tags: ["Projects"],
   description: "Get Projects using organization ID",
   security: [{ cookieAuth: [] }],
-  request: {
-    params: OrgIdSchema,
-  },
   responses: {
     200: {
       content: {
         "application/json": {
-          schema: ProjectSchema.omit({ members: true }).array(),
+          schema: ProjectSchema.omit({
+            members: true,
+            checklists: true,
+          }).array(),
         },
       },
       description: "Returs list of projects",
@@ -149,6 +154,118 @@ export const getProjects = createRoute({
         },
       },
       description: "Error response when organization does not exist",
+    },
+    500: {
+      content: {
+        "application/json": {
+          schema: ResponseSchema,
+        },
+      },
+      description: "Internal Server Error",
+    },
+  },
+})
+
+export const addProjectMembers = createRoute({
+  path: "/members",
+  method: "post",
+  summary: "Add Project Member",
+  tags: ["Projects"],
+  description: "Add Project Member",
+  security: [{ cookieAuth: [] }],
+  request: {
+    body: {
+      content: {
+        "application/json": {
+          schema: AddProjectMemberSchema,
+        },
+      },
+    },
+  },
+  responses: {
+    200: {
+      content: {
+        "application/json": {
+          schema: ProjectSchema,
+        },
+      },
+      description: "Added Project Member",
+    },
+    401: {
+      content: {
+        "application/json": {
+          schema: ResponseSchema,
+        },
+      },
+      description: "Error response when not authenticated",
+    },
+    404: {
+      content: {
+        "application/json": {
+          schema: ResponseSchema,
+        },
+      },
+      description: "Error response when Project does not exist",
+    },
+    409: {
+      content: {
+        "application/json": {
+          schema: ResponseSchema,
+        },
+      },
+      description: "Error response when Project Member already exists",
+    },
+    500: {
+      content: {
+        "application/json": {
+          schema: ResponseSchema,
+        },
+      },
+      description: "Internal Server Error",
+    },
+  },
+})
+
+export const removeProjectMembers = createRoute({
+  path: "/members",
+  method: "delete",
+  summary: "Remove Project Member",
+  tags: ["Projects"],
+  description: "Remove Project Member",
+  security: [{ cookieAuth: [] }],
+  request: {
+    body: {
+      content: {
+        "application/json": {
+          schema: RemoveProjectMemberSchema,
+        },
+      },
+    },
+  },
+  responses: {
+    200: {
+      content: {
+        "application/json": {
+          schema: ProjectSchema,
+        },
+      },
+      description: "Removed Project Members",
+    },
+    401: {
+      content: {
+        "application/json": {
+          schema: ResponseSchema,
+        },
+      },
+      description: "Error response when not authenticated",
+    },
+    404: {
+      content: {
+        "application/json": {
+          schema: ResponseSchema,
+        },
+      },
+      description: "Error response when Project does not exist",
     },
     500: {
       content: {
@@ -427,6 +544,162 @@ export const getBoard = createRoute({
         },
       },
       description: "Data for generating KanBan Board",
+    },
+    401: {
+      content: {
+        "application/json": {
+          schema: ResponseSchema,
+        },
+      },
+      description: "Error response when not authenticated",
+    },
+    404: {
+      content: {
+        "application/json": {
+          schema: ResponseSchema,
+        },
+      },
+      description: "Error response when Project does not exist",
+    },
+    500: {
+      content: {
+        "application/json": {
+          schema: ResponseSchema,
+        },
+      },
+      description: "Internal Server Error",
+    },
+  },
+})
+
+export const addProjectChecklist = createRoute({
+  path: "/checklists",
+  method: "post",
+  summary: "Add Project Checklist",
+  tags: ["Projects"],
+  description: "Add a new checklist item to a project",
+  security: [{ cookieAuth: [] }],
+  request: {
+    body: {
+      content: {
+        "application/json": {
+          schema: AddProjectChecklistSchema,
+        },
+      },
+    },
+  },
+  responses: {
+    201: {
+      content: {
+        "application/json": {
+          schema: ProjectSchema,
+        },
+      },
+      description: "Added checklist item to project",
+    },
+    401: {
+      content: {
+        "application/json": {
+          schema: ResponseSchema,
+        },
+      },
+      description: "Error response when not authenticated",
+    },
+    404: {
+      content: {
+        "application/json": {
+          schema: ResponseSchema,
+        },
+      },
+      description: "Error response when Project does not exist",
+    },
+    500: {
+      content: {
+        "application/json": {
+          schema: ResponseSchema,
+        },
+      },
+      description: "Internal Server Error",
+    },
+  },
+})
+
+export const updateProjectChecklist = createRoute({
+  path: "/checklists",
+  method: "put",
+  summary: "Update Project Checklist",
+  tags: ["Projects"],
+  description: "Update an existing checklist item in a project",
+  security: [{ cookieAuth: [] }],
+  request: {
+    body: {
+      content: {
+        "application/json": {
+          schema: UpdateProjectChecklistSchema,
+        },
+      },
+    },
+  },
+  responses: {
+    200: {
+      content: {
+        "application/json": {
+          schema: ProjectSchema,
+        },
+      },
+      description: "Updated checklist item in project",
+    },
+    401: {
+      content: {
+        "application/json": {
+          schema: ResponseSchema,
+        },
+      },
+      description: "Error response when not authenticated",
+    },
+    404: {
+      content: {
+        "application/json": {
+          schema: ResponseSchema,
+        },
+      },
+      description: "Error response when Project or Checklist does not exist",
+    },
+    500: {
+      content: {
+        "application/json": {
+          schema: ResponseSchema,
+        },
+      },
+      description: "Internal Server Error",
+    },
+  },
+})
+
+export const removeProjectChecklist = createRoute({
+  path: "/checklists",
+  method: "delete",
+  summary: "Remove Project Checklist",
+  tags: ["Projects"],
+  description: "Remove checklist items from a project",
+  security: [{ cookieAuth: [] }],
+  request: {
+    body: {
+      content: {
+        "application/json": {
+          schema: RemoveProjectChecklistSchema,
+        },
+      },
+    },
+  },
+  responses: {
+    200: {
+      content: {
+        "application/json": {
+          schema: ProjectSchema,
+        },
+      },
+      description: "Removed checklist items from project",
     },
     401: {
       content: {

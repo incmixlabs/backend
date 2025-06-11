@@ -1,6 +1,5 @@
-import type { TaskStatus } from "@incmix/utils/types"
 import type { ColumnType, Insertable, Selectable, Updateable } from "kysely"
-import type { Checklist, ProjectStatus } from "./custom-types"
+import type { ChecklistStatus, ProjectStatus, TaskStatus } from "./custom-types"
 
 type TasksTable = {
   id: string
@@ -10,9 +9,8 @@ type TasksTable = {
   figmaLink: string | null
   codeSnippets: string[] | null
   status: TaskStatus
-  checklists: Checklist[] | null
   projectId: string
-  columnId: string
+  columnId: string | null
   assignedTo: string | null
   createdBy: ColumnType<string, string, never>
   updatedBy: ColumnType<string, string, string>
@@ -49,7 +47,6 @@ type ProjectsTable = {
   currentTimelineEndDate: ColumnType<Date, string, string>
   actualTimelineStartDate: ColumnType<Date, string, string>
   actualTimelineEndDate: ColumnType<Date, string, string>
-  checklists: Checklist[]
   budgetEstimate: number
   budgetActual: number
   description: string
@@ -68,6 +65,28 @@ type ProjectMembersTable = {
   updatedAt: ColumnType<Date, string, string>
 }
 
+type ProjectChecklistsTable = {
+  id: string
+  projectId: string
+  title: string
+  createdBy: ColumnType<string, string, never>
+  updatedBy: ColumnType<string, string, string>
+  createdAt: ColumnType<Date, string, never>
+  updatedAt: ColumnType<Date, string, string>
+  status: ChecklistStatus
+}
+
+type TaskChecklistsTable = {
+  id: string
+  taskId: string
+  title: string
+  createdBy: ColumnType<string, string, never>
+  updatedBy: ColumnType<string, string, string>
+  createdAt: ColumnType<Date, string, never>
+  updatedAt: ColumnType<Date, string, string>
+  status: ChecklistStatus
+}
+
 export type Task = Selectable<TasksTable>
 export type NewTask = Insertable<TasksTable>
 export type UpdatedTask = Updateable<TasksTable>
@@ -84,11 +103,28 @@ export type ProjectMember = Selectable<ProjectMembersTable>
 export type NewProjectMember = Insertable<ProjectMembersTable>
 export type UpdatedProjectMember = Updateable<ProjectMembersTable>
 
-export const tables = ["projects", "columns", "tasks", "projectMembers"]
+export type ProjectChecklist = Selectable<ProjectChecklistsTable>
+export type NewProjectChecklist = Insertable<ProjectChecklistsTable>
+export type UpdatedProjectChecklist = Updateable<ProjectChecklistsTable>
+
+export type TaskChecklist = Selectable<TaskChecklistsTable>
+export type NewTaskChecklist = Insertable<TaskChecklistsTable>
+export type UpdatedTaskChecklist = Updateable<TaskChecklistsTable>
+
+export const tables = [
+  "projects",
+  "columns",
+  "tasks",
+  "projectMembers",
+  "projectChecklists",
+  "taskChecklists",
+]
 
 export type TasksTables = {
   tasks: TasksTable
   columns: ColumnsTable
   projects: ProjectsTable
   projectMembers: ProjectMembersTable
+  projectChecklists: ProjectChecklistsTable
+  taskChecklists: TaskChecklistsTable
 }

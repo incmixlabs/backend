@@ -1,5 +1,8 @@
 import { z } from "@hono/zod-openapi"
-import { projectStatusEnum } from "@incmix-api/utils/db-schema"
+import {
+  projectStatusEnum,
+  checklistStatusEnum,
+} from "@incmix-api/utils/db-schema"
 import { ColumnSchema } from "@incmix/utils/types"
 
 export const ProjectMemberSchema = z.object({
@@ -25,8 +28,19 @@ export const ProjectTimelineSchema = z.object({
 })
 
 export const ProjectChecklistSchema = z.object({
-  item: z.string().openapi({ example: "Checklist Item" }),
-  done: z.boolean().openapi({ example: true }),
+  id: z.string().openapi({ example: "2hek2bkjh" }),
+  title: z.string().openapi({ example: "Checklist Item" }),
+  status: z.enum(checklistStatusEnum).openapi({ example: "todo" }),
+  createdBy: z.string().openapi({ example: "2hek2bkjh" }),
+  updatedBy: z.string().openapi({ example: "2hek2bkjh" }),
+  createdAt: z
+    .string()
+    .datetime()
+    .openapi({ example: new Date("2025-01-01").toISOString() }),
+  updatedAt: z
+    .string()
+    .datetime()
+    .openapi({ example: new Date("2025-01-01").toISOString() }),
 })
 
 export const ProjectSchema = z.object({
@@ -140,4 +154,31 @@ export const UpdateColumnSchema = z.object({
   label: z.string(),
   order: z.number().optional(),
   parentId: z.string().optional(),
+})
+
+export const AddProjectMemberSchema = z.object({
+  projectId: z.string().openapi({ example: "2hek2bkjh" }),
+  members: z.array(ProjectMemberSchema.pick({ id: true, role: true })),
+})
+export const RemoveProjectMemberSchema = z.object({
+  projectId: z.string().openapi({ example: "2hek2bkjh" }),
+  memberIds: z.array(z.string()).openapi({ example: ["2hek2bkjh"] }),
+})
+
+export const AddProjectChecklistSchema = z.object({
+  projectId: z.string().openapi({ example: "2hek2bkjh" }),
+  checklist: ProjectChecklistSchema.pick({ title: true }),
+})
+
+export const UpdateProjectChecklistSchema = z.object({
+  id: z.string().openapi({ example: "2hek2bkjh" }),
+  checklist: ProjectChecklistSchema.pick({
+    title: true,
+    status: true,
+  }).partial(),
+})
+
+export const RemoveProjectChecklistSchema = z.object({
+  projectId: z.string().openapi({ example: "2hek2bkjh" }),
+  checklistIds: z.array(z.string()).openapi({ example: ["2hek2bkjh"] }),
 })

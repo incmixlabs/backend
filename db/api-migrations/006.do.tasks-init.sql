@@ -1,8 +1,5 @@
 BEGIN;
 
--- Create CHECKLIST type
-CREATE TYPE CHECKLIST AS (done boolean, item text);
-
 create type project_status as enum (
   'todo',
   'started',
@@ -20,7 +17,7 @@ create type task_status as enum (
   'archived'
 );
 
-create type TIMELINE as (start_date TIMESTAMPTZ, end_date TIMESTAMPTZ);
+create type checklist_status as enum ('todo', 'in_progress', 'done');
 
 -- Create projects table
 CREATE TABLE projects (
@@ -32,7 +29,6 @@ CREATE TABLE projects (
   current_timeline_end_date TIMESTAMPTZ,
   actual_timeline_start_date TIMESTAMPTZ,
   actual_timeline_end_date TIMESTAMPTZ,
-  checklists CHECKLIST [],
   budget_estimate integer,
   budget_actual integer,
   description text,
@@ -73,7 +69,6 @@ CREATE TABLE tasks (
   figma_link TEXT,
   code_snippets TEXT [],
   status task_status default 'backlog' not null,
-  checklists CHECKLIST [],
   project_id TEXT NOT NULL REFERENCES projects(id),
   column_id TEXT REFERENCES columns(id),
   assigned_to TEXT REFERENCES users(id),
@@ -85,6 +80,30 @@ CREATE TABLE tasks (
   actual_timeline_end_date TIMESTAMPTZ,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+create table project_checklists (
+  id text primary key,
+  project_id text references projects(id) on delete cascade,
+  title text not null,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  created_by text references users(id) on delete cascade,
+  updated_by text references users(id) on delete cascade,
+  status checklist_status default 'todo' not null,
+  unique (project_id, title)
+);
+
+create table task_checklists (
+  id text primary key,
+  task_id text references tasks(id) on delete cascade,
+  title text not null,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  created_by text references users(id) on delete cascade,
+  updated_by text references users(id) on delete cascade,
+  status checklist_status default 'todo' not null,
+  unique (task_id, title)
 );
 
 create table project_members (

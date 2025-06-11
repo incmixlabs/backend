@@ -10,6 +10,12 @@ DROP INDEX IF EXISTS idx_tasks_column_id;
 
 DROP TABLE IF EXISTS task_comments;
 
+DROP TABLE IF EXISTS task_checklists;
+
+DROP TABLE IF EXISTS project_checklists;
+
+DROP TABLE IF EXISTS checklists;
+
 DROP TABLE IF EXISTS project_comments;
 
 DROP TABLE IF EXISTS comments;
@@ -35,5 +41,7 @@ DROP TYPE IF EXISTS TIMELINE;
 DROP TYPE IF EXISTS task_status;
 
 DROP TYPE IF EXISTS project_status;
+
+DROP TYPE IF EXISTS checklist_status;
 
 COMMIT;
