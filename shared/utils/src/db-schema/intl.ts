@@ -10,8 +10,8 @@ type LocaleTable = {
   id: Generated<number>
   code: string
   isDefault: boolean | null
-  createdAt: ColumnType<Date, null, string>
-  updatedAt: ColumnType<Date, null, string>
+  createdAt: ColumnType<Date, string, never>
+  updatedAt: ColumnType<Date, string, never>
 }
 
 export const TranslationTypes = ["frag", "label"] as const
@@ -24,8 +24,8 @@ type TranslationsTable = {
   value: string
   type: TranslationType
   namespace: string
-  createdAt: ColumnType<Date, null, string>
-  updatedAt: ColumnType<Date, null, string>
+  createdAt: ColumnType<Date, string, never>
+  updatedAt: ColumnType<Date, string, never>
 }
 
 export type Message = Selectable<TranslationsTable>

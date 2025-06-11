@@ -1,15 +1,18 @@
+import { createRoute, z } from "@hono/zod-openapi"
+import { ResponseSchema } from "../types"
 import {
+  AddTaskChecklistSchema,
   CreateTaskSchema,
   FigmaSchema,
   GenerateUserStorySchema,
   ParamSchema,
+  RemoveTaskChecklistSchema,
   TaskListSchema,
+  TaskSchema,
+  UpdateTaskChecklistSchema,
   UpdateTaskSchema,
   UserStoryResponseSchema,
-} from "@/routes/tasks/types"
-import { createRoute, z } from "@hono/zod-openapi"
-import { TaskSchema } from "@incmix/utils/types"
-import { ResponseSchema } from "../types"
+} from "./types"
 
 export const listTasks = createRoute({
   method: "get",
@@ -215,7 +218,7 @@ export const deleteTask = createRoute({
     200: {
       content: {
         "application/json": {
-          schema: TaskSchema,
+          schema: ResponseSchema,
         },
       },
       description: "Deletes a Task for given ID",
@@ -394,6 +397,162 @@ export const generateCodeFromFigma = createRoute({
         },
       },
       description: "Error response when not authenticated",
+    },
+    500: {
+      content: {
+        "application/json": {
+          schema: ResponseSchema,
+        },
+      },
+      description: "Internal Server Error",
+    },
+  },
+})
+
+export const addTaskChecklist = createRoute({
+  path: "/checklists",
+  method: "post",
+  summary: "Add Task Checklist",
+  tags: ["Tasks"],
+  description: "Add a new checklist item to a task",
+  security: [{ cookieAuth: [] }],
+  request: {
+    body: {
+      content: {
+        "application/json": {
+          schema: AddTaskChecklistSchema,
+        },
+      },
+    },
+  },
+  responses: {
+    201: {
+      content: {
+        "application/json": {
+          schema: TaskSchema,
+        },
+      },
+      description: "Added checklist item to task",
+    },
+    401: {
+      content: {
+        "application/json": {
+          schema: ResponseSchema,
+        },
+      },
+      description: "Error response when not authenticated",
+    },
+    404: {
+      content: {
+        "application/json": {
+          schema: ResponseSchema,
+        },
+      },
+      description: "Error response when Task does not exist",
+    },
+    500: {
+      content: {
+        "application/json": {
+          schema: ResponseSchema,
+        },
+      },
+      description: "Internal Server Error",
+    },
+  },
+})
+
+export const updateTaskChecklist = createRoute({
+  path: "/checklists",
+  method: "put",
+  summary: "Update Task Checklist",
+  tags: ["Tasks"],
+  description: "Update an existing checklist item in a task",
+  security: [{ cookieAuth: [] }],
+  request: {
+    body: {
+      content: {
+        "application/json": {
+          schema: UpdateTaskChecklistSchema,
+        },
+      },
+    },
+  },
+  responses: {
+    200: {
+      content: {
+        "application/json": {
+          schema: TaskSchema,
+        },
+      },
+      description: "Updated checklist item in task",
+    },
+    401: {
+      content: {
+        "application/json": {
+          schema: ResponseSchema,
+        },
+      },
+      description: "Error response when not authenticated",
+    },
+    404: {
+      content: {
+        "application/json": {
+          schema: ResponseSchema,
+        },
+      },
+      description: "Error response when Task or Checklist does not exist",
+    },
+    500: {
+      content: {
+        "application/json": {
+          schema: ResponseSchema,
+        },
+      },
+      description: "Internal Server Error",
+    },
+  },
+})
+
+export const removeTaskChecklist = createRoute({
+  path: "/checklists",
+  method: "delete",
+  summary: "Remove Task Checklist",
+  tags: ["Tasks"],
+  description: "Remove checklist items from a task",
+  security: [{ cookieAuth: [] }],
+  request: {
+    body: {
+      content: {
+        "application/json": {
+          schema: RemoveTaskChecklistSchema,
+        },
+      },
+    },
+  },
+  responses: {
+    200: {
+      content: {
+        "application/json": {
+          schema: TaskSchema,
+        },
+      },
+      description: "Removed checklist items from task",
+    },
+    401: {
+      content: {
+        "application/json": {
+          schema: ResponseSchema,
+        },
+      },
+      description: "Error response when not authenticated",
+    },
+    404: {
+      content: {
+        "application/json": {
+          schema: ResponseSchema,
+        },
+      },
+      description: "Error response when Task does not exist",
     },
     500: {
       content: {

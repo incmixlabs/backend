@@ -223,9 +223,12 @@ syncRoutes.post("/push", async (c) => {
                 assignedTo: newDoc.assignedTo || user.id,
                 createdBy: user.id,
                 updatedBy: user.id,
-                createdAt:
-                  newDoc.createdAt.toISOString() || new Date().toISOString(),
+                createdAt: new Date().toISOString(),
                 updatedAt: new Date().toISOString(),
+                currentTimelineStartDate: new Date().toISOString(),
+                currentTimelineEndDate: new Date().toISOString(),
+                actualTimelineStartDate: new Date().toISOString(),
+                actualTimelineEndDate: new Date().toISOString(),
               })
               .returningAll()
               .executeTakeFirst()

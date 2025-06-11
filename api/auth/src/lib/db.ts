@@ -53,6 +53,16 @@ export async function insertUser(
     .where("isDefault", "=", true)
     .executeTakeFirst()
 
+  let hashedPassword: string | null = null
+  if (password?.length) hashedPassword = await new Scrypt().hash(password)
+
+  const user = await db
+    .insertInto("users")
+    .values({ ...newUser, hashedPassword: hashedPassword })
+    .returningAll()
+    .executeTakeFirst()
+  if (!user) throw new ServerError()
+
   const profile = await db
     .insertInto("userProfiles")
     .values({
@@ -64,16 +74,6 @@ export async function insertUser(
     })
     .returningAll()
     .executeTakeFirst()
-
-  let hashedPassword: string | null = null
-  if (password?.length) hashedPassword = await new Scrypt().hash(password)
-
-  const user = await db
-    .insertInto("users")
-    .values({ ...newUser, hashedPassword: hashedPassword })
-    .returningAll()
-    .executeTakeFirst()
-  if (!user) throw new ServerError()
 
   return { ...user, profile }
 }

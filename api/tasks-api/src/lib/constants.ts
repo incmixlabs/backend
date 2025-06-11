@@ -2,6 +2,21 @@ import { API } from "@incmix/utils/env"
 
 export const BASE_PATH = API.TASKS
 
+export const ERROR_PRESIGNED_URL = {
+  namespace: "errors",
+  key: "presigned_url",
+}
+
+export const ERROR_PROJECT_MEMBER_ALREADY_EXISTS = {
+  namespace: "errors",
+  key: "project_member_already_exists",
+}
+
+export const ERROR_PROJECT_MEMBER_REMOVE_FAILED = {
+  namespace: "errors",
+  key: "project_member_remove_failed",
+}
+
 export const ERROR_PROJECT_NOT_FOUND = {
   namespace: "errors",
   key: "project_not_found",
@@ -18,6 +33,7 @@ export const ERROR_TASK_UPDATE_FAIL = {
   namespace: "errors",
   key: "task_update_fail",
 }
+
 export const ERROR_TASK_DELETE_FAIL = {
   namespace: "errors",
   key: "task_delete_fail",
@@ -38,6 +54,10 @@ export const ERROR_PROJECT_EXISTS = {
 export const ERROR_PROJECT_CREATE_FAILED = {
   namespace: "errors",
   key: "project_create_failed",
+}
+export const ERROR_PROJECT_MEMBER_CREATE_FAILED = {
+  namespace: "errors",
+  key: "project_member_create_failed",
 }
 export const ERROR_PROJECT_UPDATE_FAILED = {
   namespace: "errors",
@@ -74,6 +94,21 @@ export const ERROR_TEMPLATE_ALREADY_EXISTS = {
 export const ERROR_TEMPLATE_NOT_FOUND = {
   namespace: "errors",
   key: "template_not_found",
+}
+
+export const ERROR_CHECKLIST_CREATE_FAILED = {
+  namespace: "errors",
+  key: "checklist_create_failed",
+}
+
+export const ERROR_CHECKLIST_UPDATE_FAILED = {
+  namespace: "errors",
+  key: "checklist_update_failed",
+}
+
+export const ERROR_CHECKLIST_NOT_FOUND = {
+  namespace: "errors",
+  key: "checklist_not_found",
 }
 
 export const MODEL_MAP = {

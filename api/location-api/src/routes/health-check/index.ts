@@ -9,7 +9,7 @@ healthcheckRoutes.openapi(healthCheck, (c) => {
   try {
     const {
       DOMAIN,
-      INTL_URL,
+      INTL_API_URL,
       LOCATION_API_KEY,
       LOCATION_URL,
       WEATHER_API_KEY,
@@ -40,9 +40,9 @@ healthcheckRoutes.openapi(healthCheck, (c) => {
       status = "DOWN"
       missing.push("WEATHER_URL")
     }
-    if (!INTL_URL) {
+    if (!INTL_API_URL) {
       status = "DOWN"
-      missing.push("INTL_URL")
+      missing.push("INTL_API_URL")
     }
 
     return c.json(

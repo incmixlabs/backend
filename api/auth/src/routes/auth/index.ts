@@ -29,6 +29,7 @@ import {
   ConflictError,
   ForbiddenError,
   NotFoundError,
+  ServerError,
   UnauthorizedError,
   processError,
   zodError,
@@ -100,7 +101,7 @@ authRoutes.openapi(getUser, async (c) => {
         id: searchedUser.id,
         userType: searchedUser.userType,
         email: searchedUser.email,
-        emailVerified: Boolean(searchedUser.emailVerified),
+        emailVerified: !!searchedUser.emailVerifiedAt,
       },
       200
     )
@@ -127,13 +128,6 @@ authRoutes.openapi(signup, async (c) => {
     if (existing) throw new ConflictError(msg)
     const userId = generateId(15)
 
-    const verificationCode = await generateVerificationCode(
-      c,
-      userId,
-      email,
-      "email_verification"
-    )
-    sendVerificationEmail(c, email, verificationCode)
     const db = c.get("db")
 
     const { profile, user } = await db.transaction().execute(async (tx) => {
@@ -142,13 +136,22 @@ authRoutes.openapi(signup, async (c) => {
         {
           id: userId,
           email,
-          emailVerified: false,
+          emailVerifiedAt: null,
           userType: UserRoles.ROLE_MEMBER,
         },
         fullName,
         password,
         tx
       )
+
+      const verificationCode = await generateVerificationCode(
+        c,
+        userId,
+        email,
+        "email_verification",
+        tx
+      )
+      sendVerificationEmail(c, email, verificationCode)
 
       return { profile, user }
     })
@@ -158,7 +161,7 @@ authRoutes.openapi(signup, async (c) => {
         id: user.id,
         userType: user.userType,
         email: user.email,
-        emailVerified: Boolean(user.emailVerified),
+        emailVerified: Boolean(user.emailVerifiedAt),
         name: fullName,
         localeId: profile?.localeId ?? 1,
         profileImage: profile?.profileImage ?? null,
@@ -194,7 +197,7 @@ authRoutes.openapi(login, async (c) => {
       const msg = await t.text(ACC_DISABLED)
       throw new ForbiddenError(msg)
     }
-    if (!user.emailVerified) {
+    if (!user.emailVerifiedAt) {
       const msg = await t.text(VERIFIY_REQ)
       throw new ForbiddenError(msg)
     }
@@ -205,7 +208,7 @@ authRoutes.openapi(login, async (c) => {
         id: user.id,
         userType: user.userType,
         email: user.email,
-        emailVerified: Boolean(user.emailVerified),
+        emailVerified: !!user.emailVerifiedAt,
         session,
       },
       200
@@ -274,7 +277,7 @@ authRoutes.openapi(checkEmailVerification, async (c) => {
   try {
     const { email } = c.req.valid("json")
     const user = await findUserByEmail(c, email)
-    return c.json({ isEmailVerified: Boolean(user.emailVerified) }, 200)
+    return c.json({ isEmailVerified: !!user.emailVerifiedAt }, 200)
   } catch (error) {
     if (error instanceof NotFoundError) {
       return c.json({ message: "User not found" }, 404)

@@ -1,5 +1,4 @@
 import { envVars } from "@/env-vars"
-import { db } from "@/lib/db"
 import { healthCheck } from "@/routes/health-check/openapi"
 import type { HonoApp } from "@/types"
 import { OpenAPIHono } from "@hono/zod-openapi"
@@ -8,7 +7,7 @@ const healthcheckRoutes = new OpenAPIHono<HonoApp>()
 
 healthcheckRoutes.openapi(healthCheck, async (c) => {
   try {
-    await db.selectFrom("emailQueue").selectAll().execute()
+    await c.get("db").selectFrom("emailQueue").selectAll().execute()
 
     const { SENDGRID_API_KEY, SENDGRID_WEBHOOK_KEY } = envVars
 

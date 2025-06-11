@@ -123,7 +123,7 @@ oAuthRoutes.openapi(googleCallback, async (c) => {
       const msg = await t.text(ACC_DISABLED)
       throw new ForbiddenError(msg)
     }
-    if (!user.emailVerified) {
+    if (!user.emailVerifiedAt) {
       const msg = await t.text(VERIFIY_REQ)
       throw new ForbiddenError(msg)
     }
@@ -132,7 +132,7 @@ oAuthRoutes.openapi(googleCallback, async (c) => {
     return c.json(
       {
         email: user.email,
-        emailVerified: Boolean(user.emailVerified),
+        emailVerified: Boolean(user.emailVerifiedAt),
         userType: user.userType,
         id: user.id,
         session,

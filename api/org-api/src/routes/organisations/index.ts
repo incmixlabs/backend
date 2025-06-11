@@ -90,6 +90,8 @@ orgRoutes.openapi(getOrganisation, async (c) => {
         id: org.id,
         name: org.name,
         handle: org.handle,
+        createdAt: org.createdAt,
+        updatedAt: org.updatedAt,
         members: org.members,
       },
       200
@@ -225,7 +227,13 @@ orgRoutes.openapi(createOrganisation, async (c) => {
       throw new ServerError(msg)
     }
 
-    const newOrg = await insertOrganisation(c, { id: orgId, name, handle })
+    const newOrg = await insertOrganisation(c, {
+      id: orgId,
+      name,
+      handle,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    })
 
     if (!newOrg) {
       const msg = await t.text(ERROR_ORG_CREATE_FAIL)

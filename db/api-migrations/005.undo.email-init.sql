@@ -1,6 +1,5 @@
 BEGIN;
 
-DROP INDEX IF EXISTS idx_email_queue_created_at;
 
 DROP INDEX IF EXISTS idx_email_queue_status;
 

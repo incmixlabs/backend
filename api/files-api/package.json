@@ -6,7 +6,6 @@
     "dev": "tsx watch --env-file=.env src/index.ts",
     "start": "node dist/src/index.js",
     "build": "tsc && tsc-alias",
-    "deploy": "wrangler deploy dist/index.js --no-bundle",
     "test": "vitest --run",
     "test:e2e": "playwright test"
   },

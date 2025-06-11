@@ -11,11 +11,11 @@ import { createHealthCheckRoute } from "@incmix-api/utils"
 const healthcheckRoutes = createHealthCheckRoute<HonoApp>({
   // Pass all environment variables to check
   envVars: {
-    AUTH_URL: envVars.AUTH_URL,
+    AUTH_API_URL: envVars.AUTH_API_URL,
     BUCKET_NAME: envVars.BUCKET_NAME,
     COOKIE_NAME: envVars.COOKIE_NAME,
     DOMAIN: envVars.DOMAIN,
-    INTL_URL: envVars.INTL_URL,
+    INTL_API_URL: envVars.INTL_API_URL,
     AWS_ACCESS_KEY_ID: envVars.AWS_ACCESS_KEY_ID,
     AWS_SECRET_ACCESS_KEY: envVars.AWS_SECRET_ACCESS_KEY,
     AWS_REGION: envVars.AWS_REGION,

@@ -30,6 +30,7 @@ export function initDb(connectionString: string) {
       max: 10,
     }),
   })
+
   return new Kysely<Database>({
     dialect,
     plugins: [
@@ -46,3 +47,4 @@ export * from "./tasks"
 export * from "./gen-ai"
 export * from "./email"
 export * from "./intl"
+export * from "./custom-types"

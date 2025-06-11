@@ -1,4 +1,10 @@
-import type { Generated, Insertable, Selectable, Updateable } from "kysely"
+import type {
+  ColumnType,
+  Generated,
+  Insertable,
+  Selectable,
+  Updateable,
+} from "kysely"
 
 export const emailTemplateNames = [
   "VerificationEmail",
@@ -14,8 +20,11 @@ type EmailQueueTable = {
   template: EmailTemplateName
   payload: string
   status: Status
-  sgId?: string
+  sgId: string | null
+  sendgridData: string | null
   shouldRetry: boolean
+  createdAt: ColumnType<Date, string, never>
+  updatedAt: ColumnType<Date, string, never>
 }
 
 export type EmailQueue = Selectable<EmailQueueTable>

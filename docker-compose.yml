@@ -4,7 +4,6 @@ services:
     build:
       context: .
       dockerfile: db/Dockerfile
-    # image: sibedge/postgres-plv8-bigint:17.4-3.2.3
     restart: always
     environment:
       POSTGRES_DB: incmix
@@ -14,7 +13,8 @@ services:
       # POSTGRES_EXTENSIONS: plv8, btree_gist, hstore, pgvector, pgcrypto, CITEXT, pg_trgm, pg_cron, plpython3u
     ports:
       - 54321:5432
-    # volumes:
+    volumes:
+      - incmix-db-data:/var/lib/postgresql/data
       # - ./postgres.conf:/etc/postgresql/postgresql.conf:ro
     # tmpfs:
       # - /var/lib/postgresql/data
@@ -32,3 +32,6 @@ services:
       - 3000:3000
     depends_on:
       - postgres
+
+volumes:
+  incmix-db-data:
