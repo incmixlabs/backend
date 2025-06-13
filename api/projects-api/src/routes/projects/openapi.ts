@@ -1,15 +1,13 @@
 import { createRoute } from "@hono/zod-openapi"
-import { BoardSchema, ColumnSchema } from "@incmix/utils/types"
+import { BoardSchema, ColumnSchema, ProjectSchema } from "@incmix/utils/types"
 import { ResponseSchema } from "../types"
 import {
   AddProjectChecklistSchema,
   AddProjectMemberSchema,
-  ColumnIdSchema,
   CreateColumnSchema,
   CreateProjectSchema,
-  OrgIdSchema,
-  ProjectIdSchema,
-  ProjectSchema,
+  IdSchema,
+  ParentColumnIdSchema,
   RemoveProjectChecklistSchema,
   RemoveProjectMemberSchema,
   UpdateColumnSchema,
@@ -120,12 +118,12 @@ export const createColumn = createRoute({
   },
 })
 
-export const getProjects = createRoute({
+export const listProjects = createRoute({
   path: "/",
   method: "get",
-  summary: "Get Projects",
+  summary: "List Projects",
   tags: ["Projects"],
-  description: "Get Projects using organization ID",
+  description: "List Projects for current user",
   security: [{ cookieAuth: [] }],
   responses: {
     200: {
@@ -134,10 +132,11 @@ export const getProjects = createRoute({
           schema: ProjectSchema.omit({
             members: true,
             checklists: true,
+            comments: true,
           }).array(),
         },
       },
-      description: "Returs list of projects",
+      description: "Returns list of projects",
     },
     401: {
       content: {
@@ -167,13 +166,14 @@ export const getProjects = createRoute({
 })
 
 export const addProjectMembers = createRoute({
-  path: "/members",
+  path: "/{id}/members",
   method: "post",
   summary: "Add Project Member",
   tags: ["Projects"],
-  description: "Add Project Member",
+  description: "Add Project Member to project",
   security: [{ cookieAuth: [] }],
   request: {
+    params: IdSchema,
     body: {
       content: {
         "application/json": {
@@ -227,13 +227,14 @@ export const addProjectMembers = createRoute({
 })
 
 export const removeProjectMembers = createRoute({
-  path: "/members",
+  path: "/{id}/members",
   method: "delete",
   summary: "Remove Project Member",
   tags: ["Projects"],
-  description: "Remove Project Member",
+  description: "Remove Project Member from project",
   security: [{ cookieAuth: [] }],
   request: {
+    params: IdSchema,
     body: {
       content: {
         "application/json": {
@@ -279,13 +280,14 @@ export const removeProjectMembers = createRoute({
 })
 
 export const updateProject = createRoute({
-  path: "",
+  path: "/{id}",
   method: "put",
   summary: "Update Project",
   tags: ["Projects"],
-  description: "Update Project",
+  description: "Update Project using ID",
   security: [{ cookieAuth: [] }],
   request: {
+    params: IdSchema,
     body: {
       content: {
         "application/json": {
@@ -332,14 +334,14 @@ export const updateProject = createRoute({
 })
 
 export const deleteProject = createRoute({
-  path: "/{projectId}",
+  path: "/{id}",
   method: "delete",
   summary: "Delete Project",
   tags: ["Projects"],
   description: "Delete Project",
   security: [{ cookieAuth: [] }],
   request: {
-    params: ProjectIdSchema,
+    params: IdSchema,
   },
   responses: {
     200: {
@@ -378,16 +380,16 @@ export const deleteProject = createRoute({
   },
 })
 
-export const getColumns = createRoute({
-  path: "/columns/{projectId}",
+export const listColumns = createRoute({
+  path: "/columns/{id}",
   method: "get",
-  summary: "Get Columns",
+  summary: "List Columns",
   tags: ["Projects"],
-  description: "Get Columns using project ID",
+  description: "List Columns for project",
   security: [{ cookieAuth: [] }],
   request: {
-    params: ProjectIdSchema,
-    query: ColumnIdSchema,
+    params: IdSchema,
+    query: ParentColumnIdSchema,
   },
   responses: {
     200: {
@@ -396,7 +398,7 @@ export const getColumns = createRoute({
           schema: ColumnSchema.array(),
         },
       },
-      description: "Returs list of Columns",
+      description: "Returns list of Columns",
     },
     401: {
       content: {
@@ -426,14 +428,14 @@ export const getColumns = createRoute({
 })
 
 export const updateColumn = createRoute({
-  path: "/columns/{columnId}",
+  path: "/columns/{id}",
   method: "put",
   summary: "Update Column",
   tags: ["Projects"],
   description: "Update Column",
   security: [{ cookieAuth: [] }],
   request: {
-    params: ColumnIdSchema,
+    params: IdSchema,
     body: {
       content: {
         "application/json": {
@@ -480,14 +482,14 @@ export const updateColumn = createRoute({
 })
 
 export const deleteColumn = createRoute({
-  path: "/columns/{columnId}",
+  path: "/columns/{id}",
   method: "delete",
   summary: "Delete Column",
   tags: ["Projects"],
   description: "Delete Column",
   security: [{ cookieAuth: [] }],
   request: {
-    params: ColumnIdSchema,
+    params: IdSchema,
   },
   responses: {
     200: {
@@ -526,15 +528,15 @@ export const deleteColumn = createRoute({
   },
 })
 
-export const getBoard = createRoute({
-  path: "/board/{projectId}",
+export const getBoardData = createRoute({
+  path: "/board/{id}",
   method: "get",
-  summary: "Get Board",
+  summary: "Get Board Data",
   tags: ["Projects"],
-  description: "Get Data for Creating KanBan Board",
+  description: "Get Data for Creating KanBan Board for project",
   security: [{ cookieAuth: [] }],
   request: {
-    params: ProjectIdSchema,
+    params: IdSchema,
   },
   responses: {
     200: {
@@ -543,7 +545,7 @@ export const getBoard = createRoute({
           schema: BoardSchema,
         },
       },
-      description: "Data for generating KanBan Board",
+      description: "Data for generating KanBan Board for project",
     },
     401: {
       content: {
@@ -573,13 +575,14 @@ export const getBoard = createRoute({
 })
 
 export const addProjectChecklist = createRoute({
-  path: "/checklists",
+  path: "/{id}/checklists",
   method: "post",
   summary: "Add Project Checklist",
   tags: ["Projects"],
   description: "Add a new checklist item to a project",
   security: [{ cookieAuth: [] }],
   request: {
+    params: IdSchema,
     body: {
       content: {
         "application/json": {
@@ -625,13 +628,14 @@ export const addProjectChecklist = createRoute({
 })
 
 export const updateProjectChecklist = createRoute({
-  path: "/checklists",
+  path: "/{id}/checklists",
   method: "put",
   summary: "Update Project Checklist",
   tags: ["Projects"],
   description: "Update an existing checklist item in a project",
   security: [{ cookieAuth: [] }],
   request: {
+    params: IdSchema,
     body: {
       content: {
         "application/json": {
@@ -677,13 +681,14 @@ export const updateProjectChecklist = createRoute({
 })
 
 export const removeProjectChecklist = createRoute({
-  path: "/checklists",
+  path: "/{id}/checklists",
   method: "delete",
   summary: "Remove Project Checklist",
   tags: ["Projects"],
   description: "Remove checklist items from a project",
   security: [{ cookieAuth: [] }],
   request: {
+    params: IdSchema,
     body: {
       content: {
         "application/json": {

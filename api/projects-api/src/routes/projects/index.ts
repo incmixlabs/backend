@@ -46,9 +46,9 @@ import {
   createProject,
   deleteColumn,
   deleteProject,
-  getBoard,
-  getColumns,
-  getProjects,
+  getBoardData,
+  listColumns,
+  listProjects,
   removeProjectChecklist,
   removeProjectMembers,
   updateColumn,
@@ -209,7 +209,8 @@ projectRoutes.openapi(addProjectMembers, async (c) => {
       const msg = await t.text(ERROR_UNAUTHORIZED)
       throw new UnauthorizedError(msg)
     }
-    const { projectId, members } = c.req.valid("json")
+    const { members } = c.req.valid("json")
+    const { id: projectId } = c.req.valid("param")
     const existingProject = await getProjectWithMembers(c, projectId)
     if (!existingProject) {
       const msg = await t.text(ERROR_PROJECT_NOT_FOUND)
@@ -276,7 +277,8 @@ projectRoutes.openapi(removeProjectMembers, async (c) => {
       const msg = await t.text(ERROR_UNAUTHORIZED)
       throw new UnauthorizedError(msg)
     }
-    const { projectId, memberIds } = c.req.valid("json")
+    const { memberIds } = c.req.valid("json")
+    const { id: projectId } = c.req.valid("param")
     const existingProject = await getProjectWithMembers(c, projectId)
     if (!existingProject) {
       const msg = await t.text(ERROR_PROJECT_NOT_FOUND)
@@ -340,8 +342,8 @@ projectRoutes.openapi(updateProject, async (c) => {
         name,
         description,
         budgetEstimate,
-        currentTimelineStartDate,
-        currentTimelineEndDate,
+        currentTimelineStartDate: currentTimelineStartDate?.toISOString(),
+        currentTimelineEndDate: currentTimelineEndDate?.toISOString(),
         company,
         updatedBy: user.id,
         updatedAt: new Date().toISOString(),
@@ -373,7 +375,7 @@ projectRoutes.openapi(deleteProject, async (c) => {
       const msg = await t.text(ERROR_UNAUTHORIZED)
       throw new UnauthorizedError(msg)
     }
-    const { projectId } = c.req.valid("param")
+    const { id: projectId } = c.req.valid("param")
 
     const deletedProject = await c
       .get("db")
@@ -551,7 +553,7 @@ projectRoutes.openapi(deleteColumn, async (c) => {
       const msg = await t.text(ERROR_UNAUTHORIZED)
       throw new UnauthorizedError(msg)
     }
-    const { columnId } = c.req.valid("param")
+    const { id: columnId } = c.req.valid("param")
     if (!columnId) {
       const msg = await t.text(ERROR_COLUMN_NOT_FOUND)
       throw new UnprocessableEntityError(msg)
@@ -580,7 +582,7 @@ projectRoutes.openapi(deleteColumn, async (c) => {
   }
 })
 
-projectRoutes.openapi(getProjects, async (c) => {
+projectRoutes.openapi(listProjects, async (c) => {
   try {
     const user = c.get("user")
     const t = await useTranslation(c)
@@ -617,14 +619,14 @@ projectRoutes.openapi(getProjects, async (c) => {
 
     return c.json(projects, 200)
   } catch (error) {
-    return await processError<typeof getProjects>(c, error, [
+    return await processError<typeof listProjects>(c, error, [
       "{{ default }}",
-      "get-projects",
+      "list-projects",
     ])
   }
 })
 
-projectRoutes.openapi(getColumns, async (c) => {
+projectRoutes.openapi(listColumns, async (c) => {
   try {
     const user = c.get("user")
     const t = await useTranslation(c)
@@ -632,7 +634,7 @@ projectRoutes.openapi(getColumns, async (c) => {
       const msg = await t.text(ERROR_UNAUTHORIZED)
       return c.json({ message: msg }, 401)
     }
-    const { projectId } = c.req.valid("param")
+    const { id: projectId } = c.req.valid("param")
 
     const project = await c
       .get("db")
@@ -645,16 +647,16 @@ projectRoutes.openapi(getColumns, async (c) => {
       throw new UnprocessableEntityError(msg)
     }
 
-    const { columnId } = c.req.valid("query")
+    const { parentColumnId } = c.req.valid("query")
     const columns = await c
       .get("db")
       .selectFrom("columns")
       .selectAll()
       .where((eb) => {
-        if (columnId?.length)
+        if (parentColumnId?.length)
           return eb.and([
             eb("projectId", "=", project.id),
-            eb("parentId", "=", columnId),
+            eb("parentId", "=", parentColumnId),
           ])
         return eb("projectId", "=", project.id)
       })
@@ -663,14 +665,14 @@ projectRoutes.openapi(getColumns, async (c) => {
 
     return c.json(columns, 200)
   } catch (error) {
-    return await processError<typeof getColumns>(c, error, [
+    return await processError<typeof listColumns>(c, error, [
       "{{ default }}",
-      "get-columns",
+      "list-columns",
     ])
   }
 })
 
-projectRoutes.openapi(getBoard, async (c) => {
+projectRoutes.openapi(getBoardData, async (c) => {
   try {
     const user = c.get("user")
     const t = await useTranslation(c)
@@ -678,7 +680,7 @@ projectRoutes.openapi(getBoard, async (c) => {
       const msg = await t.text(ERROR_UNAUTHORIZED)
       return c.json({ message: msg }, 401)
     }
-    const { projectId } = c.req.valid("param")
+    const { id: projectId } = c.req.valid("param")
 
     const board = await generateBoard(c, projectId)
     if (!board) {
@@ -688,9 +690,9 @@ projectRoutes.openapi(getBoard, async (c) => {
 
     return c.json(board, 200)
   } catch (error) {
-    return await processError<typeof getBoard>(c, error, [
+    return await processError<typeof getBoardData>(c, error, [
       "{{ default }}",
-      "get-board",
+      "get-board-data",
     ])
   }
 })
@@ -704,7 +706,8 @@ projectRoutes.openapi(addProjectChecklist, async (c) => {
       throw new UnauthorizedError(msg)
     }
 
-    const { projectId, checklist } = c.req.valid("json")
+    const { checklist } = c.req.valid("json")
+    const { id: projectId } = c.req.valid("param")
     const existingProject = await getProjectWithMembers(c, projectId)
     if (!existingProject) {
       const msg = await t.text(ERROR_PROJECT_NOT_FOUND)
@@ -755,7 +758,8 @@ projectRoutes.openapi(updateProjectChecklist, async (c) => {
       throw new UnauthorizedError(msg)
     }
 
-    const { id, checklist } = c.req.valid("json")
+    const { checklist } = c.req.valid("json")
+    const { id } = c.req.valid("param")
 
     const existingChecklist = await c
       .get("db")
@@ -817,7 +821,8 @@ projectRoutes.openapi(removeProjectChecklist, async (c) => {
       throw new UnauthorizedError(msg)
     }
 
-    const { projectId, checklistIds } = c.req.valid("json")
+    const { checklistIds } = c.req.valid("json")
+    const { id: projectId } = c.req.valid("param")
     const existingProject = await getProjectWithMembers(c, projectId)
     if (!existingProject) {
       const msg = await t.text(ERROR_PROJECT_NOT_FOUND)

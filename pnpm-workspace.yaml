@@ -20,14 +20,14 @@ catalog:
   tsc-alias: 1.8.11
   tsx: 4.19.3
   typescript: 5.7.3
-  zod: 3.23.8
+  zod: 3.24.2
   dotenv: 16.5.0
   dotenv-expand: 12.0.2
   "@casl/ability": 6.7.3
   "@hono/node-server": 1.13.8
-  "@hono/zod-openapi": 0.18.3
-  "@hono/zod-validator": 0.4.1
-  "@incmix/utils": 0.3.2
+  "@hono/zod-openapi": 0.19.8
+  "@hono/zod-validator": 0.7.0
+  "@incmix/utils": 0.11.2
   "@playwright/test": 1.49.0
   "@types/lodash": 4.17.1
   "@types/luxon": 3.4.2

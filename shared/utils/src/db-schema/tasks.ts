@@ -1,5 +1,9 @@
+import type {
+  ChecklistStatus,
+  ProjectStatus,
+  TaskStatus,
+} from "@incmix/utils/types"
 import type { ColumnType, Insertable, Selectable, Updateable } from "kysely"
-import type { ChecklistStatus, ProjectStatus, TaskStatus } from "./custom-types"
 
 type TasksTable = {
   id: string
@@ -87,6 +91,26 @@ type TaskChecklistsTable = {
   status: ChecklistStatus
 }
 
+type CommentsTable = {
+  id: string
+  content: string
+  userId: string
+  createdBy: ColumnType<string, string, never>
+  updatedBy: ColumnType<string, string, string>
+  createdAt: ColumnType<Date, string, never>
+  updatedAt: ColumnType<Date, string, string>
+}
+
+type ProjectCommentsTable = {
+  projectId: string
+  commentId: string
+}
+
+type TaskCommentsTable = {
+  taskId: string
+  commentId: string
+}
+
 export type Task = Selectable<TasksTable>
 export type NewTask = Insertable<TasksTable>
 export type UpdatedTask = Updateable<TasksTable>
@@ -111,6 +135,18 @@ export type TaskChecklist = Selectable<TaskChecklistsTable>
 export type NewTaskChecklist = Insertable<TaskChecklistsTable>
 export type UpdatedTaskChecklist = Updateable<TaskChecklistsTable>
 
+export type Comment = Selectable<CommentsTable>
+export type NewComment = Insertable<CommentsTable>
+export type UpdatedComment = Updateable<CommentsTable>
+
+export type ProjectComment = Selectable<ProjectCommentsTable>
+export type NewProjectComment = Insertable<ProjectCommentsTable>
+export type UpdatedProjectComment = Updateable<ProjectCommentsTable>
+
+export type TaskComment = Selectable<TaskCommentsTable>
+export type NewTaskComment = Insertable<TaskCommentsTable>
+export type UpdatedTaskComment = Updateable<TaskCommentsTable>
+
 export const tables = [
   "projects",
   "columns",
@@ -118,6 +154,9 @@ export const tables = [
   "projectMembers",
   "projectChecklists",
   "taskChecklists",
+  "comments",
+  "projectComments",
+  "taskComments",
 ]
 
 export type TasksTables = {
@@ -127,4 +166,7 @@ export type TasksTables = {
   projectMembers: ProjectMembersTable
   projectChecklists: ProjectChecklistsTable
   taskChecklists: TaskChecklistsTable
+  comments: CommentsTable
+  projectComments: ProjectCommentsTable
+  taskComments: TaskCommentsTable
 }

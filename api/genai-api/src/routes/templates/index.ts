@@ -10,7 +10,6 @@ import {
   zodError,
 } from "@incmix-api/utils/errors"
 import { useTranslation } from "@incmix-api/utils/middleware"
-import { Hono } from "hono"
 import {
   generateStoryTemplate,
   getStoryTemplates,

@@ -14,22 +14,19 @@ import { z } from "zod"
 
 const EnvSchema = z.object({
   NODE_ENV: z.string().default("development"),
-  PORT: z.coerce.number().default(8080),
+  PORT: z.coerce.number().default(8787),
+  DATABASE_URL: z.string().url(),
+  COOKIE_NAME: z.string().default("incmix_session"),
+  INTL_API_URL: z.string().url(),
   AUTH_API_URL: z.string().url(),
   ORG_API_URL: z.string().url(),
-  INTL_API_URL: z.string().url(),
-  GENAI_API_URL: z.string().url(),
-  PROJECTS_API_URL: z.string().url(),
-  TASKS_API_URL: z.string().url(),
-  USERS_API_URL: z.string().url(),
-  FILES_API_URL: z.string().url(),
-  EMAIL_API_URL: z.string().url(),
-  LOCATION_API_URL: z.string().url(),
-  COOKIE_NAME: z.string().default("incmix_session"),
   DOMAIN: z.string().default("localhost"),
+  ANTHROPIC_API_KEY: z.string().optional(),
+  GOOGLE_AI_API_KEY: z.string().optional(),
+  FIGMA_TOKEN: z.string().optional(),
 })
 
-export type env = z.infer<typeof EnvSchema>
+export type ENV = z.infer<typeof EnvSchema>
 
 const { data: env, error } = EnvSchema.safeParse(process.env)
 
