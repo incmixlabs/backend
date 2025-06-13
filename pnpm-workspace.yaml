@@ -4,7 +4,6 @@ packages:
   - db/
 
 catalog:
-  esbuil: 0.25.2
   hono: 4.6.16
   lodash: 4.17.21
   lucia: 3.2.2

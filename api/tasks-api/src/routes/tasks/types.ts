@@ -5,16 +5,17 @@ export const TaskIdSchema = z
   .object({
     taskId: z
       .string()
-      .openapi({ example: "1", param: { name: "id", in: "path" } }),
+      .openapi({ example: "1", param: { name: "taskId", in: "path" } }),
   })
-  .openapi("Params")
+  .openapi("Task Params")
+
 export const ChecklistIdSchema = z
   .object({
     checklistId: z
       .string()
-      .openapi({ example: "1", param: { name: "id", in: "path" } }),
+      .openapi({ example: "1", param: { name: "checklistId", in: "path" } }),
   })
-  .openapi("Params")
+  .openapi("Checklist Params")
 
 export const TaskListSchema = z.array(
   TaskSchema.omit({
