@@ -45,8 +45,6 @@ RUN pnpm install --frozen-lockfile --prod
 # Copy built files from builder stage
 COPY --from=builder /app/shared/utils/dist ./shared/utils/dist
 COPY --from=builder /app/api/genai-api/dist ./api/genai-api/dist
-COPY --from=builder /app/api/genai-api/.config ./api/genai-api/.config
-COPY --from=builder /app/api/genai-api/migrations ./api/genai-api/migrations
 WORKDIR /app/api/genai-api
 
 # Expose port 8888 (matches the port in src/index.ts)

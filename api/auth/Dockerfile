@@ -45,8 +45,6 @@ RUN pnpm install --frozen-lockfile --prod
 # Copy built files from builder stage
 COPY --from=builder /app/shared/utils/dist ./shared/utils/dist
 COPY --from=builder /app/api/auth/dist ./api/auth/dist
-COPY --from=builder /app/api/auth/.config ./api/auth/.config
-COPY --from=builder /app/api/auth/migrations ./api/auth/migrations
 
 WORKDIR /app/api/auth
 

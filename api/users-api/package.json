@@ -3,9 +3,10 @@
   "type": "module",
   "scripts": {
     "dev": "tsx watch --env-file=.env src/index.ts",
-    "start": "node dist/src/index.js",
+    "start": "node ./dist/index.js",
     "build": "tsc && tsc-alias",
-    "test": "vitest --run"
+    "test": "vitest --run",
+    "clean": "rm -rf dist"
   },
   "dependencies": {
     "@hono/node-server": "catalog:",

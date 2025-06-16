@@ -1,18 +1,22 @@
 {
   "extends": "@incmix-api/config/hono.json",
   "compilerOptions": {
-    "baseUrl": ".",
+    "baseUrl": "./",
+    "outDir": "./dist",
     "paths": {
-      "@": ["./src/index.ts"],
-      "@/*": ["./src/*"],
-      "@/test/*": ["./test/*"],
-      "@/e2e/*": ["./e2e/*"]
-    },
-    "outDir": "dist"
+      "@/*": ["./src/*"]
+    }
   },
   "tsc-alias": {
     "resolveFullPaths": true
   },
-  "include": ["./**/*.ts", "../src/env.d.ts"],
-  "exclude": ["node_modules", "e2e"]
+  "include": ["src/**/*.ts"],
+  "exclude": [
+    "node_modules",
+    "e2e",
+    "test",
+    "**/test/**",
+    "**/e2e/**",
+    "playwright.config.ts"
+  ]
 }

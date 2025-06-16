@@ -45,8 +45,6 @@ RUN pnpm install --frozen-lockfile --prod
 # Copy built files from builder stage
 COPY --from=builder /app/shared/utils/dist ./shared/utils/dist
 COPY --from=builder /app/api/users-api/dist ./api/users-api/dist
-COPY --from=builder /app/api/users-api/.config ./api/users-api/.config
-COPY --from=builder /app/api/users-api/migrations ./api/users-api/migrations
 WORKDIR /app/api/users-api
 
 # Expose port 9191 (matches the port in src/index.ts)

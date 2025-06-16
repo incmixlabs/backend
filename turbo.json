@@ -3,8 +3,8 @@
   "globalDependencies": ["**/.env.*local"],
   "tasks": {
     "build": {
-      "dependsOn": ["^build"],
-      "outputs": ["dist/**"]
+      "dependsOn": ["clean", "^build"],
+      "outputs": ["dist/**", "!dist/**/test/**", "!dist/**/e2e/**"]
     },
     "test": {},
     "@incmix-api/tasks-api#test:e2e": {

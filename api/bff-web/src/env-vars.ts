@@ -29,7 +29,7 @@ const EnvSchema = z.object({
   DOMAIN: z.string().default("localhost"),
 })
 
-export type env = z.infer<typeof EnvSchema>
+export type Env = z.infer<typeof EnvSchema>
 
 const { data: env, error } = EnvSchema.safeParse(process.env)
 

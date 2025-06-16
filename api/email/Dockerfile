@@ -45,8 +45,6 @@ RUN pnpm install --frozen-lockfile --prod
 # Copy built files from builder stage
 COPY --from=builder /app/shared/utils/dist ./shared/utils/dist
 COPY --from=builder /app/api/email/dist ./api/email/dist
-COPY --from=builder /app/api/email/.config ./api/email/.config
-COPY --from=builder /app/api/email/migrations ./api/email/migrations
 WORKDIR /app/api/email
 
 # Expose port 8989 (matches the port in src/index.ts)

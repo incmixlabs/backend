@@ -1,4 +1,6 @@
 name: "incmix"
+
+
 services:
   postgres:
     build:
@@ -12,26 +14,13 @@ services:
       PGDATA: /var/lib/postgresql/data
       # POSTGRES_EXTENSIONS: plv8, btree_gist, hstore, pgvector, pgcrypto, CITEXT, pg_trgm, pg_cron, plpython3u
     ports:
-      - 54321:5432
+      - 5432:5432
     volumes:
       - incmix-db-data:/var/lib/postgresql/data
-      # - ./postgres.conf:/etc/postgresql/postgresql.conf:ro
-    # tmpfs:
-      # - /var/lib/postgresql/data
-      # - /tmp
-    # command:
-    #   - postgres
-    #   - -c
-    #   - config_file=/etc/postgresql/postgresql.conf
-  backend:
-    image: electricsql/electric
-    environment:
-      DATABASE_URL: postgresql://postgres:password@postgres:5432/incmix?sslmode=disable
-      ELECTRIC_INSECURE: true
-    ports:
-      - 3000:3000
-    depends_on:
-      - postgres
-
+    networks:
+      - incmix-network
 volumes:
   incmix-db-data:
+
+networks:
+  incmix-network:

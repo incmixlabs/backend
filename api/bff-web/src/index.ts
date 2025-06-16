@@ -1,17 +1,18 @@
-import { OpenAPIHono } from "@hono/zod-openapi"
 import { NotFoundError } from "@incmix-api/utils/errors"
 import { setupCors } from "@incmix-api/utils/middleware"
 
 import { serve } from "@hono/node-server"
 import { API } from "@incmix/utils/env"
+import { Hono } from "hono"
+import { env } from "hono/adapter"
 import { compress } from "hono/compress"
 import { envVars } from "./env-vars"
 import type { HonoApp } from "./types"
 import { returnResponse } from "./utils"
 
-const app = new OpenAPIHono<HonoApp>()
+const app = new Hono<HonoApp>()
 
-setupCors(app, "/api")
+setupCors(app as any, "/api")
 
 app.use("*", compress({ encoding: "gzip" }))
 app.get("/api/timestamp", (c) => {
@@ -23,44 +24,35 @@ app.get("/api/timestamp-nano", (c) => {
   return c.json({ time: currentTimeInNanoseconds })
 })
 app.get("/api/healthcheck", async (c) => {
-  const auth = await fetch(`${envVars.AUTH_API_URL}${API.AUTH}/healthcheck`, {
+  const auth = await fetch(`${env(c).AUTH_API_URL}${API.AUTH}/healthcheck`, {
     method: "get",
   }).then(async (res) => await res.json())
 
-  const email = await fetch(
-    `${envVars.EMAIL_API_URL}${API.EMAIL}/healthcheck`,
-    {
-      method: "get",
-    }
-  ).then(async (res) => await res.json())
-
-  const files = await fetch(
-    `${envVars.FILES_API_URL}${API.FILES}/healthcheck`,
-    {
-      method: "get",
-    }
-  ).then(async (res) => await res.json())
-
-  const intl = await fetch(`${envVars.INTL_API_URL}${API.INTL}/healthcheck`, {
+  const email = await fetch(`${env(c).EMAIL_API_URL}${API.EMAIL}/healthcheck`, {
     method: "get",
   }).then(async (res) => await res.json())
 
-  const org = await fetch(`${envVars.ORG_API_URL}${API.ORG}/healthcheck`, {
+  const files = await fetch(`${env(c).FILES_API_URL}${API.FILES}/healthcheck`, {
     method: "get",
   }).then(async (res) => await res.json())
 
-  const users = await fetch(
-    `${envVars.USERS_API_URL}${API.USERS}/healthcheck`,
-    {
-      method: "get",
-    }
-  ).then(async (res) => await res.json())
+  const intl = await fetch(`${env(c).INTL_API_URL}${API.INTL}/healthcheck`, {
+    method: "get",
+  }).then(async (res) => await res.json())
 
-  const todo = await fetch(`${envVars.TASKS_API_URL}${API.TASKS}/healthcheck`, {
+  const org = await fetch(`${env(c).ORG_API_URL}${API.ORG}/healthcheck`, {
+    method: "get",
+  }).then(async (res) => await res.json())
+
+  const users = await fetch(`${env(c).USERS_API_URL}${API.USERS}/healthcheck`, {
+    method: "get",
+  }).then(async (res) => await res.json())
+
+  const todo = await fetch(`${env(c).TASKS_API_URL}${API.TASKS}/healthcheck`, {
     method: "get",
   }).then(async (res) => await res.json())
   const location = await fetch(
-    `${envVars.LOCATION_API_URL}${API.LOCATION}/healthcheck`,
+    `${env(c).LOCATION_API_URL}${API.LOCATION}/healthcheck`,
     { method: "get" }
   ).then(async (res) => await res.json())
 
@@ -79,40 +71,6 @@ app.get("/api/healthcheck", async (c) => {
   )
 })
 app.get("/api/rate-limits", async (c) => {
-  // const auth = await envVars.AUTH_API.fetch(
-  //   `${envVars.AUTH_API_URL}${AUTH_BASE_PATH}/rate-limits`,
-  //   { method: "get" }
-  // ).then(async (res) => await res.json())
-
-  // const email = await envVars.EMAIL_API.fetch(
-  //   `${envVars.EMAIL_API_URL}${EMAIL_BASE_PATH}/rate-limits`,
-  //   { method: "get" }
-  // ).then(async (res) => await res.json())
-
-  // const files = await envVars.FILES_API.fetch(
-  //   `${envVars.FILES_API_URL}${FILES_BASE_PATH}/rate-limits`,
-  //   { method: "get" }
-  // ).then(async (res) => await res.json())
-
-  // const intl = await envVars.INTL_API.fetch(
-  //   `${envVars.INTL_API_URL}${INTL_BASE_PATH}/rate-limits`,
-  //   { method: "get" }
-  // ).then(async (res) => await res.json())
-
-  // const org = await envVars.ORG_API.fetch(
-  //   `${envVars.ORG_API_URL}${ORG_BASE_PATH}/rate-limits`,
-  //   { method: "get" }
-  // ).then(async (res) => await res.json())
-
-  // const users = await envVars.USERS_API.fetch(
-  //   `${envVars.USERS_API_URL}${USERS_BASE_PATH}/rate-limits`,
-  //   { method: "get" }
-  // ).then(async (res) => await res.json())
-
-  // const todo = await envVars.TODO_API.fetch(
-  //   `${envVars.TODO_API_URL}${TODO_BASE_PATH}/rate-limits`,
-  //   { method: "get" }
-  // ).then(async (res) => await res.json())
   const location = await fetch(
     `${envVars.LOCATION_API_URL}${API.LOCATION}/rate-limits`,
     {
@@ -141,71 +99,17 @@ app.all("/api/*", async (c) => {
   const searchParams = url.searchParams.toString()
   const queryString = searchParams ? `?${searchParams}` : ""
 
-  if (pathname.startsWith(API.AUTH)) {
-    const req = new Request(
-      `${envVars.AUTH_API_URL}${pathname}${queryString}`,
-      c.req.raw
-    )
-
-    const res = await fetch(req)
-    return returnResponse(res, c)
-  }
-  if (pathname.startsWith(API.ORG)) {
-    const req = new Request(
-      `${envVars.ORG_API_URL}${pathname}${queryString}`,
-      c.req.raw
-    )
-    const res = await fetch(req)
-
-    return returnResponse(res, c)
-  }
-  if (pathname.startsWith(API.USERS)) {
-    const req = new Request(
-      `${envVars.USERS_API_URL}${pathname}${queryString}`,
-      c.req.raw
-    )
-    const res = await fetch(req)
-    return returnResponse(res, c)
-  }
-  if (pathname.startsWith(API.INTL)) {
-    const req = new Request(
-      `${envVars.INTL_API_URL}${pathname}${queryString}`,
-      c.req.raw
-    )
-    const res = await fetch(req)
-    return returnResponse(res, c)
-  }
-  if (pathname.startsWith(API.TASKS)) {
-    const req = new Request(
-      `${envVars.TASKS_API_URL}${pathname}${queryString}`,
-      c.req.raw
-    )
-    const res = await fetch(req)
-    return returnResponse(res, c)
-  }
-  if (pathname.startsWith(API.PROJECTS)) {
-    const req = new Request(
-      `${envVars.PROJECTS_API_URL}${pathname}${queryString}`,
-      c.req.raw
-    )
-    const res = await fetch(req)
-    return returnResponse(res, c)
-  }
-  if (pathname.startsWith(API.GENAI)) {
-    const req = new Request(
-      `${envVars.GENAI_API_URL}${pathname}${queryString}`,
-      c.req.raw
-    )
-    const res = await fetch(req)
-    return returnResponse(res, c)
-  }
-  if (pathname.startsWith(API.LOCATION)) {
-    const req = new Request(
-      `${envVars.LOCATION_API_URL}${pathname}${queryString}`,
-      c.req.raw
-    )
-    const res = await fetch(req)
-    return returnResponse(res, c)
+  const apis = Object.entries(API)
+  for (const [key, api] of apis) {
+    if (pathname.startsWith(api)) {
+      const apiUrl = envVars[`${key}_API_URL` as keyof typeof envVars]
+      const req = new Request(
+        `${apiUrl}${pathname.replace(api, "")}${queryString}`,
+        c.req.raw
+      )
+      const res = await fetch(req)
+      return returnResponse(res, c)
+    }
   }
 
   throw new NotFoundError(`404: ${pathname} does not exist`)

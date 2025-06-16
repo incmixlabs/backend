@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "tsc && (concurrently \"tsc -w\" \"tsc-alias -w\")",
-    "build": "tsc && tsc-alias"
+    "build": "tsc && tsc-alias",
+    "clean": "rm -rf dist"
   },
   "exports": {
     ".": "./dist/src/utils/index.js",

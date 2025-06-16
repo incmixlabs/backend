@@ -45,8 +45,6 @@ RUN pnpm install --frozen-lockfile --prod
 # Copy built files from builder stage
 COPY --from=builder /app/shared/utils/dist ./shared/utils/dist
 COPY --from=builder /app/api/projects-api/dist ./api/projects-api/dist
-COPY --from=builder /app/api/projects-api/.config ./api/projects-api/.config
-COPY --from=builder /app/api/projects-api/migrations ./api/projects-api/migrations
 WORKDIR /app/api/projects-api
 
 # Expose port 8888 (matches the port in src/index.ts)

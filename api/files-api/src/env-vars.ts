@@ -26,7 +26,7 @@ const EnvSchema = z.object({
   AUTH_API_URL: z.string().url(),
 })
 
-export type env = z.infer<typeof EnvSchema>
+export type Env = z.infer<typeof EnvSchema>
 
 const { data: env, error } = EnvSchema.safeParse(process.env)
 
