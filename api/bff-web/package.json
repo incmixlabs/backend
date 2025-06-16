@@ -5,7 +5,8 @@
     "dev": "tsx watch --env-file=.env src/index.ts",
     "build": "tsc && tsc-alias",
     "start": "node ./dist/index.js",
-    "test": "vitest --run"
+    "test": "vitest --run",
+    "clean": "rm -rf dist"
   },
   "dependencies": {
     "@hono/node-server": "catalog:",

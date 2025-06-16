@@ -1,22 +1,20 @@
-import { createRoute, z } from "@hono/zod-openapi"
+import { createRoute } from "@hono/zod-openapi"
+import { TaskSchema } from "@incmix/utils/types"
 import { ResponseSchema } from "../types"
 import {
   AddTaskChecklistSchema,
+  ChecklistIdSchema,
   CreateTaskSchema,
-  FigmaSchema,
-  GenerateUserStorySchema,
-  ParamSchema,
   RemoveTaskChecklistSchema,
+  TaskIdSchema,
   TaskListSchema,
-  TaskSchema,
   UpdateTaskChecklistSchema,
   UpdateTaskSchema,
-  UserStoryResponseSchema,
 } from "./types"
 
 export const listTasks = createRoute({
   method: "get",
-  path: "",
+  path: "/",
   summary: "List Tasks",
   tags: ["Tasks"],
   security: [{ cookieAuth: [] }],
@@ -50,12 +48,12 @@ export const listTasks = createRoute({
 
 export const taskById = createRoute({
   method: "get",
-  path: "/id/{id}",
+  path: "/{taskId}",
   summary: "Get Task",
   tags: ["Tasks"],
   description: "Get Task by Id",
   request: {
-    params: ParamSchema,
+    params: TaskIdSchema,
   },
   security: [{ cookieAuth: [] }],
   responses: {
@@ -147,12 +145,12 @@ export const createTask = createRoute({
 
 export const updateTask = createRoute({
   method: "put",
-  path: "/{id}",
+  path: "/{taskId}",
   summary: "Update Task",
   tags: ["Tasks"],
   security: [{ cookieAuth: [] }],
   request: {
-    params: ParamSchema,
+    params: TaskIdSchema,
     body: {
       content: {
         "application/json": {
@@ -207,12 +205,12 @@ export const updateTask = createRoute({
 
 export const deleteTask = createRoute({
   method: "delete",
-  path: "/{id}",
+  path: "/{taskId}",
   summary: "Delete Task",
   tags: ["Tasks"],
   security: [{ cookieAuth: [] }],
   request: {
-    params: ParamSchema,
+    params: TaskIdSchema,
   },
   responses: {
     200: {
@@ -250,173 +248,15 @@ export const deleteTask = createRoute({
   },
 })
 
-export const generateUserStory = createRoute({
-  method: "post",
-  path: "/generate-user-story",
-  summary: "Generate User Story",
-  tags: ["Tasks"],
-  description:
-    "Generate a user story from a prompt using AI (Claude for paid users, Gemini for free)",
-  security: [{ cookieAuth: [] }],
-  request: {
-    body: {
-      content: {
-        "application/json": {
-          schema: GenerateUserStorySchema,
-        },
-      },
-    },
-  },
-  responses: {
-    200: {
-      content: {
-        "application/json": {
-          schema: UserStoryResponseSchema,
-        },
-      },
-      description: "Returns the generated user story in markdown format",
-    },
-    400: {
-      content: {
-        "application/json": {
-          schema: ResponseSchema,
-        },
-      },
-      description: "Error response when user story generation fails",
-    },
-    401: {
-      content: {
-        "application/json": {
-          schema: ResponseSchema,
-        },
-      },
-      description: "Error response when not authenticated",
-    },
-    500: {
-      content: {
-        "application/json": {
-          schema: ResponseSchema,
-        },
-      },
-      description: "Internal Server Error",
-    },
-  },
-})
-
-export const generateFromFigma = createRoute({
-  method: "post",
-  path: "/generate/figma",
-  summary: "Generate Task from Figma",
-  tags: ["Tasks"],
-  description:
-    "Generate a task from Figma URL using AI (Claude for paid users, Gemini for free)",
-  security: [{ cookieAuth: [] }],
-  request: {
-    body: {
-      content: {
-        "application/json": {
-          schema: FigmaSchema,
-        },
-      },
-    },
-  },
-  responses: {
-    200: {
-      content: {
-        "application/json": {
-          schema: UserStoryResponseSchema,
-        },
-      },
-      description: "Returns the generated Story",
-    },
-    400: {
-      content: {
-        "application/json": {
-          schema: ResponseSchema,
-        },
-      },
-      description: "Error response when task generation fails",
-    },
-    401: {
-      content: {
-        "application/json": {
-          schema: ResponseSchema,
-        },
-      },
-      description: "Error response when not authenticated",
-    },
-    500: {
-      content: {
-        "application/json": {
-          schema: ResponseSchema,
-        },
-      },
-      description: "Internal Server Error",
-    },
-  },
-})
-
-export const generateCodeFromFigma = createRoute({
-  method: "post",
-  path: "/generate/code",
-  summary: "Generate React from Figma",
-  tags: ["Tasks"],
-  security: [{ cookieAuth: [] }],
-  request: {
-    body: {
-      content: {
-        "application/json": {
-          schema: FigmaSchema,
-        },
-      },
-    },
-  },
-  responses: {
-    200: {
-      content: {
-        "text/event-stream": {
-          schema: z.object({
-            reactCode: z.string(),
-          }),
-        },
-      },
-      description: "Returns the generated React code",
-    },
-    400: {
-      content: {
-        "application/json": {
-          schema: ResponseSchema,
-        },
-      },
-      description: "Error response when React generation fails",
-    },
-    401: {
-      content: {
-        "application/json": {
-          schema: ResponseSchema,
-        },
-      },
-      description: "Error response when not authenticated",
-    },
-    500: {
-      content: {
-        "application/json": {
-          schema: ResponseSchema,
-        },
-      },
-      description: "Internal Server Error",
-    },
-  },
-})
-
 export const addTaskChecklist = createRoute({
-  path: "/checklists",
+  path: "/{taskId}/checklists",
   method: "post",
   summary: "Add Task Checklist",
   tags: ["Tasks"],
   description: "Add a new checklist item to a task",
   security: [{ cookieAuth: [] }],
   request: {
+    params: TaskIdSchema,
     body: {
       content: {
         "application/json": {
@@ -462,13 +302,14 @@ export const addTaskChecklist = createRoute({
 })
 
 export const updateTaskChecklist = createRoute({
-  path: "/checklists",
+  path: "/{taskId}/checklists/{checklistId}",
   method: "put",
   summary: "Update Task Checklist",
   tags: ["Tasks"],
   description: "Update an existing checklist item in a task",
   security: [{ cookieAuth: [] }],
   request: {
+    params: TaskIdSchema.merge(ChecklistIdSchema),
     body: {
       content: {
         "application/json": {
@@ -514,13 +355,14 @@ export const updateTaskChecklist = createRoute({
 })
 
 export const removeTaskChecklist = createRoute({
-  path: "/checklists",
+  path: "/{taskId}/checklists/{checklistId}",
   method: "delete",
   summary: "Remove Task Checklist",
   tags: ["Tasks"],
   description: "Remove checklist items from a task",
   security: [{ cookieAuth: [] }],
   request: {
+    params: TaskIdSchema.merge(ChecklistIdSchema),
     body: {
       content: {
         "application/json": {

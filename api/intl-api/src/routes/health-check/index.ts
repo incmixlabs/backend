@@ -30,7 +30,7 @@ healthcheckRoutes.openapi(healthCheck, async (c) => {
 
     if (!AUTH_API_URL) {
       status = "DOWN"
-      missing.push("AUTH_URL")
+      missing.push("AUTH_API_URL")
     }
 
     if (!COOKIE_NAME) {

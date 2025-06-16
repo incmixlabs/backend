@@ -9,7 +9,6 @@ import {
   ERROR_TASK_NOT_FOUND,
   ERROR_TASK_UPDATE_FAIL,
   ERROR_TEMPLATE_NOT_FOUND,
-  ERROR_USER_STORY_GENERATION_FAILED,
 } from "@/lib/constants"
 import { getTaskWithChecklists } from "@/lib/db"
 import { FigmaService } from "@/lib/figma"
@@ -22,9 +21,6 @@ import {
   addTaskChecklist,
   createTask,
   deleteTask,
-  generateCodeFromFigma,
-  generateFromFigma,
-  generateUserStory,
   listTasks,
   removeTaskChecklist,
   taskById,
@@ -34,7 +30,6 @@ import {
 import type { HonoApp } from "@/types"
 import { OpenAPIHono } from "@hono/zod-openapi"
 import { ERROR_UNAUTHORIZED } from "@incmix-api/utils"
-import type { ChecklistStatus, TaskStatus } from "@incmix-api/utils/db-schema"
 import {
   BadRequestError,
   NotFoundError,
@@ -44,6 +39,7 @@ import {
   zodError,
 } from "@incmix-api/utils/errors"
 import { useTranslation } from "@incmix-api/utils/middleware"
+import type { TaskStatus } from "@incmix/utils/types"
 import { streamSSE } from "hono/streaming"
 import { nanoid } from "nanoid"
 const tasksRoutes = new OpenAPIHono<HonoApp>({
@@ -158,7 +154,7 @@ tasksRoutes.openapi(createTask, async (c) => {
       return c.json({ message: msg }, 400)
     }
 
-    return c.json({ ...newTask, checklists: [] }, 201)
+    return c.json({ ...newTask, checklists: [], comments: [] }, 201)
   } catch (error) {
     return await processError<typeof createTask>(c, error, [
       "{{ default }}",
@@ -247,9 +243,9 @@ tasksRoutes.openapi(taskById, async (c) => {
       throw new UnauthorizedError(msg)
     }
 
-    const { id } = c.req.valid("param")
+    const { taskId } = c.req.valid("param")
 
-    const task = await getTaskWithChecklists(c, id)
+    const task = await getTaskWithChecklists(c, taskId)
     if (!task) {
       const msg = await t.text(ERROR_TASK_NOT_FOUND)
       throw new NotFoundError(msg)
@@ -273,12 +269,12 @@ tasksRoutes.openapi(deleteTask, async (c) => {
       throw new UnauthorizedError(msg)
     }
 
-    const { id } = c.req.valid("param")
+    const { taskId } = c.req.valid("param")
 
     const task = await c
       .get("db")
       .deleteFrom("tasks")
-      .where("id", "=", id)
+      .where("id", "=", taskId)
       .returningAll()
       .executeTakeFirst()
 
@@ -296,91 +292,6 @@ tasksRoutes.openapi(deleteTask, async (c) => {
   }
 })
 
-tasksRoutes.openapi(generateUserStory, async (c) => {
-  try {
-    const user = c.get("user")
-    const t = await useTranslation(c)
-    if (!user) {
-      const msg = await t.text(ERROR_UNAUTHORIZED)
-      return c.json({ message: msg }, 401)
-    }
-
-    const { prompt, userTier, templateId } = c.req.valid("json")
-
-    const template = await c
-      .get("db")
-      .selectFrom("storyTemplates")
-      .selectAll()
-      .where("id", "=", templateId)
-      .executeTakeFirst()
-
-    if (!template) {
-      const msg = await t.text(ERROR_TEMPLATE_NOT_FOUND)
-      throw new UnprocessableEntityError(msg)
-    }
-
-    const userStory = await aiGenerateUserStory(c, prompt, template, userTier)
-    return c.json({ userStory }, 200)
-  } catch (error) {
-    return await processError<typeof generateUserStory>(c, error, [
-      "{{ default }}",
-      "generate-user-story",
-    ])
-  }
-})
-
-tasksRoutes.openapi(generateFromFigma, async (c) => {
-  try {
-    const user = c.get("user")
-    const t = await useTranslation(c)
-    if (!user) {
-      const msg = await t.text(ERROR_UNAUTHORIZED)
-      return c.json({ message: msg }, 401)
-    }
-
-    const { url, prompt, userTier } = c.req.valid("json")
-    const figmaService = new FigmaService()
-    const figmaImage = await figmaService.getFigmaImage(url)
-
-    const userStory = await generateUserStoryFromImage(
-      figmaImage,
-      prompt,
-      userTier
-    )
-
-    return c.json({ userStory, imageUrl: figmaImage }, 200)
-  } catch (error) {
-    return await processError<typeof generateFromFigma>(c, error, [
-      "{{ default }}",
-      "genrate-from-figma",
-    ])
-  }
-})
-
-tasksRoutes.openapi(generateCodeFromFigma, async (c) => {
-  try {
-    const user = c.get("user")
-    const t = await useTranslation(c)
-    if (!user) {
-      const msg = await t.text(ERROR_UNAUTHORIZED)
-      return c.json({ message: msg }, 401)
-    }
-
-    const { url, userTier } = c.req.valid("json")
-    const figmaService = new FigmaService()
-
-    return streamSSE(
-      c,
-      await figmaService.generateReactFromFigma(url, userTier)
-    )
-  } catch (error) {
-    return await processError<typeof generateCodeFromFigma>(c, error, [
-      "{{ default }}",
-      "generate-code-from-figma",
-    ])
-  }
-})
-
 tasksRoutes.openapi(addTaskChecklist, async (c) => {
   try {
     const user = c.get("user")
@@ -390,7 +301,9 @@ tasksRoutes.openapi(addTaskChecklist, async (c) => {
       throw new UnauthorizedError(msg)
     }
 
-    const { taskId, checklist } = c.req.valid("json")
+    const { checklist } = c.req.valid("json")
+    const { taskId } = c.req.valid("param")
+
     const existingTask = await getTaskWithChecklists(c, taskId)
     if (!existingTask) {
       const msg = await t.text(ERROR_TASK_NOT_FOUND)
@@ -441,13 +354,14 @@ tasksRoutes.openapi(updateTaskChecklist, async (c) => {
       throw new UnauthorizedError(msg)
     }
 
-    const { id, checklist } = c.req.valid("json")
+    const { checklist } = c.req.valid("json")
+    const { checklistId } = c.req.valid("param")
 
     const existingChecklist = await c
       .get("db")
       .selectFrom("taskChecklists")
       .selectAll()
-      .where("id", "=", id)
+      .where("id", "=", checklistId)
       .executeTakeFirst()
 
     if (!existingChecklist) {
@@ -505,7 +419,9 @@ tasksRoutes.openapi(removeTaskChecklist, async (c) => {
       throw new UnauthorizedError(msg)
     }
 
-    const { taskId, checklistIds } = c.req.valid("json")
+    const { checklistIds } = c.req.valid("json")
+    const { taskId } = c.req.valid("param")
+
     const existingTask = await getTaskWithChecklists(c, taskId)
     if (!existingTask) {
       const msg = await t.text(ERROR_TASK_NOT_FOUND)

@@ -4,14 +4,19 @@
     "baseUrl": "./",
     "outDir": "./dist",
     "paths": {
-      "@": ["./src/index.ts"],
-      "@/*": ["./src/*"],
-      "@test/*": ["./test/*"],
-      "@e2e/*": ["./e2e/*"]
+      "@/*": ["./src/*"]
     }
   },
   "tsc-alias": {
     "resolveFullPaths": true
   },
-  "include": ["./**/*.ts", "../src/env.d.ts"]
+  "include": ["src/**/*.ts"],
+  "exclude": [
+    "node_modules",
+    "e2e",
+    "test",
+    "**/test/**",
+    "**/e2e/**",
+    "playwright.config.ts"
+  ]
 }
