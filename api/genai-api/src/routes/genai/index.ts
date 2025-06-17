@@ -36,19 +36,31 @@ genaiRoutes.openapi(generateUserStory, async (c) => {
 
     const { prompt, userTier, templateId } = c.req.valid("json")
 
-    const template = await c
-      .get("db")
-      .selectFrom("storyTemplates")
-      .selectAll()
-      .where("id", "=", templateId)
-      .executeTakeFirst()
+    // const template = await c
+    //   .get("db")
+    //   .selectFrom("storyTemplates")
+    //   .selectAll()
+    //   .where("id", "=", templateId)
+    //   .executeTakeFirst()
 
-    if (!template) {
-      const msg = await t.text(ERROR_TEMPLATE_NOT_FOUND)
-      throw new UnprocessableEntityError(msg)
-    }
+    // if (!template) {
+    //   const msg = await t.text(ERROR_TEMPLATE_NOT_FOUND)
+    //   throw new UnprocessableEntityError(msg)
+    // }
 
-    const userStory = await aiGenerateUserStory(c, prompt, template, userTier)
+    const userStory = await aiGenerateUserStory(
+      c,
+      prompt,
+      {
+        id: 1,
+        name: "Test Template",
+        content: "Test Content",
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        createdBy: "test",
+      },
+      userTier
+    )
     return c.json({ userStory }, 200)
   } catch (error) {
     return await processError<typeof generateUserStory>(c, error, [

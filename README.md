@@ -66,5 +66,5 @@ If you're working on a service that hasn't been migrated yet:
 1. Install Docker
 2. Run ```docker compose up -d``` to start database containers
 3. Update environment variable.
-4. Run ```cd ./api/org-api && npx kysely seed:run && cd ../..```
+4. Run ```docker exec -it incmix-postgres-1 /bin/bash -c "cd /app/db && pnpm migrate"``` to initialize db
 5. Run ```pnpm dev``` to start APIs
