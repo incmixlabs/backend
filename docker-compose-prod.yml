@@ -51,6 +51,8 @@ services:
       dockerfile: api/email/Dockerfile
     ports:
       - 8989:8989
+    depends_on:
+      - auth-api
   users-api:
     <<: *api-common
     build:
@@ -58,6 +60,8 @@ services:
       dockerfile: api/users-api/Dockerfile
     ports:
       - 9191:9191
+    depends_on:
+      - email-api
   org-api:
     <<: *api-common
     build:
@@ -65,6 +69,8 @@ services:
       dockerfile: api/org-api/Dockerfile
     ports:
       - 9292:9292
+    depends_on:
+      - users-api
   intl-api:
     <<: *api-common
     build:
@@ -72,6 +78,8 @@ services:
       dockerfile: api/intl-api/Dockerfile
     ports:
       - 9090:9090
+    depends_on:
+      - org-api
   files-api:
     <<: *api-common
     build:
@@ -79,6 +87,8 @@ services:
       dockerfile: api/files-api/Dockerfile
     ports:
       - 8282:8282
+    depends_on:
+      - intl-api
   genai-api:
     <<: *api-common
     build:
@@ -86,6 +96,8 @@ services:
       dockerfile: api/genai-api/Dockerfile
     ports:
       - 8383:8383
+    depends_on:
+      - files-api
   projects-api:
     <<: *api-common
     build:
@@ -93,6 +105,8 @@ services:
       dockerfile: api/projects-api/Dockerfile
     ports:
       - 8484:8484
+    depends_on:
+      - genai-api
   tasks-api:
     <<: *api-common
     build:
@@ -100,6 +114,8 @@ services:
       dockerfile: api/tasks-api/Dockerfile
     ports:
       - 8888:8888
+    depends_on:
+      - projects-api
   location-api:
     <<: *api-common
     build:
@@ -107,6 +123,8 @@ services:
       dockerfile: api/location-api/Dockerfile
     ports:
       - 9494:9494
+    depends_on:
+      - tasks-api
   bff-web:
     <<: *api-common
     build:
@@ -114,6 +132,8 @@ services:
       dockerfile: api/bff-web/Dockerfile
     ports:
       - 8081:8080
+    depends_on:
+      - location-api
 volumes:
   incmix-db-data:
 
