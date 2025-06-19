@@ -6,7 +6,7 @@
     "migrate": "node migrate.js"
   },
   "dependencies": {
-    "pg": "catalog:",
+    "pg": "8.16.1",
     "postgrator": "8.0.0"
   }
 }

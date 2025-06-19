@@ -4,7 +4,7 @@ WORKDIR /app
 
 # Install only necessary build dependencies
 RUN apk add --no-cache git && \
-  npm install -g pnpm turbo kysely-ctl@0.11.0
+  npm install -g pnpm turbo
 
 # Copy only files needed for dependency installation
 COPY ./package.json ./pnpm-lock.yaml ./pnpm-workspace.yaml ./turbo.json ./
@@ -18,12 +18,6 @@ RUN pnpm install --frozen-lockfile --prod=false
 COPY ./shared/ ./shared/
 COPY ./api/bff-web/ ./api/bff-web/
 
-# Build the shared utils
-WORKDIR /app/shared/utils
-RUN pnpm build
-
-# Build the bff-web service
-WORKDIR /app/api/bff-web
 RUN pnpm build
 
 # Create a smaller production image
@@ -31,8 +25,7 @@ FROM node:22-alpine AS runner
 
 WORKDIR /app
 
-# Install only runtime dependencies
-RUN npm install -g pnpm kysely-ctl@0.11.0
+RUN npm install -g pnpm
 
 # Copy package files for production dependencies
 COPY --from=builder /app/package.json /app/pnpm-lock.yaml /app/pnpm-workspace.yaml ./

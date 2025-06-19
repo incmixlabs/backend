@@ -2,17 +2,9 @@ name: "incmix"
 x-api-common: &api-common
   environment:
     DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?sslmode=disable
-    AUTH_API_URL: http://auth-api:8787/api/auth
-    EMAIL_API_URL: http://email-api:8989/api/email
-    USERS_API_URL: http://users-api:9191/api/users
-    INTL_API_URL: http://intl-api:9090/api/intl
-    ORG_API_URL: http://org-api:9292/api/org
-    FILES_API_URL: http://files-api:8282/api/files
-    TASKS_API_URL: http://tasks-api:8888/api/tasks
-    LOCATION_API_URL: http://location-api:9494/api/location
-    GENAI_API_URL: http://genai-api:8383/api/genai
-    PROJECTS_API_URL: http://projects-api:8484/api/projects
-
+    TURBO_TOKEN: ${TURBO_TOKEN}
+  env_file:
+    - .services
   networks:
     - incmix-network
   depends_on:
@@ -31,20 +23,20 @@ services:
       PGDATA: ${PGDATA:-/var/lib/postgresql/data}
       # POSTGRES_EXTENSIONS: plv8, btree_gist, hstore, pgvector, pgcrypto, CITEXT, pg_trgm, pg_cron, plpython3u
     ports:
-      - ${POSTGRES_PORT:-5432}:5432
+      - ${POSTGRES_PORT:-54321}:5432
     volumes:
       - incmix-db-data:/var/lib/postgresql/data
     networks:
       - incmix-network
-  backend:
-    image: electricsql/electric
-    environment:
-      DATABASE_URL: postgresql://postgres:password@postgres:5432/incmix?sslmode=disable
-      ELECTRIC_INSECURE: true
-    ports:
-      - 3000:3000
-    depends_on:
-      - postgres
+  # backend:
+  #   image: electricsql/electric
+  #   environment:
+  #     DATABASE_URL: postgresql://postgres:password@postgres:5432/incmix?sslmode=disable
+  #     ELECTRIC_INSECURE: true
+  #   ports:
+  #     - 3000:3000
+  #   depends_on:
+  #     - postgres
   auth-api:
     <<: *api-common
     build:
@@ -121,7 +113,7 @@ services:
       context: .
       dockerfile: api/bff-web/Dockerfile
     ports:
-      - 8080:8080
+      - 8081:8080
 volumes:
   incmix-db-data:
 
