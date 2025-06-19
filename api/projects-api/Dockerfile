@@ -18,6 +18,9 @@ RUN pnpm install --frozen-lockfile --prod=false
 COPY ./shared/ ./shared/
 COPY ./api/projects-api/ ./api/projects-api/
 
+ARG TURBO_TOKEN
+ENV TURBO_TOKEN=$TURBO_TOKEN
+
 RUN pnpm build
 
 # Create a smaller production image

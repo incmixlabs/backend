@@ -18,6 +18,8 @@ RUN pnpm install --frozen-lockfile --prod=false
 COPY ./shared/ ./shared/
 COPY ./api/users-api/ ./api/users-api/
 
+ARG TURBO_TOKEN
+ENV TURBO_TOKEN=$TURBO_TOKEN
 
 RUN pnpm build
 
