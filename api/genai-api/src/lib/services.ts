@@ -28,7 +28,16 @@ export async function generateUserStory(
     Create a user story based on the following prompt: "${prompt}"
 
     Format as:
-    ${template.content}
+    As a [type of user], I want [goal] so that [benefit/value].
+
+    [Design Description]
+
+    Acceptance Criteria:
+    - [criterion 1]
+    - [criterion 2]
+    - [criterion 3]
+
+    Important: Provide only the user story without any prefatory text or instructions. Do not include phrases like "Here's a user story" at the beginning of your response.
   `
 
     const userStory = await getAiResponseUsingTextPrompt(enhancedPrompt, model)

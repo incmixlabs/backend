@@ -14,7 +14,7 @@ services:
       PGDATA: /var/lib/postgresql/data
       # POSTGRES_EXTENSIONS: plv8, btree_gist, hstore, pgvector, pgcrypto, CITEXT, pg_trgm, pg_cron, plpython3u
     ports:
-      - 5432:5432
+      - 54321:5432
     volumes:
       - incmix-db-data:/var/lib/postgresql/data
     networks:
