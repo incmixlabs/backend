@@ -15,7 +15,16 @@ function formatUserStory(rawOutput: string): UserStoryResponse {
     .replace(/^```json\n/, "")
     .replace(/\n```$/, "")
     .replace(/```/, "")
-  return JSON.parse(userStoryJsonString) as UserStoryResponse
+
+  try {
+    return JSON.parse(userStoryJsonString) as UserStoryResponse
+  } catch (error) {
+    console.error("Failed to parse JSON response from AI:", error)
+    console.error("Raw output that failed to parse:", userStoryJsonString)
+    throw new Error(
+      "Invalid JSON response from AI - unable to parse user story data"
+    )
+  }
 }
 
 export function formatUserStoryPrompt(
