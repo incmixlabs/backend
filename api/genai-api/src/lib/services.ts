@@ -1,4 +1,5 @@
 import { envVars } from "@/env-vars"
+import type { UserStoryResponse } from "@/routes/genai/types"
 import type { Context } from "@/types"
 import Anthropic from "@anthropic-ai/sdk"
 import {
@@ -9,39 +10,61 @@ import {
 import type { StoryTemplate } from "@incmix-api/utils/db-schema"
 import { type AIModel, MODEL_MAP } from "./constants"
 
+function formatUserStory(rawOutput: string): UserStoryResponse {
+  const userStoryJsonString = rawOutput
+    .replace(/^```json\n/, "")
+    .replace(/\n```$/, "")
+    .replace(/```/, "")
+  return JSON.parse(userStoryJsonString) as UserStoryResponse
+}
+
+export function formatUserStoryPrompt(
+  prompt: string,
+  template: string | undefined
+): string {
+  return `
+  Create a user story based on the following prompt: "${prompt}"
+
+  return the result as a json object that can be direclty passed to javascript's JSON.parse() function without any modifications:
+  {userStory: {
+    description: string,
+    acceptanceCriteria: string[],
+    checklist: string[],
+  }}
+
+  format description field as:
+  ${template}
+
+  Important: Provide only the user story without any prefatory text or instructions. Do not include phrases like "Here's a user story" at the beginning of your response.
+  `
+}
+
 export async function generateUserStory(
   _c: Context,
   prompt: string,
-  template: StoryTemplate,
+  template?: StoryTemplate,
   userTier: "free" | "paid" = "free"
-): Promise<string> {
-  // Use Claude for paid users, Gemini for free users
+): Promise<UserStoryResponse> {
   const model = userTier === "paid" ? "claude" : "gemini"
 
-  try {
-    // Example implementation - In a real setup, you would:
-    // 1. Call the appropriate AI API based on the model
-    // 2. Handle authentication, rate limiting, etc.
-    // 3. Process the response
+  const promptTemplate =
+    template?.content ||
+    `
+  As a [type of user], I want [goal] so that [benefit/value].
 
-    const enhancedPrompt = `
-    Create a user story based on the following prompt: "${prompt}"
+  [Design Description]
 
-    Format as:
-    As a [type of user], I want [goal] so that [benefit/value].
-
-    [Design Description]
-
-    Acceptance Criteria:
-    - [criterion 1]
-    - [criterion 2]
-    - [criterion 3]
-
-    Important: Provide only the user story without any prefatory text or instructions. Do not include phrases like "Here's a user story" at the beginning of your response.
+  Acceptance Criteria:
+  - [criterion 1]
+  - [criterion 2]
+  - [criterion 3]
   `
 
+  try {
+    const enhancedPrompt = formatUserStoryPrompt(prompt, promptTemplate)
     const userStory = await getAiResponseUsingTextPrompt(enhancedPrompt, model)
-    return userStory
+
+    return formatUserStory(userStory)
   } catch (error) {
     console.error(`Error generating user story with ${model}:`, error)
     throw new Error(
@@ -127,24 +150,22 @@ async function getAiResponseUsingTextPrompt(
 export async function generateUserStoryFromImage(
   imageUrl: string,
   prompt = "create a user story for a kanban board based on the image provided",
-  userTier: "free" | "paid" = "free"
-): Promise<string> {
-  const enhancedPrompt = `
-    Create a user story for Kanban board based on the following prompt: "${prompt}"
+  userTier: "free" | "paid" = "free",
+  template?: StoryTemplate
+): Promise<UserStoryResponse> {
+  const promptTemplate =
+    template?.content ||
+    `
+  As a [type of user], I want [goal] so that [benefit/value].
 
-    Format as:
-    As a [type of user], I want [goal] so that [benefit/value].
+  [Design Description]
 
-    [Design Description]
-
-    Acceptance Criteria:
-    - [criterion 1]
-    - [criterion 2]
-    - [criterion 3]
-
-
-    Important: Provide only the user story without any prefatory text or instructions. Do not include phrases like "Here's a user story" at the beginning of your response.
+  Acceptance Criteria:
+  - [criterion 1]
+  - [criterion 2]
+  - [criterion 3]
   `
+  const enhancedPrompt = formatUserStoryPrompt(prompt, promptTemplate)
 
   const model = userTier === "paid" ? "claude" : "gemini"
   const userStory = await getAiResponseUsingImagePrompt(
@@ -152,7 +173,8 @@ export async function generateUserStoryFromImage(
     imageUrl,
     model
   )
-  return userStory
+
+  return formatUserStory(userStory)
 }
 
 async function getAiResponseUsingImagePrompt(
