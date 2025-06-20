@@ -34,7 +34,7 @@ export function formatUserStoryPrompt(
   return `
   Create a user story based on the following prompt: "${prompt}"
 
-  return the result as a json object that can be direclty passed to javascript's JSON.parse() function without any modifications:
+  return the result as a json object that can be directly passed to javascript's JSON.parse() function without any modifications:
   {userStory: {
     description: string,
     acceptanceCriteria: string[],
