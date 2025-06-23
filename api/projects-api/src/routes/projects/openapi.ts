@@ -1,10 +1,12 @@
 import { createRoute } from "@hono/zod-openapi"
 import { ColumnSchema, ProjectSchema } from "@incmix/utils/types"
+import { z } from "zod"
 import { ResponseSchema } from "../types"
 import {
   AddProjectChecklistSchema,
   AddProjectCommentSchema,
   AddProjectMemberSchema,
+  BoardSchema,
   CreateColumnSchema,
   CreateProjectSchema,
   IdSchema,
@@ -16,9 +18,7 @@ import {
   UpdateProjectChecklistSchema,
   UpdateProjectCommentSchema,
   UpdateProjectSchema,
-  BoardSchema,
 } from "./types"
-import { z } from "zod"
 
 export const createProject = createRoute({
   path: "/",
