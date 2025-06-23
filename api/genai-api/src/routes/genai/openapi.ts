@@ -164,3 +164,58 @@ export const generateCodeFromFigma = createRoute({
     },
   },
 })
+
+export const getFigmaImage = createRoute({
+  method: "post",
+  path: "/get-figma-image",
+  summary: "Get Figma Image",
+  tags: ["Tasks"],
+  security: [{ cookieAuth: [] }],
+  request: {
+    body: {
+      content: {
+        "application/json": {
+          schema: z.object({
+            url: z.string(),
+          }),
+        },
+      },
+    },
+  },
+  responses: {
+    200: {
+      content: {
+        "application/json": {
+          schema: z.object({
+            image: z.string(),
+          }),
+        },
+      },
+      description: "Returns the generated image",
+    },
+  },
+  400: {
+    content: {
+      "application/json": {
+        schema: ResponseSchema,
+      },
+    },
+    description: "Error response when image generation fails",
+  },
+  401: {
+    content: {
+      "application/json": {
+        schema: ResponseSchema,
+      },
+    },
+    description: "Error response when not authenticated",
+  },
+  500: {
+    content: {
+      "application/json": {
+        schema: ResponseSchema,
+      },
+    },
+    description: "Internal Server Error",
+  },
+})

@@ -1,5 +1,3 @@
-import { ERROR_TEMPLATE_NOT_FOUND } from "@/lib/constants"
-
 import { FigmaService } from "@/lib/figma"
 
 import {
@@ -10,12 +8,13 @@ import {
   generateCodeFromFigma,
   generateFromFigma,
   generateUserStory,
+  getFigmaImage,
 } from "@/routes/genai/openapi"
 import type { HonoApp } from "@/types"
 import { OpenAPIHono } from "@hono/zod-openapi"
 import { ERROR_UNAUTHORIZED } from "@incmix-api/utils"
 import {
-  UnprocessableEntityError,
+  UnauthorizedError,
   processError,
   zodError,
 } from "@incmix-api/utils/errors"
@@ -31,7 +30,7 @@ genaiRoutes.openapi(generateUserStory, async (c) => {
     const t = await useTranslation(c)
     if (!user) {
       const msg = await t.text(ERROR_UNAUTHORIZED)
-      return c.json({ message: msg }, 401)
+      throw new UnauthorizedError(msg)
     }
 
     const { prompt, userTier, templateId } = c.req.valid("json")
@@ -59,7 +58,7 @@ genaiRoutes.openapi(generateFromFigma, async (c) => {
     const t = await useTranslation(c)
     if (!user) {
       const msg = await t.text(ERROR_UNAUTHORIZED)
-      return c.json({ message: msg }, 401)
+      throw new UnauthorizedError(msg)
     }
 
     const { url, prompt, userTier, templateId } = c.req.valid("json")
@@ -95,7 +94,7 @@ genaiRoutes.openapi(generateCodeFromFigma, async (c) => {
     const t = await useTranslation(c)
     if (!user) {
       const msg = await t.text(ERROR_UNAUTHORIZED)
-      return c.json({ message: msg }, 401)
+      throw new UnauthorizedError(msg)
     }
 
     const { url, userTier } = c.req.valid("json")
@@ -109,6 +108,27 @@ genaiRoutes.openapi(generateCodeFromFigma, async (c) => {
     return await processError<typeof generateCodeFromFigma>(c, error, [
       "{{ default }}",
       "generate-code-from-figma",
+    ])
+  }
+})
+
+genaiRoutes.openapi(getFigmaImage, async (c) => {
+  try {
+    const user = c.get("user")
+    const t = await useTranslation(c)
+    if (!user) {
+      const msg = await t.text(ERROR_UNAUTHORIZED)
+      throw new UnauthorizedError(msg)
+    }
+
+    const { url } = c.req.valid("json")
+    const figmaService = new FigmaService()
+    const figmaImage = await figmaService.getFigmaImage(url)
+    return c.json({ image: figmaImage }, 200)
+  } catch (error) {
+    return await processError<typeof getFigmaImage>(c, error, [
+      "{{ default }}",
+      "get-figma-image",
     ])
   }
 })
