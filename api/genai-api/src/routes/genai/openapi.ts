@@ -193,29 +193,30 @@ export const getFigmaImage = createRoute({
       },
       description: "Returns the generated image",
     },
-  },
-  400: {
-    content: {
-      "application/json": {
-        schema: ResponseSchema,
+
+    400: {
+      content: {
+        "application/json": {
+          schema: ResponseSchema,
+        },
       },
+      description: "Error response when image generation fails",
     },
-    description: "Error response when image generation fails",
-  },
-  401: {
-    content: {
-      "application/json": {
-        schema: ResponseSchema,
+    401: {
+      content: {
+        "application/json": {
+          schema: ResponseSchema,
+        },
       },
+      description: "Error response when not authenticated",
     },
-    description: "Error response when not authenticated",
-  },
-  500: {
-    content: {
-      "application/json": {
-        schema: ResponseSchema,
+    500: {
+      content: {
+        "application/json": {
+          schema: ResponseSchema,
+        },
       },
+      description: "Internal Server Error",
     },
-    description: "Internal Server Error",
   },
 })
