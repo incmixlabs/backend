@@ -2,6 +2,9 @@ import {
   ERROR_CHECKLIST_CREATE_FAILED,
   ERROR_CHECKLIST_NOT_FOUND,
   ERROR_CHECKLIST_UPDATE_FAILED,
+  ERROR_COMMENT_CREATE_FAILED,
+  ERROR_COMMENT_NOT_FOUND,
+  ERROR_COMMENT_UPDATE_FAILED,
   ERROR_COLUMN_CREATE_FAILED,
   ERROR_COLUMN_EXISTS,
   ERROR_COLUMN_NOT_FOUND,
@@ -23,10 +26,14 @@ import type { HonoApp } from "@/types"
 import { OpenAPIHono } from "@hono/zod-openapi"
 import { ERROR_UNAUTHORIZED } from "@incmix-api/utils"
 import type {
+  NewComment,
   NewProjectChecklist,
+  NewProjectComment,
   NewProjectMember,
+  UpdatedComment,
   UpdatedColumn,
   UpdatedProjectChecklist,
+  UpdatedProjectComment,
 } from "@incmix-api/utils/db-schema"
 import {
   BadRequestError,
@@ -42,18 +49,22 @@ import { env } from "hono/adapter"
 import { nanoid } from "nanoid"
 import {
   addProjectChecklist,
+  addProjectComment,
   createColumn,
   createProject,
   deleteColumn,
   deleteProject,
   getBoardData,
+  getProjectComments,
   listColumns,
   listProjects,
   removeProjectChecklist,
+  removeProjectComment,
   removeProjectMembers,
   updateColumn,
   updateProject,
   updateProjectChecklist,
+  updateProjectComment,
 } from "./openapi"
 import { addProjectMembers } from "./openapi"
 
@@ -844,6 +855,240 @@ projectRoutes.openapi(removeProjectChecklist, async (c) => {
     return await processError<typeof removeProjectChecklist>(c, error, [
       "{{ default }}",
       "remove-project-checklist",
+    ])
+  }
+})
+
+projectRoutes.openapi(addProjectComment, async (c) => {
+  try {
+    const user = c.get("user")
+    const t = await useTranslation(c)
+    if (!user) {
+      const msg = await t.text(ERROR_UNAUTHORIZED)
+      throw new UnauthorizedError(msg)
+    }
+
+    const { comment } = c.req.valid("json")
+    const { id: projectId } = c.req.valid("param")
+    const existingProject = await getProjectWithMembers(c, projectId)
+    if (!existingProject) {
+      const msg = await t.text(ERROR_PROJECT_NOT_FOUND)
+      throw new UnprocessableEntityError(msg)
+    }
+
+    const id = nanoid(6)
+    const newComment: NewComment = {
+      id,
+      content: comment.content,
+      userId: user.id,
+      createdBy: user.id,
+      updatedBy: user.id,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    }
+
+    const createdComment = await c
+      .get("db")
+      .insertInto("comments")
+      .values(newComment)
+      .returningAll()
+      .executeTakeFirst()
+
+    if (!createdComment) {
+      const msg = await t.text(ERROR_COMMENT_CREATE_FAILED)
+      throw new BadRequestError(msg)
+    }
+
+    const newProjectComment: NewProjectComment = {
+      projectId,
+      commentId: id,
+    }
+
+    await c
+      .get("db")
+      .insertInto("projectComments")
+      .values(newProjectComment)
+      .execute()
+
+    const updatedProject = await getProjectWithMembers(c, projectId)
+
+    return c.json(updatedProject, 201)
+  } catch (error) {
+    return await processError<typeof addProjectComment>(c, error, [
+      "{{ default }}",
+      "add-project-comment",
+    ])
+  }
+})
+
+projectRoutes.openapi(updateProjectComment, async (c) => {
+  try {
+    const user = c.get("user")
+    const t = await useTranslation(c)
+    if (!user) {
+      const msg = await t.text(ERROR_UNAUTHORIZED)
+      throw new UnauthorizedError(msg)
+    }
+
+    const { comment } = c.req.valid("json")
+    const { commentId } = c.req.valid("param")
+
+    const existingComment = await c
+      .get("db")
+      .selectFrom("comments")
+      .selectAll()
+      .where("id", "=", commentId)
+      .executeTakeFirst()
+
+    if (!existingComment) {
+      const msg = await t.text(ERROR_COMMENT_NOT_FOUND)
+      throw new UnprocessableEntityError(msg)
+    }
+
+    const updates: UpdatedComment = {
+      updatedBy: user.id,
+      updatedAt: new Date().toISOString(),
+    }
+
+    if (comment.content !== undefined) {
+      updates.content = comment.content
+    }
+
+    const updatedComment = await c
+      .get("db")
+      .updateTable("comments")
+      .set(updates)
+      .where("id", "=", existingComment.id)
+      .returningAll()
+      .executeTakeFirst()
+
+    if (!updatedComment) {
+      const msg = await t.text(ERROR_COMMENT_UPDATE_FAILED)
+      throw new BadRequestError(msg)
+    }
+
+    const projectComment = await c
+      .get("db")
+      .selectFrom("projectComments")
+      .selectAll()
+      .where("commentId", "=", existingComment.id)
+      .executeTakeFirst()
+
+    if (!projectComment) {
+      const msg = await t.text(ERROR_PROJECT_NOT_FOUND)
+      throw new UnprocessableEntityError(msg)
+    }
+
+    const updatedProject = await getProjectWithMembers(
+      c,
+      projectComment.projectId
+    )
+
+    return c.json(updatedProject, 200)
+  } catch (error) {
+    return await processError<typeof updateProjectComment>(c, error, [
+      "{{ default }}",
+      "update-project-comment",
+    ])
+  }
+})
+
+projectRoutes.openapi(removeProjectComment, async (c) => {
+  try {
+    const user = c.get("user")
+    const t = await useTranslation(c)
+    if (!user) {
+      const msg = await t.text(ERROR_UNAUTHORIZED)
+      throw new UnauthorizedError(msg)
+    }
+
+    const { commentId } = c.req.valid("json")
+    const { id: projectId } = c.req.valid("param")
+    const existingProject = await getProjectWithMembers(c, projectId)
+    if (!existingProject) {
+      const msg = await t.text(ERROR_PROJECT_NOT_FOUND)
+      throw new UnprocessableEntityError(msg)
+    }
+
+    // Delete from projectComments table
+    await c
+      .get("db")
+      .deleteFrom("projectComments")
+      .where((eb) =>
+        eb.and([
+          eb("projectId", "=", projectId),
+          eb("commentId", "=", commentId),
+        ])
+      )
+      .execute()
+
+    // Delete from comments table
+    await c
+      .get("db")
+      .deleteFrom("comments")
+      .where("id", "=", commentId)
+      .execute()
+
+    const updatedProject = await getProjectWithMembers(c, projectId)
+
+    return c.json(updatedProject, 200)
+  } catch (error) {
+    return await processError<typeof removeProjectComment>(c, error, [
+      "{{ default }}",
+      "remove-project-comment",
+    ])
+  }
+})
+
+projectRoutes.openapi(getProjectComments, async (c) => {
+  try {
+    const user = c.get("user")
+    const t = await useTranslation(c)
+    if (!user) {
+      const msg = await t.text(ERROR_UNAUTHORIZED)
+      throw new UnauthorizedError(msg)
+    }
+
+    const { id: projectId } = c.req.valid("param")
+
+    // Check if project exists
+    const existingProject = await c
+      .get("db")
+      .selectFrom("projects")
+      .selectAll()
+      .where("id", "=", projectId)
+      .executeTakeFirst()
+
+    if (!existingProject) {
+      const msg = await t.text(ERROR_PROJECT_NOT_FOUND)
+      throw new UnprocessableEntityError(msg)
+    }
+
+    // Get all comments for the project with user information
+    const comments = await c
+      .get("db")
+      .selectFrom("projectComments")
+      .innerJoin("comments", "projectComments.commentId", "comments.id")
+      .innerJoin("userProfiles as users", "comments.userId", "users.id")
+      .select([
+        "comments.id",
+        "comments.content",
+        "comments.userId",
+        "comments.createdAt",
+        "comments.updatedAt",
+        "users.fullName as userName",
+        "users.email as userEmail",
+        "users.avatar as userAvatar",
+      ])
+      .where("projectComments.projectId", "=", projectId)
+      .orderBy("comments.createdAt desc")
+      .execute()
+
+    return c.json(comments, 200)
+  } catch (error) {
+    return await processError<typeof getProjectComments>(c, error, [
+      "{{ default }}",
+      "get-project-comments",
     ])
   }
 })

@@ -4,6 +4,7 @@ import {
   ColumnSchema,
   ProjectMemberSchema,
   ProjectSchema,
+  TaskSchema,
 } from "@incmix/utils/types"
 
 export const IdSchema = z.object({
@@ -88,3 +89,46 @@ export const UpdateProjectChecklistSchema = z.object({
 export const RemoveProjectChecklistSchema = z.object({
   checklistIds: z.array(z.string()).openapi({ example: ["2hek2bkjh"] }),
 })
+
+export const AddProjectCommentSchema = z.object({
+  comment: z.object({
+    content: z.string().openapi({ example: "This is a comment" }),
+  }),
+})
+
+export const UpdateProjectCommentSchema = z.object({
+  comment: z.object({
+    content: z.string().openapi({ example: "Updated comment content" }),
+  }),
+})
+
+export const RemoveProjectCommentSchema = z.object({
+  commentId: z.string().openapi({ example: "2hek2bkjh" }),
+})
+
+export const ColumnWithTaskSchema = ColumnSchema.extend({
+  tasks: TaskSchema.array(),
+})
+
+export type ColumnWithTasks = z.infer<typeof ColumnWithTaskSchema>
+type ColumnWithChildren = ColumnWithTasks & {
+  children?: ColumnWithChildren[]
+}
+
+export const NestedColumnSchema: z.ZodType<ColumnWithChildren> =
+  ColumnWithTaskSchema.extend({
+    children: z
+      .lazy(() => NestedColumnSchema.array())
+      .optional()
+      .openapi({ type: "array" }),
+  })
+
+export type NestedColumns = z.infer<typeof NestedColumnSchema>
+
+export const BoardSchema = z.object({
+  project: ProjectSchema,
+  columns: NestedColumnSchema.array(),
+  tasks: TaskSchema.array(),
+})
+
+export type Board = z.infer<typeof BoardSchema>

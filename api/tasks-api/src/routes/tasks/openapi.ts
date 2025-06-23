@@ -1,14 +1,17 @@
-import { createRoute } from "@hono/zod-openapi"
+import { createRoute, z } from "@hono/zod-openapi"
 import { TaskSchema } from "@incmix/utils/types"
 import { ResponseSchema } from "../types"
 import {
   AddTaskChecklistSchema,
+  AddTaskCommentSchema,
   ChecklistIdSchema,
   CreateTaskSchema,
   RemoveTaskChecklistSchema,
+  RemoveTaskCommentSchema,
   TaskIdSchema,
   TaskListSchema,
   UpdateTaskChecklistSchema,
+  UpdateTaskCommentSchema,
   UpdateTaskSchema,
 } from "./types"
 
@@ -355,14 +358,13 @@ export const updateTaskChecklist = createRoute({
 })
 
 export const removeTaskChecklist = createRoute({
-  path: "/{taskId}/checklists/{checklistId}",
   method: "delete",
+  path: "/{taskId}/checklists",
   summary: "Remove Task Checklist",
   tags: ["Tasks"],
-  description: "Remove checklist items from a task",
   security: [{ cookieAuth: [] }],
   request: {
-    params: TaskIdSchema.merge(ChecklistIdSchema),
+    params: TaskIdSchema,
     body: {
       content: {
         "application/json": {
@@ -378,7 +380,233 @@ export const removeTaskChecklist = createRoute({
           schema: TaskSchema,
         },
       },
-      description: "Removed checklist items from task",
+      description: "Removed checklists from task",
+    },
+    401: {
+      content: {
+        "application/json": {
+          schema: ResponseSchema,
+        },
+      },
+      description: "Error response when not authenticated",
+    },
+    404: {
+      content: {
+        "application/json": {
+          schema: ResponseSchema,
+        },
+      },
+      description: "Error response when No task available for given ID",
+    },
+    400: {
+      content: {
+        "application/json": {
+          schema: ResponseSchema,
+        },
+      },
+      description: "Error response when checklist removal fails",
+    },
+    500: {
+      content: {
+        "application/json": {
+          schema: ResponseSchema,
+        },
+      },
+      description: "Internal Server Error",
+    },
+  },
+})
+
+export const addTaskComment = createRoute({
+  path: "/{taskId}/comments",
+  method: "post",
+  summary: "Add Task Comment",
+  tags: ["Tasks"],
+  description: "Add a new comment to a task",
+  security: [{ cookieAuth: [] }],
+  request: {
+    params: TaskIdSchema,
+    body: {
+      content: {
+        "application/json": {
+          schema: AddTaskCommentSchema,
+        },
+      },
+    },
+  },
+  responses: {
+    201: {
+      content: {
+        "application/json": {
+          schema: TaskSchema,
+        },
+      },
+      description: "Added comment to task",
+    },
+    401: {
+      content: {
+        "application/json": {
+          schema: ResponseSchema,
+        },
+      },
+      description: "Error response when not authenticated",
+    },
+    404: {
+      content: {
+        "application/json": {
+          schema: ResponseSchema,
+        },
+      },
+      description: "Error response when Task does not exist",
+    },
+    500: {
+      content: {
+        "application/json": {
+          schema: ResponseSchema,
+        },
+      },
+      description: "Internal Server Error",
+    },
+  },
+})
+
+export const updateTaskComment = createRoute({
+  path: "/comments/{commentId}",
+  method: "put",
+  summary: "Update Task Comment",
+  tags: ["Tasks"],
+  description: "Update an existing comment in a task",
+  security: [{ cookieAuth: [] }],
+  request: {
+    params: z.object({
+      commentId: z.string().openapi({ example: "2hek2bkjh" }),
+    }),
+    body: {
+      content: {
+        "application/json": {
+          schema: UpdateTaskCommentSchema,
+        },
+      },
+    },
+  },
+  responses: {
+    200: {
+      content: {
+        "application/json": {
+          schema: TaskSchema,
+        },
+      },
+      description: "Updated comment in task",
+    },
+    401: {
+      content: {
+        "application/json": {
+          schema: ResponseSchema,
+        },
+      },
+      description: "Error response when not authenticated",
+    },
+    404: {
+      content: {
+        "application/json": {
+          schema: ResponseSchema,
+        },
+      },
+      description: "Error response when Task or Comment does not exist",
+    },
+    500: {
+      content: {
+        "application/json": {
+          schema: ResponseSchema,
+        },
+      },
+      description: "Internal Server Error",
+    },
+  },
+})
+
+export const removeTaskComment = createRoute({
+  path: "/{taskId}/comments",
+  method: "delete",
+  summary: "Remove Task Comment",
+  tags: ["Tasks"],
+  description: "Remove comments from a task",
+  security: [{ cookieAuth: [] }],
+  request: {
+    params: TaskIdSchema,
+    body: {
+      content: {
+        "application/json": {
+          schema: RemoveTaskCommentSchema,
+        },
+      },
+    },
+  },
+  responses: {
+    200: {
+      content: {
+        "application/json": {
+          schema: TaskSchema,
+        },
+      },
+      description: "Removed comments from task",
+    },
+    401: {
+      content: {
+        "application/json": {
+          schema: ResponseSchema,
+        },
+      },
+      description: "Error response when not authenticated",
+    },
+    404: {
+      content: {
+        "application/json": {
+          schema: ResponseSchema,
+        },
+      },
+      description: "Error response when Task does not exist",
+    },
+    500: {
+      content: {
+        "application/json": {
+          schema: ResponseSchema,
+        },
+      },
+      description: "Internal Server Error",
+    },
+  },
+})
+
+export const getTaskComments = createRoute({
+  path: "/{taskId}/comments",
+  method: "get",
+  summary: "Get Task Comments",
+  tags: ["Tasks"],
+  description: "Get all comments for a task",
+  security: [{ cookieAuth: [] }],
+  request: {
+    params: TaskIdSchema,
+  },
+  responses: {
+    200: {
+      content: {
+        "application/json": {
+          schema: z.array(
+            z.object({
+              id: z.string(),
+              content: z.string(),
+              userId: z.string(),
+              createdAt: z.string(),
+              updatedAt: z.string(),
+              userName: z.string(),
+              userEmail: z.string(),
+              userAvatar: z.string().nullable(),
+            })
+          ),
+        },
+      },
+      description: "Returns list of task comments",
     },
     401: {
       content: {

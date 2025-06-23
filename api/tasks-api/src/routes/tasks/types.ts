@@ -17,6 +17,14 @@ export const ChecklistIdSchema = z
   })
   .openapi("Checklist Params")
 
+export const CommentIdSchema = z
+  .object({
+    commentId: z
+      .string()
+      .openapi({ example: "1", param: { name: "commentId", in: "path" } }),
+  })
+  .openapi("Comment Params")
+
 export const TaskListSchema = z.array(
   TaskSchema.omit({
     checklists: true,
@@ -81,4 +89,20 @@ export const UpdateTaskChecklistSchema = z.object({
 
 export const RemoveTaskChecklistSchema = z.object({
   checklistIds: z.array(z.string()).openapi({ example: ["2hek2bkjh"] }),
+})
+
+export const AddTaskCommentSchema = z.object({
+  comment: z.object({
+    content: z.string().openapi({ example: "This is a comment" }),
+  }),
+})
+
+export const UpdateTaskCommentSchema = z.object({
+  comment: z.object({
+    content: z.string().openapi({ example: "Updated comment content" }),
+  }),
+})
+
+export const RemoveTaskCommentSchema = z.object({
+  commentId: z.string().openapi({ example: "2hek2bkjh" }),
 })
