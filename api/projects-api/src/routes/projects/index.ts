@@ -876,41 +876,44 @@ projectRoutes.openapi(addProjectComment, async (c) => {
       throw new UnprocessableEntityError(msg)
     }
 
-    const id = nanoid(6)
-    const newComment: NewComment = {
-      id,
-      content: comment.content,
-      userId: user.id,
-      createdBy: user.id,
-      updatedBy: user.id,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    }
-
-    const createdComment = await c
+    const updatedProject = await c
       .get("db")
-      .insertInto("comments")
-      .values(newComment)
-      .returningAll()
-      .executeTakeFirst()
+      .transaction()
+      .execute(async (tx) => {
+        const id = nanoid(6)
+        const newComment: NewComment = {
+          id,
+          content: comment.content,
+          userId: user.id,
+          createdBy: user.id,
+          updatedBy: user.id,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        }
 
-    if (!createdComment) {
-      const msg = await t.text(ERROR_COMMENT_CREATE_FAILED)
-      throw new BadRequestError(msg)
-    }
+        const createdComment = await tx
+          .insertInto("comments")
+          .values(newComment)
+          .returningAll()
+          .executeTakeFirst()
 
-    const newProjectComment: NewProjectComment = {
-      projectId,
-      commentId: id,
-    }
+        if (!createdComment) {
+          const msg = await t.text(ERROR_COMMENT_CREATE_FAILED)
+          throw new BadRequestError(msg)
+        }
 
-    await c
-      .get("db")
-      .insertInto("projectComments")
-      .values(newProjectComment)
-      .execute()
+        const newProjectComment: NewProjectComment = {
+          projectId,
+          commentId: id,
+        }
 
-    const updatedProject = await getProjectWithMembers(c, projectId)
+        await tx
+          .insertInto("projectComments")
+          .values(newProjectComment)
+          .execute()
+
+        return await getProjectWithMembers(c, projectId)
+      })
 
     return c.json(updatedProject, 201)
   } catch (error) {
@@ -933,56 +936,63 @@ projectRoutes.openapi(updateProjectComment, async (c) => {
     const { comment } = c.req.valid("json")
     const { commentId } = c.req.valid("param")
 
-    const existingComment = await c
+    const updatedProject = await c
       .get("db")
-      .selectFrom("comments")
-      .selectAll()
-      .where("id", "=", commentId)
-      .executeTakeFirst()
+      .transaction()
+      .execute(async (tx) => {
+        const existingComment = await tx
+          .selectFrom("comments")
+          .selectAll()
+          .where("id", "=", commentId)
+          .executeTakeFirst()
 
-    if (!existingComment) {
-      const msg = await t.text(ERROR_COMMENT_NOT_FOUND)
-      throw new UnprocessableEntityError(msg)
-    }
+        if (!existingComment) {
+          const msg = await t.text(ERROR_COMMENT_NOT_FOUND)
+          throw new UnprocessableEntityError(msg)
+        }
 
-    const updates: UpdatedComment = {
-      updatedBy: user.id,
-      updatedAt: new Date().toISOString(),
-    }
+        const updates: UpdatedComment = {
+          updatedBy: user.id,
+          updatedAt: new Date().toISOString(),
+        }
 
-    if (comment.content !== undefined) {
-      updates.content = comment.content
-    }
+        if (comment.content !== undefined) {
+          updates.content = comment.content
+        }
 
-    const updatedComment = await c
-      .get("db")
-      .updateTable("comments")
-      .set(updates)
-      .where("id", "=", existingComment.id)
-      .returningAll()
-      .executeTakeFirst()
+        if (
+          existingComment.userId !== user.id &&
+          user.userType !== "super_admin"
+        ) {
+          const msg = await t.text(ERROR_UNAUTHORIZED)
+          throw new UnauthorizedError(msg)
+        }
 
-    if (!updatedComment) {
-      const msg = await t.text(ERROR_COMMENT_UPDATE_FAILED)
-      throw new BadRequestError(msg)
-    }
+        const updatedComment = await tx
+          .updateTable("comments")
+          .set(updates)
+          .where("id", "=", existingComment.id)
+          .returningAll()
+          .executeTakeFirst()
 
-    const projectComment = await c
-      .get("db")
-      .selectFrom("projectComments")
-      .selectAll()
-      .where("commentId", "=", existingComment.id)
-      .executeTakeFirst()
+        if (!updatedComment) {
+          const msg = await t.text(ERROR_COMMENT_UPDATE_FAILED)
+          throw new BadRequestError(msg)
+        }
 
-    if (!projectComment) {
-      const msg = await t.text(ERROR_PROJECT_NOT_FOUND)
-      throw new UnprocessableEntityError(msg)
-    }
+        const projectComment = await tx
+          .selectFrom("projectComments")
+          .selectAll()
+          .where("commentId", "=", existingComment.id)
+          .executeTakeFirst()
 
-    const updatedProject = await getProjectWithMembers(
-      c,
-      projectComment.projectId
-    )
+        if (!projectComment) {
+          const msg = await t.text(ERROR_PROJECT_NOT_FOUND)
+          throw new UnprocessableEntityError(msg)
+        }
+
+        return await getProjectWithMembers(c, projectComment.projectId)
+      })
 
     return c.json(updatedProject, 200)
   } catch (error) {
@@ -1010,26 +1020,43 @@ projectRoutes.openapi(removeProjectComment, async (c) => {
       throw new UnprocessableEntityError(msg)
     }
 
-    // Delete from projectComments table
-    await c
+    const existingComment = await c
       .get("db")
-      .deleteFrom("projectComments")
-      .where((eb) =>
-        eb.and([
-          eb("projectId", "=", projectId),
-          eb("commentId", "=", commentId),
-        ])
-      )
-      .execute()
-
-    // Delete from comments table
-    await c
-      .get("db")
-      .deleteFrom("comments")
+      .selectFrom("comments")
+      .selectAll()
       .where("id", "=", commentId)
-      .execute()
+      .executeTakeFirst()
 
-    const updatedProject = await getProjectWithMembers(c, projectId)
+    if (!existingComment) {
+      const msg = await t.text(ERROR_COMMENT_NOT_FOUND)
+      throw new UnprocessableEntityError(msg)
+    }
+
+    if (existingComment.userId !== user.id && user.userType !== "super_admin") {
+      const msg = await t.text(ERROR_UNAUTHORIZED)
+      throw new UnauthorizedError(msg)
+    }
+
+    const updatedProject = await c
+      .get("db")
+      .transaction()
+      .execute(async (tx) => {
+        // Delete from projectComments table
+        await tx
+          .deleteFrom("projectComments")
+          .where((eb) =>
+            eb.and([
+              eb("projectId", "=", projectId),
+              eb("commentId", "=", commentId),
+            ])
+          )
+          .execute()
+
+        // Delete from comments table
+        await tx.deleteFrom("comments").where("id", "=", commentId).execute()
+
+        return await getProjectWithMembers(c, projectId)
+      })
 
     return c.json(updatedProject, 200)
   } catch (error) {

@@ -472,41 +472,41 @@ tasksRoutes.openapi(addTaskComment, async (c) => {
       throw new UnprocessableEntityError(msg)
     }
 
-    const id = nanoid(7)
-    const newComment = {
-      id,
-      content: comment.content,
-      userId: user.id,
-      createdBy: user.id,
-      updatedBy: user.id,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    }
-
-    const createdComment = await c
+    const updatedTask = await c
       .get("db")
-      .insertInto("comments")
-      .values(newComment)
-      .returningAll()
-      .executeTakeFirst()
+      .transaction()
+      .execute(async (tx) => {
+        const id = nanoid(7)
+        const newComment = {
+          id,
+          content: comment.content,
+          userId: user.id,
+          createdBy: user.id,
+          updatedBy: user.id,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        }
 
-    if (!createdComment) {
-      const msg = await t.text(ERROR_COMMENT_CREATE_FAILED)
-      throw new BadRequestError(msg)
-    }
+        const createdComment = await tx
+          .insertInto("comments")
+          .values(newComment)
+          .returningAll()
+          .executeTakeFirst()
 
-    const newTaskComment = {
-      taskId,
-      commentId: id,
-    }
+        if (!createdComment) {
+          const msg = await t.text(ERROR_COMMENT_CREATE_FAILED)
+          throw new BadRequestError(msg)
+        }
 
-    await c
-      .get("db")
-      .insertInto("taskComments")
-      .values(newTaskComment)
-      .execute()
+        const newTaskComment = {
+          taskId,
+          commentId: id,
+        }
 
-    const updatedTask = await getTaskWithChecklists(c, taskId)
+        await tx.insertInto("taskComments").values(newTaskComment).execute()
+
+        return await getTaskWithChecklists(c, taskId)
+      })
 
     return c.json(updatedTask, 201)
   } catch (error) {
@@ -529,57 +529,67 @@ tasksRoutes.openapi(updateTaskComment, async (c) => {
     const { comment } = c.req.valid("json")
     const { commentId } = c.req.valid("param")
 
-    const existingComment = await c
+    const updatedTask = await c
       .get("db")
-      .selectFrom("comments")
-      .selectAll()
-      .where("id", "=", commentId)
-      .executeTakeFirst()
+      .transaction()
+      .execute(async (tx) => {
+        const existingComment = await tx
+          .selectFrom("comments")
+          .selectAll()
+          .where("id", "=", commentId)
+          .executeTakeFirst()
 
-    if (!existingComment) {
-      const msg = await t.text(ERROR_COMMENT_NOT_FOUND)
-      throw new UnprocessableEntityError(msg)
-    }
+        if (!existingComment) {
+          const msg = await t.text(ERROR_COMMENT_NOT_FOUND)
+          throw new UnprocessableEntityError(msg)
+        }
 
-    const updates: {
-      updatedBy: string
-      updatedAt: string
-      content?: string
-    } = {
-      updatedBy: user.id,
-      updatedAt: new Date().toISOString(),
-    }
+        if (
+          existingComment.userId !== user.id &&
+          user.userType !== "super_admin"
+        ) {
+          const msg = await t.text(ERROR_UNAUTHORIZED)
+          throw new UnauthorizedError(msg)
+        }
 
-    if (comment.content !== undefined) {
-      updates.content = comment.content
-    }
+        const updates: {
+          updatedBy: string
+          updatedAt: string
+          content?: string
+        } = {
+          updatedBy: user.id,
+          updatedAt: new Date().toISOString(),
+        }
 
-    const updatedComment = await c
-      .get("db")
-      .updateTable("comments")
-      .set(updates)
-      .where("id", "=", existingComment.id)
-      .returningAll()
-      .executeTakeFirst()
+        if (comment.content !== undefined) {
+          updates.content = comment.content
+        }
 
-    if (!updatedComment) {
-      const msg = await t.text(ERROR_COMMENT_UPDATE_FAILED)
-      throw new BadRequestError(msg)
-    }
+        const updatedComment = await tx
+          .updateTable("comments")
+          .set(updates)
+          .where("id", "=", existingComment.id)
+          .returningAll()
+          .executeTakeFirst()
 
-    const taskComment = await c
-      .get("db")
-      .selectFrom("taskComments")
-      .selectAll()
-      .where("commentId", "=", existingComment.id)
-      .executeTakeFirst()
+        if (!updatedComment) {
+          const msg = await t.text(ERROR_COMMENT_UPDATE_FAILED)
+          throw new BadRequestError(msg)
+        }
 
-    if (!taskComment) {
-      const msg = await t.text(ERROR_TASK_NOT_FOUND)
-      throw new UnprocessableEntityError(msg)
-    }
+        const taskComment = await tx
+          .selectFrom("taskComments")
+          .selectAll()
+          .where("commentId", "=", existingComment.id)
+          .executeTakeFirst()
 
-    const updatedTask = await getTaskWithChecklists(c, taskComment.taskId)
+        if (!taskComment) {
+          const msg = await t.text(ERROR_TASK_NOT_FOUND)
+          throw new UnprocessableEntityError(msg)
+        }
+
+        return await getTaskWithChecklists(c, taskComment.taskId)
+      })
 
     return c.json(updatedTask, 200)
   } catch (error) {
@@ -607,23 +617,41 @@ tasksRoutes.openapi(removeTaskComment, async (c) => {
       throw new UnprocessableEntityError(msg)
     }
 
-    // Delete from taskComments table
-    await c
+    // Authorization: Only comment author or super_admin can delete
+    const existingComment = await c
       .get("db")
-      .deleteFrom("taskComments")
-      .where((eb) =>
-        eb.and([eb("taskId", "=", taskId), eb("commentId", "=", commentId)])
-      )
-      .execute()
-
-    // Delete from comments table
-    await c
-      .get("db")
-      .deleteFrom("comments")
+      .selectFrom("comments")
+      .selectAll()
       .where("id", "=", commentId)
-      .execute()
+      .executeTakeFirst()
 
-    const updatedTask = await getTaskWithChecklists(c, taskId)
+    if (!existingComment) {
+      const msg = await t.text(ERROR_COMMENT_NOT_FOUND)
+      throw new UnprocessableEntityError(msg)
+    }
+
+    if (existingComment.userId !== user.id && user.userType !== "super_admin") {
+      const msg = await t.text(ERROR_UNAUTHORIZED)
+      throw new UnauthorizedError(msg)
+    }
+
+    const updatedTask = await c
+      .get("db")
+      .transaction()
+      .execute(async (tx) => {
+        // Delete from taskComments table
+        await tx
+          .deleteFrom("taskComments")
+          .where((eb) =>
+            eb.and([eb("taskId", "=", taskId), eb("commentId", "=", commentId)])
+          )
+          .execute()
+
+        // Delete from comments table
+        await tx.deleteFrom("comments").where("id", "=", commentId).execute()
+
+        return await getTaskWithChecklists(c, taskId)
+      })
 
     return c.json(updatedTask, 200)
   } catch (error) {
