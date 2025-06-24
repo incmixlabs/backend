@@ -81,3 +81,18 @@ export const ERROR_CHECKLIST_NOT_FOUND = {
   namespace: "errors",
   key: "checklist_not_found",
 }
+
+export const ERROR_COMMENT_CREATE_FAILED = {
+  namespace: "errors",
+  key: "comment_create_failed",
+}
+
+export const ERROR_COMMENT_UPDATE_FAILED = {
+  namespace: "errors",
+  key: "comment_update_failed",
+}
+
+export const ERROR_COMMENT_NOT_FOUND = {
+  namespace: "errors",
+  key: "comment_not_found",
+}

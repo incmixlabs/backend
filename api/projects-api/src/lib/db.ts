@@ -149,6 +149,23 @@ export function getProjectWithMembers(c: Context, projectId: string) {
           ])
           .whereRef("projectMembers.projectId", "=", "projects.id")
       ).as("members"),
+      jsonArrayFrom(
+        eb
+          .selectFrom("projectComments")
+          .innerJoin("comments", "projectComments.commentId", "comments.id")
+          .innerJoin("userProfiles as users", "comments.userId", "users.id")
+          .select([
+            "comments.id",
+            "comments.content",
+            "comments.userId",
+            "comments.createdAt",
+            "comments.updatedAt",
+            "users.fullName as userName",
+            "users.email as userEmail",
+            "users.avatar as userAvatar",
+          ])
+          .whereRef("projectComments.projectId", "=", "projects.id")
+      ).as("comments"),
     ])
     .where("projects.id", "=", projectId)
     .executeTakeFirst()

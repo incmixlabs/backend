@@ -1,9 +1,13 @@
 import { createRoute } from "@hono/zod-openapi"
-import { BoardSchema, ColumnSchema, ProjectSchema } from "@incmix/utils/types"
+import { ColumnSchema, ProjectSchema } from "@incmix/utils/types"
+import { z } from "zod"
 import { ResponseSchema } from "../types"
 import {
   AddProjectChecklistSchema,
+  AddProjectCommentSchema,
   AddProjectMemberSchema,
+  BoardSchema,
+  CommentIdSchema,
   CreateColumnSchema,
   CreateProjectSchema,
   IdSchema,
@@ -12,6 +16,7 @@ import {
   RemoveProjectMemberSchema,
   UpdateColumnSchema,
   UpdateProjectChecklistSchema,
+  UpdateProjectCommentSchema,
   UpdateProjectSchema,
 } from "./types"
 
@@ -705,6 +710,215 @@ export const removeProjectChecklist = createRoute({
         },
       },
       description: "Removed checklist items from project",
+    },
+    401: {
+      content: {
+        "application/json": {
+          schema: ResponseSchema,
+        },
+      },
+      description: "Error response when not authenticated",
+    },
+    404: {
+      content: {
+        "application/json": {
+          schema: ResponseSchema,
+        },
+      },
+      description: "Error response when Project does not exist",
+    },
+    500: {
+      content: {
+        "application/json": {
+          schema: ResponseSchema,
+        },
+      },
+      description: "Internal Server Error",
+    },
+  },
+})
+
+export const addProjectComment = createRoute({
+  path: "/{id}/comments",
+  method: "post",
+  summary: "Add Project Comment",
+  tags: ["Projects"],
+  description: "Add a new comment to a project",
+  security: [{ cookieAuth: [] }],
+  request: {
+    params: IdSchema,
+    body: {
+      content: {
+        "application/json": {
+          schema: AddProjectCommentSchema,
+        },
+      },
+    },
+  },
+  responses: {
+    201: {
+      content: {
+        "application/json": {
+          schema: ProjectSchema,
+        },
+      },
+      description: "Added comment to project",
+    },
+    401: {
+      content: {
+        "application/json": {
+          schema: ResponseSchema,
+        },
+      },
+      description: "Error response when not authenticated",
+    },
+    404: {
+      content: {
+        "application/json": {
+          schema: ResponseSchema,
+        },
+      },
+      description: "Error response when Project does not exist",
+    },
+    500: {
+      content: {
+        "application/json": {
+          schema: ResponseSchema,
+        },
+      },
+      description: "Internal Server Error",
+    },
+  },
+})
+
+export const updateProjectComment = createRoute({
+  path: "/{id}/comments/{commentId}",
+  method: "put",
+  summary: "Update Project Comment",
+  tags: ["Projects"],
+  description: "Update an existing comment in a project",
+  security: [{ cookieAuth: [] }],
+  request: {
+    params: IdSchema.merge(CommentIdSchema),
+    body: {
+      content: {
+        "application/json": {
+          schema: UpdateProjectCommentSchema,
+        },
+      },
+    },
+  },
+  responses: {
+    200: {
+      content: {
+        "application/json": {
+          schema: ProjectSchema,
+        },
+      },
+      description: "Updated comment in project",
+    },
+    401: {
+      content: {
+        "application/json": {
+          schema: ResponseSchema,
+        },
+      },
+      description: "Error response when not authenticated",
+    },
+    404: {
+      content: {
+        "application/json": {
+          schema: ResponseSchema,
+        },
+      },
+      description: "Error response when Project or Comment does not exist",
+    },
+    500: {
+      content: {
+        "application/json": {
+          schema: ResponseSchema,
+        },
+      },
+      description: "Internal Server Error",
+    },
+  },
+})
+
+export const removeProjectComment = createRoute({
+  path: "/{id}/comments/{commentId}",
+  method: "delete",
+  summary: "Remove Project Comment",
+  tags: ["Projects"],
+  description: "Remove comments from a project",
+  security: [{ cookieAuth: [] }],
+  request: {
+    params: IdSchema.merge(CommentIdSchema),
+  },
+  responses: {
+    200: {
+      content: {
+        "application/json": {
+          schema: ProjectSchema,
+        },
+      },
+      description: "Removed comments from project",
+    },
+    401: {
+      content: {
+        "application/json": {
+          schema: ResponseSchema,
+        },
+      },
+      description: "Error response when not authenticated",
+    },
+    404: {
+      content: {
+        "application/json": {
+          schema: ResponseSchema,
+        },
+      },
+      description: "Error response when Project does not exist",
+    },
+    500: {
+      content: {
+        "application/json": {
+          schema: ResponseSchema,
+        },
+      },
+      description: "Internal Server Error",
+    },
+  },
+})
+
+export const getProjectComments = createRoute({
+  path: "/{id}/comments",
+  method: "get",
+  summary: "Get Project Comments",
+  tags: ["Projects"],
+  description: "Get all comments for a project",
+  security: [{ cookieAuth: [] }],
+  request: {
+    params: IdSchema,
+  },
+  responses: {
+    200: {
+      content: {
+        "application/json": {
+          schema: z.array(
+            z.object({
+              id: z.string(),
+              content: z.string(),
+              userId: z.string(),
+              createdAt: z.string(),
+              updatedAt: z.string(),
+              userName: z.string(),
+              userEmail: z.string(),
+              userAvatar: z.string().nullable(),
+            })
+          ),
+        },
+      },
+      description: "Returns list of project comments",
     },
     401: {
       content: {
