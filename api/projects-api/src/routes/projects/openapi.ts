@@ -7,12 +7,12 @@ import {
   AddProjectCommentSchema,
   AddProjectMemberSchema,
   BoardSchema,
+  CommentIdSchema,
   CreateColumnSchema,
   CreateProjectSchema,
   IdSchema,
   ParentColumnIdSchema,
   RemoveProjectChecklistSchema,
-  RemoveProjectCommentSchema,
   RemoveProjectMemberSchema,
   UpdateColumnSchema,
   UpdateProjectChecklistSchema,
@@ -792,16 +792,14 @@ export const addProjectComment = createRoute({
 })
 
 export const updateProjectComment = createRoute({
-  path: "/comments/{commentId}",
+  path: "/{id}/comments/{commentId}",
   method: "put",
   summary: "Update Project Comment",
   tags: ["Projects"],
   description: "Update an existing comment in a project",
   security: [{ cookieAuth: [] }],
   request: {
-    params: z.object({
-      commentId: z.string().openapi({ example: "2hek2bkjh" }),
-    }),
+    params: IdSchema.merge(CommentIdSchema),
     body: {
       content: {
         "application/json": {
@@ -847,21 +845,14 @@ export const updateProjectComment = createRoute({
 })
 
 export const removeProjectComment = createRoute({
-  path: "/{id}/comments",
+  path: "/{id}/comments/{commentId}",
   method: "delete",
   summary: "Remove Project Comment",
   tags: ["Projects"],
   description: "Remove comments from a project",
   security: [{ cookieAuth: [] }],
   request: {
-    params: IdSchema,
-    body: {
-      content: {
-        "application/json": {
-          schema: RemoveProjectCommentSchema,
-        },
-      },
-    },
+    params: IdSchema.merge(CommentIdSchema),
   },
   responses: {
     200: {

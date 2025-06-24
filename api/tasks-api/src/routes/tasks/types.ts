@@ -102,7 +102,3 @@ export const UpdateTaskCommentSchema = z.object({
     content: z.string().openapi({ example: "Updated comment content" }),
   }),
 })
-
-export const RemoveTaskCommentSchema = z.object({
-  commentId: z.string().openapi({ example: "2hek2bkjh" }),
-})

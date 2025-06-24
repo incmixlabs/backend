@@ -90,6 +90,10 @@ export const RemoveProjectChecklistSchema = z.object({
   checklistIds: z.array(z.string()).openapi({ example: ["2hek2bkjh"] }),
 })
 
+export const CommentIdSchema = z.object({
+  commentId: z.string().openapi({ example: "2hek2bkjh" }),
+})
+
 export const AddProjectCommentSchema = z.object({
   comment: z.object({
     content: z.string().openapi({ example: "This is a comment" }),
@@ -100,10 +104,6 @@ export const UpdateProjectCommentSchema = z.object({
   comment: z.object({
     content: z.string().openapi({ example: "Updated comment content" }),
   }),
-})
-
-export const RemoveProjectCommentSchema = z.object({
-  commentId: z.string().openapi({ example: "2hek2bkjh" }),
 })
 
 export const ColumnWithTaskSchema = ColumnSchema.extend({

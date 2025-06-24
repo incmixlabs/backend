@@ -609,8 +609,7 @@ tasksRoutes.openapi(removeTaskComment, async (c) => {
       throw new UnauthorizedError(msg)
     }
 
-    const { commentId } = c.req.valid("json")
-    const { taskId } = c.req.valid("param")
+    const { taskId, commentId } = c.req.valid("param")
     const existingTask = await getTaskWithChecklists(c, taskId)
     if (!existingTask) {
       const msg = await t.text(ERROR_TASK_NOT_FOUND)

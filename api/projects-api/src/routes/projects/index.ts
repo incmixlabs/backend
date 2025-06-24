@@ -1012,14 +1012,14 @@ projectRoutes.openapi(removeProjectComment, async (c) => {
       throw new UnauthorizedError(msg)
     }
 
-    const { commentId } = c.req.valid("json")
-    const { id: projectId } = c.req.valid("param")
+    const { id: projectId, commentId } = c.req.valid("param")
     const existingProject = await getProjectWithMembers(c, projectId)
     if (!existingProject) {
       const msg = await t.text(ERROR_PROJECT_NOT_FOUND)
       throw new UnprocessableEntityError(msg)
     }
 
+    // Authorization: Only comment author or super_admin can delete
     const existingComment = await c
       .get("db")
       .selectFrom("comments")

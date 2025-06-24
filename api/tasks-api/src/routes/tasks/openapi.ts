@@ -5,9 +5,9 @@ import {
   AddTaskChecklistSchema,
   AddTaskCommentSchema,
   ChecklistIdSchema,
+  CommentIdSchema,
   CreateTaskSchema,
   RemoveTaskChecklistSchema,
-  RemoveTaskCommentSchema,
   TaskIdSchema,
   TaskListSchema,
   UpdateTaskChecklistSchema,
@@ -471,16 +471,14 @@ export const addTaskComment = createRoute({
 })
 
 export const updateTaskComment = createRoute({
-  path: "/comments/{commentId}",
+  path: "/{taskId}/comments/{commentId}",
   method: "put",
   summary: "Update Task Comment",
   tags: ["Tasks"],
   description: "Update an existing comment in a task",
   security: [{ cookieAuth: [] }],
   request: {
-    params: z.object({
-      commentId: z.string().openapi({ example: "2hek2bkjh" }),
-    }),
+    params: TaskIdSchema.merge(CommentIdSchema),
     body: {
       content: {
         "application/json": {
@@ -526,21 +524,14 @@ export const updateTaskComment = createRoute({
 })
 
 export const removeTaskComment = createRoute({
-  path: "/{taskId}/comments",
+  path: "/{taskId}/comments/{commentId}",
   method: "delete",
   summary: "Remove Task Comment",
   tags: ["Tasks"],
   description: "Remove comments from a task",
   security: [{ cookieAuth: [] }],
   request: {
-    params: TaskIdSchema,
-    body: {
-      content: {
-        "application/json": {
-          schema: RemoveTaskCommentSchema,
-        },
-      },
-    },
+    params: TaskIdSchema.merge(CommentIdSchema),
   },
   responses: {
     200: {
