@@ -1,18 +1,18 @@
 import { envVars } from "@/env-vars"
 import {
-  UserStoryResponseSchema,
   type UserStoryResponse,
+  UserStoryResponseSchema,
 } from "@/routes/genai/types"
 import type { Context } from "@/types"
+import { createAnthropic } from "@ai-sdk/anthropic"
+import { createGoogleGenerativeAI } from "@ai-sdk/google"
 import {
+  type StreamObjectResult,
   generateObject,
   generateText,
-  type StreamObjectResult,
   streamObject,
   streamText,
 } from "ai"
-import { createAnthropic } from "@ai-sdk/anthropic"
-import { createGoogleGenerativeAI } from "@ai-sdk/google"
 
 import type { StoryTemplate } from "@incmix-api/utils/db-schema"
 import { type AIModel, MODEL_MAP } from "./constants"

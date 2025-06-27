@@ -10,8 +10,8 @@ import type {
 } from "@figma/rest-api-spec"
 import { ServerError } from "@incmix-api/utils/errors"
 import { streamObject } from "ai"
-import { type AIModel, MODEL_MAP } from "./constants"
 import { z } from "zod"
+import { type AIModel, MODEL_MAP } from "./constants"
 
 // Token limits for different models
 const TOKEN_LIMITS = {

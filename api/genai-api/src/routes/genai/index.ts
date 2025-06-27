@@ -14,8 +14,8 @@ import type { HonoApp } from "@/types"
 import { OpenAPIHono } from "@hono/zod-openapi"
 import { ERROR_UNAUTHORIZED } from "@incmix-api/utils"
 import {
-  processError,
   UnauthorizedError,
+  processError,
   zodError,
 } from "@incmix-api/utils/errors"
 import { useTranslation } from "@incmix-api/utils/middleware"
