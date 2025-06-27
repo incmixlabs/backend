@@ -1,9 +1,10 @@
 import type { OpenAPIHono } from "@hono/zod-openapi"
-import type { Context, Env } from "hono"
+import type { Env } from "hono"
 import { cors } from "hono/cors"
 
 const allowedOrigins = [
   "http://localhost:1420",
+  "http://localhost:5500",
   "http://localhost:6006",
   "http://localhost:1421",
   "http://localhost:8282",
@@ -20,9 +21,12 @@ export function setupCors<T extends Env>(
     `${basePath}/*`,
     cors({
       origin: (origin) => {
-        const DOMAIN = "incmix-api.fly.dev"
+        const DOMAIN = process.env.DOMAIN
         if (!DOMAIN) {
           return null
+        }
+        if (DOMAIN === "localhost") {
+          return origin
         }
         if (
           allowedOrigins.includes(origin) ||
