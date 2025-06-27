@@ -1,61 +1,32 @@
 import { envVars } from "@/env-vars"
-import Anthropic from "@anthropic-ai/sdk"
-import { GoogleGenAI } from "@google/genai"
+import { CodeGenerationResponseSchema } from "@/routes/genai/types"
+import { createAnthropic } from "@ai-sdk/anthropic"
+import { createGoogleGenerativeAI } from "@ai-sdk/google"
+import type {
+  DocumentNode,
+  GetFileNodesResponse,
+  GetFileResponse,
+  Node,
+} from "@figma/rest-api-spec"
 import { ServerError } from "@incmix-api/utils/errors"
-import type { SSEStreamingApi } from "hono/streaming"
+import { streamObject } from "ai"
 import { type AIModel, MODEL_MAP } from "./constants"
+import { z } from "zod"
 
-type FigmaNode = {
-  id: string
-  name: string
-  type: string
-  visible: boolean
-  absoluteBoundingBox?: {
-    x: number
-    y: number
-    width: number
-    height: number
-  }
-  layoutMode?: string
-  paddingLeft: number
-  paddingRight: number
-  paddingTop: number
-  paddingBottom: number
-  backgroundColor: {
-    r: number
-    g: number
-    b: number
-    a: number
-  }
-  style?: {
-    fontFamily?: string
-    fontSize?: number
-    fontWeight?: number
-    textAlignHorizontal?: string
-    textAlignVertical?: string
-  }
-  fills?: {
-    color: string
-  }[]
-  strokes?: {
-    color: string
-  }[]
-  cornerRadius?: number
-  children?: FigmaNode[]
-  characters?: string
+// Token limits for different models
+const TOKEN_LIMITS = {
+  claude: {
+    input: 200000, // Claude 3.5 Sonnet context window
+    output: 4000,
+  },
+  gemini: {
+    input: 1000000, // Gemini Pro context window
+    output: 8000,
+  },
 }
 
-type FigmaFileData = {
-  name: string
-  lastModified: string
-  version: string
-  document?: FigmaNode
-  nodes?: {
-    [key: string]: {
-      document: FigmaNode
-    }
-  }
-}
+// Estimated tokens per character (rough approximation)
+const TOKENS_PER_CHAR = 0.25
 
 type DesignElement = {
   id: string
@@ -93,6 +64,7 @@ type DesignElement = {
     textAlignHorizontal?: string
     textAlignVertical?: string
     color?: string
+    responsive?: boolean
   }
   fills?: {
     color?: string
@@ -101,6 +73,24 @@ type DesignElement = {
     color?: string
   }[]
   cornerRadius?: number
+  effects?: {
+    type: string
+    visible: boolean
+    radius?: number
+    color?: {
+      r: number
+      g: number
+      b: number
+      a: number
+    }
+  }[]
+  constraints?: {
+    horizontal: string
+    vertical: string
+  }
+  layoutAlign?: string
+  layoutGrow?: number
+  importance: number // For prioritization
 }
 
 type DesignData = {
@@ -108,6 +98,21 @@ type DesignData = {
   lastModified: string
   version: string
   elements: DesignElement
+  metadata: {
+    totalElements: number
+    visibleElements: number
+    estimatedTokens: number
+    complexity: "low" | "medium" | "high"
+  }
+}
+
+type CodeGenerationOptions = {
+  framework: "react" | "vue" | "angular" | "html"
+  styling: "tailwind" | "css" | "styled-components" | "css-modules"
+  typescript: boolean
+  responsive: boolean
+  accessibility: boolean
+  componentLibrary?: string
 }
 
 export class FigmaService {
@@ -122,20 +127,13 @@ export class FigmaService {
   }
 
   private parseFigmaUrl(url: string) {
-    // Extract file key and node ID from Figma URL
-    // Figma URLs follow the pattern: https://www.figma.com/file/{fileKey}/{title}?node-id={nodeId}
-    // or https://www.figma.com/design/{fileKey}/{title}?node-id={nodeId}
-
-    // Initialize variables
     let fileKey: string | null = null
     let nodeId: string | null = null
 
     try {
-      // Parse the URL
       const figmaUrl = new URL(url)
       const pathParts = figmaUrl.pathname.split("/")
 
-      // Extract file key from path
       if (
         pathParts.length >= 3 &&
         (pathParts[1] === "file" ||
@@ -145,7 +143,6 @@ export class FigmaService {
         fileKey = pathParts[2]
       }
 
-      // Extract node ID from query parameters
       nodeId = figmaUrl.searchParams.get("node-id")?.replace("-", ":") ?? null
 
       if (!fileKey) {
@@ -197,7 +194,6 @@ export class FigmaService {
     try {
       let url = `${this.figmaApiUrl}/files/${fileId}`
 
-      // If node ID is provided, fetch just that node
       if (nodeId) {
         url = `${url}/nodes?ids=${encodeURIComponent(nodeId)}`
       }
@@ -212,7 +208,7 @@ export class FigmaService {
         throw new Error("Failed to fetch Figma file data")
       }
 
-      return response.json() as Promise<FigmaFileData>
+      return response.json() as Promise<GetFileNodesResponse>
     } catch (error) {
       console.error("Error fetching Figma file data:", error)
       throw new Error(
@@ -221,290 +217,611 @@ export class FigmaService {
     }
   }
 
-  private extractDesignElements(
-    fileData: FigmaFileData,
-    nodeId: string | null
-  ) {
-    // This is a simplified version - in production, you'd implement a more robust parser
-    let document: FigmaNode
+  private calculateElementImportance(element: Node, depth = 0): number {
+    let importance = 1
 
-    if (nodeId && fileData.nodes) {
-      // If we requested specific nodes
-      document = fileData.nodes[nodeId]?.document
+    // Reduce importance with depth
+    importance *= Math.max(0.1, 1 - depth * 0.2)
 
-      if (!document) {
-        throw new Error("Specified node not found in Figma file")
-      }
-    } else {
-      // Full file
-      if (!fileData.document) {
-        throw new Error("No document found in Figma file")
-      }
-
-      document = fileData.document
+    // Increase importance for interactive elements
+    if (element.type === "COMPONENT" || element.type === "INSTANCE") {
+      importance *= 2
     }
 
-    // Process the document to extract components, styles, layout, etc.
-    const extractedElements = this.processDocument(document)
+    // Increase importance for text elements (content is important)
+    if (element.type === "TEXT" && element.characters) {
+      importance *= 1.5
+    }
+
+    // Increase importance for visible elements
+    if (element.visible) {
+      importance *= 1.2
+    }
+
+    // Increase importance for elements with specific styling
+    if ("style" in element && element.style) {
+      importance *= 1.3
+    }
+    if ("fills" in element && element.fills) {
+      importance *= 1.3
+    }
+    if ("strokes" in element && element.strokes) {
+      importance *= 1.3
+    }
+
+    return importance
+  }
+
+  private processNode(
+    node: Node,
+    path: string[] = [],
+    depth = 0
+  ): DesignElement {
+    const importance = this.calculateElementImportance(node, depth)
+
+    const basicInfo = {
+      id: node.id,
+      name: node.name,
+      type: node.type,
+      visible: node.visible ?? false,
+      path: [...path, node.name],
+      importance,
+    }
+
+    switch (node.type) {
+      case "FRAME":
+      case "GROUP":
+      case "COMPONENT":
+      case "COMPONENT_SET":
+      case "INSTANCE":
+        return {
+          ...basicInfo,
+          size: {
+            width: node.absoluteBoundingBox?.width,
+            height: node.absoluteBoundingBox?.height,
+          },
+          position: {
+            x: node.absoluteBoundingBox?.x,
+            y: node.absoluteBoundingBox?.y,
+          },
+          layout: node.layoutMode,
+          padding: {
+            left: node.paddingLeft,
+            right: node.paddingRight,
+            top: node.paddingTop,
+            bottom: node.paddingBottom,
+          },
+          backgroundColor:
+            node.fills?.[0]?.type === "SOLID" ? node.fills[0].color : undefined,
+          constraints: node.constraints,
+          layoutAlign: node.layoutAlign,
+          layoutGrow: node.layoutGrow,
+          children: (node.children || [])
+            .map((child) =>
+              this.processNode(child, [...path, node.name], depth + 1)
+            )
+            .sort((a, b) => b.importance - a.importance), // Sort by importance
+        }
+
+      case "TEXT":
+        return {
+          ...basicInfo,
+          characters: node.characters,
+          style: {
+            fontFamily: node.style?.fontFamily,
+            fontSize: node.style?.fontSize,
+            fontWeight: node.style?.fontWeight,
+            textAlignHorizontal: node.style?.textAlignHorizontal,
+            textAlignVertical: node.style?.textAlignVertical,
+            color:
+              node.fills?.[0]?.type === "SOLID"
+                ? node.fills[0].color.r.toString()
+                : undefined,
+          },
+        }
+
+      case "RECTANGLE":
+      case "ELLIPSE":
+      case "LINE":
+      case "VECTOR":
+        return {
+          ...basicInfo,
+          size: {
+            width: node.absoluteBoundingBox?.width,
+            height: node.absoluteBoundingBox?.height,
+          },
+          fills: node.fills?.map((fill) => ({
+            color: fill.type === "SOLID" ? fill.color.r.toString() : undefined,
+          })),
+          strokes: node.strokes?.map((stroke) => ({
+            color:
+              stroke.type === "SOLID" ? stroke.color.r.toString() : undefined,
+          })),
+          cornerRadius:
+            "cornerRadius" in node && node.cornerRadius !== undefined
+              ? node.cornerRadius
+              : undefined,
+          effects: node.effects?.map((effect) => ({
+            type: effect.type ?? "",
+            visible: "visible" in effect ? effect.visible : false,
+            radius: "radius" in effect ? effect.radius : undefined,
+            color: "color" in effect && effect.color ? effect.color : undefined,
+          })),
+        }
+
+      default:
+        return basicInfo
+    }
+  }
+
+  private extractDesignElements(
+    fileData: GetFileNodesResponse,
+    nodeId: string
+  ): DesignData {
+    const document = fileData.nodes[nodeId].document
+
+    if (!document) {
+      throw new Error("Specified node not found in Figma file")
+    }
+
+    const processedElements = this.processDocument(document)
+    const metadata = this.calculateMetadata(processedElements)
 
     return {
       name: fileData.name,
       lastModified: fileData.lastModified,
       version: fileData.version,
-      elements: extractedElements,
+      elements: processedElements,
+      metadata,
     }
   }
 
-  processDocument(document: FigmaNode) {
-    // This is a simplified implementation
-    // A production version would recursively parse the Figma node tree
+  private processDocument(document: Node): DesignElement {
+    return this.processNode(document)
+  }
 
-    function processNode(node: FigmaNode, path: string[] = []): DesignElement {
-      const basicInfo = {
-        id: node.id,
-        name: node.name,
-        type: node.type,
-        visible: node.visible,
-        path: [...path, node.name],
+  private calculateMetadata(elements: DesignElement) {
+    const countElements = (element: DesignElement): number => {
+      let count = 1
+      if (element.children) {
+        count += element.children.reduce(
+          (sum, child) => sum + countElements(child),
+          0
+        )
       }
+      return count
+    }
 
-      // Extract properties based on node type
-      switch (node.type) {
-        case "FRAME":
-        case "GROUP":
-        case "COMPONENT":
-        case "COMPONENT_SET":
-        case "INSTANCE":
-          return {
-            ...basicInfo,
-            size: {
-              width: node.absoluteBoundingBox?.width,
-              height: node.absoluteBoundingBox?.height,
-            },
-            position: {
-              x: node.absoluteBoundingBox?.x,
-              y: node.absoluteBoundingBox?.y,
-            },
-            layout: node.layoutMode,
-            padding: {
-              left: node.paddingLeft,
-              right: node.paddingRight,
-              top: node.paddingTop,
-              bottom: node.paddingBottom,
-            },
-            backgroundColor: node.backgroundColor,
-            children: (node.children || []).map((child) =>
-              processNode(child, [...path, node.name])
-            ),
-          }
+    const countVisibleElements = (element: DesignElement): number => {
+      let count = element.visible ? 1 : 0
+      if (element.children) {
+        count += element.children.reduce(
+          (sum, child) => sum + countVisibleElements(child),
+          0
+        )
+      }
+      return count
+    }
 
-        case "TEXT":
-          return {
-            ...basicInfo,
-            characters: node.characters,
-            style: {
-              fontFamily: node.style?.fontFamily,
-              fontSize: node.style?.fontSize,
-              fontWeight: node.style?.fontWeight,
-              textAlignHorizontal: node.style?.textAlignHorizontal,
-              textAlignVertical: node.style?.textAlignVertical,
-              color: node.fills?.[0]?.color,
-            },
-          }
+    const totalElements = countElements(elements)
+    const visibleElements = countVisibleElements(elements)
+    const designJson = JSON.stringify(elements)
+    const estimatedTokens = Math.ceil(designJson.length * TOKENS_PER_CHAR)
 
-        case "RECTANGLE":
-        case "ELLIPSE":
-        case "LINE":
-        case "VECTOR":
-          return {
-            ...basicInfo,
-            size: {
-              width: node.absoluteBoundingBox?.width,
-              height: node.absoluteBoundingBox?.height,
-            },
-            fills: node.fills,
-            strokes: node.strokes,
-            cornerRadius: node.cornerRadius,
-          }
+    let complexity: "low" | "medium" | "high" = "low"
+    if (totalElements > 100) complexity = "high"
+    else if (totalElements > 50) complexity = "medium"
 
-        default:
-          return basicInfo
+    return {
+      totalElements,
+      visibleElements,
+      estimatedTokens,
+      complexity,
+    }
+  }
+
+  // Strategy 1: Handle large design data by chunking and prioritizing
+  private chunkDesignData(
+    designData: DesignData,
+    maxTokens: number
+  ): DesignElement[] {
+    const chunks: DesignElement[] = []
+    let currentTokens = 0
+
+    const addElementToChunks = (element: DesignElement) => {
+      const elementJson = JSON.stringify(element)
+      const elementTokens = Math.ceil(elementJson.length * TOKENS_PER_CHAR)
+
+      if (currentTokens + elementTokens <= maxTokens) {
+        chunks.push(element)
+        currentTokens += elementTokens
       }
     }
 
-    return processNode(document)
+    const processElement = (element: DesignElement) => {
+      // Add high-importance elements first
+      if (element.importance > 1.5) {
+        addElementToChunks(element)
+      }
+
+      // Process children recursively
+      if (element.children) {
+        element.children.forEach(processElement)
+      }
+
+      // Add remaining elements if space allows
+      if (element.importance <= 1.5) {
+        addElementToChunks(element)
+      }
+    }
+
+    processElement(designData.elements)
+    return chunks
   }
 
-  async generateReactFromFigma(figmaUrl: string, userTier: "free" | "paid") {
+  // Strategy 2: Progressive enhancement for large responses
+  private async generateCodeWithProgressiveEnhancement(
+    designChunks: DesignElement[],
+    options: CodeGenerationOptions,
+    model: AIModel
+  ) {
+    const basePrompt = this.createBasePrompt(options)
+    const chunkPrompts = designChunks.map((chunk, index) =>
+      this.createChunkPrompt(chunk, index + 1, designChunks.length, options)
+    )
+
     try {
-      // Extract file ID and node ID (if any) from the Figma URL
+      if (model === "claude") {
+        return this.generateWithClaudeObjectStream(basePrompt, chunkPrompts)
+      }
+      return this.generateWithGeminiObjectStream(basePrompt, chunkPrompts)
+    } catch (error) {
+      console.error("Error in progressive enhancement:", error)
+      throw new Error("Code generation failed")
+    }
+  }
+
+  private createBasePrompt(options: CodeGenerationOptions): string {
+    return `
+    You are an expert ${options.framework} developer specializing in converting Figma designs to clean, maintainable code.
+
+    Framework: ${options.framework}
+    Styling: ${options.styling}
+    TypeScript: ${options.typescript}
+    Responsive: ${options.responsive}
+    Accessibility: ${options.accessibility}
+    ${options.componentLibrary ? `Component Library: ${options.componentLibrary}` : ""}
+
+    Generate a base structure with:
+    1. Main component structure
+    2. Layout containers
+    3. Basic styling setup
+    4. TypeScript interfaces (if enabled)
+    5. Accessibility attributes (if enabled)
+
+    Focus on creating a solid foundation that can be enhanced with detailed components.`
+  }
+
+  private createChunkPrompt(
+    chunk: DesignElement,
+    chunkIndex: number,
+    totalChunks: number,
+    options: CodeGenerationOptions
+  ): string {
+    const chunkJson = JSON.stringify(chunk, null, 2)
+
+    return `
+    Generate detailed ${options.framework} component for the following design element (chunk ${chunkIndex}/${totalChunks}):
+
+    \`\`\`json
+    ${chunkJson}
+    \`\`\`
+
+    Requirements:
+    - Framework: ${options.framework}
+    - Styling: ${options.styling}
+    - TypeScript: ${options.typescript}
+    - Responsive: ${options.responsive}
+    - Accessibility: ${options.accessibility}
+
+    Focus on:
+    1. Accurate visual representation
+    2. Proper component structure
+    3. Responsive behavior
+    4. Accessibility features
+    5. Clean, maintainable code
+
+    Return only the component code without explanations.`
+  }
+
+  // Strategy 3: Improve accuracy with design analysis
+  private enhanceDesignData(designData: DesignData): DesignData {
+    const enhancedElements = this.enhanceElement(designData.elements)
+
+    return {
+      ...designData,
+      elements: enhancedElements,
+    }
+  }
+
+  private enhanceElement(element: DesignElement): DesignElement {
+    const enhanced = { ...element }
+
+    // Add inferred properties
+    if (enhanced.type === "TEXT" && enhanced.characters) {
+      enhanced.style = {
+        ...enhanced.style,
+        // Infer text color from fills if not present
+        color: enhanced.style?.color || enhanced.fills?.[0]?.color,
+      }
+    }
+
+    // Add responsive hints
+    if (enhanced.size?.width && enhanced.size.width > 768) {
+      enhanced.style = {
+        ...enhanced.style,
+        // Mark as potentially mobile-responsive
+        responsive: true,
+      }
+    }
+
+    // Enhance children recursively
+    if (enhanced.children) {
+      enhanced.children = enhanced.children.map((child) =>
+        this.enhanceElement(child)
+      )
+    }
+
+    return enhanced
+  }
+
+  public async generateCodeFromFigma(
+    figmaUrl: string,
+    userTier: "free" | "paid" = "free",
+    options: CodeGenerationOptions = {
+      framework: "react",
+      styling: "tailwind",
+      typescript: false,
+      responsive: true,
+      accessibility: true,
+    }
+  ) {
+    try {
       const { fileKey, nodeId } = this.parseFigmaUrl(figmaUrl)
-
-      // Fetch file data from Figma API
+      if (!nodeId) {
+        throw new Error("No node ID found in Figma URL")
+      }
       const fileData = await this.getFigmaFileData(fileKey, nodeId)
+      const designData = this.extractDesignElements(fileData, nodeId)
 
-      // Extract relevant design elements
-      const designElements = this.extractDesignElements(fileData, nodeId)
+      // Strategy 3: Enhance design data for better accuracy
+      const enhancedDesignData = this.enhanceDesignData(designData)
 
       const model: AIModel = userTier === "paid" ? "claude" : "gemini"
-      if (model === "claude")
-        // Generate React code using Claude API
-        return await generateUsingClaude(designElements)
+      const tokenLimit = TOKEN_LIMITS[model].input
 
-      return await generateUsingGemini(designElements)
+      // Strategy 1: Handle large design data
+      if (enhancedDesignData.metadata.estimatedTokens > tokenLimit) {
+        console.log(
+          `Design data too large (${enhancedDesignData.metadata.estimatedTokens} tokens), chunking...`
+        )
+        const chunks = this.chunkDesignData(enhancedDesignData, tokenLimit)
+
+        // Strategy 2: Progressive enhancement for large responses
+        return this.generateCodeWithProgressiveEnhancement(
+          chunks,
+          options,
+          model
+        )
+      }
+
+      // For smaller designs, use direct generation
+      return this.generateCodeDirectly(enhancedDesignData, options, model)
     } catch (error) {
-      console.error("Error generating React code from Figma:", error)
+      console.error("Error generating code from Figma:", error)
       throw error
     }
   }
-}
 
-function generateUsingClaude(designElements: DesignData) {
-  try {
-    // Create prompt for Claude
-    const prompt = createPrompt(designElements)
+  private generateCodeDirectly(
+    designData: DesignData,
+    options: CodeGenerationOptions,
+    model: AIModel
+  ) {
+    const prompt = this.createCompletePrompt(designData, options)
 
+    try {
+      if (model === "claude") {
+        return this.generateWithClaudeObjectStreamDirect(prompt)
+      }
+      return this.generateWithGeminiObjectStreamDirect(prompt)
+    } catch (error) {
+      console.error("Error in direct generation:", error)
+      throw new Error("Code generation failed")
+    }
+  }
+
+  private createCompletePrompt(
+    designData: DesignData,
+    options: CodeGenerationOptions
+  ): string {
+    const designJson = JSON.stringify(designData, null, 2)
+
+    return `
+    You are an expert ${options.framework} developer specializing in converting Figma designs to clean, maintainable code.
+
+    # Design Data:
+    \`\`\`json
+    ${designJson}
+    \`\`\`
+
+    # Requirements:
+    - Framework: ${options.framework}
+    - Styling: ${options.styling}
+    - TypeScript: ${options.typescript}
+    - Responsive: ${options.responsive}
+    - Accessibility: ${options.accessibility}
+    ${options.componentLibrary ? `- Component Library: ${options.componentLibrary}` : ""}
+
+    # Guidelines:
+    1. Use modern ${options.framework} best practices
+    2. Apply ${options.styling} styling approach
+    3. Implement responsive design when specified
+    4. Add accessibility features when enabled
+    5. Use TypeScript when specified
+    6. Create modular, reusable components
+    7. Follow semantic HTML principles
+    8. Add appropriate comments for complex logic
+
+    # Design Analysis:
+    - Total elements: ${designData.metadata.totalElements}
+    - Visible elements: ${designData.metadata.visibleElements}
+    - Complexity: ${designData.metadata.complexity}
+
+    Generate clean, well-structured code that accurately represents this design. Focus on creating maintainable, accessible, and responsive components.
+
+    Important: Provide only the code without any prefatory text or instructions.`
+  }
+
+  private generateWithClaudeObjectStream(
+    basePrompt: string,
+    chunkPrompts: string[]
+  ) {
     if (!envVars.ANTHROPIC_API_KEY) {
       throw new Error("AI Service is not available")
     }
 
-    const anthropicClient = new Anthropic({
+    const anthropic = createAnthropic({
       apiKey: envVars.ANTHROPIC_API_KEY,
     })
 
-    return async (stream: SSEStreamingApi) => {
-      // Call Claude API
-      const response = await anthropicClient.messages.create({
-        model: MODEL_MAP.claude,
-        max_tokens: 40000,
-        messages: [
-          {
-            role: "user",
-            content: prompt,
-          },
-        ],
-        stream: true,
-        system: `You are an expert React developer specializing in converting Figma designs to clean, maintainable React code.
-              Your task is to analyze the provided Figma design elements and generate high-quality React components.
-              Follow these guidelines:
-              1. Use modern React best practices with functional components and hooks
-              2. Apply the specified styling approach (Tailwind, CSS Modules, styled-components, etc.)
-              3. Implement a responsive design when specified
-              4. Add appropriate comments explaining complex logic or design decisions
-              5. Organize code into modular components
-              6. Use TypeScript type definitions when specified
-              7. Focus on accessibility and semantic HTML
-              8. Return only the code without additional explanations`,
-      })
-
-      for await (const chunk of response) {
-        if (
-          chunk.type === "content_block_delta" &&
-          chunk.delta.type === "text_delta"
-        ) {
-          await stream.writeSSE({
-            event: "message",
-            data: JSON.stringify({
-              content: chunk.delta.text,
-            }),
+    // Create a custom object stream that combines base structure and components
+    return streamObject({
+      model: anthropic(MODEL_MAP.claude),
+      prompt: this.createProgressivePrompt(basePrompt, chunkPrompts),
+      schema: z.object({
+        files: z.array(
+          z.object({
+            name: z.string(),
+            content: z.string(),
+            type: z.string(),
           })
-        }
-      }
-      // Signal end of stream
-      await stream.writeSSE({
-        event: "done",
-        data: JSON.stringify({ done: true }),
-      })
-    }
-  } catch (error) {
-    console.error("Error calling Claude API:", error)
-    throw new Error(
-      `Failed to generate React code: ${(error as Error).message}`
-    )
+        ),
+      }),
+      maxTokens: TOKEN_LIMITS.claude.output,
+    })
   }
-}
 
-function generateUsingGemini(designElements: DesignData) {
-  try {
-    // Create prompt for Gemini
-    const prompt = createPrompt(designElements)
-
+  private generateWithGeminiObjectStream(
+    basePrompt: string,
+    chunkPrompts: string[]
+  ) {
     if (!envVars.GOOGLE_AI_API_KEY) {
-      throw new Error("Gemini AI Service is not available")
+      throw new Error("AI Service is not available")
     }
 
-    // Initialize the Gemini API client
-    const genAI = new GoogleGenAI({ apiKey: envVars.GOOGLE_AI_API_KEY })
+    const google = createGoogleGenerativeAI({
+      apiKey: envVars.GOOGLE_AI_API_KEY,
+    })
 
-    return async (stream: SSEStreamingApi) => {
-      const result = await genAI.models.generateContentStream({
-        model: MODEL_MAP.gemini,
-        contents: [
-          {
-            parts: [
-              {
-                text: `You are an expert React developer specializing in converting Figma designs to clean, maintainable React code.
-        Your task is to analyze the provided Figma design elements and generate high-quality React components.
-        Follow these guidelines:
-        1. Use modern React best practices with functional components and hooks
-        2. Apply the specified styling approach (Tailwind, CSS Modules, styled-components, etc.)
-        3. Implement a responsive design when specified
-        4. Add appropriate comments explaining complex logic or design decisions
-        5. Organize code into modular components
-        6. Use TypeScript type definitions when specified
-        7. Focus on accessibility and semantic HTML
-        8. Return only the code without additional explanations`,
-              },
-              { text: prompt },
-            ],
-          },
-        ],
-      })
-
-      for await (const chunk of result) {
-        const text = chunk.text
-        await stream.writeSSE({
-          event: "message",
-          data: JSON.stringify({
-            content: text,
-          }),
-        })
-      }
-      // Signal end of stream
-      await stream.writeSSE({
-        event: "done",
-        data: JSON.stringify({ done: true }),
-      })
-    }
-  } catch (error) {
-    console.error("Error calling Gemini API:", error)
-    throw new Error(
-      `Failed to generate React code: ${(error as Error).message}`
-    )
+    // Create a custom object stream that combines base structure and components
+    return streamObject({
+      model: google(MODEL_MAP.gemini),
+      prompt: this.createProgressivePrompt(basePrompt, chunkPrompts),
+      schema: z.object({
+        files: z.array(
+          z.object({
+            name: z.string(),
+            content: z.string(),
+            type: z.string(),
+          })
+        ),
+      }),
+      maxTokens: TOKEN_LIMITS.gemini.output,
+    })
   }
-}
 
-function createPrompt(designElements: DesignData) {
-  // Convert design elements to JSON string for the prompt
-  const designJSON = JSON.stringify(designElements, null, 2)
+  private createProgressivePrompt(
+    basePrompt: string,
+    chunkPrompts: string[]
+  ): string {
+    const chunksText = chunkPrompts
+      .map((prompt, index) => `\n--- Component ${index + 1} ---\n${prompt}`)
+      .join("\n")
 
-  return `
-I need you to convert the following Figma design elements into React code.
+    return `
+    ${basePrompt}
 
-# Design Elements (JSON format):
-\`\`\`json
-${designJSON}
-\`\`\`
+    Now generate the detailed components for each design chunk. For each component, respond with a JSON object containing:
+    - type: "status" for progress updates
+    - type: "message" for code content
+    - type: "done" when complete
 
-# Requirements:
-- Framework: React
-- Styling approach: Tailwind
-- Make it responsive: Yes
-- Use TypeScript: No
+    Components to generate:
+    ${chunksText}
 
-Please generate clean, well-structured React code that accurately represents this design.
-Focus on creating reusable components and following best practices.
+    Generate the complete code structure with all components. Respond with properly formatted JSON objects for each step.`
+  }
 
-Important: Provide only the code without any prefatory text or instructions. Do not include phrases like "Here's the code" at the beginning of your response.
-`
+  private generateWithClaudeObjectStreamDirect(prompt: string) {
+    if (!envVars.ANTHROPIC_API_KEY) {
+      throw new Error("AI Service is not available")
+    }
+
+    const anthropic = createAnthropic({
+      apiKey: envVars.ANTHROPIC_API_KEY,
+    })
+
+    return streamObject({
+      model: anthropic(MODEL_MAP.claude),
+      prompt: this.createDirectPrompt(prompt),
+      schema: z.object({
+        files: z.array(
+          z.object({
+            name: z.string(),
+            content: z.string(),
+            type: z.string(),
+          })
+        ),
+      }),
+      maxTokens: TOKEN_LIMITS.claude.output,
+    })
+  }
+
+  private generateWithGeminiObjectStreamDirect(prompt: string) {
+    if (!envVars.GOOGLE_AI_API_KEY) {
+      throw new Error("AI Service is not available")
+    }
+
+    const google = createGoogleGenerativeAI({
+      apiKey: envVars.GOOGLE_AI_API_KEY,
+    })
+
+    return streamObject({
+      model: google(MODEL_MAP.gemini),
+      prompt: this.createDirectPrompt(prompt),
+      schema: z.object({
+        files: z.array(
+          z.object({
+            name: z.string(),
+            content: z.string(),
+            type: z.string(),
+          })
+        ),
+      }),
+      maxTokens: TOKEN_LIMITS.gemini.output,
+    })
+  }
+
+  private createDirectPrompt(prompt: string): string {
+    return `
+    ${prompt}
+
+    Generate the complete code and respond with JSON objects containing:
+    - type: "status" for progress updates
+    - type: "message" for code content
+    - type: "done" when complete
+
+    Provide the code in structured JSON format.`
+  }
 }

@@ -74,3 +74,60 @@ export const FigmaSchema = z
     }),
   })
   .openapi("FigmaSchema")
+
+export const GenerateCodeFromFigmaSchema = z
+  .object({
+    url: z.string().url().openapi({
+      example: "https://www.figma.com/design/1234567890/1234567890",
+      description: "Figma design URL to generate code from",
+    }),
+    userTier: z.enum(["free", "paid"]).default("free").openapi({
+      example: "free",
+      description:
+        "User tier determines which AI model to use (free: Gemini, paid: Claude)",
+    }),
+    framework: z
+      .enum(["react", "vue", "angular", "html"])
+      .default("react")
+      .openapi({
+        example: "react",
+        description: "Target framework for code generation",
+      }),
+    styling: z
+      .enum(["tailwind", "css", "styled-components", "css-modules"])
+      .default("tailwind")
+      .openapi({
+        example: "tailwind",
+        description: "Styling approach for the generated code",
+      }),
+    typescript: z.boolean().default(false).openapi({
+      example: false,
+      description: "Whether to generate TypeScript code",
+    }),
+    responsive: z.boolean().default(true).openapi({
+      example: true,
+      description: "Whether to generate responsive code",
+    }),
+    accessibility: z.boolean().default(true).openapi({
+      example: true,
+      description: "Whether to include accessibility features",
+    }),
+    componentLibrary: z.string().optional().openapi({
+      example: "material-ui",
+      description:
+        "Optional component library to use (e.g., material-ui, antd)",
+    }),
+  })
+  .openapi("GenerateCodeFromFigma")
+
+export const CodeGenerationResponseSchema = z.object({
+  type: z.enum(["status", "message", "done", "error"]),
+  content: z.string().optional(),
+  message: z.string().optional(),
+  error: z.string().optional(),
+  done: z.boolean().optional(),
+})
+
+export type CodeGenerationResponse = z.infer<
+  typeof CodeGenerationResponseSchema
+>

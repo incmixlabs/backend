@@ -10,6 +10,8 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
+    "@ai-sdk/anthropic": "^1.2.12",
+    "@ai-sdk/google": "^1.2.19",
     "@anthropic-ai/sdk": "^0.39.0",
     "@google/genai": "^0.8.0",
     "@hono/node-server": "catalog:",
@@ -17,6 +19,7 @@
     "@hono/zod-validator": "catalog:",
     "@incmix-api/utils": "workspace:^",
     "@incmix/utils": "catalog:",
+    "ai": "^4.3.16",
     "hono": "catalog:",
     "kysely": "catalog:",
     "kysely-ctl": "catalog:",
@@ -26,6 +29,7 @@
     "zod": "catalog:"
   },
   "devDependencies": {
+    "@figma/rest-api-spec": "^0.32.0",
     "@incmix-api/config": "workspace:^",
     "@playwright/test": "catalog:",
     "@types/node": "catalog:",
