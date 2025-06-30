@@ -5,16 +5,14 @@ import { serve } from "@hono/node-server"
 import { API } from "@incmix/utils/env"
 import { Hono } from "hono"
 import { env } from "hono/adapter"
-import { compress } from "hono/compress"
 import { envVars } from "./env-vars"
 import type { HonoApp } from "./types"
-import { returnResponse } from "./utils"
 
 const app = new Hono<HonoApp>()
 
 setupCors(app as any, "/api")
 
-app.use("*", compress({ encoding: "gzip" }))
+//
 app.get("/api/timestamp", (c) => {
   return c.json({ time: Date.now() })
 })
@@ -115,7 +113,7 @@ app.all("/api/*", async (c) => {
         c.req.raw
       )
       const res = await fetch(req)
-      return returnResponse(res, c)
+      return res
     }
   }
 
