@@ -116,8 +116,12 @@ export function getTaskWithChecklists(c: Context, taskId: string) {
     .executeTakeFirst()
 }
 
-export function isProjectMember(c: Context, projectId: string, userId: string) {
-  const member = c
+export async function isProjectMember(
+  c: Context,
+  projectId: string,
+  userId: string
+) {
+  const member = await c
     .get("db")
     .selectFrom("projectMembers")
     .selectAll()

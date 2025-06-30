@@ -166,7 +166,7 @@ export const removeComment = createRoute({
 })
 
 export const getProjectComments = createRoute({
-  path: "/{id}/project-comments",
+  path: "/{projectId}/project-comments",
   method: "get",
   summary: "Get Project Comments",
   tags: ["Comments"],
@@ -211,7 +211,7 @@ export const getProjectComments = createRoute({
   },
 })
 export const getTaskComments = createRoute({
-  path: "/{id}/task-comments",
+  path: "/{taskId}/task-comments",
   method: "get",
   summary: "Get Task Comments",
   tags: ["Comments"],

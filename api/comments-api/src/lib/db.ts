@@ -18,8 +18,8 @@ export function getTaskById(c: Context, taskId: string) {
     .executeTakeFirst()
 }
 
-export function isOrgMember(c: Context, orgId: string, userId: string) {
-  const member = c
+export async function isOrgMember(c: Context, orgId: string, userId: string) {
+  const member = await c
     .get("db")
     .selectFrom("members")
     .selectAll()
