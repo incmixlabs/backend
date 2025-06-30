@@ -2,6 +2,7 @@ import { createRoute, z } from "@hono/zod-openapi"
 import { ResponseSchema } from "../types"
 import {
   FigmaSchema,
+  GenerateCodeFromFigmaSchema,
   GenerateUserStorySchema,
   UserStoryResponseSchema,
 } from "./types"
@@ -26,8 +27,10 @@ export const generateUserStory = createRoute({
   responses: {
     200: {
       content: {
-        "application/json": {
-          schema: UserStoryResponseSchema,
+        "text/event-stream": {
+          schema: z.object({
+            data: z.string(),
+          }),
         },
       },
       description: "Returns the generated user story in markdown format",
@@ -59,7 +62,7 @@ export const generateUserStory = createRoute({
   },
 })
 
-export const generateFromFigma = createRoute({
+export const generateUserStoryFromFigma = createRoute({
   method: "post",
   path: "/generate/figma",
   summary: "Generate Task from Figma",
@@ -115,14 +118,16 @@ export const generateFromFigma = createRoute({
 export const generateCodeFromFigma = createRoute({
   method: "post",
   path: "/generate/code",
-  summary: "Generate React from Figma",
-  tags: ["Tasks"],
+  summary: "Generate Code from Figma Design",
+  tags: ["Code Generation"],
+  description:
+    "Generate production-ready code from Figma designs with advanced features",
   security: [{ cookieAuth: [] }],
   request: {
     body: {
       content: {
         "application/json": {
-          schema: FigmaSchema,
+          schema: GenerateCodeFromFigmaSchema,
         },
       },
     },
@@ -132,11 +137,12 @@ export const generateCodeFromFigma = createRoute({
       content: {
         "text/event-stream": {
           schema: z.object({
-            reactCode: z.string(),
+            event: z.enum(["message", "status", "done", "error"]),
+            data: z.string(),
           }),
         },
       },
-      description: "Returns the generated React code",
+      description: "Streams generated code with status updates",
     },
     400: {
       content: {
@@ -144,7 +150,7 @@ export const generateCodeFromFigma = createRoute({
           schema: ResponseSchema,
         },
       },
-      description: "Error response when React generation fails",
+      description: "Error response when code generation fails",
     },
     401: {
       content: {
@@ -153,6 +159,15 @@ export const generateCodeFromFigma = createRoute({
         },
       },
       description: "Error response when not authenticated",
+    },
+    413: {
+      content: {
+        "application/json": {
+          schema: ResponseSchema,
+        },
+      },
+      description:
+        "Design data too large - consider using a smaller design or specific node",
     },
     500: {
       content: {

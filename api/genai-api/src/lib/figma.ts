@@ -1,49 +1,24 @@
 import { envVars } from "@/env-vars"
-import Anthropic from "@anthropic-ai/sdk"
-import { GoogleGenAI } from "@google/genai"
+import { createAnthropic } from "@ai-sdk/anthropic"
+import { createGoogleGenerativeAI } from "@ai-sdk/google"
+import type { Node, RGBA } from "@figma/rest-api-spec"
 import { ServerError } from "@incmix-api/utils/errors"
-import type { SSEStreamingApi } from "hono/streaming"
+import { streamObject } from "ai"
+import { z } from "zod"
 import { type AIModel, MODEL_MAP } from "./constants"
 
-type FigmaNode = {
-  id: string
-  name: string
-  type: string
-  visible: boolean
-  absoluteBoundingBox?: {
-    x: number
-    y: number
-    width: number
-    height: number
-  }
-  layoutMode?: string
-  paddingLeft: number
-  paddingRight: number
-  paddingTop: number
-  paddingBottom: number
-  backgroundColor: {
-    r: number
-    g: number
-    b: number
-    a: number
-  }
-  style?: {
-    fontFamily?: string
-    fontSize?: number
-    fontWeight?: number
-    textAlignHorizontal?: string
-    textAlignVertical?: string
-  }
-  fills?: {
-    color: string
-  }[]
-  strokes?: {
-    color: string
-  }[]
-  cornerRadius?: number
-  children?: FigmaNode[]
-  characters?: string
-}
+// Shared schema for AI model responses
+const FilesSchema = z.object({
+  files: z.array(
+    z.object({
+      name: z.string(),
+      content: z.string(),
+      fileType: z.string(),
+    })
+  ),
+})
+
+type FigmaNode = Node
 
 type FigmaFileData = {
   name: string
@@ -78,12 +53,7 @@ type DesignElement = {
     top?: number
     bottom?: number
   }
-  backgroundColor?: {
-    r?: number
-    g?: number
-    b?: number
-    a?: number
-  }
+  backgroundColor?: string
   children?: DesignElement[]
   characters?: string
   style?: {
@@ -108,6 +78,19 @@ type DesignData = {
   lastModified: string
   version: string
   elements: DesignElement
+}
+
+type CodeGenerationOptions = {
+  framework: "react" | "vue" | "angular" | "html"
+  styling: "tailwind" | "css" | "styled-components" | "css-modules"
+  typescript: boolean
+  responsive: boolean
+  accessibility: boolean
+  componentLibrary?: string
+}
+
+const figmaColorToRgba = (color: RGBA) => {
+  return `rgba(${color.r}, ${color.g}, ${color.b}, ${color.a})`
 }
 
 export class FigmaService {
@@ -264,7 +247,7 @@ export class FigmaService {
         id: node.id,
         name: node.name,
         type: node.type,
-        visible: node.visible,
+        visible: node.visible ?? false,
         path: [...path, node.name],
       }
 
@@ -292,7 +275,10 @@ export class FigmaService {
               top: node.paddingTop,
               bottom: node.paddingBottom,
             },
-            backgroundColor: node.backgroundColor,
+            backgroundColor:
+              node.fills?.[0]?.type === "SOLID"
+                ? figmaColorToRgba(node.fills[0].color)
+                : undefined,
             children: (node.children || []).map((child) =>
               processNode(child, [...path, node.name])
             ),
@@ -308,7 +294,10 @@ export class FigmaService {
               fontWeight: node.style?.fontWeight,
               textAlignHorizontal: node.style?.textAlignHorizontal,
               textAlignVertical: node.style?.textAlignVertical,
-              color: node.fills?.[0]?.color,
+              color:
+                node.fills?.[0]?.type === "SOLID"
+                  ? figmaColorToRgba(node.fills[0].color)
+                  : undefined,
             },
           }
 
@@ -318,13 +307,23 @@ export class FigmaService {
         case "VECTOR":
           return {
             ...basicInfo,
+
             size: {
               width: node.absoluteBoundingBox?.width,
               height: node.absoluteBoundingBox?.height,
             },
-            fills: node.fills,
-            strokes: node.strokes,
-            cornerRadius: node.cornerRadius,
+            fills: node.fills?.map((fill) => ({
+              color:
+                fill.type === "SOLID"
+                  ? figmaColorToRgba(fill.color)
+                  : undefined,
+            })),
+            strokes: node.strokes?.map((stroke) => ({
+              color:
+                stroke.type === "SOLID"
+                  ? figmaColorToRgba(stroke.color)
+                  : undefined,
+            })),
           }
 
         default:
@@ -335,7 +334,11 @@ export class FigmaService {
     return processNode(document)
   }
 
-  async generateReactFromFigma(figmaUrl: string, userTier: "free" | "paid") {
+  async generateReactFromFigma(
+    figmaUrl: string,
+    userTier: "free" | "paid",
+    options: CodeGenerationOptions
+  ) {
     try {
       // Extract file ID and node ID (if any) from the Figma URL
       const { fileKey, nodeId } = this.parseFigmaUrl(figmaUrl)
@@ -346,12 +349,48 @@ export class FigmaService {
       // Extract relevant design elements
       const designElements = this.extractDesignElements(fileData, nodeId)
 
-      const model: AIModel = userTier === "paid" ? "claude" : "gemini"
-      if (model === "claude")
-        // Generate React code using Claude API
-        return await generateUsingClaude(designElements)
+      const prompt = createPrompt(designElements, options)
+      const system = `You are an expert ${options.framework} developer specializing in converting Figma designs to clean, maintainable code.
+      Your task is to analyze the provided Figma design elements and generate high-quality ${options.framework} components.
+      Follow these guidelines:
+      1. Use modern ${options.framework} best practices
+      2. Apply the specified styling approach (${options.styling})
+      3. Implement a responsive design when specified (${options.responsive})
+      4. Add appropriate comments explaining complex logic or design decisions
+      5. Organize code into modular components
+      6. Use TypeScript type definitions when specified (${options.typescript})
+      7. Focus on accessibility and semantic HTML when specified (${options.accessibility})
+      8. Use the specified component library when provided (${options.componentLibrary || "none"})
+      9. Return only the code without additional explanations`
 
-      return await generateUsingGemini(designElements)
+      const model: AIModel = userTier === "paid" ? "claude" : "gemini"
+      if (model === "claude") {
+        if (!envVars.ANTHROPIC_API_KEY?.length) {
+          throw new Error("Claude AI Service is not available")
+        }
+        // Generate React code using Claude API
+        const anthropicClient = createAnthropic({
+          apiKey: envVars.ANTHROPIC_API_KEY,
+        })
+        return streamObject({
+          model: anthropicClient(MODEL_MAP.claude),
+          schema: FilesSchema,
+          system,
+          prompt,
+        })
+      }
+      if (!envVars.GOOGLE_AI_API_KEY) {
+        throw new Error("Gemini AI Service is not available")
+      }
+      const geminiClient = createGoogleGenerativeAI({
+        apiKey: envVars.GOOGLE_AI_API_KEY,
+      })
+      return streamObject({
+        model: geminiClient(MODEL_MAP.gemini),
+        schema: FilesSchema,
+        system,
+        prompt,
+      })
     } catch (error) {
       console.error("Error generating React code from Figma:", error)
       throw error
@@ -359,137 +398,30 @@ export class FigmaService {
   }
 }
 
-function generateUsingClaude(designElements: DesignData) {
-  try {
-    // Create prompt for Claude
-    const prompt = createPrompt(designElements)
-
-    if (!envVars.ANTHROPIC_API_KEY) {
-      throw new Error("AI Service is not available")
-    }
-
-    const anthropicClient = new Anthropic({
-      apiKey: envVars.ANTHROPIC_API_KEY,
-    })
-
-    return async (stream: SSEStreamingApi) => {
-      // Call Claude API
-      const response = await anthropicClient.messages.create({
-        model: MODEL_MAP.claude,
-        max_tokens: 40000,
-        messages: [
-          {
-            role: "user",
-            content: prompt,
-          },
-        ],
-        stream: true,
-        system: `You are an expert React developer specializing in converting Figma designs to clean, maintainable React code.
-              Your task is to analyze the provided Figma design elements and generate high-quality React components.
-              Follow these guidelines:
-              1. Use modern React best practices with functional components and hooks
-              2. Apply the specified styling approach (Tailwind, CSS Modules, styled-components, etc.)
-              3. Implement a responsive design when specified
-              4. Add appropriate comments explaining complex logic or design decisions
-              5. Organize code into modular components
-              6. Use TypeScript type definitions when specified
-              7. Focus on accessibility and semantic HTML
-              8. Return only the code without additional explanations`,
-      })
-
-      for await (const chunk of response) {
-        if (
-          chunk.type === "content_block_delta" &&
-          chunk.delta.type === "text_delta"
-        ) {
-          await stream.writeSSE({
-            event: "message",
-            data: JSON.stringify({
-              content: chunk.delta.text,
-            }),
-          })
-        }
-      }
-      // Signal end of stream
-      await stream.writeSSE({
-        event: "done",
-        data: JSON.stringify({ done: true }),
-      })
-    }
-  } catch (error) {
-    console.error("Error calling Claude API:", error)
-    throw new Error(
-      `Failed to generate React code: ${(error as Error).message}`
-    )
-  }
-}
-
-function generateUsingGemini(designElements: DesignData) {
-  try {
-    // Create prompt for Gemini
-    const prompt = createPrompt(designElements)
-
-    if (!envVars.GOOGLE_AI_API_KEY) {
-      throw new Error("Gemini AI Service is not available")
-    }
-
-    // Initialize the Gemini API client
-    const genAI = new GoogleGenAI({ apiKey: envVars.GOOGLE_AI_API_KEY })
-
-    return async (stream: SSEStreamingApi) => {
-      const result = await genAI.models.generateContentStream({
-        model: MODEL_MAP.gemini,
-        contents: [
-          {
-            parts: [
-              {
-                text: `You are an expert React developer specializing in converting Figma designs to clean, maintainable React code.
-        Your task is to analyze the provided Figma design elements and generate high-quality React components.
-        Follow these guidelines:
-        1. Use modern React best practices with functional components and hooks
-        2. Apply the specified styling approach (Tailwind, CSS Modules, styled-components, etc.)
-        3. Implement a responsive design when specified
-        4. Add appropriate comments explaining complex logic or design decisions
-        5. Organize code into modular components
-        6. Use TypeScript type definitions when specified
-        7. Focus on accessibility and semantic HTML
-        8. Return only the code without additional explanations`,
-              },
-              { text: prompt },
-            ],
-          },
-        ],
-      })
-
-      for await (const chunk of result) {
-        const text = chunk.text
-        await stream.writeSSE({
-          event: "message",
-          data: JSON.stringify({
-            content: text,
-          }),
-        })
-      }
-      // Signal end of stream
-      await stream.writeSSE({
-        event: "done",
-        data: JSON.stringify({ done: true }),
-      })
-    }
-  } catch (error) {
-    console.error("Error calling Gemini API:", error)
-    throw new Error(
-      `Failed to generate React code: ${(error as Error).message}`
-    )
-  }
-}
-
-function createPrompt(designElements: DesignData) {
+function createPrompt(
+  designElements: DesignData,
+  options: CodeGenerationOptions
+) {
   // Convert design elements to JSON string for the prompt
   const designJSON = JSON.stringify(designElements, null, 2)
 
+  const frameworkInstructions = getFrameworkInstructions(options.framework)
+  const stylingInstructions = getStylingInstructions(options.styling)
+  const typescriptInstructions = options.typescript
+    ? "Use TypeScript with proper type definitions."
+    : "Use JavaScript."
+  const responsiveInstructions = options.responsive
+    ? "Make the design responsive and mobile-friendly."
+    : "Focus on desktop layout only."
+  const accessibilityInstructions = options.accessibility
+    ? "Include proper accessibility features (ARIA labels, semantic HTML, keyboard navigation)."
+    : "Basic accessibility is sufficient."
+  const componentLibraryInstructions = options.componentLibrary
+    ? `Use ${options.componentLibrary} component library for UI elements.`
+    : "Use native HTML elements and custom styling."
+
   return `
-I need you to convert the following Figma design elements into React code.
+I need you to convert the following Figma design elements into ${options.framework} code.
 
 # Design Elements (JSON format):
 \`\`\`json
@@ -497,14 +429,58 @@ ${designJSON}
 \`\`\`
 
 # Requirements:
-- Framework: React
-- Styling approach: Tailwind
-- Make it responsive: Yes
-- Use TypeScript: No
+- Framework: ${options.framework}
+- Styling approach: ${options.styling}
+- Make it responsive: ${options.responsive}
+- Use TypeScript: ${options.typescript}
+- Include accessibility: ${options.accessibility}
+- Component library: ${options.componentLibrary || "none"}
 
-Please generate clean, well-structured React code that accurately represents this design.
+# Framework-specific instructions:
+${frameworkInstructions}
+
+# Styling instructions:
+${stylingInstructions}
+
+# Additional requirements:
+- ${typescriptInstructions}
+- ${responsiveInstructions}
+- ${accessibilityInstructions}
+- ${componentLibraryInstructions}
+
+Split the code into multiple files if necessary, each file should be a separate component.
+
+Please generate clean, well-structured ${options.framework} code that accurately represents this design.
 Focus on creating reusable components and following best practices.
-
-Important: Provide only the code without any prefatory text or instructions. Do not include phrases like "Here's the code" at the beginning of your response.
 `
+}
+
+function getFrameworkInstructions(framework: string): string {
+  switch (framework) {
+    case "react":
+      return "- Use functional components with hooks\n- Follow React best practices\n- Use JSX syntax\n- Implement proper component composition"
+    case "vue":
+      return "- Use Vue 3 Composition API\n- Use Single File Components (SFC)\n- Follow Vue best practices\n- Use Vue's template syntax"
+    case "angular":
+      return "- Use Angular components and modules\n- Follow Angular best practices\n- Use Angular template syntax\n- Implement proper dependency injection"
+    case "html":
+      return "- Use semantic HTML5 elements\n- Follow HTML best practices\n- Use proper document structure\n- Include necessary meta tags"
+    default:
+      return "- Follow standard web development best practices"
+  }
+}
+
+function getStylingInstructions(styling: string): string {
+  switch (styling) {
+    case "tailwind":
+      return "- Use Tailwind CSS utility classes\n- Follow Tailwind's responsive design patterns\n- Use Tailwind's color palette and spacing system"
+    case "css":
+      return "- Use vanilla CSS with proper organization\n- Follow CSS best practices\n- Use CSS custom properties for theming"
+    case "styled-components":
+      return "- Use styled-components for component styling\n- Follow styled-components best practices\n- Use theme provider for consistent styling"
+    case "css-modules":
+      return "- Use CSS Modules for scoped styling\n- Follow CSS Modules naming conventions\n- Use composition for reusable styles"
+    default:
+      return "- Use appropriate styling approach"
+  }
 }
