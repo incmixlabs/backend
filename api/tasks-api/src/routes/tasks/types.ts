@@ -90,15 +90,3 @@ export const UpdateTaskChecklistSchema = z.object({
 export const RemoveTaskChecklistSchema = z.object({
   checklistIds: z.array(z.string()).openapi({ example: ["2hek2bkjh"] }),
 })
-
-export const AddTaskCommentSchema = z.object({
-  comment: z.object({
-    content: z.string().openapi({ example: "This is a comment" }),
-  }),
-})
-
-export const UpdateTaskCommentSchema = z.object({
-  comment: z.object({
-    content: z.string().openapi({ example: "Updated comment content" }),
-  }),
-})

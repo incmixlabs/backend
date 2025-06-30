@@ -125,6 +125,15 @@ services:
       - 9494:9494
     depends_on:
       - tasks-api
+  comments-api:
+    <<: *api-common
+    build:
+      context: .
+      dockerfile: api/comments-api/Dockerfile
+    ports:
+      - 8585:8585
+    depends_on:
+      - location-api
   bff-web:
     <<: *api-common
     build:
@@ -133,7 +142,7 @@ services:
     ports:
       - 8081:8080
     depends_on:
-      - location-api
+      - comments-api
 volumes:
   incmix-db-data:
 

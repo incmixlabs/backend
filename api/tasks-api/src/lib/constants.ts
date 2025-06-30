@@ -75,10 +75,3 @@ export const ERROR_COMMENT_NOT_FOUND = {
   namespace: "errors",
   key: "comment_not_found",
 }
-
-export const MODEL_MAP = {
-  claude: "claude-3-5-sonnet-20240620",
-  gemini: "gemini-1.5-flash-latest",
-}
-
-export type AIModel = keyof typeof MODEL_MAP
