@@ -128,7 +128,7 @@ genaiRoutes.openapi(generateCodeFromFigma, async (c) => {
       componentLibrary,
     }
 
-    const result = await figmaService.generateCodeFromFigma(
+    const result = await figmaService.generateReactFromFigma(
       url,
       userTier,
       options
