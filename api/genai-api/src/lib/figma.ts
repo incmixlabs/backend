@@ -3,51 +3,22 @@ import { createAnthropic } from "@ai-sdk/anthropic"
 import { createGoogleGenerativeAI } from "@ai-sdk/google"
 import type { Node, RGBA } from "@figma/rest-api-spec"
 import { ServerError } from "@incmix-api/utils/errors"
-import { streamObject, streamText } from "ai"
-import type { SSEStreamingApi } from "hono/streaming"
+import { streamObject } from "ai"
 import { z } from "zod"
 import { type AIModel, MODEL_MAP } from "./constants"
-type FigmaNode = Node
 
-// type FigmaNode = {
-//   id: string
-//   name: string
-//   type: string
-//   visible: boolean
-//   absoluteBoundingBox?: {
-//     x: number
-//     y: number
-//     width: number
-//     height: number
-//   }
-//   layoutMode?: string
-//   paddingLeft: number
-//   paddingRight: number
-//   paddingTop: number
-//   paddingBottom: number
-//   backgroundColor: {
-//     r: number
-//     g: number
-//     b: number
-//     a: number
-//   }
-//   style?: {
-//     fontFamily?: string
-//     fontSize?: number
-//     fontWeight?: number
-//     textAlignHorizontal?: string
-//     textAlignVertical?: string
-//   }
-//   fills?: {
-//     color: string
-//   }[]
-//   strokes?: {
-//     color: string
-//   }[]
-//   cornerRadius?: number
-//   children?: FigmaNode[]
-//   characters?: string
-// }
+// Shared schema for AI model responses
+const FilesSchema = z.object({
+  files: z.array(
+    z.object({
+      name: z.string(),
+      content: z.string(),
+      fileType: z.string(),
+    })
+  ),
+})
+
+type FigmaNode = Node
 
 type FigmaFileData = {
   name: string
@@ -403,16 +374,7 @@ export class FigmaService {
         })
         return streamObject({
           model: anthropicClient(MODEL_MAP.claude),
-
-          schema: z.object({
-            files: z.array(
-              z.object({
-                name: z.string(),
-                content: z.string(),
-                fileType: z.string(),
-              })
-            ),
-          }),
+          schema: FilesSchema,
           system,
           prompt,
         })
@@ -425,16 +387,7 @@ export class FigmaService {
       })
       return streamObject({
         model: geminiClient(MODEL_MAP.gemini),
-
-        schema: z.object({
-          files: z.array(
-            z.object({
-              name: z.string(),
-              content: z.string(),
-              fileType: z.string(),
-            })
-          ),
-        }),
+        schema: FilesSchema,
         system,
         prompt,
       })
