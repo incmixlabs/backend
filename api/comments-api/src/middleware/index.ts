@@ -14,13 +14,13 @@ import { compress } from "hono/compress"
 
 export const middlewares = (app: OpenAPIHono<HonoApp>) => {
   app.use("*", compress({ encoding: "gzip" }))
-  setupSentryMiddleware(app, BASE_PATH, "tasks-api")
+  setupSentryMiddleware(app, BASE_PATH, "comments-api")
 
   app.use(`${BASE_PATH}/*`, createAuthMiddleware())
   app.use(`${BASE_PATH}/*`, createI18nMiddleware())
   setupCors(app, BASE_PATH)
 
-  setupOpenApi(app, BASE_PATH, "Projects Api")
+  setupOpenApi(app, BASE_PATH, "Comments Api")
 
   app.use(`${BASE_PATH}/*`, async (c, next) => {
     const db = initDb(env(c).DATABASE_URL)

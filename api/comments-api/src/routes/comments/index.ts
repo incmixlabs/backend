@@ -290,11 +290,6 @@ commentsRoute.openapi(getProjectComments, async (c) => {
       .orderBy("comments.createdAt desc")
       .execute()
 
-    if (!comments) {
-      const msg = await t.text(ERROR_COMMENT_NOT_FOUND)
-      throw new UnprocessableEntityError(msg)
-    }
-
     return c.json(comments, 200)
   } catch (error) {
     return await processError<typeof getProjectComments>(c, error, [
@@ -343,11 +338,6 @@ commentsRoute.openapi(getTaskComments, async (c) => {
       .where("taskComments.taskId", "=", taskId)
       .orderBy("comments.createdAt desc")
       .execute()
-
-    if (!comments) {
-      const msg = await t.text(ERROR_COMMENT_NOT_FOUND)
-      throw new UnprocessableEntityError(msg)
-    }
 
     return c.json(comments, 200)
   } catch (error) {

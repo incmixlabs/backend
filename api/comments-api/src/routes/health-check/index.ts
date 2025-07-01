@@ -19,7 +19,12 @@ const healthcheckRoutes = createHealthCheckRoute<HonoApp>({
       check: async (c) => {
         try {
           // Simple query to check database connectivity
-          await c.get("db").selectFrom("tasks").selectAll().limit(1).execute()
+          await c
+            .get("db")
+            .selectFrom("comments")
+            .selectAll()
+            .limit(1)
+            .execute()
           return true
         } catch (_error) {
           return false

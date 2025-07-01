@@ -33,5 +33,5 @@ if (error) {
   process.exit(1)
 }
 
-// biome-ignore lint/style/noNonNullAssertion: <explanation>
+// biome-ignore lint/style/noNonNullAssertion: Env is validated above
 export const envVars = env!

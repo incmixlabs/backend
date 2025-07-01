@@ -12,7 +12,7 @@ import {
 import { env } from "hono/adapter"
 
 export const middlewares = (app: OpenAPIHono<HonoApp>) => {
-  setupSentryMiddleware(app, BASE_PATH, "tasks-api")
+  setupSentryMiddleware(app, BASE_PATH, "projects-api")
 
   app.use(`${BASE_PATH}/*`, createAuthMiddleware())
   app.use(`${BASE_PATH}/*`, createI18nMiddleware())
