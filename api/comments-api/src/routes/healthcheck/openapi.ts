@@ -5,7 +5,6 @@ export const healthCheck = createRoute({
   path: "/",
   method: "get",
   tags: ["Healthcheck"],
-  security: [{ cookieAuth: [] }],
   summary: "Check Service Health",
   responses: {
     200: {
