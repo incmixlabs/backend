@@ -49,6 +49,12 @@ app.get("/api/healthcheck", async (c) => {
   const todo = await fetch(`${env(c).TASKS_API_URL}${API.TASKS}/healthcheck`, {
     method: "get",
   }).then(async (res) => await res.json())
+
+  const comments = await fetch(
+    `${env(c).COMMENTS_API_URL}${API.COMMENTS}/healthcheck`,
+    { method: "get" }
+  ).then(async (res) => await res.json())
+
   const location = await fetch(
     `${env(c).LOCATION_API_URL}${API.LOCATION}/healthcheck`,
     { method: "get" }
@@ -64,6 +70,7 @@ app.get("/api/healthcheck", async (c) => {
       org,
       todo,
       location,
+      comments,
     },
     200
   )

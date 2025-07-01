@@ -355,14 +355,13 @@ export const updateTaskChecklist = createRoute({
 })
 
 export const removeTaskChecklist = createRoute({
-  path: "/{taskId}/checklists/{checklistId}",
   method: "delete",
+  path: "/{taskId}/checklists",
   summary: "Remove Task Checklist",
   tags: ["Tasks"],
-  description: "Remove checklist items from a task",
   security: [{ cookieAuth: [] }],
   request: {
-    params: TaskIdSchema.merge(ChecklistIdSchema),
+    params: TaskIdSchema,
     body: {
       content: {
         "application/json": {
@@ -378,7 +377,7 @@ export const removeTaskChecklist = createRoute({
           schema: TaskSchema,
         },
       },
-      description: "Removed checklist items from task",
+      description: "Removed checklists from task",
     },
     401: {
       content: {
@@ -394,7 +393,15 @@ export const removeTaskChecklist = createRoute({
           schema: ResponseSchema,
         },
       },
-      description: "Error response when Task does not exist",
+      description: "Error response when No task available for given ID",
+    },
+    400: {
+      content: {
+        "application/json": {
+          schema: ResponseSchema,
+        },
+      },
+      description: "Error response when checklist removal fails",
     },
     500: {
       content: {

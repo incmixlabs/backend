@@ -21,6 +21,7 @@ const EnvSchema = z.object({
   GENAI_API_URL: z.string().url(),
   PROJECTS_API_URL: z.string().url(),
   TASKS_API_URL: z.string().url(),
+  COMMENTS_API_URL: z.string().url(),
   USERS_API_URL: z.string().url(),
   FILES_API_URL: z.string().url(),
   EMAIL_API_URL: z.string().url(),

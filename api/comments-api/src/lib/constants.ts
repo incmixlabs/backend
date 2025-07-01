@@ -1,6 +1,6 @@
 import { API } from "@incmix/utils/env"
 
-export const BASE_PATH = API.PROJECTS
+export const BASE_PATH = API.COMMENTS
 
 export const ERROR_PRESIGNED_URL = {
   namespace: "errors",
@@ -95,4 +95,14 @@ export const ERROR_COMMENT_UPDATE_FAILED = {
 export const ERROR_COMMENT_NOT_FOUND = {
   namespace: "errors",
   key: "comment_not_found",
+}
+
+export const ERROR_COMMENT_DELETE_FAILED = {
+  namespace: "errors",
+  key: "comment_delete_failed",
+}
+
+export const ERROR_TASK_NOT_FOUND = {
+  namespace: "errors",
+  key: "task_not_found",
 }

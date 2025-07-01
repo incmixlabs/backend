@@ -19,8 +19,8 @@ catalogs:
       specifier: 0.7.0
       version: 0.7.0
     '@incmix/utils':
-      specifier: 0.11.2
-      version: 0.11.2
+      specifier: 0.27.3
+      version: 0.27.3
     '@playwright/test':
       specifier: 1.49.0
       version: 1.49.0
@@ -136,7 +136,7 @@ importers:
         version: link:../../shared/utils
       '@incmix/utils':
         specifier: 'catalog:'
-        version: 0.11.2(@types/luxon@3.6.0)(luxon@3.4.2)
+        version: 0.27.3(@types/luxon@3.6.0)(luxon@3.4.2)
       '@lucia-auth/adapter-postgresql':
         specifier: ^3.1.2
         version: 3.1.2(lucia@3.2.2)(pg@8.13.3)
@@ -209,7 +209,7 @@ importers:
         version: link:../../shared/utils
       '@incmix/utils':
         specifier: 'catalog:'
-        version: 0.11.2(@types/luxon@3.6.0)(luxon@3.4.2)
+        version: 0.27.3(@types/luxon@3.6.0)(luxon@3.4.2)
       hono:
         specifier: 'catalog:'
         version: 4.6.16
@@ -223,6 +223,70 @@ importers:
       '@types/node':
         specifier: 'catalog:'
         version: 22.10.1
+      tsc-alias:
+        specifier: 'catalog:'
+        version: 1.8.11
+      tsx:
+        specifier: 'catalog:'
+        version: 4.19.3
+      typescript:
+        specifier: 'catalog:'
+        version: 5.7.3
+      vitest:
+        specifier: 'catalog:'
+        version: 3.1.2(@types/node@22.10.1)(jiti@2.4.2)(tsx@4.19.3)(yaml@2.7.1)
+
+  api/comments-api:
+    dependencies:
+      '@hono/node-server':
+        specifier: 'catalog:'
+        version: 1.13.8(hono@4.6.16)
+      '@hono/zod-openapi':
+        specifier: 'catalog:'
+        version: 0.19.8(hono@4.6.16)(zod@3.24.2)
+      '@hono/zod-validator':
+        specifier: 'catalog:'
+        version: 0.7.0(hono@4.6.16)(zod@3.24.2)
+      '@incmix-api/utils':
+        specifier: workspace:^
+        version: link:../../shared/utils
+      '@incmix/utils':
+        specifier: 'catalog:'
+        version: 0.27.3(@types/luxon@3.6.0)(luxon@3.4.2)
+      hono:
+        specifier: 'catalog:'
+        version: 4.6.16
+      kysely:
+        specifier: 'catalog:'
+        version: 0.27.5
+      kysely-ctl:
+        specifier: 'catalog:'
+        version: 0.12.1(kysely@0.27.5)
+      luxon:
+        specifier: 'catalog:'
+        version: 3.4.2
+      nanoid:
+        specifier: 'catalog:'
+        version: 3.3.8
+      pg:
+        specifier: 'catalog:'
+        version: 8.13.3
+      zod:
+        specifier: 'catalog:'
+        version: 3.24.2
+    devDependencies:
+      '@incmix-api/config':
+        specifier: workspace:^
+        version: link:../../shared/config
+      '@playwright/test':
+        specifier: 'catalog:'
+        version: 1.49.0
+      '@types/node':
+        specifier: 'catalog:'
+        version: 22.10.1
+      '@types/pg':
+        specifier: 'catalog:'
+        version: 8.11.11
       tsc-alias:
         specifier: 'catalog:'
         version: 1.8.11
@@ -252,7 +316,7 @@ importers:
         version: link:../../shared/utils
       '@incmix/utils':
         specifier: 'catalog:'
-        version: 0.11.2(@types/luxon@3.6.0)(luxon@3.4.2)
+        version: 0.27.3(@types/luxon@3.6.0)(luxon@3.4.2)
       '@react-email/body':
         specifier: 0.0.11
         version: 0.0.11(react@19.1.0)
@@ -388,7 +452,7 @@ importers:
         version: link:../../shared/utils
       '@incmix/utils':
         specifier: 'catalog:'
-        version: 0.11.2(@types/luxon@3.6.0)(luxon@3.4.2)
+        version: 0.27.3(@types/luxon@3.6.0)(luxon@3.4.2)
       '@playwright/test':
         specifier: 'catalog:'
         version: 1.49.0
@@ -452,7 +516,7 @@ importers:
         version: link:../../shared/utils
       '@incmix/utils':
         specifier: 'catalog:'
-        version: 0.11.2(@types/luxon@3.6.0)(luxon@3.4.2)
+        version: 0.27.3(@types/luxon@3.6.0)(luxon@3.4.2)
       ai:
         specifier: ^4.3.16
         version: 4.3.16(react@19.1.0)(zod@3.24.2)
@@ -522,7 +586,7 @@ importers:
         version: link:../../shared/utils
       '@incmix/utils':
         specifier: 'catalog:'
-        version: 0.11.2(@types/luxon@3.6.0)(luxon@3.4.2)
+        version: 0.27.3(@types/luxon@3.6.0)(luxon@3.4.2)
       '@intlify/utils':
         specifier: 0.13.0
         version: 0.13.0
@@ -583,7 +647,7 @@ importers:
         version: link:../../shared/utils
       '@incmix/utils':
         specifier: 'catalog:'
-        version: 0.11.2(@types/luxon@3.6.0)(luxon@3.4.2)
+        version: 0.27.3(@types/luxon@3.6.0)(luxon@3.4.2)
       hono:
         specifier: 'catalog:'
         version: 4.6.16
@@ -638,7 +702,7 @@ importers:
         version: link:../../shared/utils
       '@incmix/utils':
         specifier: 'catalog:'
-        version: 0.11.2(@types/luxon@3.6.0)(luxon@3.4.2)
+        version: 0.27.3(@types/luxon@3.6.0)(luxon@3.4.2)
       hono:
         specifier: 'catalog:'
         version: 4.6.16
@@ -688,12 +752,6 @@ importers:
 
   api/projects-api:
     dependencies:
-      '@anthropic-ai/sdk':
-        specifier: ^0.39.0
-        version: 0.39.0
-      '@google/genai':
-        specifier: ^0.8.0
-        version: 0.8.0
       '@hono/node-server':
         specifier: 'catalog:'
         version: 1.13.8(hono@4.6.16)
@@ -708,7 +766,7 @@ importers:
         version: link:../../shared/utils
       '@incmix/utils':
         specifier: 'catalog:'
-        version: 0.11.2(@types/luxon@3.6.0)(luxon@3.4.2)
+        version: 0.27.3(@types/luxon@3.6.0)(luxon@3.4.2)
       hono:
         specifier: 'catalog:'
         version: 4.6.16
@@ -758,12 +816,6 @@ importers:
 
   api/tasks-api:
     dependencies:
-      '@anthropic-ai/sdk':
-        specifier: ^0.39.0
-        version: 0.39.0
-      '@google/genai':
-        specifier: ^0.8.0
-        version: 0.8.0
       '@hono/node-server':
         specifier: 'catalog:'
         version: 1.13.8(hono@4.6.16)
@@ -778,7 +830,7 @@ importers:
         version: link:../../shared/utils
       '@incmix/utils':
         specifier: 'catalog:'
-        version: 0.11.2(@types/luxon@3.6.0)(luxon@3.4.2)
+        version: 0.27.3(@types/luxon@3.6.0)(luxon@3.4.2)
       hono:
         specifier: 'catalog:'
         version: 4.6.16
@@ -842,7 +894,7 @@ importers:
         version: link:../../shared/utils
       '@incmix/utils':
         specifier: 'catalog:'
-        version: 0.11.2(@types/luxon@3.6.0)(luxon@3.4.2)
+        version: 0.27.3(@types/luxon@3.6.0)(luxon@3.4.2)
       hono:
         specifier: 'catalog:'
         version: 4.6.16
@@ -915,7 +967,7 @@ importers:
         version: 0.19.8(hono@4.6.16)(zod@3.24.2)
       '@incmix/utils':
         specifier: 'catalog:'
-        version: 0.11.2(@types/luxon@3.6.0)(luxon@3.4.2)
+        version: 0.27.3(@types/luxon@3.6.0)(luxon@3.4.2)
       '@intlify/utils':
         specifier: 0.13.0
         version: 0.13.0
@@ -1591,8 +1643,8 @@ packages:
       hono: '>=3.9.0'
       zod: ^3.25.0
 
-  '@incmix/utils@0.11.2':
-    resolution: {integrity: sha512-YfNpJm062JzjFnJviJ3ZOeg5QbEggjMvLeRCssWCSvlIlLy+BtZNP+d1jl7kTQnx78IqznkyfR9+jV71r3iv1A==}
+  '@incmix/utils@0.27.3':
+    resolution: {integrity: sha512-SDIvvshcUOO/aDdFKHbbTPQoHwZdSVpIz/2bXhQdnbmBu1Bj9qR5puCm4/10J/fTdyJ2pkaAFwDbKWWMzKnb0A==}
     engines: {node: '>=22.13.0'}
     peerDependencies:
       '@types/luxon': '>=3.0'
@@ -4146,14 +4198,8 @@ packages:
   perfect-debounce@1.0.0:
     resolution: {integrity: sha512-xCy9V055GLEqoFaHoC1SoLIaLmWctgCUaBaWxDZ7/Zx4CTyX7cJQLJOok/orfjZAh9kEYpjJa4d0KcJmCbctZA==}
 
-  pg-cloudflare@1.1.1:
-    resolution: {integrity: sha512-xWPagP/4B6BgFO+EKz3JONXv3YDgvkbVrGw2mTo3D6tVDQRh1e7cqVGvyR3BE+eQgAvx1XhW/iEASj4/jCWl3Q==}
-
   pg-cloudflare@1.2.6:
     resolution: {integrity: sha512-uxmJAnmIgmYgnSFzgOf2cqGQBzwnRYcrEgXuFjJNEkpedEIPBSEzxY7ph4uA9k1mI+l/GR0HjPNS6FKNZe8SBQ==}
-
-  pg-connection-string@2.7.0:
-    resolution: {integrity: sha512-PI2W9mv53rXJQEOb8xNR8lH7Hr+EKa6oJa38zsK0S/ky2er16ios1wLKhZyxzD7jUReiWokc9WK5nxSnC7W1TA==}
 
   pg-connection-string@2.9.1:
     resolution: {integrity: sha512-nkc6NpDcvPVpZXxrreI/FOtX3XemeLl8E0qFr6F2Lrm/I8WOnaWNhIPK2Z7OHpw7gh5XJThi6j6ppgNoaT1w4w==}
@@ -4176,16 +4222,8 @@ packages:
     peerDependencies:
       pg: '>=8.0'
 
-  pg-pool@3.8.0:
-    resolution: {integrity: sha512-VBw3jiVm6ZOdLBTIcXLNdSotb6Iy3uOCwDGFAksZCXmi10nyRvnP2v3jl4d+IsLYRyXf6o9hIm/ZtUzlByNUdw==}
-    peerDependencies:
-      pg: '>=8.0'
-
   pg-protocol@1.10.1:
     resolution: {integrity: sha512-9YS3ZonDj0Lxny//aF0ITPdfrEPgKWCJvONsSXAaIUhgpzlzl5JgaZNlbTFxvYNfm2terGEnHeOSUlF6qRGBzw==}
-
-  pg-protocol@1.8.0:
-    resolution: {integrity: sha512-jvuYlEkL03NRvOoyoRktBK7+qU5kOvlAwvmrH8sr3wbLrOdVWsRxQfz8mMy9sZFsqJ1hEWNfdWKI4SAmoL+j7g==}
 
   pg-types@2.2.0:
     resolution: {integrity: sha512-qTAAlrEsl8s4OiEQY69wDvcMIdQN6wdz5ojQiOy6YRMuynxenON0O5oCpJI6lshc6scgAY8qvJ2On/p+CXY0GA==}
@@ -5990,7 +6028,7 @@ snapshots:
       hono: 4.6.16
       zod: 3.24.2
 
-  '@incmix/utils@0.11.2(@types/luxon@3.6.0)(luxon@3.4.2)':
+  '@incmix/utils@0.27.3(@types/luxon@3.6.0)(luxon@3.4.2)':
     dependencies:
       '@casl/ability': 6.7.3
       '@date-fns/tz': 1.2.0
@@ -6925,7 +6963,7 @@ snapshots:
   '@types/pg@8.11.11':
     dependencies:
       '@types/node': 22.13.15
-      pg-protocol: 1.8.0
+      pg-protocol: 1.10.1
       pg-types: 4.0.2
 
   '@types/react@19.0.12':
@@ -8708,13 +8746,8 @@ snapshots:
 
   perfect-debounce@1.0.0: {}
 
-  pg-cloudflare@1.1.1:
-    optional: true
-
   pg-cloudflare@1.2.6:
     optional: true
-
-  pg-connection-string@2.7.0: {}
 
   pg-connection-string@2.9.1: {}
 
@@ -8726,17 +8759,15 @@ snapshots:
 
   pg-numeric@1.0.2: {}
 
+  pg-pool@3.10.1(pg@8.13.3):
+    dependencies:
+      pg: 8.13.3
+
   pg-pool@3.10.1(pg@8.16.1):
     dependencies:
       pg: 8.16.1
 
-  pg-pool@3.8.0(pg@8.13.3):
-    dependencies:
-      pg: 8.13.3
-
   pg-protocol@1.10.1: {}
-
-  pg-protocol@1.8.0: {}
 
   pg-types@2.2.0:
     dependencies:
@@ -8758,13 +8789,13 @@ snapshots:
 
   pg@8.13.3:
     dependencies:
-      pg-connection-string: 2.7.0
-      pg-pool: 3.8.0(pg@8.13.3)
-      pg-protocol: 1.8.0
+      pg-connection-string: 2.9.1
+      pg-pool: 3.10.1(pg@8.13.3)
+      pg-protocol: 1.10.1
       pg-types: 2.2.0
       pgpass: 1.0.5
     optionalDependencies:
-      pg-cloudflare: 1.1.1
+      pg-cloudflare: 1.2.6
 
   pg@8.16.1:
     dependencies:

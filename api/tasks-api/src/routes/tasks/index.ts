@@ -8,15 +8,9 @@ import {
   ERROR_TASK_INSERT_FAIL,
   ERROR_TASK_NOT_FOUND,
   ERROR_TASK_UPDATE_FAIL,
-  ERROR_TEMPLATE_NOT_FOUND,
 } from "@/lib/constants"
 import { getTaskWithChecklists } from "@/lib/db"
-import { FigmaService } from "@/lib/figma"
 
-import {
-  generateUserStory as aiGenerateUserStory,
-  generateUserStoryFromImage,
-} from "@/lib/services"
 import {
   addTaskChecklist,
   createTask,
@@ -40,7 +34,6 @@ import {
 } from "@incmix-api/utils/errors"
 import { useTranslation } from "@incmix-api/utils/middleware"
 import type { TaskStatus } from "@incmix/utils/types"
-import { streamSSE } from "hono/streaming"
 import { nanoid } from "nanoid"
 const tasksRoutes = new OpenAPIHono<HonoApp>({
   defaultHook: zodError,
