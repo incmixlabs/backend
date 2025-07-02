@@ -39,7 +39,7 @@ export const middlewares = (app: OpenAPIHono<HonoApp>) => {
     if (session?.fresh) {
       createSession(c, user.id)
     }
-
+    console.log("user", user)
     c.set("user", user)
     c.set("session", session)
 
