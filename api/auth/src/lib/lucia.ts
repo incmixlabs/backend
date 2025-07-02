@@ -9,8 +9,8 @@ import postgres from "pg"
 interface DatabaseUserAttributes {
   id: string
   email: string
-  emailVerified: boolean
-  userType: UserType
+  email_verified_at: Date
+  user_type: UserType
 }
 
 declare module "lucia" {
@@ -41,11 +41,12 @@ export function initializeLucia(c: Context) {
     },
 
     getUserAttributes: (attributes) => {
+      console.log(attributes)
       return {
         id: attributes.id,
         email: attributes.email,
-        emailVerified: Boolean(attributes.emailVerified),
-        userType: attributes.userType,
+        emailVerified: Boolean(attributes.email_verified_at),
+        userType: attributes.user_type,
       }
     },
   })
