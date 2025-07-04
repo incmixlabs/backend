@@ -134,6 +134,15 @@ services:
       - 8585:8585
     depends_on:
       - location-api
+  rxdb-api:
+    <<: *api-common
+    build:
+      context: .
+      dockerfile: api/rxdb-api/Dockerfile
+    ports:
+      - 8686:8686
+    depends_on:
+      - comments-api
   bff-web:
     <<: *api-common
     build:
@@ -142,7 +151,7 @@ services:
     ports:
       - 8081:8080
     depends_on:
-      - comments-api
+      - rxdb-api
 volumes:
   incmix-db-data:
 

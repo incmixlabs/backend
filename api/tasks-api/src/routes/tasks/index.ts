@@ -9,7 +9,7 @@ import {
   ERROR_TASK_NOT_FOUND,
   ERROR_TASK_UPDATE_FAIL,
 } from "@/lib/constants"
-import { getTaskWithChecklists } from "@/lib/db"
+import { getTaskWithChecklists, getTasks } from "@/lib/db"
 
 import {
   addTaskChecklist,
@@ -27,6 +27,7 @@ import { ERROR_UNAUTHORIZED } from "@incmix-api/utils"
 import {
   BadRequestError,
   NotFoundError,
+  ServerError,
   UnauthorizedError,
   UnprocessableEntityError,
   processError,
@@ -48,12 +49,7 @@ tasksRoutes.openapi(listTasks, async (c) => {
       return c.json({ message: msg }, 401)
     }
 
-    const tasks = await c
-      .get("db")
-      .selectFrom("tasks")
-      .selectAll()
-      .where("assignedTo", "=", user.id)
-      .execute()
+    const tasks = await getTasks(c, user.id)
 
     return c.json(tasks, 200)
   } catch (error) {
@@ -74,21 +70,22 @@ tasksRoutes.openapi(createTask, async (c) => {
     }
 
     const {
-      columnId,
-      content,
       projectId,
       taskOrder,
       assignedTo,
-      title,
       startDate,
       endDate,
+      name,
+      description,
+      parentTaskId,
+      statusId,
+      priorityId,
+      labelsTags,
+      refUrls,
+      attachments,
+      checklist,
+      acceptanceCriteria,
     } = c.req.valid("json")
-
-    let status: TaskStatus = "backlog"
-
-    if (columnId) {
-      status = "active"
-    }
 
     const project = await c
       .get("db")
@@ -102,12 +99,12 @@ tasksRoutes.openapi(createTask, async (c) => {
       throw new UnprocessableEntityError(msg)
     }
 
-    if (columnId) {
+    if (statusId) {
       const column = await c
         .get("db")
-        .selectFrom("columns")
+        .selectFrom("labels")
         .selectAll()
-        .where("id", "=", columnId)
+        .where("id", "=", statusId)
         .executeTakeFirst()
 
       if (!column) {
@@ -116,38 +113,78 @@ tasksRoutes.openapi(createTask, async (c) => {
       }
     }
 
-    const taskId = nanoid(7)
+    if (priorityId) {
+      const priority = await c
+        .get("db")
+        .selectFrom("labels")
+        .selectAll()
+        .where("id", "=", priorityId)
+        .executeTakeFirst()
 
-    const newTask = await c
-      .get("db")
-      .insertInto("tasks")
-      .values({
-        id: taskId,
-        content,
-        status,
-        taskOrder,
-        projectId,
-        columnId,
-        assignedTo,
-        title,
-        currentTimelineStartDate: new Date(startDate).toISOString(),
-        currentTimelineEndDate: new Date(endDate).toISOString(),
-        actualTimelineStartDate: new Date(startDate).toISOString(),
-        actualTimelineEndDate: new Date(endDate).toISOString(),
-        createdBy: user.id,
-        updatedBy: user.id,
-        updatedAt: new Date().toISOString(),
-        createdAt: new Date().toISOString(),
-      })
-      .returningAll()
-      .executeTakeFirst()
-
-    if (!newTask) {
-      const msg = await t.text(ERROR_TASK_INSERT_FAIL)
-      return c.json({ message: msg }, 400)
+      if (!priority) {
+        const msg = await t.text(ERROR_COLUMN_NOT_FOUND)
+        throw new UnprocessableEntityError(msg)
+      }
     }
 
-    return c.json({ ...newTask, checklists: [], comments: [] }, 201)
+    const taskId = nanoid(7)
+
+    const task = await c
+      .get("db")
+      .transaction()
+      .execute(async (tx) => {
+        const newTask = await tx
+          .insertInto("tasks")
+          .values({
+            id: taskId,
+            name,
+            description,
+            taskOrder,
+            projectId,
+            statusId,
+            priorityId,
+            parentTaskId,
+            labelsTags: JSON.stringify(labelsTags),
+            refUrls: JSON.stringify(refUrls),
+            attachments: JSON.stringify(attachments),
+            acceptanceCriteria: JSON.stringify(acceptanceCriteria),
+            startDate: new Date(startDate).toISOString(),
+            endDate: new Date(endDate).toISOString(),
+            createdBy: user.id,
+            updatedBy: user.id,
+            updatedAt: new Date().toISOString(),
+            createdAt: new Date().toISOString(),
+            completed: false,
+            checklist: JSON.stringify(checklist),
+          })
+          .returningAll()
+          .executeTakeFirst()
+
+        if (!newTask) {
+          const msg = await t.text(ERROR_TASK_INSERT_FAIL)
+          throw new ServerError(msg)
+        }
+
+        if (assignedTo?.length)
+          await tx
+            .insertInto("taskAssignments")
+            .values(
+              assignedTo.map((a) => ({
+                taskId: newTask.id,
+                userId: a,
+              }))
+            )
+            .execute()
+
+        return newTask
+      })
+
+    const newTask = await getTaskWithChecklists(c, task.id)
+    if (!newTask) {
+      const msg = await t.text(ERROR_TASK_NOT_FOUND)
+      throw new UnprocessableEntityError(msg)
+    }
+    return c.json({ ...newTask, comments: [] }, 201)
   } catch (error) {
     return await processError<typeof createTask>(c, error, [
       "{{ default }}",
@@ -165,25 +202,58 @@ tasksRoutes.openapi(updateTask, async (c) => {
       return c.json({ message: msg }, 401)
     }
     const {
-      id,
       assignedTo,
-      content,
-      status,
       taskOrder,
-      columnId,
+      statusId,
+      priorityId,
+      name,
+      description,
+      parentTaskId,
+      labelsTags,
+      refUrls,
+      attachments,
+      acceptanceCriteria,
       startDate,
       endDate,
     } = c.req.valid("json")
 
-    if (columnId) {
-      const column = await c
+    const { taskId } = c.req.valid("param")
+
+    const existingTask = await c
+      .get("db")
+      .selectFrom("tasks")
+      .selectAll()
+      .where("id", "=", taskId)
+      .executeTakeFirst()
+
+    if (!existingTask) {
+      const msg = await t.text(ERROR_TASK_NOT_FOUND)
+      throw new UnprocessableEntityError(msg)
+    }
+
+    if (statusId && existingTask.statusId !== statusId) {
+      const status = await c
         .get("db")
-        .selectFrom("columns")
+        .selectFrom("labels")
         .selectAll()
-        .where("id", "=", columnId)
+        .where("id", "=", statusId)
         .executeTakeFirst()
 
-      if (!column) {
+      if (!status) {
+        const msg = await t.text(ERROR_COLUMN_NOT_FOUND)
+        throw new UnprocessableEntityError(msg)
+      }
+    }
+
+    if (priorityId && existingTask.priorityId !== priorityId) {
+      const priority = await c
+        .get("db")
+        .selectFrom("labels")
+        .selectAll()
+        .where("id", "=", priorityId)
+        .executeTakeFirst()
+
+      if (!priority) {
         const msg = await t.text(ERROR_COLUMN_NOT_FOUND)
         throw new UnprocessableEntityError(msg)
       }
@@ -193,21 +263,22 @@ tasksRoutes.openapi(updateTask, async (c) => {
       .get("db")
       .updateTable("tasks")
       .set({
-        assignedTo,
-        content,
-        status,
+        name,
+        description,
         taskOrder,
-        columnId,
-        currentTimelineStartDate: startDate
-          ? new Date(startDate).toISOString()
-          : undefined,
-        currentTimelineEndDate: endDate
-          ? new Date(endDate).toISOString()
-          : undefined,
+        statusId,
+        priorityId,
+        parentTaskId,
+        labelsTags: JSON.stringify(labelsTags),
+        refUrls: JSON.stringify(refUrls),
+        attachments: JSON.stringify(attachments),
+        acceptanceCriteria: JSON.stringify(acceptanceCriteria),
+        startDate: startDate,
+        endDate: endDate,
         updatedAt: new Date().toISOString(),
         updatedBy: user.id,
       })
-      .where("id", "=", id)
+      .where("id", "=", taskId)
       .returningAll()
       .executeTakeFirst()
 
@@ -216,9 +287,31 @@ tasksRoutes.openapi(updateTask, async (c) => {
       return c.json({ message: msg }, 400)
     }
 
-    const task = await getTaskWithChecklists(c, id)
+    if (assignedTo?.length) {
+      await c
+        .get("db")
+        .deleteFrom("taskAssignments")
+        .where("taskId", "=", taskId)
+        .execute()
+      await c
+        .get("db")
+        .insertInto("taskAssignments")
+        .values(
+          assignedTo.map((a) => ({
+            taskId: taskId,
+            userId: a,
+          }))
+        )
+        .execute()
+    }
 
-    return c.json(task, 200)
+    const task = await getTaskWithChecklists(c, taskId)
+    if (!task) {
+      const msg = await t.text(ERROR_TASK_NOT_FOUND)
+      throw new NotFoundError(msg)
+    }
+
+    return c.json({ ...task, comments: [] }, 200)
   } catch (error) {
     return await processError<typeof updateTask>(c, error, [
       "{{ default }}",
@@ -239,12 +332,13 @@ tasksRoutes.openapi(taskById, async (c) => {
     const { taskId } = c.req.valid("param")
 
     const task = await getTaskWithChecklists(c, taskId)
+
     if (!task) {
       const msg = await t.text(ERROR_TASK_NOT_FOUND)
       throw new NotFoundError(msg)
     }
 
-    return c.json(task, 200)
+    return c.json({ ...task, comments: [] }, 200)
   } catch (error) {
     return await processError<typeof taskById>(c, error, [
       "{{ default }}",
@@ -297,39 +391,36 @@ tasksRoutes.openapi(addTaskChecklist, async (c) => {
     const { checklist } = c.req.valid("json")
     const { taskId } = c.req.valid("param")
 
-    const existingTask = await getTaskWithChecklists(c, taskId)
+    const existingTask = await c
+      .get("db")
+      .selectFrom("tasks")
+      .selectAll()
+      .where("id", "=", taskId)
+      .executeTakeFirst()
+
     if (!existingTask) {
       const msg = await t.text(ERROR_TASK_NOT_FOUND)
       throw new UnprocessableEntityError(msg)
     }
 
-    const id = nanoid(6)
-    const newChecklist = {
-      id,
-      taskId,
-      title: checklist.title,
-      status: "todo" as const,
-      createdBy: user.id,
-      updatedBy: user.id,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    }
+    const allChecklists = { ...existingTask.checklist, checklist }
 
-    const createdChecklist = await c
+    await c
       .get("db")
-      .insertInto("taskChecklists")
-      .values(newChecklist)
-      .returningAll()
-      .executeTakeFirst()
-
-    if (!createdChecklist) {
-      const msg = await t.text(ERROR_CHECKLIST_CREATE_FAILED)
-      throw new BadRequestError(msg)
-    }
+      .updateTable("tasks")
+      .set({
+        checklist: JSON.stringify(allChecklists),
+      })
+      .where("id", "=", taskId)
+      .execute()
 
     const updatedTask = await getTaskWithChecklists(c, taskId)
+    if (!updatedTask) {
+      const msg = await t.text(ERROR_TASK_UPDATE_FAIL)
+      throw new UnprocessableEntityError(msg)
+    }
 
-    return c.json(updatedTask, 201)
+    return c.json({ ...updatedTask, comments: [] }, 201)
   } catch (error) {
     return await processError<typeof addTaskChecklist>(c, error, [
       "{{ default }}",
@@ -338,106 +429,106 @@ tasksRoutes.openapi(addTaskChecklist, async (c) => {
   }
 })
 
-tasksRoutes.openapi(updateTaskChecklist, async (c) => {
-  try {
-    const user = c.get("user")
-    const t = await useTranslation(c)
-    if (!user) {
-      const msg = await t.text(ERROR_UNAUTHORIZED)
-      throw new UnauthorizedError(msg)
-    }
+// tasksRoutes.openapi(updateTaskChecklist, async (c) => {
+//   try {
+//     const user = c.get("user")
+//     const t = await useTranslation(c)
+//     if (!user) {
+//       const msg = await t.text(ERROR_UNAUTHORIZED)
+//       throw new UnauthorizedError(msg)
+//     }
 
-    const { checklist } = c.req.valid("json")
-    const { checklistId } = c.req.valid("param")
+//     const { checklist } = c.req.valid("json")
+//     const { checklistId } = c.req.valid("param")
 
-    const existingChecklist = await c
-      .get("db")
-      .selectFrom("taskChecklists")
-      .selectAll()
-      .where("id", "=", checklistId)
-      .executeTakeFirst()
+//     const existingChecklist = await c
+//       .get("db")
+//       .selectFrom("taskChecklists")
+//       .selectAll()
+//       .where("id", "=", checklistId)
+//       .executeTakeFirst()
 
-    if (!existingChecklist) {
-      const msg = await t.text(ERROR_CHECKLIST_NOT_FOUND)
-      throw new UnprocessableEntityError(msg)
-    }
+//     if (!existingChecklist) {
+//       const msg = await t.text(ERROR_CHECKLIST_NOT_FOUND)
+//       throw new UnprocessableEntityError(msg)
+//     }
 
-    const updates: {
-      updatedBy: string
-      updatedAt: string
-      title?: string
-      status?: "todo" | "in_progress" | "done"
-    } = {
-      updatedBy: user.id,
-      updatedAt: new Date().toISOString(),
-    }
+//     const updates: {
+//       updatedBy: string
+//       updatedAt: string
+//       title?: string
+//       status?: "todo" | "in_progress" | "done"
+//     } = {
+//       updatedBy: user.id,
+//       updatedAt: new Date().toISOString(),
+//     }
 
-    if (checklist.title !== undefined) {
-      updates.title = checklist.title
-    }
-    if (checklist.status !== undefined) {
-      updates.status = checklist.status
-    }
+//     if (checklist.title !== undefined) {
+//       updates.title = checklist.title
+//     }
+//     if (checklist.status !== undefined) {
+//       updates.status = checklist.status
+//     }
 
-    const updatedChecklist = await c
-      .get("db")
-      .updateTable("taskChecklists")
-      .set(updates)
-      .where("id", "=", existingChecklist.id)
-      .returningAll()
-      .executeTakeFirst()
+//     const updatedChecklist = await c
+//       .get("db")
+//       .updateTable("taskChecklists")
+//       .set(updates)
+//       .where("id", "=", existingChecklist.id)
+//       .returningAll()
+//       .executeTakeFirst()
 
-    if (!updatedChecklist) {
-      const msg = await t.text(ERROR_CHECKLIST_UPDATE_FAILED)
-      throw new BadRequestError(msg)
-    }
+//     if (!updatedChecklist) {
+//       const msg = await t.text(ERROR_CHECKLIST_UPDATE_FAILED)
+//       throw new BadRequestError(msg)
+//     }
 
-    const updatedTask = await getTaskWithChecklists(c, existingChecklist.taskId)
+//     const updatedTask = await getTaskWithChecklists(c, existingChecklist.taskId)
 
-    return c.json(updatedTask, 200)
-  } catch (error) {
-    return await processError<typeof updateTaskChecklist>(c, error, [
-      "{{ default }}",
-      "update-task-checklist",
-    ])
-  }
-})
+//     return c.json(updatedTask, 200)
+//   } catch (error) {
+//     return await processError<typeof updateTaskChecklist>(c, error, [
+//       "{{ default }}",
+//       "update-task-checklist",
+//     ])
+//   }
+// })
 
-tasksRoutes.openapi(removeTaskChecklist, async (c) => {
-  try {
-    const user = c.get("user")
-    const t = await useTranslation(c)
-    if (!user) {
-      const msg = await t.text(ERROR_UNAUTHORIZED)
-      throw new UnauthorizedError(msg)
-    }
+// tasksRoutes.openapi(removeTaskChecklist, async (c) => {
+//   try {
+//     const user = c.get("user")
+//     const t = await useTranslation(c)
+//     if (!user) {
+//       const msg = await t.text(ERROR_UNAUTHORIZED)
+//       throw new UnauthorizedError(msg)
+//     }
 
-    const { checklistIds } = c.req.valid("json")
-    const { taskId } = c.req.valid("param")
+//     const { checklistIds } = c.req.valid("json")
+//     const { taskId } = c.req.valid("param")
 
-    const existingTask = await getTaskWithChecklists(c, taskId)
-    if (!existingTask) {
-      const msg = await t.text(ERROR_TASK_NOT_FOUND)
-      throw new UnprocessableEntityError(msg)
-    }
+//     const existingTask = await getTaskWithChecklists(c, taskId)
+//     if (!existingTask) {
+//       const msg = await t.text(ERROR_TASK_NOT_FOUND)
+//       throw new UnprocessableEntityError(msg)
+//     }
 
-    await c
-      .get("db")
-      .deleteFrom("taskChecklists")
-      .where((eb) =>
-        eb.and([eb("taskId", "=", taskId), eb("id", "in", checklistIds)])
-      )
-      .execute()
+//     await c
+//       .get("db")
+//       .deleteFrom("taskChecklists")
+//       .where((eb) =>
+//         eb.and([eb("taskId", "=", taskId), eb("id", "in", checklistIds)])
+//       )
+//       .execute()
 
-    const updatedTask = await getTaskWithChecklists(c, taskId)
+//     const updatedTask = await getTaskWithChecklists(c, taskId)
 
-    return c.json(updatedTask, 200)
-  } catch (error) {
-    return await processError<typeof removeTaskChecklist>(c, error, [
-      "{{ default }}",
-      "remove-task-checklist",
-    ])
-  }
-})
+//     return c.json(updatedTask, 200)
+//   } catch (error) {
+//     return await processError<typeof removeTaskChecklist>(c, error, [
+//       "{{ default }}",
+//       "remove-task-checklist",
+//     ])
+//   }
+// })
 
 export default tasksRoutes

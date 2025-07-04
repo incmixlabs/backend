@@ -17,31 +17,27 @@ export const ChecklistIdSchema = z
   })
   .openapi("Checklist Params")
 
-export const CommentIdSchema = z
-  .object({
-    commentId: z
-      .string()
-      .openapi({ example: "1", param: { name: "commentId", in: "path" } }),
-  })
-  .openapi("Comment Params")
-
 export const TaskListSchema = z.array(
   TaskSchema.omit({
-    checklists: true,
-    codeSnippets: true,
-    figmaLink: true,
+    subTasks: true,
     comments: true,
   })
 )
 
 export const CreateTaskSchema = TaskSchema.pick({
-  title: true,
-  content: true,
+  name: true,
+  description: true,
   taskOrder: true,
-  columnId: true,
-  assignedTo: true,
   projectId: true,
+  statusId: true,
+  priorityId: true,
+  labelsTags: true,
+  refUrls: true,
+  attachments: true,
+  checklist: true,
+  acceptanceCriteria: true,
 }).extend({
+  parentTaskId: z.string().optional(),
   startDate: z
     .string()
     .datetime()
@@ -50,18 +46,25 @@ export const CreateTaskSchema = TaskSchema.pick({
     .string()
     .datetime()
     .openapi({ example: new Date("2025-01-01").toISOString() }),
+  assignedTo: z.array(z.string()).optional(),
 })
 
 export const UpdateTaskSchema = TaskSchema.pick({
-  title: true,
-  content: true,
+  name: true,
+  description: true,
   taskOrder: true,
   projectId: true,
-  columnId: true,
-  assignedTo: true,
-  status: true,
+  statusId: true,
+  priorityId: true,
+  labelsTags: true,
+  refUrls: true,
+  attachments: true,
+  acceptanceCriteria: true,
+  startDate: true,
+  endDate: true,
 })
   .extend({
+    parentTaskId: z.string().optional(),
     startDate: z
       .string()
       .datetime()
@@ -70,14 +73,12 @@ export const UpdateTaskSchema = TaskSchema.pick({
       .string()
       .datetime()
       .openapi({ example: new Date("2025-01-01").toISOString() }),
+    assignedTo: z.array(z.string()).optional(),
   })
   .partial()
-  .extend({
-    id: z.string().openapi({ example: "1" }),
-  })
 
 export const AddTaskChecklistSchema = z.object({
-  checklist: ChecklistSchema.pick({ title: true }),
+  checklist: ChecklistSchema,
 })
 
 export const UpdateTaskChecklistSchema = z.object({

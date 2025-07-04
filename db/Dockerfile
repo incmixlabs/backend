@@ -40,6 +40,10 @@ COPY ./db/api-migrations ./api-migrations
 COPY ./db/migrations ./migrations
 COPY ./db/migrate.js ./migrate.js
 
+# Copy and set up entrypoint script
+COPY ./db/entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
 # Expose PostgreSQL port
 EXPOSE 5432
 
@@ -47,5 +51,5 @@ EXPOSE 5432
 # The official postgres entrypoint script will handle permissions correctly
 USER postgres
 
-# Use the default postgres entrypoint which handles permissions correctly
-CMD ["postgres"]
+# Use our custom entrypoint script
+ENTRYPOINT ["/entrypoint.sh"]
