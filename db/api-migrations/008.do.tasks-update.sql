@@ -72,13 +72,9 @@ CREATE TABLE task_assignments (
 );
 
 -- Create indexes for tasks
-CREATE INDEX idx_tasks_project_id ON tasks(project_id);
-
 CREATE INDEX idx_tasks_status_id ON tasks(status_id);
 
 CREATE INDEX idx_tasks_priority_id ON tasks(priority_id);
-
-CREATE INDEX idx_tasks_assigned_to ON tasks(assigned_to);
 
 CREATE INDEX idx_tasks_parent_task_id ON tasks(parent_task_id);
 
