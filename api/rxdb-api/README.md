@@ -3,7 +3,8 @@
 ```bash
 pnpm install
 pnpm run dev
-npx wrangler d1 migrations apply tasks-api -- apply schema locally first time
+# Apply schema locally (first run)
+npx wrangler d1 migrations apply tasks-api
 ```
 
 ```bash
