@@ -2,7 +2,7 @@
   "$schema": "https://turborepo.org/schema.json",
   "globalDependencies": ["**/.env.*local"],
   "remoteCache": {
-    "enabled": true,
+    "enabled": false,
     "apiUrl": "https://turbo-cache.incmix.com",
     "teamSlug": "incmix"
   },
