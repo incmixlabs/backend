@@ -331,3 +331,5 @@ tasksRoutes.post("/push", zValidator("json", PushTasksSchema), async (c) => {
     )
   }
 })
+
+export default tasksRoutes

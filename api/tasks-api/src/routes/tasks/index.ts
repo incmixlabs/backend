@@ -273,12 +273,8 @@ tasksRoutes.openapi(updateTask, async (c) => {
         refUrls: JSON.stringify(refUrls),
         attachments: JSON.stringify(attachments),
         acceptanceCriteria: JSON.stringify(acceptanceCriteria),
-        startDate: startDate
-          ? new Date(startDate).toISOString()
-          : existingTask.startDate,
-        endDate: endDate
-          ? new Date(endDate).toISOString()
-          : existingTask.endDate,
+        startDate: startDate ? new Date(startDate).toISOString() : undefined,
+        endDate: endDate ? new Date(endDate).toISOString() : undefined,
         updatedAt: new Date().toISOString(),
         updatedBy: user.id,
       })

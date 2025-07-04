@@ -6,5 +6,5 @@ import type { OpenAPIHono } from "@hono/zod-openapi"
 
 export const routes = (app: OpenAPIHono<HonoApp>) => {
   app.route(`${BASE_PATH}/healthcheck`, healthcheckRoutes)
-  app.route(BASE_PATH, tasksRoutes)
+  app.route(`${BASE_PATH}/tasks`, tasksRoutes)
 }
