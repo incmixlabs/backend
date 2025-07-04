@@ -3,7 +3,7 @@
 ```bash
 pnpm install
 pnpm run dev
-npx wrangler d1 migrations apply lucia-auth -- apply schema locally first time
+npx wrangler d1 migrations apply tasks-api -- apply schema locally first time
 ```
 
 ```bash
