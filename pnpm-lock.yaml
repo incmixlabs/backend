@@ -19,8 +19,8 @@ catalogs:
       specifier: 0.7.0
       version: 0.7.0
     '@incmix/utils':
-      specifier: 0.28.1
-      version: 0.28.1
+      specifier: 0.28.2
+      version: 0.28.2
     '@playwright/test':
       specifier: 1.49.0
       version: 1.49.0
@@ -136,7 +136,7 @@ importers:
         version: link:../../shared/utils
       '@incmix/utils':
         specifier: 'catalog:'
-        version: 0.28.1(@types/luxon@3.6.0)(luxon@3.4.2)
+        version: 0.28.2(@types/luxon@3.6.0)(luxon@3.4.2)
       '@lucia-auth/adapter-postgresql':
         specifier: ^3.1.2
         version: 3.1.2(lucia@3.2.2)(pg@8.13.3)
@@ -209,7 +209,7 @@ importers:
         version: link:../../shared/utils
       '@incmix/utils':
         specifier: 'catalog:'
-        version: 0.28.1(@types/luxon@3.6.0)(luxon@3.4.2)
+        version: 0.28.2(@types/luxon@3.6.0)(luxon@3.4.2)
       hono:
         specifier: 'catalog:'
         version: 4.6.16
@@ -252,7 +252,7 @@ importers:
         version: link:../../shared/utils
       '@incmix/utils':
         specifier: 'catalog:'
-        version: 0.28.1(@types/luxon@3.6.0)(luxon@3.4.2)
+        version: 0.28.2(@types/luxon@3.6.0)(luxon@3.4.2)
       hono:
         specifier: 'catalog:'
         version: 4.6.16
@@ -316,7 +316,7 @@ importers:
         version: link:../../shared/utils
       '@incmix/utils':
         specifier: 'catalog:'
-        version: 0.28.1(@types/luxon@3.6.0)(luxon@3.4.2)
+        version: 0.28.2(@types/luxon@3.6.0)(luxon@3.4.2)
       '@react-email/body':
         specifier: 0.0.11
         version: 0.0.11(react@19.1.0)
@@ -452,7 +452,7 @@ importers:
         version: link:../../shared/utils
       '@incmix/utils':
         specifier: 'catalog:'
-        version: 0.28.1(@types/luxon@3.6.0)(luxon@3.4.2)
+        version: 0.28.2(@types/luxon@3.6.0)(luxon@3.4.2)
       '@playwright/test':
         specifier: 'catalog:'
         version: 1.49.0
@@ -516,7 +516,7 @@ importers:
         version: link:../../shared/utils
       '@incmix/utils':
         specifier: 'catalog:'
-        version: 0.28.1(@types/luxon@3.6.0)(luxon@3.4.2)
+        version: 0.28.2(@types/luxon@3.6.0)(luxon@3.4.2)
       ai:
         specifier: ^4.3.16
         version: 4.3.16(react@19.1.0)(zod@3.24.2)
@@ -586,7 +586,7 @@ importers:
         version: link:../../shared/utils
       '@incmix/utils':
         specifier: 'catalog:'
-        version: 0.28.1(@types/luxon@3.6.0)(luxon@3.4.2)
+        version: 0.28.2(@types/luxon@3.6.0)(luxon@3.4.2)
       '@intlify/utils':
         specifier: 0.13.0
         version: 0.13.0
@@ -647,7 +647,7 @@ importers:
         version: link:../../shared/utils
       '@incmix/utils':
         specifier: 'catalog:'
-        version: 0.28.1(@types/luxon@3.6.0)(luxon@3.4.2)
+        version: 0.28.2(@types/luxon@3.6.0)(luxon@3.4.2)
       hono:
         specifier: 'catalog:'
         version: 4.6.16
@@ -702,7 +702,7 @@ importers:
         version: link:../../shared/utils
       '@incmix/utils':
         specifier: 'catalog:'
-        version: 0.28.1(@types/luxon@3.6.0)(luxon@3.4.2)
+        version: 0.28.2(@types/luxon@3.6.0)(luxon@3.4.2)
       hono:
         specifier: 'catalog:'
         version: 4.6.16
@@ -766,7 +766,7 @@ importers:
         version: link:../../shared/utils
       '@incmix/utils':
         specifier: 'catalog:'
-        version: 0.28.1(@types/luxon@3.6.0)(luxon@3.4.2)
+        version: 0.28.2(@types/luxon@3.6.0)(luxon@3.4.2)
       hono:
         specifier: 'catalog:'
         version: 4.6.16
@@ -830,7 +830,7 @@ importers:
         version: link:../../shared/utils
       '@incmix/utils':
         specifier: 'catalog:'
-        version: 0.28.1(@types/luxon@3.6.0)(luxon@3.4.2)
+        version: 0.28.2(@types/luxon@3.6.0)(luxon@3.4.2)
       hono:
         specifier: 'catalog:'
         version: 4.6.16
@@ -894,7 +894,7 @@ importers:
         version: link:../../shared/utils
       '@incmix/utils':
         specifier: 'catalog:'
-        version: 0.28.1(@types/luxon@3.6.0)(luxon@3.4.2)
+        version: 0.28.2(@types/luxon@3.6.0)(luxon@3.4.2)
       hono:
         specifier: 'catalog:'
         version: 4.6.16
@@ -958,7 +958,7 @@ importers:
         version: link:../../shared/utils
       '@incmix/utils':
         specifier: 'catalog:'
-        version: 0.28.1(@types/luxon@3.6.0)(luxon@3.4.2)
+        version: 0.28.2(@types/luxon@3.6.0)(luxon@3.4.2)
       hono:
         specifier: 'catalog:'
         version: 4.6.16
@@ -1031,7 +1031,7 @@ importers:
         version: 0.19.8(hono@4.6.16)(zod@3.24.2)
       '@incmix/utils':
         specifier: 'catalog:'
-        version: 0.28.1(@types/luxon@3.6.0)(luxon@3.4.2)
+        version: 0.28.2(@types/luxon@3.6.0)(luxon@3.4.2)
       '@intlify/utils':
         specifier: 0.13.0
         version: 0.13.0
@@ -1707,8 +1707,8 @@ packages:
       hono: '>=3.9.0'
       zod: ^3.25.0
 
-  '@incmix/utils@0.28.1':
-    resolution: {integrity: sha512-cktIkUpykAgQ5aRHgbpqulxSz/7wpp5MW2KKbvEyDf7PKT3jOep6ivhIqCpCZODn93Widr3ezaJPzBimYZWuRA==}
+  '@incmix/utils@0.28.2':
+    resolution: {integrity: sha512-Xa9avG+fMAmt6XpCwVuREOIp7dP5v0FqGD5i/2LagE1iODqG5t+pI0H7gJ4PYp1rKlgviIgj60xbw3+UAc/Lyw==}
     engines: {node: '>=22.13.0'}
     peerDependencies:
       '@types/luxon': '>=3.0'
@@ -6092,7 +6092,7 @@ snapshots:
       hono: 4.6.16
       zod: 3.24.2
 
-  '@incmix/utils@0.28.1(@types/luxon@3.6.0)(luxon@3.4.2)':
+  '@incmix/utils@0.28.2(@types/luxon@3.6.0)(luxon@3.4.2)':
     dependencies:
       '@casl/ability': 6.7.3
       '@date-fns/tz': 1.2.0

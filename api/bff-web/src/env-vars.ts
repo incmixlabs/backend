@@ -26,6 +26,7 @@ const EnvSchema = z.object({
   FILES_API_URL: z.string().url(),
   EMAIL_API_URL: z.string().url(),
   LOCATION_API_URL: z.string().url(),
+  RXDB_SYNC_API_URL: z.string().url(),
   COOKIE_NAME: z.string().default("incmix_session"),
   DOMAIN: z.string().default("localhost"),
 })

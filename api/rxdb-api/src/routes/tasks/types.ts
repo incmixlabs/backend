@@ -8,9 +8,9 @@ export const PullTasksSchema = z.object({
 export const PushTasksSchema = z.object({
   changeRows: z.array(
     z.object({
-      id: z.string(),
+      id: z.string().optional(),
       newDocumentState: TaskSchema,
-      assumedMasterState: TaskSchema,
+      assumedMasterState: TaskSchema.optional(),
     })
   ),
 })

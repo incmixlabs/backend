@@ -1,7 +1,8 @@
 BEGIN;
 
 -- Create label type enum
--- CREATE TYPE label_type AS ENUM ('status', 'priority', 'tag');
+CREATE TYPE label_type AS ENUM ('status', 'priority', 'tag');
+
 -- Drop existing tables that are being replaced
 DROP TABLE IF EXISTS task_checklists CASCADE;
 
@@ -121,3 +122,13 @@ ALTER TABLE
 DROP TYPE IF EXISTS project_status CASCADE;
 
 COMMIT;
+
+insert into
+  schema_version
+values
+  (
+    8,
+    'tasks-update',
+    'e3a00105f19f93a5e887d24309c28db8',
+    '2025-07-04 18:15:30'
+  );
