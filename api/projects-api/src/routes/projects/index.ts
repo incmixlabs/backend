@@ -458,9 +458,9 @@ projectRoutes.openapi(addProjectChecklist, async (c) => {
     const id = nanoid(6)
     const newChecklist: Checklist = {
       id,
-      title: checklist[0].title,
-      checked: checklist[0].checked,
-      order: checklist[0].order,
+      title: checklist.title,
+      checked: checklist.checked,
+      order: checklist.order,
     }
 
     const query = sql`

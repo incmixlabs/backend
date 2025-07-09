@@ -142,7 +142,11 @@ export async function getProjectById(
       name: updatedBy.fullName,
       image: updatedBy.avatar ?? undefined,
     },
-    progress: 0,
+    progress:
+      project.checklist.length > 0
+        ? (100 * project.checklist.filter((c) => c.checked).length) /
+          project.checklist.length
+        : 0,
     timeLeft: "0d 0h 0m",
     createdAt: project.createdAt.toISOString(),
     updatedAt: project.updatedAt.toISOString(),

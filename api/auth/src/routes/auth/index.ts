@@ -116,7 +116,6 @@ authRoutes.openapi(getUser, async (c) => {
 authRoutes.openapi(signup, async (c) => {
   const { fullName, email, password } = c.req.valid("json")
   try {
-    console.log(email)
     const existing = await c
       .get("db")
       .selectFrom("users")

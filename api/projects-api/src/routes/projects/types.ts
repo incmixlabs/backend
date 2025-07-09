@@ -68,7 +68,7 @@ export const RemoveProjectMemberSchema = z.object({
 })
 
 export const AddProjectChecklistSchema = z.object({
-  checklist: z.array(ChecklistSchema.omit({ id: true })),
+  checklist: ChecklistSchema.omit({ id: true }),
 })
 
 export const UpdateProjectChecklistSchema = z.object({

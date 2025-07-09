@@ -1,14 +1,6 @@
 import { z } from "@hono/zod-openapi"
 import { projectStatus } from "@incmix-api/utils/db-schema"
 
-export const projectStatusEnum = [
-  "all",
-  "started",
-  "on-hold",
-  "completed",
-] as const
-export type ProjectStatus = (typeof projectStatusEnum)[number]
-
 export const taskStatusEnum = [
   "backlog",
   "active",
@@ -18,7 +10,7 @@ export const taskStatusEnum = [
 ] as const
 export type TaskStatus = (typeof taskStatusEnum)[number]
 
-export const labelTypeEnum = ["status", "priority"] as const
+export const labelTypeEnum = ["status", "priority", "tag"] as const
 export type LabelType = (typeof labelTypeEnum)[number]
 
 export const timeTypeEnum = ["day", "days", "week", "month", "year"] as const
