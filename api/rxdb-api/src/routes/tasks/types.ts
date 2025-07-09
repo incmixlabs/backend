@@ -1,4 +1,4 @@
-import { TaskSchema } from "@incmix/utils/types"
+import { TaskSchema } from "@incmix-api/utils/zod-schema"
 import { z } from "zod"
 
 export const PullTasksSchema = z.object({

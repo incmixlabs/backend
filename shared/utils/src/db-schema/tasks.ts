@@ -1,6 +1,6 @@
+import type { Checklist } from "@incmix-api/utils/zod-schema"
 import type {
   Attachment,
-  ChecklistItem,
   LabelTag,
   LabelType,
   RefUrl,
@@ -23,8 +23,8 @@ type TasksTable = {
   startDate: ColumnType<Date, string, string> | null
   endDate: ColumnType<Date, string, string> | null
   description: string
-  acceptanceCriteria: JSONColumnType<ChecklistItem[]>
-  checklist: JSONColumnType<ChecklistItem[]>
+  acceptanceCriteria: JSONColumnType<Checklist[]>
+  checklist: JSONColumnType<Checklist[]>
   completed: boolean
   refUrls: JSONColumnType<RefUrl[]>
   labelsTags: JSONColumnType<LabelTag[]>
@@ -49,16 +49,35 @@ type LabelsTable = {
   color: string
   order: number
   description: string
-  createdAt: number
-  updatedAt: number
+  createdAt: ColumnType<Date, string, never>
+  updatedAt: ColumnType<Date, string, string>
   createdBy: string
   updatedBy: string
 }
+
+export const projectStatus = [
+  "todo",
+  "started",
+  "on_hold",
+  "cancelled",
+  "completed",
+  "archived",
+] as const
+
+export type ProjectStatus = (typeof projectStatus)[number]
 
 type ProjectsTable = {
   id: string
   name: string
   orgId: string
+  status: ProjectStatus
+  startDate: ColumnType<Date, string, string> | null
+  endDate: ColumnType<Date, string, string> | null
+  budget: number | null
+  description: string | null
+  company: string | null
+  logo: string | null
+  checklist: JSONColumnType<Checklist[]>
   createdAt: ColumnType<Date, string, never>
   updatedAt: ColumnType<Date, string, string>
   createdBy: ColumnType<string, string, never>
@@ -68,7 +87,7 @@ type ProjectsTable = {
 type ProjectMembersTable = {
   projectId: string
   userId: string
-  role: string
+  role: string | null
   isOwner: boolean
   createdBy: ColumnType<string, string, never>
   updatedBy: ColumnType<string, string, string>

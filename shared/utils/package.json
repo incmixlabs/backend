@@ -29,6 +29,10 @@
     "./db-schema": {
       "default": "./dist/src/db-schema/index.js",
       "types": "./dist/src/db-schema/index.d.ts"
+    },
+    "./zod-schema": {
+      "default": "./dist/src/zod-schema/index.js",
+      "types": "./dist/src/zod-schema/index.d.ts"
     }
   },
   "dependencies": {
@@ -48,7 +52,6 @@
   },
   "devDependencies": {
     "@casl/ability": "catalog:",
-    "@hono/zod-openapi": "catalog:",
     "@incmix-api/config": "workspace:^",
     "@types/node": "catalog:",
     "@types/pg": "catalog:",

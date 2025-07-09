@@ -1,5 +1,5 @@
 import { z } from "@hono/zod-openapi"
-import { ChecklistSchema, TaskSchema } from "@incmix/utils/types"
+import { TaskSchema, ChecklistSchema } from "@incmix-api/utils/zod-schema"
 
 export const TaskIdSchema = z
   .object({
@@ -9,25 +9,21 @@ export const TaskIdSchema = z
   })
   .openapi("Task Params")
 
-export const ChecklistIdSchema = z
-  .object({
-    checklistId: z
-      .string()
-      .openapi({ example: "1", param: { name: "checklistId", in: "path" } }),
-  })
-  .openapi("Checklist Params")
+export const ChecklistIdSchema = z.object({
+  taskId: z.string().openapi({ example: "2hek2bkjh" }),
+  checklistId: z.string().openapi({ example: "2hek2bkjh" }),
+})
 
 export const TaskListSchema = z.array(
   TaskSchema.omit({
     subTasks: true,
-    comments: true,
   })
 )
 
 export const CreateTaskSchema = TaskSchema.pick({
   name: true,
   description: true,
-  taskOrder: true,
+  order: true,
   projectId: true,
   statusId: true,
   priorityId: true,
@@ -52,7 +48,7 @@ export const CreateTaskSchema = TaskSchema.pick({
 export const UpdateTaskSchema = TaskSchema.pick({
   name: true,
   description: true,
-  taskOrder: true,
+  order: true,
   projectId: true,
   statusId: true,
   priorityId: true,
@@ -78,14 +74,11 @@ export const UpdateTaskSchema = TaskSchema.pick({
   .partial()
 
 export const AddTaskChecklistSchema = z.object({
-  checklist: ChecklistSchema,
+  checklist: ChecklistSchema.omit({ id: true }),
 })
 
 export const UpdateTaskChecklistSchema = z.object({
-  checklist: ChecklistSchema.pick({
-    title: true,
-    status: true,
-  }).partial(),
+  checklist: ChecklistSchema.omit({ id: true }).partial(),
 })
 
 export const RemoveTaskChecklistSchema = z.object({

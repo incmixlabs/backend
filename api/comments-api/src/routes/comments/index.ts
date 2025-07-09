@@ -6,7 +6,13 @@ import {
   ERROR_PROJECT_NOT_FOUND,
   ERROR_TASK_NOT_FOUND,
 } from "@/lib/constants"
-import { getCommentById, getProjectById, getTaskById } from "@/lib/db"
+import {
+  getCommentById,
+  getProjectById,
+  getTaskById,
+  listProjectComments,
+  listTaskComments,
+} from "@/lib/db"
 import type { HonoApp } from "@/types"
 import { OpenAPIHono } from "@hono/zod-openapi"
 import { ERROR_UNAUTHORIZED } from "@incmix-api/utils"
@@ -24,7 +30,6 @@ import {
   zodError,
 } from "@incmix-api/utils/errors"
 import { useTranslation } from "@incmix-api/utils/middleware"
-import { Comment } from "@incmix/utils/types"
 import { nanoid } from "nanoid"
 import {
   addComment,
@@ -250,55 +255,33 @@ commentsRoute.openapi(removeComment, async (c) => {
   }
 })
 
-// commentsRoute.openapi(getProjectComments, async (c) => {
-//   try {
-//     const user = c.get("user")
-//     const t = await useTranslation(c)
-//     if (!user) {
-//       const msg = await t.text(ERROR_UNAUTHORIZED)
-//       throw new UnauthorizedError(msg)
-//     }
+commentsRoute.openapi(getProjectComments, async (c) => {
+  try {
+    const user = c.get("user")
+    const t = await useTranslation(c)
+    if (!user) {
+      const msg = await t.text(ERROR_UNAUTHORIZED)
+      throw new UnauthorizedError(msg)
+    }
 
-//     const { projectId } = c.req.valid("param")
+    const { projectId } = c.req.valid("param")
 
-//     // Check if project exists
-//     const existingProject = await getProjectById(c, projectId)
+    const existingProject = await getProjectById(c, projectId)
 
-//     if (!existingProject) {
-//       const msg = await t.text(ERROR_PROJECT_NOT_FOUND)
-//       throw new UnprocessableEntityError(msg)
-//     }
+    if (!existingProject) {
+      const msg = await t.text(ERROR_PROJECT_NOT_FOUND)
+      throw new UnprocessableEntityError(msg)
+    }
 
-//     // Get all comments for the project with user information
-//     const comments = await c
-//       .get("db")
-//       .selectFrom("projectComments")
-//       .innerJoin("comments", "projectComments.commentId", "comments.id")
-//       .innerJoin("userProfiles as users", "comments.userId", "users.id")
-//       .select([
-//         "comments.id",
-//         "comments.content",
-//         "comments.createdAt",
-//         "comments.updatedAt",
-//         "comments.createdBy",
-//         "comments.updatedBy",
-//         "comments.userId",
-//         "users.fullName as userName",
-//         "users.email as userEmail",
-//         "users.avatar as userAvatar",
-//       ])
-//       .where("projectComments.projectId", "=", projectId)
-//       .orderBy("comments.createdAt desc")
-//       .execute()
-
-//     return c.json(comments, 200)
-//   } catch (error) {
-//     return await processError<typeof getProjectComments>(c, error, [
-//       "{{ default }}",
-//       "get-project-comments",
-//     ])
-//   }
-// })
+    const comments = await listProjectComments(c, projectId)
+    return c.json(comments, 200)
+  } catch (error) {
+    return await processError<typeof getProjectComments>(c, error, [
+      "{{ default }}",
+      "get-project-comments",
+    ])
+  }
+})
 commentsRoute.openapi(getTaskComments, async (c) => {
   try {
     const user = c.get("user")
@@ -310,7 +293,6 @@ commentsRoute.openapi(getTaskComments, async (c) => {
 
     const { taskId } = c.req.valid("param")
 
-    // Check if task exists
     const existingTask = await getTaskById(c, taskId)
 
     if (!existingTask) {
@@ -318,40 +300,8 @@ commentsRoute.openapi(getTaskComments, async (c) => {
       throw new UnprocessableEntityError(msg)
     }
 
-    // Get all comments for the task with user information
-    const comments = await c
-      .get("db")
-      .selectFrom("taskComments")
-      .innerJoin("comments", "taskComments.commentId", "comments.id")
-      .innerJoin("userProfiles as users", "comments.userId", "users.id")
-      .select([
-        "comments.id",
-        "comments.content",
-        "comments.createdAt",
-        "comments.createdBy",
-        "comments.updatedBy",
-        "comments.userId",
-        "users.fullName as userName",
-        "users.email as userEmail",
-        "users.avatar as userAvatar",
-      ])
-      .where("taskComments.taskId", "=", taskId)
-      .orderBy("comments.createdAt desc")
-      .execute()
-
-    return c.json(
-      comments.map((comment) => ({
-        id: comment.id,
-        content: comment.content,
-        createdAt: new Date(comment.createdAt).getTime(),
-        createdBy: {
-          id: comment.createdBy,
-          name: comment.userName,
-          image: comment.userAvatar ?? undefined,
-        },
-      })),
-      200
-    )
+    const comments = await listTaskComments(c, taskId)
+    return c.json(comments, 200)
   } catch (error) {
     return await processError<typeof getTaskComments>(c, error, [
       "{{ default }}",

@@ -1,5 +1,5 @@
 import { createRoute } from "@hono/zod-openapi"
-import { CommentSchema } from "@incmix/utils/types"
+import { CommentSchema } from "@incmix-api/utils/zod-schema"
 import { z } from "zod"
 import { ResponseSchema } from "../types"
 import {

@@ -1,5 +1,5 @@
 import type { Context } from "@/types"
-import type { Task } from "@incmix/utils/types"
+import type { Task } from "@incmix-api/utils/zod-schema"
 
 import { jsonArrayFrom, jsonObjectFrom } from "kysely/helpers/postgres"
 
@@ -12,74 +12,74 @@ export function getProjectById(c: Context, projectId: string) {
     .executeTakeFirst()
 }
 
-export function getProjectWithColumnsAndTasks(c: Context, projectId: string) {
-  return c
-    .get("db")
-    .selectFrom("projects")
-    .selectAll()
-    .select((eb) => [
-      "id",
-      "name",
-      "orgId",
-      "createdBy",
-      "updatedBy",
-      "createdAt",
-      "updatedAt",
-      "createdBy",
-      "updatedBy",
-      jsonArrayFrom(
-        eb
-          .selectFrom("labels")
-          .select([
-            "id",
-            "order",
-            "createdAt",
-            "updatedAt",
-            "createdBy",
-            "updatedBy",
-            "projectId",
-            "type",
-            "name",
-            "color",
-            "description",
-          ])
-          .whereRef("projectId", "=", "projects.id")
-      ).as("labels"),
-      jsonArrayFrom(
-        eb
-          .selectFrom("tasks")
-          .select([
-            "id",
-            "projectId",
-            "name",
-            "statusId",
-            "priorityId",
-            "taskOrder",
-            "startDate",
-            "endDate",
-            "createdAt",
-            "updatedAt",
-            "createdBy",
-            "updatedBy",
-            "projectId",
-            "name",
-            "description",
-            "acceptanceCriteria",
-            "checklist",
-            "refUrls",
-            "labelsTags",
-            "attachments",
-            "parentTaskId",
-            "completed",
-          ])
-          .whereRef("projectId", "=", "projects.id")
-      ).as("tasks"),
-    ])
-    .where("projects.id", "=", projectId)
-    .executeTakeFirst()
-}
+// export function getProjectWithColumnsAndTasks(c: Context, projectId: string) {
+//   return c
+//     .get("db")
+//     .selectFrom("projects")
+//     .selectAll()
+//     .select((eb) => [
+//       "id",
+//       "name",
+//       "orgId",
+//       "createdBy",
+//       "updatedBy",
+//       "createdAt",
+//       "updatedAt",
+//       "createdBy",
+//       "updatedBy",
+//       jsonArrayFrom(
+//         eb
+//           .selectFrom("labels")
+//           .select([
+//             "id",
+//             "order",
+//             "createdAt",
+//             "updatedAt",
+//             "createdBy",
+//             "updatedBy",
+//             "projectId",
+//             "type",
+//             "name",
+//             "color",
+//             "description",
+//           ])
+//           .whereRef("projectId", "=", "projects.id")
+//       ).as("labels"),
+//       jsonArrayFrom(
+//         eb
+//           .selectFrom("tasks")
+//           .select([
+//             "id",
+//             "projectId",
+//             "name",
+//             "statusId",
+//             "priorityId",
+//             "taskOrder",
+//             "startDate",
+//             "endDate",
+//             "createdAt",
+//             "updatedAt",
+//             "createdBy",
+//             "updatedBy",
+//             "projectId",
+//             "name",
+//             "description",
+//             "acceptanceCriteria",
+//             "checklist",
+//             "refUrls",
+//             "labelsTags",
+//             "attachments",
+//             "parentTaskId",
+//             "completed",
+//           ])
+//           .whereRef("projectId", "=", "projects.id")
+//       ).as("tasks"),
+//     ])
+//     .where("projects.id", "=", projectId)
+//     .executeTakeFirst()
+// }
 
-export async function getTaskWithChecklists(c: Context, taskId: string) {
+export async function getTaskById(c: Context, taskId: string) {
   const tasksQuery = buildTaskQuery(c)
 
   tasksQuery.where("tasks.id", "=", taskId)
@@ -110,10 +110,10 @@ export async function getTaskWithChecklists(c: Context, taskId: string) {
         name: a.name,
         image: a.image ?? undefined,
       })),
-      createdAt: task.createdAt.getTime(),
-      updatedAt: task.updatedAt.getTime(),
-      startDate: task.startDate?.getTime(),
-      endDate: task.endDate?.getTime(),
+      createdAt: task.createdAt.toISOString(),
+      updatedAt: task.updatedAt.toISOString(),
+      startDate: task.startDate?.toISOString(),
+      endDate: task.endDate?.toISOString(),
     }
 
   return null
@@ -136,10 +136,7 @@ export async function isProjectMember(
   return !!member
 }
 
-export async function getTasks(
-  c: Context,
-  userId: string
-): Promise<Omit<Task, "subTasks" | "comments">[]> {
+export async function getTasks(c: Context, userId: string): Promise<Task[]> {
   const tasksQuery = buildTaskQuery(c)
 
   tasksQuery.where("taskAssignments.userId", "=", userId)
@@ -169,10 +166,10 @@ export async function getTasks(
           name: a.name,
           image: a.image ?? undefined,
         })),
-        createdAt: task.createdAt.getTime(),
-        updatedAt: task.updatedAt.getTime(),
-        startDate: task.startDate?.getTime(),
-        endDate: task.endDate?.getTime(),
+        createdAt: task.createdAt.toISOString(),
+        updatedAt: task.updatedAt.toISOString(),
+        startDate: task.startDate?.toISOString(),
+        endDate: task.endDate?.toISOString(),
       }
 
     return []
@@ -187,7 +184,7 @@ function buildTaskQuery(c: Context) {
       "tasks.id",
       "tasks.name",
       "tasks.description",
-      "tasks.taskOrder",
+      "tasks.taskOrder as order",
       "tasks.createdAt",
       "tasks.updatedAt",
       "tasks.projectId",

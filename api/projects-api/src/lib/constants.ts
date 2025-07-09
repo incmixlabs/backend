@@ -77,6 +77,11 @@ export const ERROR_CHECKLIST_UPDATE_FAILED = {
   key: "checklist_update_failed",
 }
 
+export const ERROR_CHECKLIST_REMOVE_FAILED = {
+  namespace: "errors",
+  key: "checklist_remove_failed",
+}
+
 export const ERROR_CHECKLIST_NOT_FOUND = {
   namespace: "errors",
   key: "checklist_not_found",

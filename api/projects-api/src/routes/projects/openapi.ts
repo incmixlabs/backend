@@ -1,11 +1,14 @@
 import { createRoute } from "@hono/zod-openapi"
-import { ProjectSchema } from "@incmix/utils/types"
+import { ProjectSchema } from "@incmix-api/utils/zod-schema"
 import { ResponseSchema } from "../types"
 import {
   AddProjectChecklistSchema,
   AddProjectMemberSchema,
+  ChecklistIdSchema,
   CreateProjectSchema,
   IdSchema,
+  OrgIdSchema,
+  ProjectListSchema,
   RemoveProjectChecklistSchema,
   RemoveProjectMemberSchema,
   UpdateProjectChecklistSchema,
@@ -65,17 +68,20 @@ export const createProject = createRoute({
 })
 
 export const listProjects = createRoute({
-  path: "/",
+  path: "/{orgId}",
   method: "get",
   summary: "List Projects",
   tags: ["Projects"],
   description: "List Projects for current user",
   security: [{ cookieAuth: [] }],
+  request: {
+    params: OrgIdSchema,
+  },
   responses: {
     200: {
       content: {
         "application/json": {
-          schema: ProjectSchema.array(),
+          schema: ProjectListSchema,
         },
       },
       description: "Returns list of projects",
@@ -376,14 +382,14 @@ export const addProjectChecklist = createRoute({
 })
 
 export const updateProjectChecklist = createRoute({
-  path: "/{id}/checklists",
+  path: "/{projectId}/checklists/{checklistId}",
   method: "put",
   summary: "Update Project Checklist",
   tags: ["Projects"],
   description: "Update an existing checklist item in a project",
   security: [{ cookieAuth: [] }],
   request: {
-    params: IdSchema,
+    params: ChecklistIdSchema,
     body: {
       content: {
         "application/json": {

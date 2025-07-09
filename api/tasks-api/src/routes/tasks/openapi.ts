@@ -1,5 +1,5 @@
 import { createRoute } from "@hono/zod-openapi"
-import { TaskSchema } from "@incmix/utils/types"
+import { TaskSchema } from "@incmix-api/utils/zod-schema"
 import { ResponseSchema } from "../types"
 import {
   AddTaskChecklistSchema,
@@ -309,7 +309,7 @@ export const updateTaskChecklist = createRoute({
   description: "Update an existing checklist item in a task",
   security: [{ cookieAuth: [] }],
   request: {
-    params: TaskIdSchema.merge(ChecklistIdSchema),
+    params: ChecklistIdSchema,
     body: {
       content: {
         "application/json": {
