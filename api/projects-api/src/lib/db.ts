@@ -58,10 +58,58 @@ export async function getProjectById(
   c: Context,
   projectId: string
 ): Promise<Project | undefined> {
-  const query = buildProjectQuery(c)
-  const project = await query
+  // const query = buildProjectQuery(c)
+  const project = await c
+    .get("db")
+    .selectFrom("projects")
+    .select((eb) => [
+      "id",
+      "name",
+      "orgId",
+      "createdAt",
+      "updatedAt",
+      "status",
+      "startDate",
+      "endDate",
+      "budget",
+      "company",
+      "logo",
+      "description",
+      "checklist",
+      jsonArrayFrom(
+        eb
+          .selectFrom("projectMembers")
+          .innerJoin(
+            "userProfiles as users",
+            "projectMembers.userId",
+            "users.id"
+          )
+          .select([
+            "projectMembers.userId as id",
+            "projectMembers.role",
+            "projectMembers.isOwner",
+            "users.fullName as name",
+            "users.email",
+            "users.avatar",
+          ])
+          .whereRef("projectId", "=", "projects.id")
+      ).as("members"),
+      jsonObjectFrom(
+        eb
+          .selectFrom("userProfiles")
+          .select(["id", "fullName", "email", "avatar"])
+          .whereRef("id", "=", "projects.createdBy")
+      ).as("createdBy"),
+      jsonObjectFrom(
+        eb
+          .selectFrom("userProfiles")
+          .select(["id", "fullName", "email", "avatar"])
+          .whereRef("id", "=", "projects.updatedBy")
+      ).as("updatedBy"),
+    ])
     .where("projects.id", "=", projectId)
     .executeTakeFirst()
+
   if (!project) return
 
   const createdBy = project.createdBy

@@ -210,12 +210,12 @@ projectRoutes.openapi(createProject, async (c) => {
           throw new BadRequestError(msg)
         }
 
-        const newProject = await getProjectById(c, id)
-
-        return newProject
+        return project.id
       })
 
-    return c.json(createdProject, 201)
+    const newProject = await getProjectById(c, createdProject)
+
+    return c.json(newProject, 201)
   } catch (error) {
     return await processError<typeof createProject>(c, error, [
       "{{ default }}",

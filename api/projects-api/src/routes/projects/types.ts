@@ -31,10 +31,14 @@ export const CreateProjectSchema = ProjectSchema.pick({
   status: true,
   startDate: true,
   endDate: true,
-  budget: true,
   company: true,
 }).extend({
   logo: z.custom<File>(),
+  budget: z
+    .number({ coerce: true })
+    .int()
+    .nullish()
+    .openapi({ example: 10000 }),
   members: z.string().optional().openapi({ example: "user1,user2,user3" }),
 })
 
