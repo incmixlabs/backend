@@ -2,6 +2,7 @@ import {
   ERROR_CHECKLIST_CREATE_FAILED,
   ERROR_CHECKLIST_REMOVE_FAILED,
   ERROR_CHECKLIST_UPDATE_FAILED,
+  ERROR_INVALID_FILE_TYPE,
   ERROR_ORG_NOT_FOUND,
   ERROR_PRESIGNED_URL,
   ERROR_PROJECT_CREATE_FAILED,
@@ -92,7 +93,42 @@ projectRoutes.openapi(createProject, async (c) => {
       .execute(async (tx) => {
         let logoUrl: string | null = null
         if (logo) {
-          const fileName = `projects/${id}.jpg`
+          // Validate that the uploaded file is an image type
+          if (!logo.type.startsWith("image/")) {
+            const msg = await t.text(ERROR_INVALID_FILE_TYPE)
+            throw new BadRequestError(msg)
+          }
+
+          // Extract file extension from MIME type or filename
+          let fileExtension = ".jpg" // default fallback
+
+          // Try to get extension from MIME type first
+          const mimeToExtension: Record<string, string> = {
+            "image/jpeg": ".jpg",
+            "image/jpg": ".jpg",
+            "image/png": ".png",
+            "image/gif": ".gif",
+            "image/webp": ".webp",
+            "image/svg+xml": ".svg",
+            "image/bmp": ".bmp",
+            "image/tiff": ".tiff",
+          }
+
+          if (logo.type in mimeToExtension) {
+            fileExtension = mimeToExtension[logo.type]
+          } else if (logo.name) {
+            // Fallback to extracting from filename
+            const nameParts = logo.name.split(".")
+            if (nameParts.length > 1) {
+              const ext = `.${nameParts[nameParts.length - 1].toLowerCase()}`
+              // Only use the extension if it's a known image extension
+              if (Object.values(mimeToExtension).includes(ext)) {
+                fileExtension = ext
+              }
+            }
+          }
+
+          const fileName = `projects/${id}${fileExtension}`
           const presignedUrlResponse = await fetch(
             `${env(c).FILES_API_URL}/presigned-upload?fileName=${encodeURIComponent(
               fileName

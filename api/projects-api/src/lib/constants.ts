@@ -101,3 +101,8 @@ export const ERROR_COMMENT_NOT_FOUND = {
   namespace: "errors",
   key: "comment_not_found",
 }
+
+export const ERROR_INVALID_FILE_TYPE = {
+  namespace: "errors",
+  key: "invalid_file_type",
+}
