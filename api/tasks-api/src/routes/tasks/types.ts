@@ -1,5 +1,5 @@
 import { z } from "@hono/zod-openapi"
-import { TaskSchema, ChecklistSchema } from "@incmix-api/utils/zod-schema"
+import { ChecklistSchema, TaskSchema } from "@incmix-api/utils/zod-schema"
 
 export const TaskIdSchema = z
   .object({

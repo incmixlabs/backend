@@ -26,6 +26,7 @@ import {
   zodError,
 } from "@incmix-api/utils/errors"
 import { useTranslation } from "@incmix-api/utils/middleware"
+import type { Checklist } from "@incmix-api/utils/zod-schema"
 import { env } from "hono/adapter"
 import { sql } from "kysely"
 import { nanoid } from "nanoid"
@@ -41,7 +42,6 @@ import {
   updateProjectChecklist,
 } from "./openapi"
 import { AddProjectMemberSchema } from "./types"
-import type { Checklist } from "@incmix-api/utils/zod-schema"
 
 const projectRoutes = new OpenAPIHono<HonoApp>({
   defaultHook: zodError,
