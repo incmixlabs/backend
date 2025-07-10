@@ -46,3 +46,7 @@ export const ResponseSchema = z
     }),
   })
   .openapi("Response")
+
+export const presignedUrlSchema = z.object({
+  url: z.string().openapi({ example: "https://example.com/presigned-url" }),
+})

@@ -8,7 +8,7 @@ import {
   zodError,
 } from "@incmix-api/utils/errors"
 import { useTranslation } from "@incmix-api/utils/middleware"
-import type { Task } from "@incmix/utils/types"
+import type { Task } from "@incmix-api/utils/zod-schema"
 import { jsonArrayFrom } from "kysely/helpers/postgres"
 import { PullTasksSchema, PushTasksSchema } from "./types"
 
@@ -185,7 +185,7 @@ tasksRoutes.post("/push", zValidator("json", PushTasksSchema), async (c) => {
                 name: newDoc.name,
                 description: newDoc.description,
                 completed: newDoc.completed,
-                taskOrder: newDoc.taskOrder,
+                taskOrder: newDoc.order,
                 projectId: newDoc.projectId,
                 statusId: newDoc.statusId,
                 priorityId: newDoc.priorityId,
@@ -262,6 +262,7 @@ tasksRoutes.post("/push", zValidator("json", PushTasksSchema), async (c) => {
               .insertInto("tasks")
               .values({
                 ...newDoc,
+                taskOrder: newDoc.order,
                 createdBy: user.id,
                 updatedBy: user.id,
                 createdAt: new Date().toISOString(),

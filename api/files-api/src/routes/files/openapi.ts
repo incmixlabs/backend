@@ -5,7 +5,7 @@ import {
   UploadFileSchema,
 } from "@/routes/files/types"
 import { createRoute } from "@hono/zod-openapi"
-import { presignedUrlSchema } from "@incmix/utils/types"
+import { presignedUrlSchema } from "./types"
 
 export const uploadFile = createRoute({
   method: "put",

@@ -77,6 +77,11 @@ export const ERROR_CHECKLIST_UPDATE_FAILED = {
   key: "checklist_update_failed",
 }
 
+export const ERROR_CHECKLIST_REMOVE_FAILED = {
+  namespace: "errors",
+  key: "checklist_remove_failed",
+}
+
 export const ERROR_CHECKLIST_NOT_FOUND = {
   namespace: "errors",
   key: "checklist_not_found",
@@ -95,4 +100,9 @@ export const ERROR_COMMENT_UPDATE_FAILED = {
 export const ERROR_COMMENT_NOT_FOUND = {
   namespace: "errors",
   key: "comment_not_found",
+}
+
+export const ERROR_INVALID_FILE_TYPE = {
+  namespace: "errors",
+  key: "invalid_file_type",
 }

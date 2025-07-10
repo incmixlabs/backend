@@ -1,47 +1,48 @@
 BEGIN;
 
+-- Drop indexes for tasks
+DROP INDEX IF EXISTS idx_tasks_end_date;
+
+DROP INDEX IF EXISTS idx_tasks_start_date;
+
+DROP INDEX IF EXISTS idx_tasks_completed;
+
 DROP INDEX IF EXISTS idx_tasks_project_order;
 
-DROP INDEX IF EXISTS idx_tasks_project_column;
+DROP INDEX IF EXISTS idx_tasks_parent_task_id;
 
-DROP INDEX IF EXISTS idx_tasks_assigned_to;
+DROP INDEX IF EXISTS idx_tasks_priority_id;
 
-DROP INDEX IF EXISTS idx_tasks_column_id;
+DROP INDEX IF EXISTS idx_tasks_status_id;
 
+-- Drop task-related tables
 DROP TABLE IF EXISTS task_comments;
 
-DROP TABLE IF EXISTS task_checklists;
-
-DROP TABLE IF EXISTS project_checklists;
-
-DROP TABLE IF EXISTS checklists;
-
-DROP TABLE IF EXISTS project_comments;
-
-DROP TABLE IF EXISTS comments;
-
-DROP TABLE IF EXISTS project_members;
+DROP TABLE IF EXISTS task_assignments;
 
 DROP TABLE IF EXISTS tasks;
 
-DROP INDEX IF EXISTS idx_columns_project_order;
+-- Drop indexes for labels
+DROP INDEX IF EXISTS idx_labels_project_order;
 
-DROP INDEX IF EXISTS idx_columns_parent_id;
+DROP INDEX IF EXISTS idx_labels_project_type;
 
-DROP TABLE IF EXISTS columns;
+-- Drop labels table
+DROP TABLE IF EXISTS labels;
 
-DROP INDEX IF EXISTS idx_projects_org_created;
+-- Drop project-related tables
+DROP TABLE IF EXISTS project_comments;
+
+DROP TABLE IF EXISTS project_members;
 
 DROP TABLE IF EXISTS projects;
 
-DROP TYPE IF EXISTS CHECKLIST;
+-- Drop comments table
+DROP TABLE IF EXISTS comments;
 
-DROP TYPE IF EXISTS TIMELINE;
-
-DROP TYPE IF EXISTS task_status;
+-- Drop types
+DROP TYPE IF EXISTS label_type;
 
 DROP TYPE IF EXISTS project_status;
-
-DROP TYPE IF EXISTS checklist_status;
 
 COMMIT;
