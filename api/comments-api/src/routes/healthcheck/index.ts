@@ -10,6 +10,7 @@ const healthcheckRoutes = createHealthCheckRoute<HonoApp>({
     COOKIE_NAME: envVars.COOKIE_NAME,
     DOMAIN: envVars.DOMAIN,
     INTL_API_URL: envVars.INTL_API_URL,
+    DATABASE_URL: envVars.DATABASE_URL,
   },
 
   // Add service-specific checks
