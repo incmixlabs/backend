@@ -584,6 +584,12 @@ projectRoutes.openapi(removeProjectChecklist, async (c) => {
 
     const { checklistIds } = c.req.valid("json")
     const { id: projectId } = c.req.valid("param")
+
+    if (!checklistIds || checklistIds.length === 0) {
+      const msg = await t.text("No checklist IDs provided")
+      throw new BadRequestError(msg)
+    }
+
     const existingProject = await getProjectById(c, projectId)
     if (!existingProject) {
       const msg = await t.text(ERROR_PROJECT_NOT_FOUND)
@@ -608,7 +614,6 @@ projectRoutes.openapi(removeProjectChecklist, async (c) => {
       const msg = await t.text(ERROR_CHECKLIST_REMOVE_FAILED)
       throw new UnprocessableEntityError(msg)
     }
-
     const updatedProject = await getProjectById(c, projectId)
 
     return c.json(updatedProject, 200)
