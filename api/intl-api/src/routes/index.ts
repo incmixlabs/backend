@@ -3,7 +3,7 @@ import localeRoutes from "@/routes/locales"
 import messageRoutes from "@/routes/messages"
 import type { HonoApp } from "@/types"
 import type { OpenAPIHono } from "@hono/zod-openapi"
-import healthcheckRoutes from "./health-check"
+import healthcheckRoutes from "./healthcheck"
 
 export const routes = (app: OpenAPIHono<HonoApp>) => {
   app.route(`${BASE_PATH}/locales`, localeRoutes)

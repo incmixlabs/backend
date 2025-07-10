@@ -1,11 +1,12 @@
-import { HealthCheckSchema } from "@/routes/health-check/types"
 import { createRoute } from "@hono/zod-openapi"
+
+import { HealthCheckSchema } from "@/routes/healthcheck/types"
 
 export const healthCheck = createRoute({
   path: "/",
   method: "get",
-  security: [{ cookieAuth: [] }],
   summary: "Check Service Health",
+  tags: ["Health Check"],
   responses: {
     200: {
       content: {
