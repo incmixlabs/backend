@@ -5,7 +5,7 @@ import { serve } from "@hono/node-server"
 import { API } from "@incmix/utils/env"
 import { Hono } from "hono"
 import { env } from "hono/adapter"
-import { envVars } from "./env-vars"
+import { type Env, envVars } from "./env-vars"
 import type { HonoApp } from "./types"
 
 const app = new Hono<HonoApp>()
@@ -23,19 +23,60 @@ app.get("/api/timestamp-nano", (c) => {
 })
 app.get("/api/healthcheck", async (c) => {
   const apis = Object.entries(API)
-  const results = []
-  for (const [key, api] of apis) {
-    if (key === "RATELIMITS") continue
-    const apiUrl = envVars[`${key}_API_URL` as keyof typeof envVars]
-    console.log(`${apiUrl}${api}/healthcheck`)
-    const res = await fetch(`${apiUrl}/healthcheck`, {
-      method: "get",
-    }).then(async (res) => await res.json())
-    results.push({
-      [key]: res,
+  const healthChecks = apis
+    .filter(([key]) => key !== "RATELIMITS")
+    .map(async ([key]) => {
+      const apiUrl = env(c)[`${key}_API_URL` as keyof Env]
+      try {
+        const response = await fetch(`${apiUrl}/healthcheck`, {
+          method: "GET",
+          signal: AbortSignal.timeout(5000), // 5 second timeout
+        })
+
+        if (!response.ok) {
+          return {
+            [key]: {
+              status: "DOWN",
+              error: `HTTP ${response.status}: ${response.statusText}`,
+              timestamp: new Date().toISOString(),
+            },
+          }
+        }
+
+        const data = await response.json()
+        return {
+          [key]: data,
+        }
+      } catch (error) {
+        return {
+          [key]: {
+            status: "DOWN",
+            error: error instanceof Error ? error.message : "Unknown error",
+            timestamp: new Date().toISOString(),
+          },
+        }
+      }
     })
-  }
-  return c.json(results, 200)
+
+  const results = await Promise.allSettled(healthChecks)
+
+  // Aggregate results, handling any promise rejections
+  const aggregatedResults = results.map((result, index) => {
+    if (result.status === "fulfilled") {
+      return result.value
+    }
+    // If the promise itself was rejected, create an error result
+    const [key] = apis.filter(([k]) => k !== "RATELIMITS")[index]
+    return {
+      [key]: {
+        status: "DOWN",
+        error: "Health check promise rejected",
+        timestamp: new Date().toISOString(),
+      },
+    }
+  })
+
+  return c.json(aggregatedResults, 200)
 })
 app.get("/api/rate-limits", async (c) => {
   const location = await fetch(
