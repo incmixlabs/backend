@@ -2,7 +2,7 @@ import { BASE_PATH } from "@/lib/constants"
 import type { HonoApp } from "@/types"
 import type { OpenAPIHono } from "@hono/zod-openapi"
 import emailRoutes from "./email"
-import healthcheckRoutes from "./health-check"
+import healthcheckRoutes from "./healthcheck"
 // import webhookRoutes from "./webhook"
 
 export const routes = (app: OpenAPIHono<HonoApp>) => {

@@ -1,7 +1,7 @@
 import { BASE_PATH } from "@/lib/constants"
 import authRoutes from "@/routes/auth"
 import emailVerificationRoutes from "@/routes/email-verification"
-import healthcheckRoutes from "@/routes/health-check"
+import healthcheckRoutes from "@/routes/healthcheck"
 import oAuthRoutes from "@/routes/oauth"
 import resetPasswordRoutes from "@/routes/reset-password"
 import type { HonoApp } from "@/types"

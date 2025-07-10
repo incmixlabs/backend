@@ -5,7 +5,7 @@ import { serve } from "@hono/node-server"
 import { API } from "@incmix/utils/env"
 import { Hono } from "hono"
 import { env } from "hono/adapter"
-import { envVars } from "./env-vars"
+import { type Env, envVars } from "./env-vars"
 import type { HonoApp } from "./types"
 
 const app = new Hono<HonoApp>()
@@ -22,58 +22,61 @@ app.get("/api/timestamp-nano", (c) => {
   return c.json({ time: currentTimeInNanoseconds })
 })
 app.get("/api/healthcheck", async (c) => {
-  const auth = await fetch(`${env(c).AUTH_API_URL}${API.AUTH}/healthcheck`, {
-    method: "get",
-  }).then(async (res) => await res.json())
+  const apis = Object.entries(API)
+  const healthChecks = apis
+    .filter(([key]) => key !== "RATELIMITS")
+    .map(async ([key]) => {
+      const apiUrl = env(c)[`${key}_API_URL` as keyof Env]
+      try {
+        const response = await fetch(`${apiUrl}/healthcheck`, {
+          method: "GET",
+          signal: AbortSignal.timeout(5000), // 5 second timeout
+        })
 
-  const email = await fetch(`${env(c).EMAIL_API_URL}${API.EMAIL}/healthcheck`, {
-    method: "get",
-  }).then(async (res) => await res.json())
+        if (!response.ok) {
+          return {
+            [key]: {
+              status: "DOWN",
+              error: `HTTP ${response.status}: ${response.statusText}`,
+              timestamp: new Date().toISOString(),
+            },
+          }
+        }
 
-  const files = await fetch(`${env(c).FILES_API_URL}${API.FILES}/healthcheck`, {
-    method: "get",
-  }).then(async (res) => await res.json())
+        const data = await response.json()
+        return {
+          [key]: data,
+        }
+      } catch (error) {
+        return {
+          [key]: {
+            status: "DOWN",
+            error: error instanceof Error ? error.message : "Unknown error",
+            timestamp: new Date().toISOString(),
+          },
+        }
+      }
+    })
 
-  const intl = await fetch(`${env(c).INTL_API_URL}${API.INTL}/healthcheck`, {
-    method: "get",
-  }).then(async (res) => await res.json())
+  const results = await Promise.allSettled(healthChecks)
 
-  const org = await fetch(`${env(c).ORG_API_URL}${API.ORG}/healthcheck`, {
-    method: "get",
-  }).then(async (res) => await res.json())
+  // Aggregate results, handling any promise rejections
+  const aggregatedResults = results.map((result, index) => {
+    if (result.status === "fulfilled") {
+      return result.value
+    }
+    // If the promise itself was rejected, create an error result
+    const [key] = apis.filter(([k]) => k !== "RATELIMITS")[index]
+    return {
+      [key]: {
+        status: "DOWN",
+        error: "Health check promise rejected",
+        timestamp: new Date().toISOString(),
+      },
+    }
+  })
 
-  const users = await fetch(`${env(c).USERS_API_URL}${API.USERS}/healthcheck`, {
-    method: "get",
-  }).then(async (res) => await res.json())
-
-  const todo = await fetch(`${env(c).TASKS_API_URL}${API.TASKS}/healthcheck`, {
-    method: "get",
-  }).then(async (res) => await res.json())
-
-  const comments = await fetch(
-    `${env(c).COMMENTS_API_URL}${API.COMMENTS}/healthcheck`,
-    { method: "get" }
-  ).then(async (res) => await res.json())
-
-  const location = await fetch(
-    `${env(c).LOCATION_API_URL}${API.LOCATION}/healthcheck`,
-    { method: "get" }
-  ).then(async (res) => await res.json())
-
-  return c.json(
-    {
-      auth,
-      intl,
-      files,
-      email,
-      users,
-      org,
-      todo,
-      location,
-      comments,
-    },
-    200
-  )
+  return c.json(aggregatedResults, 200)
 })
 app.get("/api/rate-limits", async (c) => {
   const location = await fetch(
