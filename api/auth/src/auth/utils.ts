@@ -3,10 +3,9 @@ import { scrypt as _scrypt, timingSafeEqual } from "node:crypto"
 import { promisify } from "node:util"
 
 // Base32 encoding alphabet (RFC 4648)
-const BASE32_ALPHABET =
-  "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567abcdefghijklmnopqrstuvwxyz"
+const ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567abcdefghijklmnopqrstuvwxyz"
 
-export function base32Encode(buffer: Buffer): string {
+function encode(buffer: Buffer): string {
   let bits = 0
   let value = 0
   let output = ""
@@ -14,12 +13,12 @@ export function base32Encode(buffer: Buffer): string {
     value = (value << 8) | buffer[i]
     bits += 8
     while (bits >= 5) {
-      output += BASE32_ALPHABET[(value >>> (bits - 5)) & 31]
+      output += ALPHABET[(value >>> (bits - 5)) & 31]
       bits -= 5
     }
   }
   if (bits > 0) {
-    output += BASE32_ALPHABET[(value << (5 - bits)) & 31]
+    output += ALPHABET[(value << (5 - bits)) & 31]
   }
   return output
 }
@@ -27,12 +26,25 @@ export function base32Encode(buffer: Buffer): string {
 // Generate a secure random session ID (base32, 40 chars = 25 bytes)
 export function generateSessionId(): string {
   const random = randomBytes(25) // 25 bytes = 200 bits = 40 base32 chars
-  return base32Encode(random)
+  return encode(random)
 }
 
 export function generateRandomId(length = 15): string {
+  // Validate length: must be a positive integer within a safe range
+  const MIN_LENGTH = 1
+  const MAX_LENGTH = 1024
+  if (
+    typeof length !== "number" ||
+    !Number.isInteger(length) ||
+    length < MIN_LENGTH ||
+    length > MAX_LENGTH
+  ) {
+    throw new Error(
+      `Invalid length for generateRandomId: must be an integer between ${MIN_LENGTH} and ${MAX_LENGTH}`
+    )
+  }
   const random = randomBytes(length)
-  return base32Encode(random)
+  return encode(random)
 }
 
 const scryptAsync = promisify(_scrypt)

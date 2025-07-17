@@ -33,13 +33,14 @@ This service now uses a **custom authentication system** (migrated from Lucia v3
 ```ts
 const db = c.get('db');
 const session = await createSession(db, user.id);
-setSessionCookie(c, session.id, new Date(session.expiresAt));
+setSessionCookie(c, session.id, session.expiresAt);
 // ...return user info and session in response
 ```
 
 ## Example: Logout Flow
 ```ts
 const db = c.get('db');
+const session = c.get('session');
 await invalidateSession(db, session.id);
 deleteSessionCookie(c);
 ```

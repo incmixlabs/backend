@@ -16,7 +16,7 @@ export function setSessionCookie(
 ): void {
   c.header(
     "Set-Cookie",
-    `${COOKIE_NAME}=${sessionId}; Path=${COOKIE_PATH}; HttpOnly; SameSite=Lax; Max-Age=${MAX_AGE};${isProduction() ? " Secure;" : ""}${isProduction() ? "" : ""} Expires=${expiresAt.toUTCString()}`
+    `${COOKIE_NAME}=${sessionId}; Path=${COOKIE_PATH}; HttpOnly; SameSite=Lax; Max-Age=${MAX_AGE};${isProduction() ? " Secure;" : ""} Expires=${expiresAt.toUTCString()}`
   )
 }
 

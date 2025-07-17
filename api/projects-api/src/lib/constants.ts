@@ -87,6 +87,11 @@ export const ERROR_CHECKLIST_NOT_FOUND = {
   key: "checklist_not_found",
 }
 
+export const ERROR_CHECKLIST_IDS_REQUIRED = {
+  namespace: "errors",
+  key: "checklist_ids_required",
+}
+
 export const ERROR_COMMENT_CREATE_FAILED = {
   namespace: "errors",
   key: "comment_create_failed",
