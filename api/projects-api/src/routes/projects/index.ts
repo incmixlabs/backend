@@ -586,7 +586,7 @@ projectRoutes.openapi(removeProjectChecklist, async (c) => {
     const { id: projectId } = c.req.valid("param")
 
     if (!checklistIds || checklistIds.length === 0) {
-      const msg = await t.text("No checklist IDs provided")
+      const msg = await t.text(ERROR_CHECKLIST_REMOVE_FAILED)
       throw new BadRequestError(msg)
     }
 
