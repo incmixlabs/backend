@@ -15,7 +15,6 @@
     "@hono/zod-validator": "0.4.1",
     "@incmix-api/utils": "workspace:^",
     "@incmix/utils": "catalog:",
-    "@lucia-auth/adapter-postgresql": "^3.1.2",
     "@playwright/test": "1.49.0",
     "arctic": "2.3.0",
     "hono": "catalog:",

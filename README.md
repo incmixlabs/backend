@@ -44,7 +44,7 @@ If you're working on a service that hasn't been migrated yet:
 
 - [x] pnpm
 - [x] hono (Nodejs)
-- [x] lucia auth
+- [x] Custom session-based auth (see api/auth/README.md)
 - [x] backend postgres (postgres)
 - [x] Deployment (Flyio)
 
@@ -58,7 +58,7 @@ If you're working on a service that hasn't been migrated yet:
 | ip location    | radar.io     |
 | *auth-api*     |              |
 | google auth    | google.com   |
-| lucia auth     | lucia.io     |
+| session auth   | custom       |
 | *email-api*    |              |
 | email          | sendgrid.com |
 
