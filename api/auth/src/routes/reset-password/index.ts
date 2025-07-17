@@ -1,3 +1,4 @@
+import { setSessionCookie } from "@/auth/cookies"
 import { createSession } from "@/auth/session"
 import { hashPassword, verifyPassword } from "@/auth/utils"
 import {
@@ -63,7 +64,8 @@ resetPasswordRoutes.openapi(resetPassword, async (c) => {
       .where("id", "=", currentUser.id)
       .execute()
 
-    createSession(c.get("db"), currentUser.id)
+    const session = await createSession(c.get("db"), currentUser.id)
+    setSessionCookie(c, session.id, new Date(session.expiresAt))
     const msg = await t.text(PASS_RESET_SUCCESS)
 
     return c.json({ message: msg })
