@@ -21,7 +21,6 @@
     "hono": "catalog:",
     "kysely": "catalog:",
     "kysely-ctl": "0.12.1",
-    "lucia": "3.2.2",
     "mailslurp-client": "15.20.2",
     "oslo": "1.2.1",
     "pg": "catalog:",

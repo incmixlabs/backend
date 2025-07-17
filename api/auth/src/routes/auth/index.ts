@@ -1,3 +1,10 @@
+import { deleteSessionCookie, setSessionCookie } from "@/auth/cookies"
+import {
+  createSession,
+  invalidateAllSessions,
+  invalidateSession,
+} from "@/auth/session"
+import { generateRandomId, verifyPassword } from "@/auth/utils"
 import {
   ACC_DISABLED,
   ERROR_ALREADY_REG,
@@ -8,9 +15,7 @@ import {
   VERIFIY_REQ,
 } from "@/lib/constants"
 import { deleteUserById, findUserByEmail, insertUser } from "@/lib/db"
-import { sendVerificationEmail } from "@/lib/helper"
-import { generateVerificationCode } from "@/lib/helper"
-import { createSession, initializeLucia } from "@/lib/lucia"
+import { generateVerificationCode, sendVerificationEmail } from "@/lib/helper"
 import { deleteUserProfile } from "@/lib/services"
 import {
   checkEmailVerification,
@@ -29,15 +34,12 @@ import {
   ConflictError,
   ForbiddenError,
   NotFoundError,
-  ServerError,
   UnauthorizedError,
   processError,
   zodError,
 } from "@incmix-api/utils/errors"
 import { useTranslation } from "@incmix-api/utils/middleware"
 import { UserRoles } from "@incmix/utils/types"
-import { Scrypt, generateId } from "lucia"
-
 const authRoutes = new OpenAPIHono<HonoApp>({
   defaultHook: zodError,
 })
@@ -126,7 +128,7 @@ authRoutes.openapi(signup, async (c) => {
     const t = await useTranslation(c)
     const msg = await t.text(ERROR_ALREADY_REG)
     if (existing) throw new ConflictError(msg)
-    const userId = generateId(15)
+    const userId = generateRandomId(15)
 
     const db = c.get("db")
 
@@ -184,10 +186,11 @@ authRoutes.openapi(login, async (c) => {
 
     const user = await findUserByEmail(c, email)
 
-    const validPassword = await new Scrypt().verify(
-      user.hashedPassword ?? "",
-      password
-    )
+    if (!user.hashedPassword) {
+      const msg = await t.text(ERROR_INVALID_CREDENTIALS)
+      throw new UnauthorizedError(msg)
+    }
+    const validPassword = await verifyPassword(user.hashedPassword, password)
     if (!validPassword) {
       const msg = await t.text(ERROR_INVALID_CREDENTIALS)
       throw new UnauthorizedError(msg)
@@ -202,7 +205,9 @@ authRoutes.openapi(login, async (c) => {
       throw new ForbiddenError(msg)
     }
 
-    const session = await createSession(c, user.id)
+    const db = c.get("db")
+    const session = await createSession(db, user.id)
+    setSessionCookie(c, session.id, new Date(session.expiresAt))
     return c.json(
       {
         id: user.id,
@@ -228,20 +233,15 @@ authRoutes.openapi(login, async (c) => {
 })
 
 authRoutes.openapi(logout, async (c) => {
-  const lucia = initializeLucia(c)
   const session = c.get("session")
   const t = await useTranslation(c)
-
   if (!session) {
     const msg = await t.text(ERROR_UNAUTHORIZED)
     throw new UnauthorizedError(msg)
   }
-  await lucia.invalidateSession(session.id)
-  const sessionCookie = lucia.createBlankSessionCookie()
-  c.header("Set-Cookie", sessionCookie.serialize(), {
-    append: false,
-  })
-
+  const db = c.get("db")
+  await invalidateSession(db, session.id)
+  deleteSessionCookie(c)
   const msg = await t.text(LOGOUT_SUCC)
   return c.json({ message: msg }, 200)
 })
@@ -256,13 +256,10 @@ authRoutes.openapi(deleteUser, async (c) => {
       throw new UnauthorizedError(msg)
     }
     await deleteUserProfile(c, user.id)
-    const lucia = initializeLucia(c)
-    await lucia.invalidateUserSessions(user.id)
+    const db = c.get("db")
+    await invalidateAllSessions(db, user.id)
     await deleteUserById(c, user.id)
-    const sessionCookie = lucia.createBlankSessionCookie()
-    c.header("Set-Cookie", sessionCookie.serialize(), {
-      append: false,
-    })
+    deleteSessionCookie(c)
     const msg = await t.text(USER_DEL)
     return c.json({ message: msg }, 200)
   } catch (error) {

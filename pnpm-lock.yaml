@@ -48,9 +48,6 @@ catalogs:
     lodash:
       specifier: 4.17.21
       version: 4.17.21
-    lucia:
-      specifier: 3.2.2
-      version: 3.2.2
     luxon:
       specifier: 3.4.2
       version: 3.4.2
@@ -155,9 +152,6 @@ importers:
       kysely-ctl:
         specifier: 0.12.1
         version: 0.12.1(kysely@0.27.5)
-      lucia:
-        specifier: 3.2.2
-        version: 3.2.2
       mailslurp-client:
         specifier: 15.20.2
         version: 15.20.2
@@ -715,9 +709,9 @@ importers:
       lodash:
         specifier: 'catalog:'
         version: 4.17.21
-      lucia:
+      nanoid:
         specifier: 'catalog:'
-        version: 3.2.2
+        version: 3.3.8
       pg:
         specifier: 'catalog:'
         version: 8.13.3

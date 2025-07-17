@@ -58,8 +58,7 @@ import {
 import { useTranslation } from "@incmix-api/utils/middleware"
 import type { UserRole } from "@incmix/utils/types"
 import { UserRoles } from "@incmix/utils/types"
-
-import { generateId } from "lucia"
+import { nanoid } from "nanoid"
 
 const orgRoutes = new OpenAPIHono<HonoApp>({
   defaultHook: zodError,
@@ -219,7 +218,7 @@ orgRoutes.openapi(createOrganisation, async (c) => {
       throw new UnprocessableEntityError(msg)
     }
 
-    const orgId = generateId(15)
+    const orgId = nanoid(15)
     const dbRoles = await findAllRoles(c)
 
     if (!dbRoles.length) {

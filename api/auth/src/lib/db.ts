@@ -1,9 +1,9 @@
+import { hashPassword } from "@/auth/utils"
 import { ERROR_USER_NOT_FOUND } from "@/lib/constants"
 import type { Context } from "@/types"
 import type { KyselyDb, NewUser } from "@incmix-api/utils/db-schema"
 import { NotFoundError, ServerError } from "@incmix-api/utils/errors"
 import { useTranslation } from "@incmix-api/utils/middleware"
-import { Scrypt } from "lucia"
 
 export async function findUserByEmail(c: Context, email: string) {
   const user = await c
@@ -54,7 +54,7 @@ export async function insertUser(
     .executeTakeFirst()
 
   let hashedPassword: string | null = null
-  if (password?.length) hashedPassword = await new Scrypt().hash(password)
+  if (password?.length) hashedPassword = await hashPassword(password)
 
   const user = await db
     .insertInto("users")

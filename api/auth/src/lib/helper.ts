@@ -1,11 +1,11 @@
 import type { Context } from "@/types"
 import type { KyselyDb, Provider, TokenType } from "@incmix-api/utils/db-schema"
 
+import { generateRandomId } from "@/auth/utils"
 import { generateSentryHeaders } from "@incmix-api/utils"
 import { ServerError } from "@incmix-api/utils/errors"
 import { UserRoles } from "@incmix/utils/types"
 import { env } from "hono/adapter"
-import { generateId } from "lucia"
 import { TimeSpan, createDate, isWithinExpirationDate } from "oslo"
 import { alphabet, generateRandomString } from "oslo/crypto"
 import { insertUser } from "./db"
@@ -98,7 +98,7 @@ export async function insertOAuthUser(
     return existingUser
   }
 
-  const userId = generateId(15)
+  const userId = generateRandomId(15)
   const { profile, ...newUser } = await insertUser(
     c,
     {
@@ -142,7 +142,7 @@ export async function generateVerificationCode(
     )
     .execute()
 
-  const code = generateRandomString(8, alphabet("0-9"))
+  const code = generateRandomString(8, alphabet("0-9", "a-z", "A-Z"))
   await db
     .insertInto("verificationCodes")
     .values({
