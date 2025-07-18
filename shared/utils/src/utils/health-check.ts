@@ -47,11 +47,13 @@ export type HealthCheckConfig<T extends Env> = {
 /**
  * Create a health check route
  */
-export function createHealthCheckRoute<T extends Env>(
-  config: HealthCheckConfig<T>
-) {
-  const tags = config.tags || ["Health Check"]
-  const security = config.requireAuth ? [{ cookieAuth: [] }] : undefined
+export function createHealthCheckRoute<T extends Env>({
+  envVars,
+  checks,
+  tags = ["Health Check"],
+  requireAuth = false,
+}: HealthCheckConfig<T>) {
+  const security = requireAuth ? [{ cookieAuth: [] }] : undefined
 
   // Create the OpenAPI route schema
   const healthCheckRoute = createRoute({
@@ -82,8 +84,8 @@ export function createHealthCheckRoute<T extends Env>(
       const checkFailures: string[] = []
 
       // Check environment variables
-      if (config.envVars) {
-        for (const [name, value] of Object.entries(config.envVars)) {
+      if (envVars) {
+        for (const [name, value] of Object.entries(envVars)) {
           if (!value) {
             status = "DOWN"
             missing.push(name)
@@ -92,8 +94,8 @@ export function createHealthCheckRoute<T extends Env>(
       }
 
       // Run additional health checks
-      if (config.checks) {
-        for (const { name, check } of config.checks) {
+      if (checks) {
+        for (const { name, check } of checks) {
           try {
             const isHealthy = await check(c)
             if (!isHealthy) {

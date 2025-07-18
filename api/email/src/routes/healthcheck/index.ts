@@ -1,25 +1,22 @@
 import { envVars } from "@/env-vars"
-
 import type { HonoApp } from "@/types"
 import { createHealthCheckRoute } from "@incmix-api/utils"
 
 const healthcheckRoutes = createHealthCheckRoute<HonoApp>({
-  // Pass all environment variables to check
   envVars: {
-    AUTH_API_URL: envVars.AUTH_API_URL,
-    COOKIE_NAME: envVars.COOKIE_NAME,
-    DOMAIN: envVars.DOMAIN,
+    DATABASE_URL: envVars.DATABASE_URL,
     INTL_API_URL: envVars.INTL_API_URL,
+    COOKIE_NAME: envVars.COOKIE_NAME,
+    SENDGRID_API_KEY: envVars.SENDGRID_API_KEY,
+    SENDGRID_WEBHOOK_KEY: envVars.SENDGRID_WEBHOOK_KEY,
   },
 
-  // Add service-specific checks
   checks: [
     {
       name: "Database",
       check: async (c) => {
         try {
-          // Simple query to check database connectivity
-          await c.get("db").selectFrom("tasks").selectAll().limit(1).execute()
+          await c.get("db").selectFrom("emailQueue").selectAll().execute()
           return true
         } catch (_error) {
           return false
@@ -27,12 +24,6 @@ const healthcheckRoutes = createHealthCheckRoute<HonoApp>({
       },
     },
   ],
-
-  // Set OpenAPI tags
-  tags: ["Healthcheck"],
-
-  // Require authentication (optional, this particular service uses it)
-  requireAuth: true,
 })
 
 export default healthcheckRoutes

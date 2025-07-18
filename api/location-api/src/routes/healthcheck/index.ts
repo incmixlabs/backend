@@ -1,32 +1,25 @@
 import { envVars } from "@/env-vars"
-
+import { healthCheck } from "@/routes/healthcheck/openapi"
 import type { HonoApp } from "@/types"
 import { createHealthCheckRoute } from "@incmix-api/utils"
 
 const healthcheckRoutes = createHealthCheckRoute<HonoApp>({
-  // Pass all environment variables to check
   envVars: {
-    AUTH_API_URL: envVars.AUTH_API_URL,
-    COOKIE_NAME: envVars.COOKIE_NAME,
     DOMAIN: envVars.DOMAIN,
     INTL_API_URL: envVars.INTL_API_URL,
-    DATABASE_URL: envVars.DATABASE_URL,
+    LOCATION_API_KEY: envVars.LOCATION_API_KEY,
+    LOCATION_URL: envVars.LOCATION_URL,
+    WEATHER_API_KEY: envVars.WEATHER_API_KEY,
+    WEATHER_URL: envVars.WEATHER_URL,
   },
 
-  // Add service-specific checks
   checks: [
     {
-      name: "Database",
+      name: "Redis",
       check: async (c) => {
         try {
-          // Simple query to check database connectivity
-          await c
-            .get("db")
-            .selectFrom("projects")
-            .selectAll()
-            .limit(1)
-            .execute()
-          return true
+          const result = await c.get("redis").ping()
+          return result === "PONG"
         } catch (_error) {
           return false
         }

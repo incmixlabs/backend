@@ -1,94 +1,41 @@
 import { envVars } from "@/env-vars"
 import { S3 } from "@/lib/s3"
-import { healthCheck } from "@/routes/healthcheck/openapi"
 import type { HonoApp } from "@/types"
 import { ListObjectsV2Command } from "@aws-sdk/client-s3"
-import { OpenAPIHono } from "@hono/zod-openapi"
+import { createHealthCheckRoute } from "@incmix-api/utils"
 
-const healthcheckRoutes = new OpenAPIHono<HonoApp>()
-healthcheckRoutes.openapi(healthCheck, async (c) => {
-  try {
-    const {
-      AUTH_API_URL,
-      BUCKET_NAME,
-      COOKIE_NAME,
-      DOMAIN,
-      INTL_API_URL,
-      AWS_ACCESS_KEY_ID,
-      AWS_SECRET_ACCESS_KEY,
-      AWS_REGION,
-      AWS_ENDPOINT_URL_S3,
-    } = envVars
+const healthcheckRoutes = createHealthCheckRoute<HonoApp>({
+  // Pass all environment variables to check
+  envVars: {
+    AUTH_API_URL: envVars.AUTH_API_URL,
+    BUCKET_NAME: envVars.BUCKET_NAME,
+    COOKIE_NAME: envVars.COOKIE_NAME,
+    DOMAIN: envVars.DOMAIN,
+    INTL_API_URL: envVars.INTL_API_URL,
+    AWS_ACCESS_KEY_ID: envVars.AWS_ACCESS_KEY_ID,
+    AWS_SECRET_ACCESS_KEY: envVars.AWS_SECRET_ACCESS_KEY,
+    AWS_REGION: envVars.AWS_REGION,
+    AWS_ENDPOINT_URL_S3: envVars.AWS_ENDPOINT_URL_S3,
+  },
 
-    let status = "UP"
-    const missing: string[] = []
-
-    if (!AUTH_API_URL) {
-      status = "DOWN"
-      missing.push("AUTH_API_URL")
-    }
-
-    if (!BUCKET_NAME) {
-      status = "DOWN"
-      missing.push("BUCKET_NAME")
-    }
-    if (!COOKIE_NAME) {
-      status = "DOWN"
-      missing.push("COOKIE_NAME")
-    }
-    if (!DOMAIN) {
-      status = "DOWN"
-      missing.push("DOMAIN")
-    }
-    if (!INTL_API_URL) {
-      status = "DOWN"
-      missing.push("INTL_API_URL")
-    }
-
-    if (!AWS_ACCESS_KEY_ID) {
-      status = "DOWN"
-      missing.push("AWS_ACCESS_KEY_ID")
-    }
-    if (!AWS_SECRET_ACCESS_KEY) {
-      status = "DOWN"
-      missing.push("AWS_SECRET_ACCESS_KEY")
-    }
-    if (!AWS_REGION) {
-      status = "DOWN"
-      missing.push("AWS_REGION")
-    }
-    if (!AWS_ENDPOINT_URL_S3) {
-      status = "DOWN"
-      missing.push("AWS_ENDPOINT_URL_S3")
-    }
-
-    const command = new ListObjectsV2Command({
-      Bucket: envVars.BUCKET_NAME,
-      MaxKeys: 1,
-    })
-    await S3.send(command)
-
-    return c.json(
-      {
-        status,
-        reason:
-          missing.length > 0
-            ? `Env variables missing: [${missing.join(", ")}]`
-            : undefined,
+  // Add service-specific checks
+  checks: [
+    {
+      name: "S3 Bucket",
+      check: async () => {
+        try {
+          const command = new ListObjectsV2Command({
+            Bucket: envVars.BUCKET_NAME,
+            MaxKeys: 1,
+          })
+          await S3.send(command)
+          return true
+        } catch (_error) {
+          return false
+        }
       },
-      200
-    )
-  } catch (error) {
-    let reason = "R2 Bucket error"
-    if (error instanceof Error) reason = error.message
-    return c.json(
-      {
-        status: "DOWN",
-        reason,
-      },
-      200
-    )
-  }
+    },
+  ],
 })
 
 export default healthcheckRoutes
