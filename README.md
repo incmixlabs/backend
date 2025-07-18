@@ -70,7 +70,8 @@ If you're working on a service that hasn't been migrated yet:
    for d in api/*; do [ -d "$d" ] && [ -f "$d/.env.example" ] && cp "$d/.env.example" "$d/.env"; done
    ```
 4. Update environment variables in the new `.env` files as needed.
-5. Run ```pnpm dev``` to start APIs
+5. If you have just cloned the repository, run ```pnpm build``` to build all dependencies
+6. Run ```pnpm dev``` to start APIs
 
 ## Troubleshooting
 1. Run the following command to remove the postgres container, delete its volume, and rebuild it:
