@@ -119,6 +119,62 @@ export function generateUserStory(
   }
 }
 
+export function generateProject(
+  _c: Context,
+  prompt: string,
+  template?: StoryTemplate,
+  userTier: "free" | "paid" = "free"
+) {
+  const model = userTier === "paid" ? "claude" : "gemini"
+
+  const promptTemplate =
+    template?.content ||
+    `
+  As a [type of user], I want [goal] so that [benefit/value].
+
+  [Design Description]
+
+  Acceptance Criteria:
+  - [criterion 1]
+  - [criterion 2]
+  - [criterion 3]
+  `
+
+  try {
+    const enhancedPrompt = formatUserStoryPrompt(prompt, promptTemplate)
+    if (model === "claude") {
+      if (!envVars.ANTHROPIC_API_KEY) {
+        throw new Error("AI Service is not available")
+      }
+
+      const result = streamObject({
+        model: anthropic(MODEL_MAP[model]),
+        prompt: enhancedPrompt,
+        schema: UserStoryResponseSchema,
+        maxTokens: 1024,
+      })
+      return result
+    }
+
+    if (!envVars.GOOGLE_AI_API_KEY) {
+      throw new Error("AI Service is not available")
+    }
+
+    const result = streamObject({
+      model: google(MODEL_MAP[model]),
+      prompt: enhancedPrompt,
+      schema: UserStoryResponseSchema.omit({ imageUrl: true }),
+      maxTokens: 1024,
+    })
+
+    return result
+  } catch (error) {
+    console.error(`Error generating user story with ${model}:`, error)
+    throw new Error(
+      `Failed to generate user story: ${(error as Error).message}`
+    )
+  }
+}
 export async function generateTemplate(
   _c: Context,
   prompt: string,

@@ -7,6 +7,60 @@ import {
   UserStoryResponseSchema,
 } from "./types"
 
+export const generateProject = createRoute({
+  method: "post",
+  path: "/generate-project",
+  summary: "Generate Project",
+  tags: ["Project"],
+  description:
+    "Generate a project description, checklist, milestones, initial tasks",
+  security: [{ cookieAuth: [] }],
+  request: {
+    body: {
+      content: {
+        "application/json": {
+          schema: GenerateUserStorySchema,
+        },
+      },
+    },
+  },
+  responses: {
+    200: {
+      content: {
+        "text/event-stream": {
+          schema: z.object({
+            data: z.string(),
+          }),
+        },
+      },
+      description: "Returns the generated user story in markdown format",
+    },
+    400: {
+      content: {
+        "application/json": {
+          schema: ResponseSchema,
+        },
+      },
+      description: "Error response when user story generation fails",
+    },
+    401: {
+      content: {
+        "application/json": {
+          schema: ResponseSchema,
+        },
+      },
+      description: "Error response when not authenticated",
+    },
+    500: {
+      content: {
+        "application/json": {
+          schema: ResponseSchema,
+        },
+      },
+      description: "Internal Server Error",
+    },
+  },
+})
 export const generateUserStory = createRoute({
   method: "post",
   path: "/generate-user-story",

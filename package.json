@@ -23,9 +23,11 @@
     "pnpm": ">=9"
   },
   "pnpm": {
-    "neverBuiltDependencies": ["@incmix/utils"]
+    "neverBuiltDependencies": [
+      "@incmix/utils"
+    ]
   },
-  "packageManager": "pnpm@9.15.4",
+  "packageManager": "pnpm@10.13.1",
   "devDependencies": {
     "@biomejs/biome": "1.9.4",
     "@commitlint/cli": "19.6.1",
@@ -38,5 +40,8 @@
     "lefthook": "1.10.4",
     "turbo": "2.5.4"
   },
-  "trustedDependencies": ["@biomejs/biome", "core-js-pure"]
+  "trustedDependencies": [
+    "@biomejs/biome",
+    "core-js-pure"
+  ]
 }
