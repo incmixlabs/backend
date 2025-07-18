@@ -41,6 +41,26 @@ function formatUserStory(rawOutput: string): UserStoryResponse {
   }
 }
 
+export function formatProjectPrompt(
+  prompt: string,
+  template: string | undefined
+): string {
+  return `
+  Create project description based on the following prompt: "${prompt}"
+
+  return the result as a json object that can be directly passed to javascript's JSON.parse() function without any modifications:
+  {project: {
+    description: string,
+    acceptanceCriteria: string[],
+    checklist: string[],
+  }}
+
+  format description field as:
+  ${template}
+
+  Important: Provide only the project description without any prefatory text or instructions. Do not include phrases like "Here's a user story" at the beginning of your response.
+  `
+}
 export function formatUserStoryPrompt(
   prompt: string,
   template: string | undefined
@@ -141,7 +161,7 @@ export function generateProject(
   `
 
   try {
-    const enhancedPrompt = formatUserStoryPrompt(prompt, promptTemplate)
+    const enhancedPrompt = formatProjectPrompt(prompt, promptTemplate)
     if (model === "claude") {
       if (!envVars.ANTHROPIC_API_KEY) {
         throw new Error("AI Service is not available")
@@ -150,7 +170,7 @@ export function generateProject(
       const result = streamObject({
         model: anthropic(MODEL_MAP[model]),
         prompt: enhancedPrompt,
-        schema: UserStoryResponseSchema,
+        schema: UserStoryResponseSchema.omit({ imageUrl: true }),
         maxTokens: 1024,
       })
       return result
@@ -169,12 +189,11 @@ export function generateProject(
 
     return result
   } catch (error) {
-    console.error(`Error generating user story with ${model}:`, error)
-    throw new Error(
-      `Failed to generate user story: ${(error as Error).message}`
-    )
+    console.error(`Error generating project with ${model}:`, error)
+    throw new Error(`Failed to generate project: ${(error as Error).message}`)
   }
 }
+
 export async function generateTemplate(
   _c: Context,
   prompt: string,

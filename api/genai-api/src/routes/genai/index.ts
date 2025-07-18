@@ -2,6 +2,7 @@ import { FigmaService } from "@/lib/figma"
 
 import {
   generateUserStory as aiGenerateUserStory,
+  generateProject as aiGenerateProject,
   generateUserStoryFromImage,
 } from "@/lib/services"
 import {
@@ -9,7 +10,7 @@ import {
   generateUserStory,
   generateUserStoryFromFigma,
   getFigmaImage,
-  generateProject
+  generateProject,
 } from "@/routes/genai/openapi"
 import type { HonoApp } from "@/types"
 import { OpenAPIHono } from "@hono/zod-openapi"
@@ -45,7 +46,7 @@ genaiRoutes.openapi(generateProject, async (c) => {
       .executeTakeFirst()
 
     return streamSSE(c, async (stream) => {
-      const result = aiGenerateUserStory(c, prompt, template, userTier)
+      const result = aiGenerateProject(c, prompt, template, userTier)
       for await (const chunk of result.partialObjectStream) {
         stream.writeSSE({
           data: JSON.stringify(chunk),
