@@ -65,6 +65,19 @@ If you're working on a service that hasn't been migrated yet:
 ## How to Run
 1. Install Docker
 2. Run ```docker compose up -d``` to start database containers
-3. Update environment variable.
-4. Run ```docker exec -it incmix-postgres-1 /bin/bash -c "cd /app/db && pnpm migrate"``` to initialize db
+3. Copy all `.env.example` files to `.env` in each API directory:
+   ```bash
+   for d in api/*; do [ -d "$d" ] && [ -f "$d/.env.example" ] && cp "$d/.env.example" "$d/.env"; done
+   ```
+4. Update environment variables in the new `.env` files as needed.
 5. Run ```pnpm dev``` to start APIs
+
+## Troubleshooting
+1. Run the following command to remove the postgres container, delete its volume, and rebuild it:
+  ```bash
+  docker compose down -v --remove-orphans && docker compose up -d --build
+  ```
+2. Run the following command to delete all .env files
+  ```bash
+  find ./api/ -type f -name ".env" -delete
+  ```
