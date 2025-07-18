@@ -48,9 +48,6 @@ catalogs:
     lodash:
       specifier: 4.17.21
       version: 4.17.21
-    lucia:
-      specifier: 3.2.2
-      version: 3.2.2
     luxon:
       specifier: 3.4.2
       version: 3.4.2
@@ -137,9 +134,6 @@ importers:
       '@incmix/utils':
         specifier: 'catalog:'
         version: 0.28.2(@types/luxon@3.6.0)(luxon@3.4.2)
-      '@lucia-auth/adapter-postgresql':
-        specifier: ^3.1.2
-        version: 3.1.2(lucia@3.2.2)(pg@8.13.3)
       '@playwright/test':
         specifier: 1.49.0
         version: 1.49.0
@@ -155,9 +149,6 @@ importers:
       kysely-ctl:
         specifier: 0.12.1
         version: 0.12.1(kysely@0.27.5)
-      lucia:
-        specifier: 3.2.2
-        version: 3.2.2
       mailslurp-client:
         specifier: 15.20.2
         version: 15.20.2
@@ -715,9 +706,9 @@ importers:
       lodash:
         specifier: 'catalog:'
         version: 4.17.21
-      lucia:
+      nanoid:
         specifier: 'catalog:'
-        version: 3.2.2
+        version: 3.3.8
       pg:
         specifier: 'catalog:'
         version: 8.13.3
@@ -1863,21 +1854,6 @@ packages:
 
   '@jridgewell/trace-mapping@0.3.9':
     resolution: {integrity: sha512-3Belt6tdc8bPgAtbcmdtNJlirVoTmEb5e2gC94PnkwEW9jI6CAHUeoG85tjWP5WquqfavoMtMwiG4P926ZKKuQ==}
-
-  '@lucia-auth/adapter-postgresql@3.1.2':
-    resolution: {integrity: sha512-XgScy312JsaiyJZ0OaUHakk01hFBldF1m8abX4Ctk2Dkt7lEVS/u0xZ2Sf6Hlji1wZtEM0uiIWdeMUu79XcXZA==}
-    peerDependencies:
-      '@neondatabase/serverless': 0.7 - 0.9
-      lucia: 3.x
-      pg: ^8.8.0
-      postgres: ^3.3.0
-    peerDependenciesMeta:
-      '@neondatabase/serverless':
-        optional: true
-      pg:
-        optional: true
-      postgres:
-        optional: true
 
   '@node-rs/argon2-android-arm-eabi@1.7.0':
     resolution: {integrity: sha512-udDqkr5P9E+wYX1SZwAVPdyfYvaF4ry9Tm+R9LkfSHbzWH0uhU6zjIwNRp7m+n4gx691rk+lqqDAIP8RLKwbhg==}
@@ -3936,9 +3912,6 @@ packages:
   lru-cache@7.18.3:
     resolution: {integrity: sha512-jumlc0BIUrS3qJGgIkWZsyfAM7NCWiBcCDhnd+3NNM5KbBmLTgHVfWBcg6W+rLUsIpzpERPsvwUP7CckAQSOoA==}
     engines: {node: '>=12'}
-
-  lucia@3.2.2:
-    resolution: {integrity: sha512-P1FlFBGCMPMXu+EGdVD9W4Mjm0DqsusmKgO7Xc33mI5X1bklmsQb0hfzPhXomQr9waWIBDsiOjvr1e6BTaUqpA==}
 
   luxon@3.4.2:
     resolution: {integrity: sha512-uBoAVCVcajsrqy3pv7eo5jEUz1oeLmCcnMv8n4AJpT5hbpN9lUssAXibNElpbLce3Mhm9dyBzwYLs9zctM/0tA==}
@@ -6254,12 +6227,6 @@ snapshots:
       '@jridgewell/resolve-uri': 3.1.2
       '@jridgewell/sourcemap-codec': 1.5.0
 
-  '@lucia-auth/adapter-postgresql@3.1.2(lucia@3.2.2)(pg@8.13.3)':
-    dependencies:
-      lucia: 3.2.2
-    optionalDependencies:
-      pg: 8.13.3
-
   '@node-rs/argon2-android-arm-eabi@1.7.0':
     optional: true
 
@@ -8478,11 +8445,6 @@ snapshots:
   lru-cache@11.1.0: {}
 
   lru-cache@7.18.3: {}
-
-  lucia@3.2.2:
-    dependencies:
-      '@oslojs/crypto': 1.0.1
-      '@oslojs/encoding': 1.1.0
 
   luxon@3.4.2: {}
 

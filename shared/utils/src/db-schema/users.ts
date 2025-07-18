@@ -55,6 +55,18 @@ type UserProfileTable = {
   onboardingCompleted: boolean
 }
 
+type SessionsTable = {
+  id: string
+  expiresAt: ColumnType<Date, string, string>
+  userId: string
+  createdAt: ColumnType<Date, string, string>
+  updatedAt: ColumnType<Date, string, string>
+}
+
+export type SessionRow = Selectable<SessionsTable>
+export type NewSession = Insertable<SessionsTable>
+export type UpdatedSession = Updateable<SessionsTable>
+
 export type User = Selectable<UsersTable>
 export type Account = Selectable<UserAccountsTable>
 export type VerificationCode = Selectable<VerificationCodesTable>
@@ -96,4 +108,5 @@ export type UsersTables = {
   users: UsersTable
   accounts: UserAccountsTable
   verificationCodes: VerificationCodesTable
+  sessions: SessionsTable
 }

@@ -1,3 +1,6 @@
+import { setSessionCookie } from "@/auth/cookies"
+import { createSession } from "@/auth/session"
+import { hashPassword, verifyPassword } from "@/auth/utils"
 import {
   ERROR_INVALID_CODE,
   ERROR_WRONG_PASSWORD,
@@ -11,7 +14,6 @@ import {
   sendForgetPasswordEmail,
   verifyVerificationCode,
 } from "@/lib/helper"
-import { createSession } from "@/lib/lucia"
 
 import {
   forgetPassword,
@@ -26,7 +28,6 @@ import {
   zodError,
 } from "@incmix-api/utils/errors"
 import { useTranslation } from "@incmix-api/utils/middleware"
-import { Scrypt } from "lucia"
 
 const resetPasswordRoutes = new OpenAPIHono<HonoApp>({
   defaultHook: zodError,
@@ -44,9 +45,7 @@ resetPasswordRoutes.openapi(resetPassword, async (c) => {
 
     const { newPassword, currentPassword } = c.req.valid("json")
 
-    const scrypt = new Scrypt()
-
-    const validPassword = await scrypt.verify(
+    const validPassword = await verifyPassword(
       user.hashedPassword ?? "",
       currentPassword
     )
@@ -56,7 +55,7 @@ resetPasswordRoutes.openapi(resetPassword, async (c) => {
       throw new UnauthorizedError(msg)
     }
 
-    const newHash = await scrypt.hash(newPassword)
+    const newHash = await hashPassword(newPassword)
 
     await c
       .get("db")
@@ -65,7 +64,8 @@ resetPasswordRoutes.openapi(resetPassword, async (c) => {
       .where("id", "=", currentUser.id)
       .execute()
 
-    createSession(c, currentUser.id)
+    const session = await createSession(c.get("db"), currentUser.id)
+    setSessionCookie(c, session.id, new Date(session.expiresAt))
     const msg = await t.text(PASS_RESET_SUCCESS)
 
     return c.json({ message: msg })
@@ -122,9 +122,7 @@ resetPasswordRoutes.openapi(forgetPassword, async (c) => {
       throw new UnauthorizedError(msg)
     }
 
-    const scrypt = new Scrypt()
-
-    const newHash = await scrypt.hash(newPassword)
+    const newHash = await hashPassword(newPassword)
 
     await c
       .get("db")

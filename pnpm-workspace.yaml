@@ -6,7 +6,6 @@ packages:
 catalog:
   hono: 4.6.16
   lodash: 4.17.21
-  lucia: 3.2.2
   kysely: 0.27.5
   kysely-ctl: 0.12.1
   luxon: 3.4.2

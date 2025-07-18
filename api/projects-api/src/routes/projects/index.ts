@@ -1,5 +1,6 @@
 import {
   ERROR_CHECKLIST_CREATE_FAILED,
+  ERROR_CHECKLIST_IDS_REQUIRED,
   ERROR_CHECKLIST_REMOVE_FAILED,
   ERROR_CHECKLIST_UPDATE_FAILED,
   ERROR_INVALID_FILE_TYPE,
@@ -584,6 +585,11 @@ projectRoutes.openapi(removeProjectChecklist, async (c) => {
 
     const { checklistIds } = c.req.valid("json")
     const { id: projectId } = c.req.valid("param")
+
+    if (!checklistIds || checklistIds.length === 0) {
+      const msg = await t.text(ERROR_CHECKLIST_IDS_REQUIRED)
+      throw new BadRequestError(msg)
+    }
 
     const existingProject = await getProjectById(c, projectId)
     if (!existingProject) {

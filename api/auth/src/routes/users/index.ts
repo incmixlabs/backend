@@ -1,5 +1,6 @@
 import { findUserById } from "@/lib/db"
-import { initializeLucia } from "@/lib/lucia"
+
+import { invalidateAllSessions } from "@/auth/session"
 import type { HonoApp } from "@/types"
 import { OpenAPIHono } from "@hono/zod-openapi"
 import {
@@ -23,7 +24,8 @@ import {
 import { useTranslation } from "@incmix-api/utils/middleware"
 import { UserRoles } from "@incmix/utils/types"
 import type { ExpressionWrapper, OrderByExpression, SqlBool } from "kysely"
-import { Scrypt } from "lucia"
+
+import { hashPassword } from "@/auth/utils"
 import { getAllUsers, setEnabled, setPassword, setVerified } from "./openapi"
 const userRoutes = new OpenAPIHono<HonoApp>({
   defaultHook: zodError,
@@ -181,8 +183,7 @@ userRoutes.openapi(setVerified, async (c) => {
     }
 
     // Logout users everywhere
-    const lucia = initializeLucia(c)
-    await lucia.invalidateUserSessions(updated.id)
+    await invalidateAllSessions(c.get("db"), updated.id)
 
     return c.json({ message: "Updated Successfully" }, 200)
   } catch (error) {
@@ -231,8 +232,7 @@ userRoutes.openapi(setEnabled, async (c) => {
     }
 
     // Logout users everywhere
-    const lucia = initializeLucia(c)
-    await lucia.invalidateUserSessions(updated.id)
+    await invalidateAllSessions(c.get("db"), updated.id)
 
     return c.json({ message: "Updated Successfully" }, 200)
   } catch (error) {
@@ -267,7 +267,7 @@ userRoutes.openapi(setPassword, async (c) => {
       throw new ForbiddenError("Cannot update own account")
     }
 
-    const newHash = await new Scrypt().hash(value)
+    const newHash = await hashPassword(value)
 
     const updated = await c
       .get("db")
@@ -282,8 +282,7 @@ userRoutes.openapi(setPassword, async (c) => {
     }
 
     // Logout users everywhere
-    const lucia = initializeLucia(c)
-    await lucia.invalidateUserSessions(updated.id)
+    await invalidateAllSessions(c.get("db"), updated.id)
 
     return c.json({ message: "Updated Successfully" }, 200)
   } catch (error) {

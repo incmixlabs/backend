@@ -3,9 +3,11 @@ import type { GoogleUser } from "@/types"
 import { ACC_DISABLED, VERIFIY_REQ } from "@/lib/constants"
 
 import { insertOAuthUser } from "@/lib/helper"
-import { createSession } from "@/lib/lucia"
+
 import { initializeGoogleAuth } from "@/lib/oauth"
 
+import { setSessionCookie } from "@/auth/cookies"
+import { createSession } from "@/auth/session"
 import { googleCallback, googleOAuth } from "@/routes/oauth/openapi"
 import type { HonoApp } from "@/types"
 import { OpenAPIHono } from "@hono/zod-openapi"
@@ -128,7 +130,8 @@ oAuthRoutes.openapi(googleCallback, async (c) => {
       throw new ForbiddenError(msg)
     }
 
-    const session = await createSession(c, user.id)
+    const session = await createSession(c.get("db"), user.id)
+    setSessionCookie(c, session.id, new Date(session.expiresAt))
     return c.json(
       {
         email: user.email,

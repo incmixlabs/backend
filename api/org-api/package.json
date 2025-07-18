@@ -19,7 +19,7 @@
     "kysely": "catalog:",
     "kysely-ctl": "catalog:",
     "lodash": "catalog:",
-    "lucia": "catalog:",
+    "nanoid": "catalog:",
     "pg": "catalog:",
     "zod": "catalog:"
   },

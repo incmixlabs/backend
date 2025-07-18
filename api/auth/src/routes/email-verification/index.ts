@@ -1,3 +1,5 @@
+import { setSessionCookie } from "@/auth/cookies"
+import { createSession, invalidateAllSessions } from "@/auth/session"
 import {
   EMAIL_ALREADY_VERIFIED,
   ERROR_INVALID_CODE,
@@ -11,7 +13,7 @@ import {
   sendVerificationEmail,
   verifyVerificationCode,
 } from "@/lib/helper"
-import { initializeLucia } from "@/lib/lucia"
+
 import {
   sendVerificationEmail as sendVerificationEmailRoute,
   verifyEmail,
@@ -47,7 +49,7 @@ emailVerificationRoutes.openapi(sendVerificationEmailRoute, async (c) => {
       "email_verification"
     )
 
-    await sendVerificationEmail(c, email, verificationCode)
+    sendVerificationEmail(c, email, verificationCode)
     const msg = await t.text(MAIL_SENT)
     return c.json({ message: msg }, 200)
   } catch (error) {
@@ -63,12 +65,9 @@ emailVerificationRoutes.openapi(verifyEmail, async (c) => {
     const { code, email } = c.req.valid("json")
     const user = await findUserByEmail(c, email)
 
-    const lucia = initializeLucia(c)
-    await lucia.invalidateUserSessions(user.id)
-    const sessionCookie = lucia.createBlankSessionCookie()
-    c.header("Set-Cookie", sessionCookie.serialize(), {
-      append: false,
-    })
+    await invalidateAllSessions(c.get("db"), user.id)
+    const session = await createSession(c.get("db"), user.id)
+    setSessionCookie(c, session.id, new Date(session.expiresAt))
 
     const t = await useTranslation(c)
     if (!user) {
