@@ -12,13 +12,12 @@ import {
 import { env } from "hono/adapter"
 
 export const middlewares = (app: OpenAPIHono<HonoApp>) => {
+  setupCors(app, BASE_PATH)
+  setupSentryMiddleware(app, BASE_PATH, "auth")
   app.use(`${BASE_PATH}/*`, (c, next) => {
     c.set("db", initDb(env(c).DATABASE_URL))
     return next()
   })
-  setupCors(app, BASE_PATH)
-  setupSentryMiddleware(app, BASE_PATH, "auth")
-
   app.use(`${BASE_PATH}/*`, createI18nMiddleware())
 
   // Use custom authentication middleware
