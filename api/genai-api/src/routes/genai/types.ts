@@ -131,3 +131,85 @@ export const CodeGenerationResponseSchema = z.object({
 export type CodeGenerationResponse = z.infer<
   typeof CodeGenerationResponseSchema
 >
+
+export const GenerateMultipleUserStoriesSchema = z
+  .object({
+    description: z.string().min(3).max(1000).openapi({
+      example:
+        "A project management dashboard for tracking tasks and progress.",
+      description: "Project description for user story generation",
+    }),
+    successCriteria: z
+      .array(z.string())
+      .min(1)
+      .openapi({
+        example: [
+          "The dashboard should allow users to add, edit, and delete tasks.",
+          "Users can filter tasks by status.",
+        ],
+        description: "Success criteria for the project",
+      }),
+    checklist: z
+      .array(z.string())
+      .min(1)
+      .openapi({
+        example: ["Implement authentication", "Set up database schema"],
+        description: "Checklist items for the project",
+      }),
+    userTier: z.enum(["free", "paid"]).default("free").openapi({
+      example: "free",
+      description:
+        "User tier determines which AI model to use (free: Gemini, paid: Claude)",
+    }),
+    templateId: z.number().optional().openapi({
+      example: 1,
+      description: "ID of the story template to use (optional)",
+    }),
+  })
+  .openapi("GenerateMultipleUserStories")
+
+export const MultipleUserStoriesResponseSchema = z
+  .object({
+    userStories: z
+      .array(
+        z.object({
+          description: z.string().openapi({
+            example:
+              "As a user, I want to add tasks to the dashboard so that I can track my work.",
+            description: "Generated user story description",
+          }),
+          acceptanceCriteria: z.array(z.string()).openapi({
+            example: [
+              "Tasks can be added with a title and description.",
+              "Tasks appear in the dashboard immediately after creation.",
+            ],
+            description: "Acceptance criteria for the user story",
+          }),
+          checklist: z.array(z.string()).openapi({
+            example: ["Add task form UI", "API endpoint for task creation"],
+            description: "Checklist for the user story",
+          }),
+        })
+      )
+      .length(3)
+      .openapi({
+        example: [
+          {
+            description:
+              "As a user, I want to add tasks to the dashboard so that I can track my work.",
+            acceptanceCriteria: [
+              "Tasks can be added with a title and description.",
+              "Tasks appear in the dashboard immediately after creation.",
+            ],
+            checklist: ["Add task form UI", "API endpoint for task creation"],
+          },
+          // ... 2 more user stories ...
+        ],
+        description: "Array of 3 generated user stories",
+      }),
+  })
+  .openapi("MultipleUserStoriesResponse")
+
+export type MultipleUserStoriesResponse = z.infer<
+  typeof MultipleUserStoriesResponseSchema
+>
