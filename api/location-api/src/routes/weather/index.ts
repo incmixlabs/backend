@@ -29,12 +29,12 @@ weatherRoutes.openapi(getWeatherForecast, async (c) => {
     searchParams.append("location", `${lat},${lon}`)
   }
 
-  const redis = c.get("redis")
-  const cache = await redis.get<WeatherForecast>(searchParams.toString())
-  if (cache) {
-    console.log("weather:cache hit")
-    return c.json(cache, 200)
-  }
+  // const redis = c.get("redis")
+  // const cache = await redis.get<WeatherForecast>(searchParams.toString())
+  // if (cache) {
+  //   console.log("weather:cache hit")
+  //   return c.json(cache, 200)
+  // }
 
   const res = await fetch(
     `${envVars.WEATHER_URL}/forecast?${searchParams.toString()}`,
@@ -57,9 +57,9 @@ weatherRoutes.openapi(getWeatherForecast, async (c) => {
     location: address?.city ?? address?.state ?? address?.country,
   }
 
-  // Expires 1 day
-  await redis.setex(searchParams.toString(), 60 * 60 * 24, data)
-  console.log("weather:cache miss")
+  // // Expires 1 day
+  // await redis.setex(searchParams.toString(), 60 * 60 * 24, data)
+  // console.log("weather:cache miss")
   return c.json(data, 200)
 })
 

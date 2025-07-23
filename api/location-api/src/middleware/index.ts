@@ -15,6 +15,6 @@ export const middlewares = (app: OpenAPIHono<HonoApp>) => {
   setupSentryMiddleware(app, BASE_PATH, "location-api")
 
   app.use(`${BASE_PATH}/*`, createI18nMiddleware())
-  setupRedisMiddleware(app, BASE_PATH)
+  // setupRedisMiddleware(app, BASE_PATH)
   setupOpenApi(app, BASE_PATH, "Location Api")
 }

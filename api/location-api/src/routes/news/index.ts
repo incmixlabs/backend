@@ -25,19 +25,19 @@ newsRoutes.openapi(getNewsTopics, async (c) => {
     searchParams.append("gl", country_code)
   }
 
-  const redis = c.get("redis")
+  // const redis = c.get("redis")
 
-  const cache = await redis.get<{ menu_links: TopicApiResponse[] }>(
-    searchParams.toString()
-  )
+  // const cache = await redis.get<{ menu_links: TopicApiResponse[] }>(
+  //   searchParams.toString()
+  // )
 
-  if (cache) {
-    console.log("news:cache hit")
-    return c.json(
-      { topics: cache.menu_links, country: searchParams.get("gl") ?? "us" },
-      200
-    )
-  }
+  // if (cache) {
+  //   console.log("news:cache hit")
+  //   return c.json(
+  //     { topics: cache.menu_links, country: searchParams.get("gl") ?? "us" },
+  //     200
+  //   )
+  // }
 
   const res = await fetch(`${envVars.SERP_NEWS_URL}?${searchParams.toString()}`)
   if (!res.ok) {
@@ -47,9 +47,9 @@ newsRoutes.openapi(getNewsTopics, async (c) => {
 
   const data = (await res.json()) as { menu_links: TopicApiResponse[] }
   // Expire after one day
-  await redis.setex(searchParams.toString(), 60 * 60 * 24, data)
+  // await redis.setex(searchParams.toString(), 60 * 60 * 24, data)
 
-  console.log("news:cache miss")
+  // console.log("news:cache miss")
   return c.json(
     { topics: data.menu_links, country: searchParams.get("gl") ?? "us" },
     200
@@ -72,14 +72,14 @@ newsRoutes.openapi(getNews, async (c) => {
     searchParams.append("gl", country_code)
   }
 
-  const redis = c.get("redis")
+  // const redis = c.get("redis")
 
-  const cache = await redis.get<NewsResponse>(searchParams.toString())
+  // const cache = await redis.get<NewsResponse>(searchParams.toString())
 
-  if (cache) {
-    console.log("news:cache hit")
-    return c.json(cache, 200)
-  }
+  // if (cache) {
+  //   console.log("news:cache hit")
+  //   return c.json(cache, 200)
+  // }
 
   const res = await fetch(`${envVars.SERP_NEWS_URL}?${searchParams.toString()}`)
   if (!res.ok) {
@@ -90,9 +90,9 @@ newsRoutes.openapi(getNews, async (c) => {
   const news = (await res.json()) as NewsApiResponse
   const parsed = parseNewsResults(news)
   // Expire after 15 mins
-  await redis.setex(searchParams.toString(), 60 * 15, parsed)
+  // await redis.setex(searchParams.toString(), 60 * 15, parsed)
 
-  console.log("news:cache miss")
+  // console.log("news:cache miss")
   return c.json(parsed, 200)
 })
 
