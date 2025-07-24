@@ -161,7 +161,7 @@ export const GenerateMultipleUserStoriesSchema = z
       description:
         "User tier determines which AI model to use (free: Gemini, paid: Claude)",
     }),
-    templateId: z.number().optional().openapi({
+    templateId: z.number().openapi({
       example: 1,
       description: "ID of the story template to use (optional)",
     }),
@@ -173,6 +173,10 @@ export const MultipleUserStoriesResponseSchema = z
     userStories: z
       .array(
         z.object({
+          title: z.string().openapi({
+            example: "Add tasks to the dashboard",
+            description: "Generated user story title",
+          }),
           description: z.string().openapi({
             example:
               "As a user, I want to add tasks to the dashboard so that I can track my work.",
@@ -191,22 +195,7 @@ export const MultipleUserStoriesResponseSchema = z
           }),
         })
       )
-      .length(3)
-      .openapi({
-        example: [
-          {
-            description:
-              "As a user, I want to add tasks to the dashboard so that I can track my work.",
-            acceptanceCriteria: [
-              "Tasks can be added with a title and description.",
-              "Tasks appear in the dashboard immediately after creation.",
-            ],
-            checklist: ["Add task form UI", "API endpoint for task creation"],
-          },
-          // ... 2 more user stories ...
-        ],
-        description: "Array of 3 generated user stories",
-      }),
+      .length(3),
   })
   .openapi("MultipleUserStoriesResponse")
 

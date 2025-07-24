@@ -292,6 +292,7 @@ Checklist: ${checklist.map((c) => `- ${c}`).join("\n")}
 
 Generate 3 distinct user stories for this project. Each user story should be a JSON object with the following structure:
 {
+  title: string,
   description: string, // user story description
   acceptanceCriteria: string[],
   checklist: string[]

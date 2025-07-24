@@ -10,6 +10,7 @@ import {
   generateUserStory,
   generateUserStoryFromFigma,
   getFigmaImage,
+  generateMultipleUserStories,
 } from "@/routes/genai/openapi"
 import type { HonoApp } from "@/types"
 import { OpenAPIHono } from "@hono/zod-openapi"
