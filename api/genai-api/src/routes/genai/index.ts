@@ -1,16 +1,16 @@
 import { FigmaService } from "@/lib/figma"
 
 import {
+  generateMultipleUserStories as aiGenerateMultipleUserStories,
   generateUserStory as aiGenerateUserStory,
   generateUserStoryFromImage,
-  generateMultipleUserStories as aiGenerateMultipleUserStories,
 } from "@/lib/services"
 import {
   generateCodeFromFigma,
+  generateMultipleUserStories,
   generateUserStory,
   generateUserStoryFromFigma,
   getFigmaImage,
-  generateMultipleUserStories,
 } from "@/routes/genai/openapi"
 import type { HonoApp } from "@/types"
 import { OpenAPIHono } from "@hono/zod-openapi"
