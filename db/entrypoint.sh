@@ -42,7 +42,7 @@ echo "Starting PostgreSQL with migrations..."
 
 # Start PostgreSQL in the background
 echo "Starting PostgreSQL..."
-exec docker-entrypoint.sh postgres &
+exec docker-entrypoint.sh postgres -c wal_level=logical -c max_replication_slots=10 -c max_wal_senders=10 &
 
 # Wait for PostgreSQL to be ready
 wait_for_postgres

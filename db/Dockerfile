@@ -1,13 +1,17 @@
 # Use official PostgreSQL 17 Alpine base image
 FROM postgres:17-alpine
 
+# Upgrade all packages to their latest versions to reduce vulnerabilities
+RUN apk update && apk upgrade --no-cache
+
 # Install plpython3u extension and Node.js as root
 USER root
 RUN apk add --no-cache \
     postgresql-plpython3 \
     git \
     nodejs \
-    npm
+    npm && \
+    apk upgrade --no-cache
 
 # Create initialization script to enable extension
 RUN mkdir -p /docker-entrypoint-initdb.d
