@@ -1,11 +1,13 @@
 import { FigmaService } from "@/lib/figma"
 
 import {
+  generateMultipleUserStories as aiGenerateMultipleUserStories,
   generateUserStory as aiGenerateUserStory,
   generateUserStoryFromImage,
 } from "@/lib/services"
 import {
   generateCodeFromFigma,
+  generateMultipleUserStories,
   generateUserStory,
   generateUserStoryFromFigma,
   getFigmaImage,
@@ -175,6 +177,43 @@ genaiRoutes.openapi(getFigmaImage, async (c) => {
     return await processError<typeof getFigmaImage>(c, error, [
       "{{ default }}",
       "get-figma-image",
+    ])
+  }
+})
+
+genaiRoutes.openapi(generateMultipleUserStories, async (c) => {
+  try {
+    const user = c.get("user")
+    const t = await useTranslation(c)
+    if (!user) {
+      const msg = await t.text(ERROR_UNAUTHORIZED)
+      throw new UnauthorizedError(msg)
+    }
+
+    const { description, successCriteria, checklist, userTier, templateId } =
+      c.req.valid("json")
+
+    const template = await c
+      .get("db")
+      .selectFrom("storyTemplates")
+      .selectAll()
+      .where("id", "=", templateId)
+      .executeTakeFirst()
+
+    const userStories = await aiGenerateMultipleUserStories(
+      c,
+      description,
+      successCriteria,
+      checklist,
+      userTier,
+      template
+    )
+
+    return c.json({ userStories }, 200)
+  } catch (error) {
+    return await processError(c, error, [
+      "{{ default }}",
+      "generate-multiple-user-stories",
     ])
   }
 })
