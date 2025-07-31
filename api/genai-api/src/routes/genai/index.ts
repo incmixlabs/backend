@@ -3,6 +3,7 @@ import { FigmaService } from "@/lib/figma"
 import {
   generateMultipleUserStories as aiGenerateMultipleUserStories,
   generateUserStory as aiGenerateUserStory,
+  generateProject as aiGenerateProject,
   generateUserStoryFromImage,
 } from "@/lib/services"
 import {
@@ -11,6 +12,7 @@ import {
   generateUserStory,
   generateUserStoryFromFigma,
   getFigmaImage,
+  generateProject,
 } from "@/routes/genai/openapi"
 import type { HonoApp } from "@/types"
 import { OpenAPIHono } from "@hono/zod-openapi"
@@ -27,6 +29,40 @@ const genaiRoutes = new OpenAPIHono<HonoApp>({
   defaultHook: zodError,
 })
 
+genaiRoutes.openapi(generateProject, async (c) => {
+  try {
+    const user = c.get("user")
+    const t = await useTranslation(c)
+    if (!user) {
+      const msg = await t.text(ERROR_UNAUTHORIZED)
+      throw new UnauthorizedError(msg)
+    }
+
+    const { prompt, userTier, templateId } = c.req.valid("json")
+
+    const template = await c
+      .get("db")
+      .selectFrom("storyTemplates")
+      .selectAll()
+      .where("id", "=", templateId)
+      .executeTakeFirst()
+
+    return streamSSE(c, async (stream) => {
+      const result = aiGenerateProject(c, prompt, template, userTier)
+      for await (const chunk of result.partialObjectStream) {
+        stream.writeSSE({
+          data: JSON.stringify(chunk),
+        })
+      }
+      stream.close()
+    })
+  } catch (error) {
+    return await processError<typeof generateUserStory>(c, error, [
+      "{{ default }}",
+      "generate-user-story",
+    ])
+  }
+})
 genaiRoutes.openapi(generateUserStory, async (c) => {
   try {
     const user = c.get("user")
