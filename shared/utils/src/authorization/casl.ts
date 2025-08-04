@@ -8,6 +8,7 @@ import { UnauthorizedError } from "@incmix-api/utils/errors"
 import type {
   AppAbility,
   Permission,
+  Subject,
   SubjectTuple,
   AuthUser as User,
 } from "@incmix/utils/types"
@@ -49,6 +50,57 @@ export class PermissionService {
     this.db = context.get("db")
     this.user = user
     this.memberPermissions = this.getUserPermissionsFromDb()
+  }
+
+  async getAllPermissions(orgId?: string) {
+    const query = this.db
+      .selectFrom("rolePermissions")
+      .innerJoin("roles", "rolePermissions.roleId", "roles.id")
+      .innerJoin(
+        "permissions",
+        "rolePermissions.permissionId",
+        "permissions.id"
+      )
+      .select([
+        "roles.name as roleName",
+        "permissions.action",
+        "permissions.resourceType",
+        "permissions.name as permissionName",
+        "permissions.description as permissionDescription",
+        "roles.scope",
+        "roles.id as roleId",
+        "roles.isSystemRole as isSystemRole",
+        "roles.description as roleDescription",
+      ])
+
+    if (orgId) {
+      query.where("roles.organizationId", "=", orgId)
+    }
+
+    const permissionData = await query.execute()
+
+    const permissions = permissionData.map((curr) => {
+      const {
+        roleName,
+        roleDescription,
+        scope,
+        roleId,
+        isSystemRole,
+        action,
+        resourceType,
+        permissionName,
+      } = curr
+
+      return {
+        role: { name: roleName, id: roleId, isSystemRole, scope },
+        description: roleDescription ?? undefined,
+        action,
+        subject: resourceType,
+        name: permissionName,
+      }
+    })
+
+    return permissions
   }
 
   private async getUserPermissionsFromDb() {
@@ -231,9 +283,11 @@ export class PermissionService {
   async hasOrgPermission(
     action: PermissionAction,
     subject: SubjectTuple,
-    id: string
+    id?: string
   ) {
     if (this.user.isSuperAdmin) return true
+
+    if (!id) return false
 
     const isMember = await this.isOrgMember(id)
     if (!isMember) return false
@@ -247,10 +301,11 @@ export class PermissionService {
   async hasProjectPermission(
     action: PermissionAction,
     subject: SubjectTuple,
-    id: string
+    id?: string
   ) {
     if (this.user.isSuperAdmin) return true
 
+    if (!id) return false
     const isMember = await this.isProjectMember(id)
     if (!isMember) return false
     const ability = await this.buildAbility("project", id)

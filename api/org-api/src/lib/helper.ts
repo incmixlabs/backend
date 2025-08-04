@@ -14,7 +14,7 @@ export async function throwUnlessUserCan(
   c: Context,
   action: Action,
   subject: SubjectTuple,
-  orgId: string
+  orgId?: string
 ) {
   const rbac = c.get("rbac")
   const can = await rbac.hasOrgPermission(action, subject, orgId)

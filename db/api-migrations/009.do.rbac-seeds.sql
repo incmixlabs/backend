@@ -53,7 +53,7 @@ INSERT INTO
     description,
     resource_type,
     action,
-    condition
+    conditions
   )
 VALUES
   -- User permissions
@@ -503,8 +503,7 @@ VALUES
   -- Project Manager: Read Project Member
   (4, 38, NULL),
   -- Project Manager: Update Project Member
-  (4, 39, NULL),
-  -- Project Manager: Delete Project Member
+  (4, 39, NULL) -- Project Manager: Delete Project Member
 ;
 
 COMMIT;

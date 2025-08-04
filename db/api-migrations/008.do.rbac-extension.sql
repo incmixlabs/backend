@@ -110,6 +110,11 @@ CREATE TABLE role_permissions (
   PRIMARY KEY (role_id, permission_id)
 );
 
+ALTER TABLE
+  project_members
+ADD
+  COLUMN role_id INTEGER REFERENCES roles(id) ON DELETE CASCADE;
+
 -- Create indexes for role_permissions
 CREATE INDEX idx_role_permissions_role_id ON role_permissions(role_id);
 

@@ -16,8 +16,8 @@ const globalStore = new KVStore({}, 900)
 
 setupKvStore(app, BASE_PATH, globalStore)
 
-setupRbac(app, BASE_PATH)
 middlewares(app)
+setupRbac(app, BASE_PATH)
 routes(app)
 serve(
   {

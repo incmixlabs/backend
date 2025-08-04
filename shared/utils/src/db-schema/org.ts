@@ -48,7 +48,7 @@ export type PermissionTable = {
   description: string | null
   resourceType: ColumnType<ResourceType, string, string>
   action: ColumnType<PermissionAction, string, string>
-  condition: JSONColumnType<MongoQuery, string, string> | null
+  conditions: JSONColumnType<MongoQuery, string, string> | null
   createdAt: ColumnType<Date, string, never>
   updatedAt: ColumnType<Date, string, never>
 }

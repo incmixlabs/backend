@@ -20,6 +20,7 @@ import { actions, subjects } from "@incmix/utils/types"
 import { getRolesPermissions, updatePermissions } from "./openapi"
 
 import { throwUnlessUserCan } from "@/lib/helper"
+import type { PermissionsWithRole } from "./types"
 
 const permissionRoutes = new OpenAPIHono<HonoApp>({
   defaultHook: zodError,
@@ -34,10 +35,15 @@ permissionRoutes.openapi(getRolesPermissions, async (c) => {
       throw new UnauthorizedError(msg)
     }
 
-    const { orgId } = c.req.valid("param")
+    const { orgId } = c.req.valid("query")
+
     await throwUnlessUserCan(c, "read", "Role", orgId)
 
-    // Create an array of all possible subject-action combinations
+    const roles = await findAllRoles(c, orgId)
+
+    const rbac = c.get("rbac")
+
+    const permissions = await rbac.getAllPermissions(orgId)
     const subjectActionCombinations = []
     for (const subject of subjects) {
       for (const action of actions) {
@@ -47,24 +53,72 @@ permissionRoutes.openapi(getRolesPermissions, async (c) => {
         })
       }
     }
-
-    const roles = await findAllRoles(c, orgId)
-
-    const rbac = c.get("rbac")
-
-    const orgPermissions = await rbac.getOrgPermissions(orgId)
-    const projectPermissions = await rbac.getProjectPermissions(orgId)
     // Create a map of role IDs to their names for easier lookup
-    // const combinedPermissions = [
-    //   ...(orgPermissions?.permissions || []),
-    //   ...(projectPermissions?.permissions || []),
-    // ]
+    const roleMap = new Map(roles.map((role) => [role.id, role.name]))
+
+    // Create a map to track which permissions are assigned to which roles
+    const rolePermissionsMap = new Map()
+
+    // Initialize the map with all subject-action combinations for each role
+    for (const role of roles) {
+      rolePermissionsMap.set(role.id, new Set())
+    }
+
+    // Populate the map with actual permissions
+    for (const permission of permissions) {
+      if (permission.role.id) {
+        const permissionSet = rolePermissionsMap.get(permission.role.id)
+        if (permissionSet) {
+          const key =
+            `${permission.subject.toLowerCase()}:${permission.action.toLowerCase()}`.replaceAll(
+              "_",
+              ""
+            )
+          permissionSet.add(key)
+        }
+      }
+    }
+    // console.log(rolePermissionsMap)
+    // Create a flat array of all permissions with role information
+    const enhancedPermissions: Record<
+      string,
+      (typeof subjects)[number] | (typeof actions)[number] | boolean
+    >[] = []
+
+    // Process all subject-action combinations
+    subjectActionCombinations.forEach(({ subject, action }) => {
+      if (subject === "all") {
+        return
+      }
+
+      const permissionObj: Record<
+        string,
+        (typeof subjects)[number] | (typeof actions)[number] | boolean
+      > = {
+        subject,
+        action,
+        ...Object.fromEntries(roles.map((role) => [role.name, false])),
+      }
+
+      // Add a boolean flag for each role
+      for (const role of roles) {
+        const roleName = roleMap.get(role.id) || role.name
+        const permissionKey = `${subject.toLowerCase()}:${action.toLowerCase()}`
+        console.log(permissionKey)
+        // Check if this role has this specific permission
+        const hasPermission =
+          rolePermissionsMap.get(role.id)?.has(permissionKey) || false
+
+        permissionObj[roleName] = hasPermission
+      }
+
+      enhancedPermissions.push(permissionObj)
+    })
 
     return c.json(
       {
         roles,
-        orgPermissions: orgPermissions?.permissions || [],
-        projectPermissions: projectPermissions?.permissions || [],
+        permissions: enhancedPermissions,
       },
       200
     )
@@ -115,7 +169,7 @@ permissionRoutes.openapi(updatePermissions, async (c) => {
               {
                 resourceType: subject,
                 action,
-                condition: null,
+                conditions: null,
                 createdAt: new Date().toISOString(),
                 updatedAt: new Date().toISOString(),
                 name: `${subject} ${action}`,
@@ -141,7 +195,7 @@ permissionRoutes.openapi(updatePermissions, async (c) => {
               c,
               {
                 ...permission,
-                condition: null,
+                conditions: null,
               },
               permission.id,
               tx

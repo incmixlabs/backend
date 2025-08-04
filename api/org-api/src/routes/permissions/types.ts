@@ -2,10 +2,7 @@ import { z } from "@hono/zod-openapi"
 import { actions, subjects } from "@incmix/utils/types"
 
 export const PermissionsWithRoleSchema = z
-  .object({
-    subject: z.enum(subjects),
-    action: z.enum(actions),
-  })
+  .record(z.string(), z.union([z.enum(subjects), z.enum(actions), z.boolean()]))
   .openapi("PermissionsWithRoleSchema")
 
 export const PermissionRolesResponseSchema = z
@@ -17,8 +14,7 @@ export const PermissionRolesResponseSchema = z
         isSystemRole: z.boolean().default(false),
       })
     ),
-    orgPermissions: PermissionsWithRoleSchema.array(),
-    projectPermissions: PermissionsWithRoleSchema.array(),
+    permissions: PermissionsWithRoleSchema.array(),
   })
   .openapi("PermissionRolesResponseSchema")
 

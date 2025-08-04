@@ -47,7 +47,7 @@ export async function authMiddleware(c: Context, next: () => Promise<void>) {
 
   c.set("user", {
     email: user.email,
-    userType: user.userType,
+    isSuperAdmin: user.isSuperAdmin,
     emailVerified: user.emailVerifiedAt !== null,
     id: user.id,
   })

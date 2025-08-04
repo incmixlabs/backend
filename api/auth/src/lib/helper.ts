@@ -104,7 +104,7 @@ export async function insertOAuthUser(
     {
       id: userId,
       email: user.email,
-      userType: UserRoles.ROLE_MEMBER,
+      isSuperAdmin: false,
       isActive: true,
       hashedPassword: null,
       emailVerifiedAt: new Date().toISOString(),

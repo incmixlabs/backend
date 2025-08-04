@@ -8,13 +8,13 @@ import { PermissionRolesResponseSchema, UpdatePermissionSchema } from "./types"
  */
 export const getRolesPermissions = createRoute({
   method: "get",
-  path: "/{orgId}",
+  path: "",
   summary: "Get All Roles and Permissions",
   tags: ["Permissions"],
   security: [{ cookieAuth: [] }],
   request: {
-    params: z.object({
-      orgId: z.string().openapi({
+    query: z.object({
+      orgId: z.string().optional().openapi({
         description: "The ID of the organization",
         example: "123",
       }),
