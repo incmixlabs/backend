@@ -12,7 +12,9 @@
       "dist",
       ".wrangler",
       ".vscode",
-      "vitest-pool-workers"
+      "vitest-pool-workers",
+      "package.json",
+      "pnpm-workspace.yaml"
     ]
   },
   "formatter": {
