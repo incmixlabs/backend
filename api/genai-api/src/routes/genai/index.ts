@@ -1,14 +1,18 @@
 import { FigmaService } from "@/lib/figma"
 
 import {
+  generateMultipleUserStories as aiGenerateMultipleUserStories,
   generateUserStory as aiGenerateUserStory,
+  generateProject as aiGenerateProject,
   generateUserStoryFromImage,
 } from "@/lib/services"
 import {
   generateCodeFromFigma,
+  generateMultipleUserStories,
   generateUserStory,
   generateUserStoryFromFigma,
   getFigmaImage,
+  generateProject,
 } from "@/routes/genai/openapi"
 import type { HonoApp } from "@/types"
 import { OpenAPIHono } from "@hono/zod-openapi"
@@ -25,6 +29,40 @@ const genaiRoutes = new OpenAPIHono<HonoApp>({
   defaultHook: zodError,
 })
 
+genaiRoutes.openapi(generateProject, async (c) => {
+  try {
+    const user = c.get("user")
+    const t = await useTranslation(c)
+    if (!user) {
+      const msg = await t.text(ERROR_UNAUTHORIZED)
+      throw new UnauthorizedError(msg)
+    }
+
+    const { prompt, userTier, templateId } = c.req.valid("json")
+
+    const template = await c
+      .get("db")
+      .selectFrom("storyTemplates")
+      .selectAll()
+      .where("id", "=", templateId)
+      .executeTakeFirst()
+
+    return streamSSE(c, async (stream) => {
+      const result = aiGenerateProject(c, prompt, template, userTier)
+      for await (const chunk of result.partialObjectStream) {
+        stream.writeSSE({
+          data: JSON.stringify(chunk),
+        })
+      }
+      stream.close()
+    })
+  } catch (error) {
+    return await processError<typeof generateUserStory>(c, error, [
+      "{{ default }}",
+      "generate-user-story",
+    ])
+  }
+})
 genaiRoutes.openapi(generateUserStory, async (c) => {
   try {
     const user = c.get("user")
@@ -175,6 +213,43 @@ genaiRoutes.openapi(getFigmaImage, async (c) => {
     return await processError<typeof getFigmaImage>(c, error, [
       "{{ default }}",
       "get-figma-image",
+    ])
+  }
+})
+
+genaiRoutes.openapi(generateMultipleUserStories, async (c) => {
+  try {
+    const user = c.get("user")
+    const t = await useTranslation(c)
+    if (!user) {
+      const msg = await t.text(ERROR_UNAUTHORIZED)
+      throw new UnauthorizedError(msg)
+    }
+
+    const { description, successCriteria, checklist, userTier, templateId } =
+      c.req.valid("json")
+
+    const template = await c
+      .get("db")
+      .selectFrom("storyTemplates")
+      .selectAll()
+      .where("id", "=", templateId)
+      .executeTakeFirst()
+
+    const userStories = await aiGenerateMultipleUserStories(
+      c,
+      description,
+      successCriteria,
+      checklist,
+      userTier,
+      template
+    )
+
+    return c.json({ userStories }, 200)
+  } catch (error) {
+    return await processError(c, error, [
+      "{{ default }}",
+      "generate-multiple-user-stories",
     ])
   }
 })

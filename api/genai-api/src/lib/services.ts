@@ -1,18 +1,14 @@
 import { envVars } from "@/env-vars"
 import {
+  type MultipleUserStoriesResponse,
+  MultipleUserStoriesResponseSchema,
   type UserStoryResponse,
   UserStoryResponseSchema,
 } from "@/routes/genai/types"
 import type { Context } from "@/types"
 import { createAnthropic } from "@ai-sdk/anthropic"
 import { createGoogleGenerativeAI } from "@ai-sdk/google"
-import {
-  type StreamObjectResult,
-  generateObject,
-  generateText,
-  streamObject,
-  streamText,
-} from "ai"
+import { generateText, streamObject } from "ai"
 
 import type { StoryTemplate } from "@incmix-api/utils/db-schema"
 import { type AIModel, MODEL_MAP } from "./constants"
@@ -41,6 +37,26 @@ function formatUserStory(rawOutput: string): UserStoryResponse {
   }
 }
 
+export function formatProjectPrompt(
+  prompt: string,
+  template: string | undefined
+): string {
+  return `
+  Create project description based on the following prompt: "${prompt}"
+
+  return the result as a json object that can be directly passed to javascript's JSON.parse() function without any modifications:
+  {project: {
+    description: string,
+    acceptanceCriteria: string[],
+    checklist: string[],
+  }}
+
+  format description field as:
+  ${template}
+
+  Important: Provide only the project description without any prefatory text or instructions. Do not include phrases like "Here's a user story" at the beginning of your response.
+  `
+}
 export function formatUserStoryPrompt(
   prompt: string,
   template: string | undefined
@@ -116,6 +132,61 @@ export function generateUserStory(
     throw new Error(
       `Failed to generate user story: ${(error as Error).message}`
     )
+  }
+}
+
+export function generateProject(
+  _c: Context,
+  prompt: string,
+  template?: StoryTemplate,
+  userTier: "free" | "paid" = "free"
+) {
+  const model = userTier === "paid" ? "claude" : "gemini"
+
+  const promptTemplate =
+    template?.content ||
+    `
+  As a [type of user], I want [goal] so that [benefit/value].
+
+  [Design Description]
+
+  Acceptance Criteria:
+  - [criterion 1]
+  - [criterion 2]
+  - [criterion 3]
+  `
+
+  try {
+    const enhancedPrompt = formatProjectPrompt(prompt, promptTemplate)
+    if (model === "claude") {
+      if (!envVars.ANTHROPIC_API_KEY) {
+        throw new Error("AI Service is not available")
+      }
+
+      const result = streamObject({
+        model: anthropic(MODEL_MAP[model]),
+        prompt: enhancedPrompt,
+        schema: UserStoryResponseSchema.omit({ imageUrl: true }),
+        maxTokens: 1024,
+      })
+      return result
+    }
+
+    if (!envVars.GOOGLE_AI_API_KEY) {
+      throw new Error("AI Service is not available")
+    }
+
+    const result = streamObject({
+      model: google(MODEL_MAP[model]),
+      prompt: enhancedPrompt,
+      schema: UserStoryResponseSchema.omit({ imageUrl: true }),
+      maxTokens: 1024,
+    })
+
+    return result
+  } catch (error) {
+    console.error(`Error generating project with ${model}:`, error)
+    throw new Error(`Failed to generate project: ${(error as Error).message}`)
   }
 }
 
@@ -271,4 +342,78 @@ async function getAiResponseUsingImagePrompt(
     console.error(`Error getting AI response with image using ${model}:`, error)
     throw new Error(`AI Service error: ${(error as Error).message}`)
   }
+}
+
+export async function generateMultipleUserStories(
+  _c: Context,
+  description: string,
+  successCriteria: string[],
+  checklist: string[],
+  userTier: "free" | "paid" = "free",
+  template?: StoryTemplate
+) {
+  const model = userTier === "paid" ? "claude" : "gemini"
+
+  const promptTemplate =
+    template?.content ||
+    "As a [type of user], I want [goal] so that [benefit/value].\n\n[Design Description]\n\nAcceptance Criteria:\n- [criterion 1]\n- [criterion 2]\n- [criterion 3]"
+
+  const aiPrompt = `
+Given the following project details:
+
+Description: ${description}
+Success Criteria: ${successCriteria.map((c) => `- ${c}`).join("\n")}
+Checklist: ${checklist.map((c) => `- ${c}`).join("\n")}
+
+Generate 3 distinct user stories for this project. Each user story should be a JSON object with the following structure:
+{
+  title: string,
+  description: string, // user story description
+  acceptanceCriteria: string[],
+  checklist: string[]
+}
+
+Return a JSON object with a single key 'userStories' whose value is an array of exactly 3 user stories. Use the following template for the description field of each user story:\n\n${promptTemplate}\n\nImportant: Provide only the JSON object, no extra text or explanation.`
+
+  let aiResult: string
+  if (model === "claude") {
+    if (!envVars.ANTHROPIC_API_KEY) {
+      throw new Error("AI Service is not available")
+    }
+    const result = await generateText({
+      model: anthropic(MODEL_MAP[model]),
+      prompt: aiPrompt,
+      maxTokens: 2048,
+    })
+    aiResult = result.text
+  } else {
+    if (!envVars.GOOGLE_AI_API_KEY) {
+      throw new Error("AI Service is not available")
+    }
+    const result = await generateText({
+      model: google(MODEL_MAP[model]),
+      prompt: aiPrompt,
+      maxTokens: 2048,
+    })
+    aiResult = result.text
+  }
+
+  // Remove code block markers if present
+  const jsonString = aiResult
+    .replace(/^```json\n/, "")
+    .replace(/\n```$/, "")
+    .replace(/```/, "")
+  let parsed: MultipleUserStoriesResponse
+  try {
+    parsed = JSON.parse(jsonString)
+  } catch (error) {
+    console.error("Failed to parse JSON response from AI:", error)
+    console.error("Raw output that failed to parse:", jsonString)
+    throw new Error(
+      "Invalid JSON response from AI - unable to parse user stories data"
+    )
+  }
+  // Validate with zod
+  const validated = MultipleUserStoriesResponseSchema.parse(parsed)
+  return validated.userStories
 }

@@ -3,10 +3,66 @@ import { ResponseSchema } from "../types"
 import {
   FigmaSchema,
   GenerateCodeFromFigmaSchema,
+  GenerateMultipleUserStoriesSchema,
   GenerateUserStorySchema,
+  MultipleUserStoriesResponseSchema,
   UserStoryResponseSchema,
 } from "./types"
 
+export const generateProject = createRoute({
+  method: "post",
+  path: "/generate-project",
+  summary: "Generate Project",
+  tags: ["Project"],
+  description:
+    "Generate a project description, checklist, milestones, initial tasks",
+  security: [{ cookieAuth: [] }],
+  request: {
+    body: {
+      content: {
+        "application/json": {
+          schema: GenerateUserStorySchema,
+        },
+      },
+    },
+  },
+  responses: {
+    200: {
+      content: {
+        "text/event-stream": {
+          schema: z.object({
+            data: z.string(),
+          }),
+        },
+      },
+      description: "Returns the generated user story in markdown format",
+    },
+    400: {
+      content: {
+        "application/json": {
+          schema: ResponseSchema,
+        },
+      },
+      description: "Error response when user story generation fails",
+    },
+    401: {
+      content: {
+        "application/json": {
+          schema: ResponseSchema,
+        },
+      },
+      description: "Error response when not authenticated",
+    },
+    500: {
+      content: {
+        "application/json": {
+          schema: ResponseSchema,
+        },
+      },
+      description: "Internal Server Error",
+    },
+  },
+})
 export const generateUserStory = createRoute({
   method: "post",
   path: "/generate-user-story",
@@ -168,6 +224,59 @@ export const generateCodeFromFigma = createRoute({
       },
       description:
         "Design data too large - consider using a smaller design or specific node",
+    },
+    500: {
+      content: {
+        "application/json": {
+          schema: ResponseSchema,
+        },
+      },
+      description: "Internal Server Error",
+    },
+  },
+})
+
+export const generateMultipleUserStories = createRoute({
+  method: "post",
+  path: "/generate-multiple-user-stories",
+  summary: "Generate 3 User Stories",
+  tags: ["Tasks"],
+  description:
+    "Generate 3 user stories from project description, success criteria, and checklist using AI (Claude for paid users, Gemini for free)",
+  security: [{ cookieAuth: [] }],
+  request: {
+    body: {
+      content: {
+        "application/json": {
+          schema: GenerateMultipleUserStoriesSchema,
+        },
+      },
+    },
+  },
+  responses: {
+    200: {
+      content: {
+        "application/json": {
+          schema: MultipleUserStoriesResponseSchema,
+        },
+      },
+      description: "Returns an array of 3 generated user stories",
+    },
+    400: {
+      content: {
+        "application/json": {
+          schema: ResponseSchema,
+        },
+      },
+      description: "Error response when user story generation fails",
+    },
+    401: {
+      content: {
+        "application/json": {
+          schema: ResponseSchema,
+        },
+      },
+      description: "Error response when not authenticated",
     },
     500: {
       content: {
