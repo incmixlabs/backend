@@ -13,28 +13,6 @@ export const PermissionsWithRoleSchema = z
   })
   .openapi("PermissionsWithRoleSchema")
 
-export const AddNewRoleSchema = z
-  .object({
-    name: z.string().min(3).max(50).openapi({
-      example: "Admin",
-      description: "The name of the role",
-    }),
-  })
-  .openapi("AddNewRoleSchema")
-
-export const UpdateRoleSchema = z
-  .object({
-    id: z.number().int().positive().openapi({
-      example: 1,
-      description: "The ID of the role",
-    }),
-    name: z.string().min(3).max(50).openapi({
-      example: "Admin",
-      description: "The name of the role",
-    }),
-  })
-  .openapi("UpdateRoleSchema")
-
 export const PermissionRolesResponseSchema = z
   .object({
     roles: z

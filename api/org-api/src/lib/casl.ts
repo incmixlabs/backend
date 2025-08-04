@@ -1,13 +1,4 @@
-import type { Permission } from "@incmix/utils/types"
 import get from "lodash/get.js"
-
-export const defaultPermissions: Permission[] = [
-  {
-    action: "manage",
-    subject: "all",
-    conditions: {},
-  },
-]
 
 export const interpolate = (template: string, vars: object) => {
   return JSON.parse(template, (_, rawValue: string) => {
