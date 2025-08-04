@@ -36,7 +36,7 @@ rolesRoutes.openapi(addNewRole, async (c) => {
     const { name, description, scope } = c.req.valid("json")
     const { orgId } = c.req.valid("param")
 
-    throwUnlessUserCan(c, "create", "Role", orgId)
+    await throwUnlessUserCan(c, "create", "Role", orgId)
 
     const existingRole = await findRoleByName(c, name)
 
@@ -90,7 +90,7 @@ rolesRoutes.openapi(updateRole, async (c) => {
       throw new UnauthorizedError("Role is not editable")
     }
 
-    throwUnlessUserCan(c, "update", "Role", existingRole.organizationId)
+    await throwUnlessUserCan(c, "update", "Role", existingRole.organizationId)
 
     const updatedRole = await updateRoleById(
       c,
@@ -137,7 +137,7 @@ rolesRoutes.openapi(deleteRole, async (c) => {
       throw new UnauthorizedError("Role is not editable")
     }
 
-    throwUnlessUserCan(c, "delete", "Role", existingRole.organizationId)
+    await throwUnlessUserCan(c, "delete", "Role", existingRole.organizationId)
 
     const deletedRole = await deleteRoleById(c, id)
 

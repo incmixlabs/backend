@@ -35,7 +35,7 @@ permissionRoutes.openapi(getRolesPermissions, async (c) => {
     }
 
     const { orgId } = c.req.valid("param")
-    throwUnlessUserCan(c, "read", "Role", orgId)
+    await throwUnlessUserCan(c, "read", "Role", orgId)
 
     // Create an array of all possible subject-action combinations
     const subjectActionCombinations = []
@@ -86,7 +86,7 @@ permissionRoutes.openapi(updatePermissions, async (c) => {
     }
 
     const { orgId } = c.req.valid("param")
-    throwUnlessUserCan(c, "update", "Role", orgId)
+    await throwUnlessUserCan(c, "update", "Role", orgId)
 
     const { updates } = c.req.valid("json")
 
