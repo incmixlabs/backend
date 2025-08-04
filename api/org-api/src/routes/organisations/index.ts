@@ -16,7 +16,6 @@ import {
   ensureAtLeastOneOwner,
   findAllRoles,
   findOrgMemberById,
-  findOrgMemberPermissions,
   findOrgMembers,
   findOrganisationByHandle,
   findOrganisationById,
@@ -25,11 +24,9 @@ import {
   getUserById,
   insertMembers,
   insertOrganisation,
-  isOrgMember,
   isValidUser,
-  throwUnlessUserCan,
 } from "@/lib/db"
-import { getRoleIdByName } from "@/lib/helper"
+import { getRoleIdByName, throwUnlessUserCan } from "@/lib/helper"
 import {
   addMember,
   createOrganisation,
@@ -76,13 +73,7 @@ orgRoutes.openapi(getOrganisation, async (c) => {
     const { handle } = c.req.valid("param")
     const org = await findOrganisationByHandle(c, handle)
 
-    await throwUnlessUserCan({
-      c,
-      user,
-      org,
-      action: "read",
-      subject: "Organisation",
-    })
+    await throwUnlessUserCan(c, "read", "Organisation", org.id)
 
     return c.json(
       {
@@ -114,13 +105,7 @@ orgRoutes.openapi(getOrganisationById, async (c) => {
     const { id } = c.req.valid("param")
     const org = await findOrganisationById(c, id)
 
-    await throwUnlessUserCan({
-      c,
-      user,
-      org,
-      action: "read",
-      subject: "Organisation",
-    })
+    await throwUnlessUserCan(c, "read", "Organisation", org.id)
 
     return c.json(
       {
@@ -293,16 +278,10 @@ orgRoutes.openapi(addMember, async (c) => {
 
     const { handle } = c.req.valid("param")
     const { role, email } = c.req.valid("json")
-    // Use findOrganisationById since the "handle" parameter is actually the ID
+
     const org = await findOrganisationById(c, handle)
 
-    await throwUnlessUserCan({
-      c,
-      user,
-      org,
-      action: "create",
-      subject: "Member",
-    })
+    await throwUnlessUserCan(c, "create", "Member", org.id)
 
     const existingUser = await getUserByEmail(c, email)
     if (!existingUser) {
@@ -311,7 +290,7 @@ orgRoutes.openapi(addMember, async (c) => {
     }
     const userId = existingUser.id
 
-    const isMember = await isOrgMember(c, userId, org.id)
+    const isMember = await c.get("rbac").isOrgMember(org.id)
     if (isMember) {
       const msg = await t.text(ERROR_MEMBER_EXIST)
       throw new ConflictError(msg)
@@ -360,42 +339,20 @@ orgRoutes.openapi(updateOrganisation, async (c) => {
       throw new UnauthorizedError(msg)
     }
 
-    // Log request parameters
-    console.log("Request parameters:", c.req.valid("param"))
     const { handle } = c.req.valid("param")
 
-    // Log request body
-    console.log("Request body:", c.req.valid("json"))
     const { name } = c.req.valid("json")
-    // frontend is passing the ID as the handle hence the error
-    // Use findOrganisationById since the "handle" parameter is actually the ID
     const org = await findOrganisationById(c, handle)
-    console.log("Found organization by id:", org)
 
-    console.log("User attempting authorization:", user)
-    await throwUnlessUserCan({
-      c,
-      user,
-      org,
-      action: "update",
-      subject: "Organisation",
-    })
-    console.log("Authorization successful for user:", user.id)
+    await throwUnlessUserCan(c, "update", "Organisation", org.id)
 
     const orgExists = await doesOrganisationExist(c, name, user.id)
-    console.log("Organization with this name exists:", orgExists)
 
     if (orgExists) {
       const msg = await t.text(ERROR_ORG_EXIST)
       throw new ConflictError(msg)
     }
 
-    console.log(
-      "Attempting to update organization with ID:",
-      org.id,
-      "to new name:",
-      name
-    )
     const updatedOrg = await c
       .get("db")
       .updateTable("organisations")
@@ -403,7 +360,6 @@ orgRoutes.openapi(updateOrganisation, async (c) => {
       .where("id", "=", org.id)
       .returningAll()
       .executeTakeFirst()
-    console.log("Updated organization data:", updatedOrg)
 
     if (!updatedOrg) {
       const msg = await t.text(ERROR_ORG_UPDATE_FAIL)
@@ -411,7 +367,6 @@ orgRoutes.openapi(updateOrganisation, async (c) => {
     }
 
     const members = await findOrgMembers(c, org.id)
-    console.log("Organization members:", members)
 
     const responseData = {
       id: org.id,
@@ -419,7 +374,6 @@ orgRoutes.openapi(updateOrganisation, async (c) => {
       handle: org.handle,
       members: members.map((m) => ({ userId: m.userId, role: m.role })),
     }
-    console.log("Response data being sent to frontend:", responseData)
     return c.json(responseData, 200)
   } catch (error) {
     return await processError<typeof updateOrganisation>(c, error, [
@@ -442,13 +396,7 @@ orgRoutes.openapi(deleteOrganisation, async (c) => {
 
     const org = await findOrganisationByHandle(c, handle)
 
-    await throwUnlessUserCan({
-      c,
-      user,
-      org,
-      action: "delete",
-      subject: "Organisation",
-    })
+    await throwUnlessUserCan(c, "delete", "Organisation", org.id)
 
     const deletedMembers = await c
       .get("db")
@@ -503,13 +451,7 @@ orgRoutes.openapi(removeMembers, async (c) => {
 
     const org = await findOrganisationById(c, handle)
 
-    await throwUnlessUserCan({
-      c,
-      user,
-      org,
-      action: "delete",
-      subject: "Member",
-    })
+    await throwUnlessUserCan(c, "delete", "Member", org.id)
     await ensureAtLeastOneOwner(c, org.id, userIds, "remove")
 
     await c
@@ -554,13 +496,7 @@ orgRoutes.openapi(updateMemberRole, async (c) => {
 
     const org = await findOrganisationById(c, handle)
 
-    await throwUnlessUserCan({
-      c,
-      user,
-      org,
-      action: "update",
-      subject: "Member",
-    })
+    await throwUnlessUserCan(c, "update", "Member", org.id)
 
     const member = await findOrgMemberById(c, userId, org.id)
 
@@ -621,13 +557,7 @@ orgRoutes.openapi(getOrganizationMembers, async (c) => {
     const { handle } = c.req.valid("param")
     const org = await findOrganisationByHandle(c, handle)
 
-    await throwUnlessUserCan({
-      c,
-      user,
-      org,
-      action: "read",
-      subject: "Member",
-    })
+    await throwUnlessUserCan(c, "read", "Member", org.id)
 
     const members = await findOrgMembers(c, org.id)
     const memberDetails = await Promise.all(
@@ -669,7 +599,7 @@ orgRoutes.openapi(getOrganizationPermissions, async (c) => {
     const { handle } = c.req.valid("param")
     const org = await findOrganisationByHandle(c, handle)
 
-    const { permissions } = await findOrgMemberPermissions(c, user, org)
+    const permissions = await c.get("rbac").getOrgPermissions(org.id)
 
     return c.json(permissions, 200)
   } catch (error) {

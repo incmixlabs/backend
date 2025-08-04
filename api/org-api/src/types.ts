@@ -1,3 +1,4 @@
+import { z } from "@hono/zod-openapi"
 import type { KyselyDb } from "@incmix-api/utils/db-schema"
 import type { AuthUser as User } from "@incmix/utils/types"
 import type { Context as HonoContext } from "hono"
@@ -10,3 +11,11 @@ type Variables = {
 
 export type HonoApp = { Bindings: Env; Variables: Variables }
 export type Context = HonoContext<HonoApp>
+
+export const MessageResponseSchema = z
+  .object({
+    message: z.string().openapi({
+      example: "Successful",
+    }),
+  })
+  .openapi("Response")

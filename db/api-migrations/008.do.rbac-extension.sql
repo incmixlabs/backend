@@ -89,8 +89,6 @@ ADD
 ADD
   COLUMN action permission_action NOT NULL,
 ADD
-  COLUMN condition JSONB,
-ADD
   COLUMN created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
 ADD
   COLUMN updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW();

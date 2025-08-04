@@ -16,11 +16,12 @@ import {
   insertRole,
   updateRoleById,
 } from "@/lib/db"
+import { findRoleById } from "@/lib/db"
+import { throwUnlessUserCan } from "@/lib/helper"
 import { ERROR_UNAUTHORIZED } from "@incmix-api/utils"
 import { ConflictError, ServerError } from "@incmix-api/utils/errors"
 import { useTranslation } from "@incmix-api/utils/middleware"
 import { addNewRole, deleteRole, updateRole } from "./openapi"
-import { findRoleById } from "@/lib/db"
 
 const rolesRoutes = new OpenAPIHono<HonoApp>()
 rolesRoutes.openapi(addNewRole, async (c) => {
@@ -34,6 +35,8 @@ rolesRoutes.openapi(addNewRole, async (c) => {
 
     const { name, description, scope } = c.req.valid("json")
     const { orgId } = c.req.valid("param")
+
+    throwUnlessUserCan(c, "create", "Role", orgId)
 
     const existingRole = await findRoleByName(c, name)
 
@@ -83,6 +86,12 @@ rolesRoutes.openapi(updateRole, async (c) => {
       throw new NotFoundError(msg)
     }
 
+    if (!existingRole.organizationId) {
+      throw new UnauthorizedError("Role is not editable")
+    }
+
+    throwUnlessUserCan(c, "update", "Role", existingRole.organizationId)
+
     const updatedRole = await updateRoleById(
       c,
       {
@@ -116,6 +125,19 @@ rolesRoutes.openapi(deleteRole, async (c) => {
     }
 
     const { id } = c.req.valid("param")
+
+    const existingRole = await findRoleById(c, id)
+
+    if (!existingRole) {
+      const msg = await t.text(ERROR_ROLE_NOT_FOUND)
+      throw new NotFoundError(msg)
+    }
+
+    if (!existingRole.organizationId) {
+      throw new UnauthorizedError("Role is not editable")
+    }
+
+    throwUnlessUserCan(c, "delete", "Role", existingRole.organizationId)
 
     const deletedRole = await deleteRoleById(c, id)
 

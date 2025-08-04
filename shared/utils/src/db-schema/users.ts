@@ -1,4 +1,3 @@
-import type { UserType } from "@incmix/utils/types"
 import type {
   ColumnType,
   Generated,
@@ -14,7 +13,7 @@ type UsersTable = {
   email: string
   hashedPassword: string | null
   emailVerifiedAt: ColumnType<Date, string | null, string | null>
-  userType: UserType
+  isSuperAdmin: boolean
   isActive: boolean | null
   lastLoggedIn: ColumnType<Date, null, string>
 }
@@ -100,7 +99,7 @@ export const userColumns: UserColumns[] = [
   "email",
   "emailVerifiedAt",
   "id",
-  "userType",
+  "isSuperAdmin",
 ] as const
 
 export type UsersTables = {

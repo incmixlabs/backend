@@ -87,7 +87,7 @@ type ProjectsTable = {
 type ProjectMembersTable = {
   projectId: string
   userId: string
-  role: string | null
+  roleId: number
   isOwner: boolean
   createdBy: ColumnType<string, string, never>
   updatedBy: ColumnType<string, string, string>
