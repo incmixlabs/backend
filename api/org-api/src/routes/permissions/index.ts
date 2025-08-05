@@ -69,11 +69,7 @@ permissionRoutes.openapi(getRolesPermissions, async (c) => {
       if (permission.role.id) {
         const permissionSet = rolePermissionsMap.get(permission.role.id)
         if (permissionSet) {
-          const key =
-            `${permission.subject.toLowerCase()}:${permission.action.toLowerCase()}`.replaceAll(
-              "_",
-              ""
-            )
+          const key = `${permission.subject}:${permission.action}`
           permissionSet.add(key)
         }
       }
@@ -103,8 +99,7 @@ permissionRoutes.openapi(getRolesPermissions, async (c) => {
       // Add a boolean flag for each role
       for (const role of roles) {
         const roleName = roleMap.get(role.id) || role.name
-        const permissionKey = `${subject.toLowerCase()}:${action.toLowerCase()}`
-        console.log(permissionKey)
+        const permissionKey = `${subject}:${action}`
         // Check if this role has this specific permission
         const hasPermission =
           rolePermissionsMap.get(role.id)?.has(permissionKey) || false

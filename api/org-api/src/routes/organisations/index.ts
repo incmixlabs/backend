@@ -205,7 +205,7 @@ orgRoutes.openapi(createOrganisation, async (c) => {
 
     const orgId = nanoid(15)
     const dbRoles = await findAllRoles(c)
-
+    console.log(dbRoles)
     if (!dbRoles.length) {
       const msg = await t.text(ERROR_NO_ROLES)
       throw new ServerError(msg)
@@ -599,9 +599,9 @@ orgRoutes.openapi(getOrganizationPermissions, async (c) => {
     const { handle } = c.req.valid("param")
     const org = await findOrganisationByHandle(c, handle)
 
-    const permissions = await c.get("rbac").getOrgPermissions(org.id)
+    const orgPermissions = await c.get("rbac").getOrgPermissions(org.id)
 
-    return c.json(permissions, 200)
+    return c.json(orgPermissions?.permissions ?? [], 200)
   } catch (error) {
     return await processError<typeof getOrganizationPermissions>(c, error, [
       "{{ default }}",

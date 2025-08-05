@@ -153,3 +153,5 @@ rolesRoutes.openapi(deleteRole, async (c) => {
     ])
   }
 })
+
+export default rolesRoutes

@@ -106,16 +106,16 @@ export class PermissionService {
   private async getUserPermissionsFromDb() {
     const permissionData = await this.db
       .selectFrom("rolePermissions")
-      .innerJoin("roles", "rolePermissions.roleId", "roles.id")
+      .innerJoin("roles", "roles.id", "rolePermissions.roleId")
       .innerJoin(
         "permissions",
-        "rolePermissions.permissionId",
-        "permissions.id"
+        "permissions.id",
+        "rolePermissions.permissionId"
       )
       .innerJoin("members", "members.roleId", "roles.id")
-      .innerJoin("projectMembers", "projectMembers.roleId", "roles.id")
       .innerJoin("organisations", "organisations.id", "members.orgId")
-      .innerJoin("projects", "projects.id", "projectMembers.projectId")
+      .leftJoin("projectMembers", "projectMembers.roleId", "roles.id")
+      .leftJoin("projects", "projects.id", "projectMembers.projectId")
       .select([
         "roles.name as roleName",
         "permissions.action",
@@ -130,9 +130,9 @@ export class PermissionService {
         "projects.id as projectId",
         "projects.name as projectName",
       ])
-      .where((eb) => eb.and([eb("members.userId", "=", this.user.id)]))
+      .where("members.userId", "=", this.user.id)
       .execute()
-
+    console.log(permissionData)
     const memberPermissions = permissionData.reduce<MemberPermissions>(
       (acc, curr) => {
         const {
@@ -196,6 +196,7 @@ export class PermissionService {
 
   async getOrgPermissions(orgId: string) {
     const memberPermissions = await this.memberPermissions
+    console.log(memberPermissions)
     return memberPermissions.orgPermissions.find((o) => o.orgId === orgId)
   }
 

@@ -57,7 +57,9 @@ export function findAllRoles(c: Context, orgId?: string) {
   const query = c.get("db").selectFrom("roles").selectAll()
 
   if (orgId) {
-    query.where("organizationId", "=", orgId)
+    query.where((eb) =>
+      eb.or([eb("organizationId", "=", orgId), eb("isSystemRole", "=", true)])
+    )
   }
 
   return query.execute()
