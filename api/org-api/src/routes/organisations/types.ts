@@ -1,22 +1,12 @@
 import { z } from "@hono/zod-openapi"
 import { USER_ROLES, UserRoles } from "@incmix/utils/types"
 
-export const MessageResponseSchema = z
-  .object({
-    message: z.string().openapi({
-      example: "Successful",
-    }),
-  })
-  .openapi("Response")
-
 export const MemberSchema = z
   .object({
     userId: z.string().openapi({
       example: "93jpbulpkkavxnz",
     }),
-    role: z.enum(USER_ROLES).default(UserRoles.ROLE_VIEWER).openapi({
-      example: UserRoles.ROLE_VIEWER,
-    }),
+    role: z.string().openapi({ example: "Owner" }),
   })
   .openapi("Member")
 

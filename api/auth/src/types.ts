@@ -1,6 +1,5 @@
 import type { Session } from "@/auth/types"
 import type { KyselyDb } from "@incmix-api/utils/db-schema"
-import type { UserType } from "@incmix/utils/types"
 import type { Context as HonoContext } from "hono"
 import type { Env } from "./env-vars"
 
@@ -9,7 +8,7 @@ export type Bindings = Env
 export type AuthUser = {
   id: string
   email: string
-  userType: UserType
+  isSuperAdmin: boolean
   emailVerified: boolean
 }
 

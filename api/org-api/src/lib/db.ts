@@ -1,13 +1,9 @@
 import type { Context } from "@/types"
-import { subject as caslSubject } from "@casl/ability"
 import {
-  ForbiddenError,
   NotFoundError,
   PreconditionFailedError,
 } from "@incmix-api/utils/errors"
-import { createAbilityFromPermissions } from "@incmix/utils/casl"
 
-import { ERROR_CASL_FORBIDDEN } from "@incmix-api/utils"
 import { useTranslation } from "@incmix-api/utils/middleware"
 import {
   type Action,
@@ -17,7 +13,6 @@ import {
   UserRoles,
 } from "@incmix/utils/types"
 
-import { defaultPermissions, interpolate } from "./casl"
 import {
   ERROR_LAST_OWNER,
   ERROR_NOT_MEMBER,
@@ -26,7 +21,6 @@ import {
 
 import type {
   KyselyDb,
-  MemberRole,
   NewMember,
   NewOrganisation,
   NewPermission,
@@ -59,15 +53,23 @@ export async function isValidUser(c: Context, id: string) {
   return !!user
 }
 
-export function findAllRoles(c: Context) {
-  return c.get("db").selectFrom("roles").selectAll().execute()
+export function findAllRoles(c: Context, orgId?: string) {
+  const query = c.get("db").selectFrom("roles").selectAll()
+
+  if (orgId) {
+    query.where((eb) =>
+      eb.or([eb("organizationId", "=", orgId), eb("isSystemRole", "=", true)])
+    )
+  }
+
+  return query.execute()
 }
 
 export function insertRole(c: Context, role: NewRole) {
   return c
     .get("db")
     .insertInto("roles")
-    .values({ name: role.name })
+    .values(role)
     .returningAll()
     .executeTakeFirst()
 }
@@ -77,7 +79,7 @@ export function findRoleByName(c: Context, name: string) {
     .get("db")
     .selectFrom("roles")
     .selectAll()
-    .where("name", "=", name as MemberRole)
+    .where("name", "=", name)
     .executeTakeFirst()
 }
 export function findRoleById(c: Context, id: number) {
@@ -104,7 +106,7 @@ export async function deleteRoleById(c: Context, id: number) {
     .transaction()
     .execute(async (tx) => {
       await tx
-        .deleteFrom("permissions")
+        .deleteFrom("rolePermissions")
         .where("roleId", "=", id)
         .executeTakeFirstOrThrow()
       return await tx
@@ -112,22 +114,6 @@ export async function deleteRoleById(c: Context, id: number) {
         .where("id", "=", id)
         .executeTakeFirstOrThrow()
     })
-}
-
-export function findAllPermissions(c: Context) {
-  return c
-    .get("db")
-    .selectFrom("permissions")
-    .innerJoin("roles", "roles.id", "permissions.roleId")
-    .select([
-      "permissions.id",
-      "roles.id as roleId",
-      "roles.name as role",
-      "permissions.action",
-      "permissions.subject",
-      "permissions.conditions",
-    ])
-    .execute()
 }
 
 export function findPermissionBySubjectAndAction(
@@ -138,11 +124,12 @@ export function findPermissionBySubjectAndAction(
   instance?: KyselyDb
 ) {
   return (instance ?? c.get("db"))
-    .selectFrom("permissions")
+    .selectFrom("rolePermissions")
+    .innerJoin("permissions", "permissions.id", "rolePermissions.permissionId")
     .selectAll()
-    .where("subject", "=", subject)
-    .where("action", "=", action)
-    .where("roleId", "=", roleId)
+    .where("permissions.resourceType", "=", subject)
+    .where("permissions.action", "=", action)
+    .where("rolePermissions.roleId", "=", roleId)
     .executeTakeFirst()
 }
 
@@ -171,10 +158,17 @@ export function updatePermission(
     .executeTakeFirstOrThrow()
 }
 
-export function deletePermission(c: Context, id: number, instance?: KyselyDb) {
+export function deletePermission(
+  c: Context,
+  id: number,
+  roleId: number,
+  instance?: KyselyDb
+) {
   return (instance ?? c.get("db"))
-    .deleteFrom("permissions")
-    .where("id", "=", id)
+    .deleteFrom("rolePermissions")
+    .where((eb) =>
+      eb.and([eb("permissionId", "=", id), eb("roleId", "=", roleId)])
+    )
     .executeTakeFirstOrThrow()
 }
 
@@ -197,6 +191,7 @@ export async function checkHandleAvailability(c: Context, handle: string) {
   if (!org) return true
   return false
 }
+
 export async function findOrganisationByHandle(c: Context, handle: string) {
   const org = await c
     .get("db")
@@ -338,57 +333,6 @@ export async function findOrgMemberById(
 
   return member
 }
-export async function findOrgMemberPermissions(
-  c: Context,
-  user: AuthUser,
-  org: Organisation & { owners: string[] }
-) {
-  const member = await c
-    .get("db")
-    .selectFrom("members")
-    .innerJoin("roles", "roles.id", "members.roleId")
-    .select((eb) => [
-      "orgId",
-      "roleId",
-      "userId",
-      "roles.name as role",
-      jsonArrayFrom(
-        eb
-          .selectFrom("permissions")
-          .select(["id", "roleId", "action", "subject", "conditions"])
-          .whereRef("permissions.roleId", "=", "members.roleId")
-      ).as("permissions"),
-    ])
-    .where((eb) =>
-      eb.and([
-        eb("members.userId", "=", user.id),
-        eb("members.orgId", "=", org.id),
-      ])
-    )
-    .executeTakeFirst()
-
-  const t = await useTranslation(c)
-  if (!member?.userId) {
-    const msg = await t.text(ERROR_NOT_MEMBER)
-    throw new NotFoundError(msg)
-  }
-
-  let permissions = member.permissions
-
-  if (user.userType === UserRoles.ROLE_SUPER_ADMIN) {
-    // @ts-expect-error - defaultPermissions is not typed
-    permissions = defaultPermissions
-  }
-
-  const interpolatedPermissions: Permission[] = interpolate(
-    JSON.stringify(permissions),
-    {
-      owner: org.owners,
-    }
-  )
-
-  return { member, permissions: interpolatedPermissions }
-}
 
 export function findOrgMembers(c: Context, orgId: string) {
   return c
@@ -431,26 +375,6 @@ export async function ensureAtLeastOneOwner(
   }
 }
 
-export async function isOrgMember(
-  c: Context,
-  userId: string,
-  orgId: string
-): Promise<boolean> {
-  const member = await c
-    .get("db")
-    .selectFrom("members")
-    .select("userId")
-    .where((eb) =>
-      eb.and([
-        eb("members.orgId", "=", orgId),
-        eb("members.userId", "=", userId),
-      ])
-    )
-    .executeTakeFirst()
-
-  return !!member
-}
-
 export async function doesOrganisationExist(
   c: Context,
   name: string,
@@ -467,32 +391,4 @@ export async function doesOrganisationExist(
 
   const members = await findOrgMembers(c, org.id)
   return members.some((m) => m.userId === userId)
-}
-
-export async function throwUnlessUserCan({
-  c,
-  user,
-  org,
-  action,
-  subject,
-}: {
-  c: Context
-  user: AuthUser
-  org: Organisation & { owners: string[] }
-  action: Action
-  subject: "Organisation" | "Member"
-}) {
-  const { member, permissions } = await findOrgMemberPermissions(c, user, org)
-
-  const ability = createAbilityFromPermissions(permissions)
-  const sub = caslSubject(subject, { ...org, owner: member.userId })
-
-  if (!ability.can(action, sub)) {
-    const t = await useTranslation(c)
-    const msg = await t.text(ERROR_CASL_FORBIDDEN, {
-      role: member.role,
-      action,
-    })
-    throw new ForbiddenError(msg)
-  }
 }

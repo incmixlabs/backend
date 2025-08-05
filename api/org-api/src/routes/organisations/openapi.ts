@@ -1,3 +1,4 @@
+import { MessageResponseSchema } from "@/types"
 import { createRoute } from "@hono/zod-openapi"
 import {
   MembersResponseSchema,
@@ -7,7 +8,6 @@ import {
   CreateOrgSchema,
   MemberEmailSchema,
   MemberSchema,
-  MessageResponseSchema,
   OrgHandleSchema,
   OrgIdSchema,
   OrgSchema,

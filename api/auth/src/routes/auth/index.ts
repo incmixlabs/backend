@@ -39,7 +39,7 @@ import {
   zodError,
 } from "@incmix-api/utils/errors"
 import { useTranslation } from "@incmix-api/utils/middleware"
-import { UserRoles } from "@incmix/utils/types"
+
 const authRoutes = new OpenAPIHono<HonoApp>({
   defaultHook: zodError,
 })
@@ -101,7 +101,7 @@ authRoutes.openapi(getUser, async (c) => {
     return c.json(
       {
         id: searchedUser.id,
-        userType: searchedUser.userType,
+        isSuperAdmin: searchedUser.isSuperAdmin,
         email: searchedUser.email,
         emailVerified: !!searchedUser.emailVerifiedAt,
       },
@@ -139,7 +139,7 @@ authRoutes.openapi(signup, async (c) => {
           id: userId,
           email,
           emailVerifiedAt: null,
-          userType: UserRoles.ROLE_MEMBER,
+          isSuperAdmin: false,
         },
         fullName,
         password,
@@ -161,7 +161,7 @@ authRoutes.openapi(signup, async (c) => {
     return c.json(
       {
         id: user.id,
-        userType: user.userType,
+        isSuperAdmin: user.isSuperAdmin,
         email: user.email,
         emailVerified: Boolean(user.emailVerifiedAt),
         name: fullName,
@@ -211,7 +211,7 @@ authRoutes.openapi(login, async (c) => {
     return c.json(
       {
         id: user.id,
-        userType: user.userType,
+        isSuperAdmin: user.isSuperAdmin,
         email: user.email,
         emailVerified: !!user.emailVerifiedAt,
         session,

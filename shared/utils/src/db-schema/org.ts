@@ -1,21 +1,19 @@
-import { type Action, type Subject, UserRoles } from "@incmix/utils/types"
+import type { MongoQuery } from "@casl/ability"
+import type { Action, Subject } from "@incmix/utils/types"
 import type {
   ColumnType,
   Generated,
   Insertable,
+  JSONColumnType,
   Selectable,
   Updateable,
 } from "kysely"
 
-const MemberRoles = [
-  UserRoles.ROLE_ADMIN,
-  UserRoles.ROLE_OWNER,
-  UserRoles.ROLE_EDITOR,
-  UserRoles.ROLE_VIEWER,
-  UserRoles.ROLE_COMMENTER,
-] as const
+// New enum types based on SQL migration
+export type RoleScope = "organization" | "project" | "both"
+export type PermissionAction = Action
 
-export type MemberRole = (typeof MemberRoles)[number]
+export type ResourceType = Subject
 
 type OrganisationTable = {
   id: string
@@ -31,17 +29,36 @@ type MemberTable = {
   roleId: number
 }
 
+// Updated RoleTable based on SQL migration 008
 type RoleTable = {
   id: Generated<number>
-  name: ColumnType<MemberRole, string, string>
+  name: string
+  description: string | null
+  organizationId: string | null
+  isSystemRole: boolean
+  scope: ColumnType<RoleScope, string, string>
+  createdAt: ColumnType<Date, string, never>
+  updatedAt: ColumnType<Date, string, never>
 }
 
+// Updated PermissionTable based on SQL migration 008
 export type PermissionTable = {
   id: Generated<number>
+  name: string
+  description: string | null
+  resourceType: ColumnType<ResourceType, string, string>
+  action: ColumnType<PermissionAction, string, string>
+  conditions: JSONColumnType<MongoQuery, string, string> | null
+  createdAt: ColumnType<Date, string, never>
+  updatedAt: ColumnType<Date, string, never>
+}
+
+// New RolePermissionsTable based on SQL migration 008
+export type RolePermissionsTable = {
   roleId: number
-  action: ColumnType<Action>
-  subject: ColumnType<Subject>
-  conditions: string | null
+  permissionId: number
+  conditions: JSONColumnType<MongoQuery, string, string> | null
+  createdAt: ColumnType<Date, string, never>
 }
 
 export type Organisation = Selectable<OrganisationTable>
@@ -60,9 +77,14 @@ export type Permission = Selectable<PermissionTable>
 export type NewPermission = Insertable<PermissionTable>
 export type UpdatedPermission = Updateable<PermissionTable>
 
+export type RolePermissions = Selectable<RolePermissionsTable>
+export type NewRolePermissions = Insertable<RolePermissionsTable>
+export type UpdatedRolePermissions = Updateable<RolePermissionsTable>
+
 export type OrgTables = {
   organisations: OrganisationTable
   members: MemberTable
   roles: RoleTable
   permissions: PermissionTable
+  rolePermissions: RolePermissionsTable
 }

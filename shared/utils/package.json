@@ -33,6 +33,10 @@
     "./zod-schema": {
       "default": "./dist/src/zod-schema/index.js",
       "types": "./dist/src/zod-schema/index.d.ts"
+    },
+    "./authorization": {
+      "default": "./dist/src/authorization/index.js",
+      "types": "./dist/src/authorization/index.d.ts"
     }
   },
   "dependencies": {

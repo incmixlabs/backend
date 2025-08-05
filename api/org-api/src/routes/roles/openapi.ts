@@ -1,33 +1,33 @@
 import { MessageResponseSchema } from "@/types"
 import { createRoute, z } from "@hono/zod-openapi"
-import { PermissionRolesResponseSchema, UpdatePermissionSchema } from "./types"
+import { AddNewRoleSchema, UpdateRoleSchema } from "./types"
 
-/**
- * Route for retrieving all roles and permissions.
- * Requires authentication and appropriate permissions to access data.
- */
-export const getRolesPermissions = createRoute({
-  method: "get",
-  path: "",
-  summary: "Get All Roles and Permissions",
+export const addNewRole = createRoute({
+  method: "post",
+  path: "/{orgId}",
+  summary: "Add New Role",
   tags: ["Permissions"],
   security: [{ cookieAuth: [] }],
   request: {
-    query: z.object({
-      orgId: z.string().optional().openapi({
-        description: "The ID of the organization",
-        example: "123",
-      }),
+    params: z.object({
+      orgId: z.string(),
     }),
-  },
-  responses: {
-    200: {
+    body: {
       content: {
         "application/json": {
-          schema: PermissionRolesResponseSchema,
+          schema: AddNewRoleSchema,
         },
       },
-      description: "Roles and permissions for the organization",
+    },
+  },
+  responses: {
+    201: {
+      content: {
+        "application/json": {
+          schema: MessageResponseSchema,
+        },
+      },
+      description: "Role added successfully",
     },
     401: {
       content: {
@@ -56,27 +56,21 @@ export const getRolesPermissions = createRoute({
   },
 })
 
-/**
- * Route for updating permissions for specific roles.
- * Requires authentication and administrative permissions to modify role permissions.
- */
-export const updatePermissions = createRoute({
+export const updateRole = createRoute({
   method: "put",
-  path: "/{orgId}",
-  summary: "Update Permissions",
+  path: "/{orgId}/{id}",
+  summary: "Update Role",
   tags: ["Permissions"],
   security: [{ cookieAuth: [] }],
   request: {
     params: z.object({
-      orgId: z.string().openapi({
-        description: "The ID of the organization",
-        example: "123",
-      }),
+      orgId: z.string(),
+      id: z.coerce.number(),
     }),
     body: {
       content: {
         "application/json": {
-          schema: UpdatePermissionSchema,
+          schema: UpdateRoleSchema,
         },
       },
     },
@@ -88,7 +82,54 @@ export const updatePermissions = createRoute({
           schema: MessageResponseSchema,
         },
       },
-      description: "Permission updated",
+      description: "Role updated successfully",
+    },
+    401: {
+      content: {
+        "application/json": {
+          schema: MessageResponseSchema,
+        },
+      },
+      description: "Authentication Error",
+    },
+    403: {
+      content: {
+        "application/json": {
+          schema: MessageResponseSchema,
+        },
+      },
+      description: "Forbidden - Insufficient permissions",
+    },
+    500: {
+      content: {
+        "application/json": {
+          schema: MessageResponseSchema,
+        },
+      },
+      description: "Internal Server Error",
+    },
+  },
+})
+export const deleteRole = createRoute({
+  method: "delete",
+  path: "/{orgId}",
+  summary: "Delete Role",
+  tags: ["Permissions"],
+  security: [{ cookieAuth: [] }],
+  request: {
+    params: z.object({
+      orgId: z.string(),
+      id: z.coerce.number(),
+    }),
+  },
+  responses: {
+    200: {
+      content: {
+        "application/json": {
+          schema: MessageResponseSchema,
+        },
+      },
+      description: "Role deleted successfully",
     },
     401: {
       content: {
