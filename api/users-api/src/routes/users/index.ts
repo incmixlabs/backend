@@ -322,31 +322,28 @@ userRoutes.openapi(getUserpermissions, async (c) => {
       const msg = await t.text(ERROR_UNAUTHORIZED)
       throw new UnauthorizedError(msg)
     }
-    if (user.userType === UserRoles.ROLE_SUPER_ADMIN) {
+    if (user.isSuperAdmin) {
       return c.json(adminPermissions, 200)
     }
-    if (user.userType === UserRoles.ROLE_MEMBER) {
-      const { orgId } = c.req.valid("query")
-      if (!orgId) throw new BadRequestError("orgId is required")
-      const url = `${env(c).ORG_API_URL}/${orgId}/permissions`
-      const cookie = c.req.header("Cookie") || ""
-      const res = await fetch(url, {
-        headers: { cookie },
-      })
-      if (!res.ok) {
-        const error = (await res.json()) as { message: string }
 
-        return c.json(
-          { message: error.message },
-          res.status as ContentfulStatusCode
-        )
-      }
+    const { orgId } = c.req.valid("query")
+    if (!orgId) throw new BadRequestError("orgId is required")
+    const url = `${env(c).ORG_API_URL}/${orgId}/permissions`
+    const cookie = c.req.header("Cookie") || ""
+    const res = await fetch(url, {
+      headers: { cookie },
+    })
+    if (!res.ok) {
+      const error = (await res.json()) as { message: string }
 
-      const permissions = (await res.json()) as Permission[]
-      return c.json(permissions, 200)
+      return c.json(
+        { message: error.message },
+        res.status as ContentfulStatusCode
+      )
     }
 
-    return c.json(userPermissions(user.id), 200)
+    const permissions = (await res.json()) as Permission[]
+    return c.json(permissions, 200)
   } catch (error) {
     return await processError<typeof getUserpermissions>(c, error, [
       "{{ default }}",
@@ -364,10 +361,10 @@ userRoutes.openapi(getAllUsers, async (c) => {
       throw new UnauthorizedError(msg)
     }
 
-    if (user.userType !== UserRoles.ROLE_SUPER_ADMIN) {
+    if (!user.isSuperAdmin) {
       const msg = await t.text(ERROR_CASL_FORBIDDEN, {
         action: "read",
-        role: user.userType,
+        role: "Member",
       })
       throw new ForbiddenError(msg)
     }
@@ -505,7 +502,7 @@ userRoutes.openapi(deleteUser, async (c) => {
     }
     const { id } = c.req.valid("param")
 
-    if (user.id !== id && user.userType !== UserRoles.ROLE_SUPER_ADMIN) {
+    if (user.id !== id && !user.isSuperAdmin) {
       const msg = await t.text(ERROR_FORBIDDEN)
       throw new ForbiddenError(msg)
     }
@@ -551,7 +548,7 @@ userRoutes.openapi(updateUser, async (c) => {
       throw new UnauthorizedError(msg)
     }
     const { id } = c.req.valid("param")
-    if (user.id !== id && user.userType !== UserRoles.ROLE_SUPER_ADMIN) {
+    if (user.id !== id && !user.isSuperAdmin) {
       const msg = await t.text(ERROR_FORBIDDEN)
       throw new ForbiddenError(msg)
     }
@@ -596,7 +593,7 @@ userRoutes.openapi(addProfilePicture, async (c) => {
     }
     const { id } = c.req.valid("param")
 
-    if (user.id !== id && user.userType !== UserRoles.ROLE_SUPER_ADMIN) {
+    if (user.id !== id && !user.isSuperAdmin) {
       const msg = await t.text(ERROR_FORBIDDEN)
       throw new ForbiddenError(msg)
     }
@@ -686,7 +683,7 @@ userRoutes.openapi(deleteProfilePicture, async (c) => {
       throw new UnauthorizedError(msg)
     }
     const { id } = c.req.valid("param")
-    if (user.id !== id && user.userType !== UserRoles.ROLE_SUPER_ADMIN) {
+    if (user.id !== id && !user.isSuperAdmin) {
       const msg = await t.text(ERROR_FORBIDDEN)
       throw new ForbiddenError(msg)
     }

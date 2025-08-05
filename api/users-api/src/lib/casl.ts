@@ -10,7 +10,7 @@ export const adminPermissions: Permission[] = [
 export const userPermissions = (userId: string): Permission[] => [
   {
     action: "manage",
-    subject: "User",
+    subject: "Member",
     conditions: {
       id: userId,
     },

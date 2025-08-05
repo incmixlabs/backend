@@ -161,10 +161,7 @@ commentsRoute.openapi(updateComment, async (c) => {
           updates.content = comment.content
         }
 
-        if (
-          existingComment.userId !== user.id &&
-          user.userType !== "super_admin"
-        ) {
+        if (existingComment.userId !== user.id && !user.isSuperAdmin) {
           const msg = await t.text(ERROR_UNAUTHORIZED)
           throw new UnauthorizedError(msg)
         }
@@ -216,7 +213,7 @@ commentsRoute.openapi(removeComment, async (c) => {
       throw new UnprocessableEntityError(msg)
     }
 
-    if (existingComment.userId !== user.id && user.userType !== "super_admin") {
+    if (existingComment.userId !== user.id && !user.isSuperAdmin) {
       const msg = await t.text(ERROR_UNAUTHORIZED)
       throw new UnauthorizedError(msg)
     }

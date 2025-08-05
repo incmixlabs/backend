@@ -136,7 +136,7 @@ oAuthRoutes.openapi(googleCallback, async (c) => {
       {
         email: user.email,
         emailVerified: Boolean(user.emailVerifiedAt),
-        userType: user.userType,
+        isSuperAdmin: user.isSuperAdmin,
         id: user.id,
         session,
       },

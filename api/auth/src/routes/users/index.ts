@@ -40,10 +40,10 @@ userRoutes.openapi(getAllUsers, async (c) => {
       throw new UnauthorizedError(msg)
     }
 
-    if (user.userType !== UserRoles.ROLE_SUPER_ADMIN) {
+    if (!user.isSuperAdmin) {
       const msg = await t.text(ERROR_CASL_FORBIDDEN, {
         action: "read",
-        role: user.userType,
+        role: "Member",
       })
       throw new ForbiddenError(msg)
     }
@@ -154,10 +154,10 @@ userRoutes.openapi(setVerified, async (c) => {
       throw new UnauthorizedError(msg)
     }
 
-    if (user.userType !== UserRoles.ROLE_SUPER_ADMIN) {
+    if (!user.isSuperAdmin) {
       const msg = await t.text(ERROR_CASL_FORBIDDEN, {
         action: "read",
-        role: user.userType,
+        role: "Member",
       })
       throw new ForbiddenError(msg)
     }
@@ -203,10 +203,10 @@ userRoutes.openapi(setEnabled, async (c) => {
       throw new UnauthorizedError(msg)
     }
 
-    if (user.userType !== UserRoles.ROLE_SUPER_ADMIN) {
+    if (!user.isSuperAdmin) {
       const msg = await t.text(ERROR_CASL_FORBIDDEN, {
         action: "read",
-        role: user.userType,
+        role: "Member",
       })
       throw new ForbiddenError(msg)
     }
@@ -251,10 +251,10 @@ userRoutes.openapi(setPassword, async (c) => {
       throw new UnauthorizedError(msg)
     }
 
-    if (user.userType !== UserRoles.ROLE_SUPER_ADMIN) {
+    if (!user.isSuperAdmin) {
       const msg = await t.text(ERROR_CASL_FORBIDDEN, {
         action: "read",
-        role: user.userType,
+        role: "Member",
       })
       throw new ForbiddenError(msg)
     }

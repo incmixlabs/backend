@@ -173,8 +173,8 @@ export class PermissionService {
               role: { name: roleName, id: roleId },
               description: roleDescription ?? undefined,
               permissions: [permissions],
-              projectId,
-              projectName,
+              projectId: projectId ?? "",
+              projectName: projectName ?? "",
             })
           } else {
             acc.projectPermissions
