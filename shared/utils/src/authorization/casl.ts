@@ -132,7 +132,7 @@ export class PermissionService {
       ])
       .where("members.userId", "=", this.user.id)
       .execute()
-    console.log(permissionData)
+
     const memberPermissions = permissionData.reduce<MemberPermissions>(
       (acc, curr) => {
         const {
@@ -196,7 +196,6 @@ export class PermissionService {
 
   async getOrgPermissions(orgId: string) {
     const memberPermissions = await this.memberPermissions
-    console.log(memberPermissions)
     return memberPermissions.orgPermissions.find((o) => o.orgId === orgId)
   }
 

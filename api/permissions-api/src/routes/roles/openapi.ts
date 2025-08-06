@@ -1,17 +1,20 @@
 import { MessageResponseSchema } from "@/types"
 import { createRoute, z } from "@hono/zod-openapi"
-import { AddNewRoleSchema, UpdateRoleSchema } from "./types"
+import {
+  AddNewRoleSchema,
+  IdSchema,
+  OrgIdSchema,
+  UpdateRoleSchema,
+} from "./types"
 
 export const addNewRole = createRoute({
   method: "post",
-  path: "/{orgId}",
+  path: "",
   summary: "Add New Role",
   tags: ["Permissions"],
   security: [{ cookieAuth: [] }],
   request: {
-    params: z.object({
-      orgId: z.string(),
-    }),
+    query: OrgIdSchema,
     body: {
       content: {
         "application/json": {
@@ -58,15 +61,13 @@ export const addNewRole = createRoute({
 
 export const updateRole = createRoute({
   method: "put",
-  path: "/{orgId}/{id}",
+  path: "/{id}",
   summary: "Update Role",
   tags: ["Permissions"],
   security: [{ cookieAuth: [] }],
   request: {
-    params: z.object({
-      orgId: z.string(),
-      id: z.coerce.number(),
-    }),
+    query: OrgIdSchema,
+    params: IdSchema,
     body: {
       content: {
         "application/json": {
@@ -112,15 +113,13 @@ export const updateRole = createRoute({
 })
 export const deleteRole = createRoute({
   method: "delete",
-  path: "/{orgId}",
+  path: "/{id}",
   summary: "Delete Role",
   tags: ["Permissions"],
   security: [{ cookieAuth: [] }],
   request: {
-    params: z.object({
-      orgId: z.string(),
-      id: z.coerce.number(),
-    }),
+    query: OrgIdSchema,
+    params: IdSchema,
   },
   responses: {
     200: {
