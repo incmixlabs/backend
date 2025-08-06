@@ -13,7 +13,13 @@ import {
   ERROR_PROJECT_NOT_FOUND,
   ERROR_PROJECT_UPDATE_FAILED,
 } from "@/lib/constants"
-import { getProjectById, getUserProjects, isOrgMember } from "@/lib/db"
+import {
+  findRoleByName,
+  getProjectById,
+  getProjectMembers as getProjectMembersFromDb,
+  getUserProjects,
+  isOrgMember,
+} from "@/lib/db"
 import { getOrganizationById } from "@/lib/services"
 import type { HonoApp } from "@/types"
 import { OpenAPIHono } from "@hono/zod-openapi"
@@ -22,6 +28,7 @@ import type { NewProjectMember } from "@incmix-api/utils/db-schema"
 import {
   BadRequestError,
   ConflictError,
+  ServerError,
   UnauthorizedError,
   UnprocessableEntityError,
   processError,
@@ -37,6 +44,7 @@ import {
   addProjectMembers,
   createProject,
   deleteProject,
+  getProjectMembers as getProjectMembersRoute,
   listProjects,
   removeProjectChecklist,
   removeProjectMembers,
@@ -186,13 +194,17 @@ projectRoutes.openapi(createProject, async (c) => {
           const msg = await t.text(ERROR_PROJECT_CREATE_FAILED)
           throw new BadRequestError(msg)
         }
-
+        const role = await findRoleByName(c, "project_manager", org.id)
+        if (!role) {
+          const msg = await t.text(ERROR_PROJECT_MEMBER_CREATE_FAILED)
+          throw new ServerError(msg)
+        }
         const insertableMembers: NewProjectMember[] = [
           {
             projectId: id,
             userId: user.id,
-            role: "owner",
-            roleId: 1,
+            role: role.name,
+            roleId: role.id,
             isOwner: true,
             createdBy: user.id,
             updatedBy: user.id,
@@ -212,7 +224,9 @@ projectRoutes.openapi(createProject, async (c) => {
             throw new BadRequestError(msg)
           }
 
-          const memberData = parsedMembers.data.members
+          const memberData = parsedMembers.data.members.filter(
+            (m) => m.id !== user.id
+          )
 
           for (const member of memberData) {
             const orgMember = await isOrgMember(c, org.id, member.id)
@@ -223,19 +237,27 @@ projectRoutes.openapi(createProject, async (c) => {
             }
           }
 
-          insertableMembers.push(
-            ...memberData.map((member) => ({
-              projectId: id,
-              userId: member.id,
-              role: member.role,
-              roleId: 1,
-              isOwner: member.id === user.id,
-              createdBy: user.id,
-              updatedBy: user.id,
-              createdAt: new Date().toISOString(),
-              updatedAt: new Date().toISOString(),
-            }))
+          const memberWithValues = await Promise.all(
+            memberData.map(async (member) => {
+              const role = await findRoleByName(c, member.role, org.id)
+              if (!role) {
+                const msg = await t.text(ERROR_PROJECT_MEMBER_CREATE_FAILED)
+                throw new ServerError(msg)
+              }
+              return {
+                projectId: id,
+                userId: member.id,
+                role: member.role,
+                roleId: role.id,
+                isOwner: member.id === user.id,
+                createdBy: user.id,
+                updatedBy: user.id,
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString(),
+              }
+            })
           )
+          insertableMembers.push(...memberWithValues)
         }
 
         const insertedMembers = await tx
@@ -625,6 +647,33 @@ projectRoutes.openapi(removeProjectChecklist, async (c) => {
     return await processError<typeof removeProjectChecklist>(c, error, [
       "{{ default }}",
       "remove-project-checklist",
+    ])
+  }
+})
+
+projectRoutes.openapi(getProjectMembersRoute, async (c) => {
+  try {
+    const user = c.get("user")
+    const t = await useTranslation(c)
+    if (!user) {
+      const msg = await t.text(ERROR_UNAUTHORIZED)
+      throw new UnauthorizedError(msg)
+    }
+
+    const { id: projectId } = c.req.valid("param")
+    const existingProject = await getProjectById(c, projectId)
+    if (!existingProject) {
+      const msg = await t.text(ERROR_PROJECT_NOT_FOUND)
+      throw new UnprocessableEntityError(msg)
+    }
+
+    const members = await getProjectMembersFromDb(c, projectId)
+
+    return c.json(members, 200)
+  } catch (error) {
+    return await processError<typeof getProjectMembersRoute>(c, error, [
+      "{{ default }}",
+      "get-project-members",
     ])
   }
 })

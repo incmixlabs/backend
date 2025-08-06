@@ -14,6 +14,7 @@ import {
   UpdateProjectChecklistSchema,
   UpdateProjectSchema,
 } from "./types"
+import { z } from "@hono/zod-openapi"
 
 export const createProject = createRoute({
   path: "/",
@@ -459,6 +460,61 @@ export const removeProjectChecklist = createRoute({
         },
       },
       description: "Removed checklist items from project",
+    },
+    401: {
+      content: {
+        "application/json": {
+          schema: ResponseSchema,
+        },
+      },
+      description: "Error response when not authenticated",
+    },
+    404: {
+      content: {
+        "application/json": {
+          schema: ResponseSchema,
+        },
+      },
+      description: "Error response when Project does not exist",
+    },
+    500: {
+      content: {
+        "application/json": {
+          schema: ResponseSchema,
+        },
+      },
+      description: "Internal Server Error",
+    },
+  },
+})
+
+export const getProjectMembers = createRoute({
+  path: "/{id}/members",
+  method: "get",
+  summary: "Get Project Members",
+  tags: ["Projects"],
+  description: "Get all members of a project",
+  security: [{ cookieAuth: [] }],
+  request: {
+    params: IdSchema,
+  },
+  responses: {
+    200: {
+      content: {
+        "application/json": {
+          schema: z.array(
+            z.object({
+              id: z.string(),
+              role: z.string(),
+              isOwner: z.boolean(),
+              name: z.string(),
+              email: z.string(),
+              avatar: z.string().nullable(),
+            })
+          ),
+        },
+      },
+      description: "Returns list of project members",
     },
     401: {
       content: {
