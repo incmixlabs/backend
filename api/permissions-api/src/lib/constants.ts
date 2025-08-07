@@ -10,7 +10,7 @@ export const ERROR_PERMISSION_NOT_FOUND = {
   namespace: "errors",
   key: "permission_not_found",
 }
-export const ERROR_NO_ROLES = { namespace: "errors", key: "role_not_found" }
+// ERROR_NO_ROLES removed - duplicate of ERROR_ROLE_NOT_FOUND
 export const ERROR_PERMISSION_CREATE_FAIL = {
   namespace: "errors",
   key: "permission_create_fail",

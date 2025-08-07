@@ -9,14 +9,14 @@ RUN apk add --no-cache git && \
 # Copy only files needed for dependency installation
 COPY ./package.json ./pnpm-lock.yaml ./pnpm-workspace.yaml ./turbo.json ./
 COPY ./shared/utils/package.json ./shared/utils/
-COPY ./api/org-api/package.json ./api/org-api/
+COPY ./api/permissions-api/package.json ./api/permissions-api/
 
 # Install dependencies with production flag
 RUN pnpm install --frozen-lockfile --prod=false
 
 # Copy only necessary source files
 COPY ./shared/ ./shared/
-COPY ./api/org-api/ ./api/org-api/
+COPY ./api/permissions-api/ ./api/permissions-api/
 
 ARG TURBO_TOKEN
 ENV TURBO_TOKEN=$TURBO_TOKEN
@@ -33,16 +33,16 @@ RUN npm install -g pnpm
 # Copy package files for production dependencies
 COPY --from=builder /app/package.json /app/pnpm-lock.yaml /app/pnpm-workspace.yaml ./
 COPY --from=builder /app/shared/utils/package.json ./shared/utils/
-COPY --from=builder /app/api/org-api/package.json ./api/org-api/
+COPY --from=builder /app/api/permissions-api/package.json ./api/permissions-api/
 
 # Install only production dependencies
 RUN pnpm install --frozen-lockfile --prod
 
 # Copy built files from builder stage
 COPY --from=builder /app/shared/utils/dist ./shared/utils/dist
-COPY --from=builder /app/api/org-api/dist ./api/org-api/dist
+COPY --from=builder /app/api/permissions-api/dist ./api/permissions-api/dist
 
-WORKDIR /app/api/org-api
+WORKDIR /app/api/permissions-api
 
 # Expose port 9292 (matches the port in src/index.ts)
 EXPOSE 9292
