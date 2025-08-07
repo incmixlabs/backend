@@ -5,13 +5,7 @@ import {
 } from "@incmix-api/utils/errors"
 
 import { useTranslation } from "@incmix-api/utils/middleware"
-import {
-  type Action,
-  type AuthUser,
-  type Permission,
-  type Subject,
-  UserRoles,
-} from "@incmix/utils/types"
+import { UserRoles } from "@incmix/utils/types"
 
 import {
   ERROR_LAST_OWNER,
@@ -19,16 +13,7 @@ import {
   ERROR_ORG_NOT_FOUND,
 } from "./constants"
 
-import type {
-  KyselyDb,
-  NewMember,
-  NewOrganisation,
-  NewPermission,
-  NewRole,
-  Organisation,
-  UpdatedPermission,
-  UpdatedRole,
-} from "@incmix-api/utils/db-schema"
+import type { NewMember, NewOrganisation } from "@incmix-api/utils/db-schema"
 import { jsonArrayFrom } from "kysely/helpers/postgres"
 
 export async function getUserByEmail(c: Context, email: string) {
@@ -65,15 +50,6 @@ export function findAllRoles(c: Context, orgId?: string) {
   return query.execute()
 }
 
-export function insertRole(c: Context, role: NewRole) {
-  return c
-    .get("db")
-    .insertInto("roles")
-    .values(role)
-    .returningAll()
-    .executeTakeFirst()
-}
-
 export function findRoleByName(c: Context, name: string) {
   return c
     .get("db")
@@ -82,6 +58,7 @@ export function findRoleByName(c: Context, name: string) {
     .where("name", "=", name)
     .executeTakeFirst()
 }
+
 export function findRoleById(c: Context, id: number) {
   return c
     .get("db")
@@ -89,87 +66,6 @@ export function findRoleById(c: Context, id: number) {
     .selectAll()
     .where("id", "=", id)
     .executeTakeFirst()
-}
-
-export function updateRoleById(c: Context, role: UpdatedRole, id: number) {
-  return c
-    .get("db")
-    .updateTable("roles")
-    .set(role)
-    .where("id", "=", id)
-    .executeTakeFirst()
-}
-
-export async function deleteRoleById(c: Context, id: number) {
-  return await c
-    .get("db")
-    .transaction()
-    .execute(async (tx) => {
-      await tx
-        .deleteFrom("rolePermissions")
-        .where("roleId", "=", id)
-        .executeTakeFirstOrThrow()
-      return await tx
-        .deleteFrom("roles")
-        .where("id", "=", id)
-        .executeTakeFirstOrThrow()
-    })
-}
-
-export function findPermissionBySubjectAndAction(
-  c: Context,
-  subject: Subject,
-  action: Action,
-  roleId: number,
-  instance?: KyselyDb
-) {
-  return (instance ?? c.get("db"))
-    .selectFrom("rolePermissions")
-    .innerJoin("permissions", "permissions.id", "rolePermissions.permissionId")
-    .selectAll()
-    .where("permissions.resourceType", "=", subject)
-    .where("permissions.action", "=", action)
-    .where("rolePermissions.roleId", "=", roleId)
-    .executeTakeFirst()
-}
-
-export function insertPermission(
-  c: Context,
-  permission: NewPermission,
-  instance?: KyselyDb
-) {
-  return (instance ?? c.get("db"))
-    .insertInto("permissions")
-    .values(permission)
-    .returningAll()
-    .executeTakeFirstOrThrow()
-}
-
-export function updatePermission(
-  c: Context,
-  permission: UpdatedPermission,
-  id: number,
-  instance?: KyselyDb
-) {
-  return (instance ?? c.get("db"))
-    .updateTable("permissions")
-    .set(permission)
-    .where("id", "=", id)
-    .executeTakeFirstOrThrow()
-}
-
-export function deletePermission(
-  c: Context,
-  id: number,
-  roleId: number,
-  instance?: KyselyDb
-) {
-  return (instance ?? c.get("db"))
-    .deleteFrom("rolePermissions")
-    .where((eb) =>
-      eb.and([eb("permissionId", "=", id), eb("roleId", "=", roleId)])
-    )
-    .executeTakeFirstOrThrow()
 }
 
 export function insertOrganisation(c: Context, org: NewOrganisation) {

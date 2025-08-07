@@ -20,13 +20,14 @@ import {
   findOrganisationByHandle,
   findOrganisationById,
   findOrganisationByUserId,
+  findRoleByName,
   getUserByEmail,
   getUserById,
   insertMembers,
   insertOrganisation,
   isValidUser,
 } from "@/lib/db"
-import { getRoleIdByName, throwUnlessUserCan } from "@/lib/helper"
+import { throwUnlessUserCan } from "@/lib/helper"
 import {
   addMember,
   createOrganisation,
@@ -224,7 +225,7 @@ orgRoutes.openapi(createOrganisation, async (c) => {
       throw new ServerError(msg)
     }
 
-    const ownerRole = await getRoleIdByName(c, UserRoles.ROLE_OWNER)
+    const ownerRole = await findRoleByName(c, UserRoles.ROLE_OWNER)
     if (!ownerRole) {
       const msg = await t.text(ERROR_NO_ROLES)
       throw new ServerError(msg)
@@ -234,7 +235,7 @@ orgRoutes.openapi(createOrganisation, async (c) => {
       members.map(async (m) => ({
         userId: m.userId as string,
         orgId: newOrg.id,
-        roleId: (await getRoleIdByName(c, m.role as UserRole)) ?? 3,
+        roleId: (await findRoleByName(c, m.role as UserRole))?.id ?? 3,
       }))
     )
 
@@ -242,7 +243,7 @@ orgRoutes.openapi(createOrganisation, async (c) => {
       {
         userId: user.id,
         orgId: orgId,
-        roleId: ownerRole,
+        roleId: ownerRole.id,
       },
       ...orgMembers,
     ])
@@ -296,14 +297,14 @@ orgRoutes.openapi(addMember, async (c) => {
       throw new ConflictError(msg)
     }
 
-    const dbRole = await getRoleIdByName(c, role)
+    const dbRole = await findRoleByName(c, role)
     if (!dbRole) {
       const msg = await t.text(ERROR_NO_ROLES)
       throw new ServerError(msg)
     }
 
     const [newMember] = await insertMembers(c, [
-      { userId, orgId: org.id, roleId: dbRole },
+      { userId, orgId: org.id, roleId: dbRole.id },
     ])
 
     if (!newMember) {
@@ -507,7 +508,7 @@ orgRoutes.openapi(updateMemberRole, async (c) => {
       await ensureAtLeastOneOwner(c, org.id, [userId], "update")
     }
 
-    const dbRole = await getRoleIdByName(c, newRole)
+    const dbRole = await findRoleByName(c, newRole)
     if (!dbRole) {
       const msg = await t.text(ERROR_NO_ROLES)
       throw new ServerError(msg)
@@ -516,7 +517,7 @@ orgRoutes.openapi(updateMemberRole, async (c) => {
     const updated = await c
       .get("db")
       .updateTable("members")
-      .set({ roleId: dbRole })
+      .set({ roleId: dbRole.id })
       .where((eb) =>
         eb.and([eb("orgId", "=", org.id), eb("userId", "=", userId)])
       )

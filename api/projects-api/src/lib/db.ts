@@ -3,6 +3,32 @@ import type { Project } from "@incmix-api/utils/zod-schema"
 
 import { jsonArrayFrom, jsonObjectFrom } from "kysely/helpers/postgres"
 
+export async function findRoleByName(c: Context, name: string, orgId: string) {
+  const role = await c
+    .get("db")
+    .selectFrom("roles")
+    .selectAll()
+    .where((eb) =>
+      eb.and([eb("organizationId", "=", orgId), eb("name", "=", name)])
+    )
+    .executeTakeFirst()
+
+  if (!role) {
+    const systemRole = await c
+      .get("db")
+      .selectFrom("roles")
+      .selectAll()
+      .where((eb) =>
+        eb.and([eb("isSystemRole", "=", true), eb("name", "=", name)])
+      )
+      .executeTakeFirst()
+
+    return systemRole
+  }
+
+  return role
+}
+
 export function buildProjectQuery(c: Context) {
   return c
     .get("db")
@@ -226,4 +252,30 @@ export async function isOrgMember(c: Context, orgId: string, userId: string) {
     .executeTakeFirst()
 
   return !!member
+}
+
+export async function getProjectMembers(c: Context, projectId: string) {
+  const members = await c
+    .get("db")
+    .selectFrom("projectMembers")
+    .innerJoin("userProfiles as users", "projectMembers.userId", "users.id")
+    .select([
+      "projectMembers.userId as id",
+      "projectMembers.role",
+      "projectMembers.isOwner",
+      "users.fullName as name",
+      "users.email",
+      "users.avatar",
+    ])
+    .where("projectMembers.projectId", "=", projectId)
+    .execute()
+
+  return members.map((member) => ({
+    id: member.id,
+    role: member.role ?? "member",
+    isOwner: member.isOwner,
+    name: member.name,
+    email: member.email,
+    avatar: member.avatar,
+  }))
 }

@@ -1,12 +1,27 @@
 import { z } from "@hono/zod-openapi"
+
+export const OrgIdSchema = z.object({
+  orgId: z.string().optional().openapi({
+    example: "123",
+    description: "The id of the organisation",
+  }),
+})
+
+export const IdSchema = z.object({
+  id: z.coerce.number().openapi({
+    example: 1,
+    description: "The id of the role",
+  }),
+})
+
 export const AddNewRoleSchema = z
   .object({
     name: z.string().min(3).max(50).openapi({
-      example: "Admin",
+      example: "project_admin",
       description: "The name of the role",
     }),
     description: z.string().min(3).max(255).openapi({
-      example: "Admin role",
+      example: "Project admin role",
       description: "The description of the role",
     }),
     scope: z.enum(["org", "project"]).openapi({
