@@ -36,7 +36,7 @@ permissionRoutes.openapi(getRolesPermissions, async (c) => {
 
     const { orgId } = c.req.valid("query")
 
-    await throwUnlessUserCan(c, "read", "Role", orgId)
+    await throwUnlessUserCan(c, "update", "Role", orgId)
 
     const roles = await findAllRoles(c, orgId)
 

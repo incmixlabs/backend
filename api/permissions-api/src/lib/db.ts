@@ -14,7 +14,12 @@ export function findAllRoles(c: Context, orgId?: string) {
   let query = c.get("db").selectFrom("roles").selectAll()
 
   if (orgId) {
-    query = query.where((eb) => eb.or([eb("organizationId", "=", orgId)]))
+    query = query.where((eb) =>
+      eb.or([
+        eb("organizationId", "=", orgId),
+        eb("organizationId", "is", null),
+      ])
+    )
   }
 
   return query.execute()
