@@ -20,7 +20,6 @@ import { actions, subjects } from "@incmix/utils/types"
 import { getRolesPermissions, updatePermissions } from "./openapi"
 
 import { throwUnlessUserCan } from "@/lib/helper"
-import type { PermissionsWithRole } from "./types"
 
 const permissionRoutes = new OpenAPIHono<HonoApp>({
   defaultHook: zodError,

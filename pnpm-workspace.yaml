@@ -25,7 +25,7 @@ catalog:
   "@hono/node-server": 1.13.8
   "@hono/zod-openapi": 0.19.8
   "@hono/zod-validator": 0.7.0
-  "@incmix/utils": 0.36.2
+  "@incmix/utils": 0.36.3
   "@playwright/test": 1.49.0
   "@types/lodash": 4.17.1
   "@types/luxon": 3.4.2

@@ -57,7 +57,11 @@ export const AddProjectMemberSchema = z.object({
     .array(
       z.object({
         id: z.string().openapi({ example: "user123" }),
-        role: z.string().openapi({ example: "member" }),
+        role: z
+          .string()
+          .optional()
+          .default("project_member")
+          .openapi({ example: "project_member" }),
       })
     )
     .openapi({ example: [{ id: "user123", role: "member" }] }),

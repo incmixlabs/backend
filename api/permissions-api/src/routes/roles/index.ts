@@ -34,11 +34,11 @@ rolesRoutes.openapi(addNewRole, async (c) => {
     }
 
     const { name, description, scope } = c.req.valid("json")
-    const { orgId } = c.req.valid("param")
+    const { orgId } = c.req.valid("query")
 
     await throwUnlessUserCan(c, "create", "Role", orgId)
 
-    const existingRole = await findRoleByName(c, name)
+    const existingRole = await findRoleByName(c, name, orgId)
 
     if (existingRole) {
       const msg = await t.text(ERROR_ROLE_ALREADY_EXISTS)
@@ -49,7 +49,7 @@ rolesRoutes.openapi(addNewRole, async (c) => {
       name,
       description,
       scope,
-      isSystemRole: false,
+      isSystemRole: user.isSuperAdmin && !orgId,
       organizationId: orgId,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
