@@ -6,6 +6,7 @@ import {
   ChecklistIdSchema,
   CreateTaskSchema,
   RemoveTaskChecklistSchema,
+  TaskIdListSchema,
   TaskIdSchema,
   TaskListSchema,
   UpdateTaskChecklistSchema,
@@ -402,6 +403,65 @@ export const removeTaskChecklist = createRoute({
         },
       },
       description: "Error response when checklist removal fails",
+    },
+    500: {
+      content: {
+        "application/json": {
+          schema: ResponseSchema,
+        },
+      },
+      description: "Internal Server Error",
+    },
+  },
+})
+
+export const bulkAiGenTask = createRoute({
+  method: "post",
+  path: "/bulk-ai-gen",
+  summary: "Bulk AI Gen Task",
+  tags: ["Tasks"],
+  security: [{ cookieAuth: [] }],
+  request: {
+    body: {
+      content: {
+        "application/json": {
+          schema: TaskIdListSchema,
+        },
+      },
+    },
+  },
+  responses: {
+    200: {
+      content: {
+        "application/json": {
+          schema: ResponseSchema,
+        },
+      },
+      description: "Updates existing Task for current User",
+    },
+    401: {
+      content: {
+        "application/json": {
+          schema: ResponseSchema,
+        },
+      },
+      description: "Error response when not authenticated",
+    },
+    404: {
+      content: {
+        "application/json": {
+          schema: ResponseSchema,
+        },
+      },
+      description: "Error response when No task available for given ID",
+    },
+    400: {
+      content: {
+        "application/json": {
+          schema: ResponseSchema,
+        },
+      },
+      description: "Error response when task update fails",
     },
     500: {
       content: {

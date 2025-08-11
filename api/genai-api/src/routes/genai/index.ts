@@ -82,7 +82,7 @@ genaiRoutes.openapi(generateUserStory, async (c) => {
       .executeTakeFirst()
 
     return streamSSE(c, async (stream) => {
-      const result = aiGenerateUserStory(c, prompt, template, userTier)
+      const result = aiGenerateUserStory(prompt, template, userTier)
       for await (const chunk of result.partialObjectStream) {
         stream.writeSSE({
           data: JSON.stringify(chunk),

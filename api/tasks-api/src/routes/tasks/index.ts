@@ -13,6 +13,7 @@ import { getTaskById, getTasks } from "@/lib/db"
 
 import {
   addTaskChecklist,
+  bulkAiGenTask,
   createTask,
   deleteTask,
   listTasks,
@@ -33,6 +34,11 @@ import {
   zodError,
 } from "@incmix-api/utils/errors"
 import { useTranslation } from "@incmix-api/utils/middleware"
+import {
+  addUserStoryToQueue,
+  setupUserStoryQueue,
+} from "@incmix-api/utils/queue"
+import { env } from "hono/adapter"
 import { nanoid } from "nanoid"
 const tasksRoutes = new OpenAPIHono<HonoApp>({
   defaultHook: zodError,
@@ -541,6 +547,49 @@ tasksRoutes.openapi(removeTaskChecklist, async (c) => {
     return await processError<typeof removeTaskChecklist>(c, error, [
       "{{ default }}",
       "remove-task-checklist",
+    ])
+  }
+})
+
+tasksRoutes.openapi(bulkAiGenTask, async (c) => {
+  try {
+    const user = c.get("user")
+    const t = await useTranslation(c)
+    if (!user) {
+      const msg = await t.text(ERROR_UNAUTHORIZED)
+      throw new UnauthorizedError(msg)
+    }
+
+    const { taskIds } = c.req.valid("json")
+
+    const tasks = await c
+      .get("db")
+      .selectFrom("tasks")
+      .select(["id", "name", "description"])
+      .where(
+        "id",
+        "in",
+        taskIds.map((t) => t.id)
+      )
+      .execute()
+
+    const queue = setupUserStoryQueue(env(c))
+
+    for (const task of tasks) {
+      await addUserStoryToQueue(queue, {
+        taskId: task.id,
+        title: task.name,
+      })
+    }
+
+    return c.json(
+      { message: `${tasks.length} Tasks queued for AI generation` },
+      200
+    )
+  } catch (error) {
+    return await processError<typeof bulkAiGenTask>(c, error, [
+      "{{ default }}",
+      "bulk-ai-gen-task",
     ])
   }
 })
