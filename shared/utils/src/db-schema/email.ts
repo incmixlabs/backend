@@ -22,6 +22,7 @@ type EmailQueueTable = {
   status: Status
   sgId: string | null
   sendgridData: string | null
+  userId: string
   shouldRetry: boolean
   createdAt: ColumnType<Date, string, never>
   updatedAt: ColumnType<Date, string, never>

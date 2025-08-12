@@ -25,7 +25,7 @@ type UserAccountsTable = {
   createdAt: ColumnType<Date, null, string>
 }
 
-export type TokenType = "forgot_password" | "email_verification"
+export type TokenType = "reset_password" | "email_verification"
 
 type VerificationCodesTable = {
   id: Generated<number>

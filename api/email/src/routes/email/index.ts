@@ -32,6 +32,7 @@ emailRoutes.openapi(sendMail, async (c) => {
         template: params.body.template,
         payload: JSON.stringify(params.body.payload),
         status,
+        userId: params.requestedBy,
         sgId: res.id,
         shouldRetry,
         createdAt: new Date().toISOString(),

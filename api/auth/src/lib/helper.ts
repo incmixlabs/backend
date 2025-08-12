@@ -177,6 +177,7 @@ export const sendVerificationEmail = (
         template: "VerificationEmail",
       },
       recipient,
+      requestedBy: c.get("user")?.id,
     }),
     headers: {
       "content-type": "application/json",
@@ -203,6 +204,7 @@ export const sendForgetPasswordEmail = async (
         payload: { resetPasswordLink, username },
         template: "ResetPasswordEmail",
       },
+      requestedBy: c.get("user")?.id,
       recipient,
     }),
     headers: {
@@ -211,7 +213,7 @@ export const sendForgetPasswordEmail = async (
     },
   })
   const res = await fetch(request)
-
+  console.log(res.status)
   if (!res.ok) throw new ServerError()
   console.log({
     recipient,
