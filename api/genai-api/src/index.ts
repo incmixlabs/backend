@@ -31,60 +31,90 @@ serve(
   }
 )
 
-startUserStoryWorker(envVars, async (job) => {
+const worker = startUserStoryWorker(envVars, async (job) => {
   const db = initDb(envVars.DATABASE_URL)
   const task = await db
     .selectFrom("tasks")
     .selectAll()
-    .where("statusId", "=", job.data.taskId)
+    .where("id", "=", job.data.taskId)
     .executeTakeFirst()
 
   if (!task) {
     throw new Error("Task not found")
   }
 
-  const userStoryResult = generateUserStory(task.name)
+  try {
+    const userStoryResult = generateUserStory(task.name, undefined, "free")
 
-  const { userStory } = await userStoryResult.object
+    const result = await userStoryResult.object
 
-  if (
-    !userStory ||
-    !userStory.description ||
-    !userStory.acceptanceCriteria ||
-    !userStory.checklist
-  ) {
+    if (!result || !result.userStory) {
+      console.error(
+        `Invalid response from AI service for task ${job.data.taskId}:`,
+        result
+      )
+      return Promise.resolve(
+        `failed to generate user story for task ${job.data.taskId}: invalid response format`
+      )
+    }
+
+    const { userStory } = result
+
+    if (
+      !userStory ||
+      !userStory.description ||
+      !userStory.acceptanceCriteria ||
+      !userStory.checklist
+    ) {
+      console.error(
+        `Incomplete user story data for task ${job.data.taskId}:`,
+        userStory
+      )
+      return Promise.resolve(
+        `failed to generate user story for task ${job.data.taskId}: incomplete data`
+      )
+    }
+
+    await db.transaction().execute(async (tx) => {
+      const updateResult = await tx
+        .updateTable("tasks")
+        .set({
+          description: userStory.description,
+          acceptanceCriteria: JSON.stringify(
+            userStory.acceptanceCriteria.map((item, i) => ({
+              id: nanoid(),
+              title: item,
+              checked: false,
+              order: i,
+            }))
+          ),
+          checklist: JSON.stringify(
+            userStory.checklist.map((item, i) => ({
+              id: nanoid(),
+              title: item,
+              checked: false,
+              order: i,
+            }))
+          ),
+        })
+        .where("id", "=", job.data.taskId)
+        .executeTakeFirst()
+
+      return updateResult
+    })
+
+    return Promise.resolve(`updated task ${job.data.taskId}`)
+  } catch (error) {
+    console.error(
+      `Error generating user story for task ${job.data.taskId}:`,
+      error
+    )
     return Promise.resolve(
-      `failed to generate user story for task ${job.data.taskId}`
+      `failed to generate user story for task ${job.data.taskId}: ${(error as Error).message}`
     )
   }
-
-  const updateResult = await db
-    .updateTable("tasks")
-    .set({
-      description: userStory.description,
-      acceptanceCriteria: JSON.stringify(
-        userStory.acceptanceCriteria.map((item, i) => ({
-          id: nanoid(),
-          title: item,
-          checked: false,
-          order: i,
-        }))
-      ),
-      checklist: JSON.stringify(
-        userStory.checklist.map((item, i) => ({
-          id: nanoid(),
-          title: item,
-          checked: false,
-          order: i,
-        }))
-      ),
-    })
-    .where("id", "=", job.data.taskId)
-    .executeTakeFirst()
-
-  if (updateResult) {
-    return Promise.resolve(`updated task ${job.data.taskId}`)
-  }
-  return Promise.resolve(`failed to update task ${job.data.taskId}`)
 })
+
+worker.run()
+
 export default app

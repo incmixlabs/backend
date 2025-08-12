@@ -437,7 +437,8 @@ export const bulkAiGenTask = createRoute({
           schema: ResponseSchema,
         },
       },
-      description: "Updates existing Task for current User",
+      description:
+        "Queues tasks for AI-generated content including descriptions, acceptance criteria, and checklists",
     },
     401: {
       content: {

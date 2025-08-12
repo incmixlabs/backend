@@ -1,4 +1,4 @@
-import { type ConnectionOptions, type Job, Queue, Worker } from "bullmq"
+import { type Job, Queue, type QueueOptions, Worker } from "bullmq"
 
 type EnvVars = {
   REDIS_HOST: string
@@ -6,8 +6,12 @@ type EnvVars = {
   REDIS_PASSWORD: string
 }
 
-function createNewQueue(name: string, connection: ConnectionOptions) {
+function createNewQueue(
+  name: string,
+  { connection, ...options }: QueueOptions
+) {
   return new Queue(name, {
+    ...options,
     connection,
   })
 }
@@ -21,9 +25,18 @@ const USER_STORY_QUEUE_NAME = "user-story"
 
 export function setupUserStoryQueue(envVars: EnvVars): Queue<UserStoryJobData> {
   return createNewQueue(USER_STORY_QUEUE_NAME, {
-    host: envVars.REDIS_HOST,
-    port: envVars.REDIS_PORT,
-    password: envVars.REDIS_PASSWORD,
+    connection: {
+      host: envVars.REDIS_HOST,
+      port: envVars.REDIS_PORT,
+      password: envVars.REDIS_PASSWORD,
+    },
+    defaultJobOptions: {
+      attempts: 2,
+      backoff: {
+        type: "exponential",
+        delay: 2000,
+      },
+    },
   })
 }
 
@@ -45,6 +58,7 @@ export function startUserStoryWorker<T>(
       password: envVars.REDIS_PASSWORD,
     },
     autorun: false,
+    concurrency: 2,
   })
 
   return worker
