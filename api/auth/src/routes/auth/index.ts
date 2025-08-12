@@ -153,7 +153,7 @@ authRoutes.openapi(signup, async (c) => {
         "email_verification",
         tx
       )
-      sendVerificationEmail(c, email, verificationCode)
+      sendVerificationEmail(c, email, verificationCode, userId)
 
       return { profile, user }
     })
