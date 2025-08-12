@@ -79,7 +79,6 @@ export function formatUserStoryPrompt(
 }
 
 export function generateUserStory(
-  _c: Context,
   prompt: string,
   template?: StoryTemplate,
   userTier: "free" | "paid" = "free"

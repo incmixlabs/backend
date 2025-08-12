@@ -20,6 +20,10 @@ export const TaskListSchema = z.array(
   })
 )
 
+export const TaskIdListSchema = z.object({
+  taskIds: z.array(TaskSchema.pick({ id: true })),
+})
+
 export const CreateTaskSchema = TaskSchema.pick({
   name: true,
   description: true,

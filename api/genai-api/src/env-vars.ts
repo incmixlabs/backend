@@ -24,6 +24,9 @@ const EnvSchema = z.object({
   ANTHROPIC_API_KEY: z.string().optional(),
   GOOGLE_AI_API_KEY: z.string().optional(),
   FIGMA_TOKEN: z.string().optional(),
+  REDIS_HOST: z.string().default("localhost"),
+  REDIS_PORT: z.coerce.number().default(6379),
+  REDIS_PASSWORD: z.string().default("redis_password"),
 })
 
 export type ENV = z.infer<typeof EnvSchema>

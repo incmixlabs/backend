@@ -9,3 +9,4 @@ TASKS_API_URL=http://tasks-api:8888/api/tasks
 LOCATION_API_URL=http://location-api:9494/api/location
 GENAI_API_URL=http://genai-api:8383/api/genai
 PROJECTS_API_URL=http://projects-api:8484/api/projects
+PERMISSIONS_API_URL=http://permissions-api:9393/api/permissions

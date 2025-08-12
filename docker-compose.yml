@@ -19,8 +19,23 @@ services:
       - incmix-db-data:/var/lib/postgresql/data
     networks:
       - incmix-network
+
+  redis:
+    image: redis:8.2-alpine
+    restart: always
+    # command: redis-server --requirepass ${REDIS_PASSWORD:-redis_password}
+    # environment:
+      # REDIS_PASSWORD: ${REDIS_PASSWORD:-redis_password}
+    ports:
+      - 6379:6379
+    volumes:
+      - incmix-redis-data:/data
+    networks:
+      - incmix-network
+
 volumes:
   incmix-db-data:
+  incmix-redis-data:
 
 networks:
   incmix-network:
