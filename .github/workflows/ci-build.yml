@@ -1,0 +1,173 @@
+name: CI/CD Docker Build
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'api/**/Dockerfile'
+      - 'api/**/src/**'
+      - 'api/**/package.json'
+      - 'shared/**'
+
+env:
+  REGISTRY_URL: https://registry.incmix.com
+
+jobs:
+  detect-changes:
+    runs-on: ubuntu-latest
+    outputs:
+      services: ${{ steps.changes.outputs.services }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Detect changed services
+        id: changes
+        run: |
+          # Get changed files
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            CHANGED_FILES=$(git diff --name-only origin/main...HEAD)
+          else
+            CHANGED_FILES=$(git diff --name-only HEAD~1 HEAD)
+          fi
+
+          # Extract service names from changed files
+          SERVICES=""
+          for file in $CHANGED_FILES; do
+            if [[ $file =~ ^api/([^/]+)/ ]]; then
+              SERVICE=${BASH_REMATCH[1]}
+              if [[ ! " $SERVICES " =~ " $SERVICE " ]]; then
+                SERVICES="$SERVICES $SERVICE"
+              fi
+            fi
+          done
+
+          # Also check shared directory changes
+          if echo "$CHANGED_FILES" | grep -q "^shared/"; then
+            # If shared code changed, build all services
+            SERVICES="auth users-api projects-api tasks-api comments-api files-api genai-api intl-api location-api org-api permissions-api rxdb-api bff-web email"
+          fi
+
+          echo "services=$SERVICES" >> $GITHUB_OUTPUT
+          echo "Changed services: $SERVICES"
+
+  build-services:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.services != ''
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        service: ${{ fromJson(format('[{0}]', needs.detect-changes.outputs.services)) }}
+        include:
+          - service: auth
+            dockerfile: api/auth/Dockerfile
+            context: api/auth
+            image-name: auth-service
+          - service: users-api
+            dockerfile: api/users-api/Dockerfile
+            context: api/users-api
+            image-name: users-api
+          - service: projects-api
+            dockerfile: api/projects-api/Dockerfile
+            context: api/projects-api
+            image-name: projects-api
+          - service: tasks-api
+            dockerfile: api/tasks-api/Dockerfile
+            context: api/tasks-api
+            image-name: tasks-api
+          - service: comments-api
+            dockerfile: api/comments-api/Dockerfile
+            context: api/comments-api
+            image-name: comments-api
+          - service: files-api
+            dockerfile: api/files-api/Dockerfile
+            context: api/files-api
+            image-name: files-api
+          - service: genai-api
+            dockerfile: api/genai-api/Dockerfile
+            context: api/genai-api
+            image-name: genai-api
+          - service: intl-api
+            dockerfile: api/intl-api/Dockerfile
+            context: api/intl-api
+            image-name: intl-api
+          - service: location-api
+            dockerfile: api/location-api/Dockerfile
+            context: api/location-api
+            image-name: location-api
+          - service: org-api
+            dockerfile: api/org-api/Dockerfile
+            context: api/org-api
+            image-name: org-api
+          - service: permissions-api
+            dockerfile: api/permissions-api/Dockerfile
+            context: api/permissions-api
+            image-name: permissions-api
+          - service: rxdb-api
+            dockerfile: api/rxdb-api/Dockerfile
+            context: api/rxdb-api
+            image-name: rxdb-api
+          - service: bff-web
+            dockerfile: api/bff-web/Dockerfile
+            context: api/bff-web
+            image-name: bff-web
+          - service: email
+            dockerfile: api/email/Dockerfile
+            context: api/email
+            image-name: email-service
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Build Docker image
+        id: build
+        uses: ./.github/actions/docker-build-push
+        with:
+          dockerfile: ${{ matrix.dockerfile }}
+          context: ${{ matrix.context }}
+          image-name: ${{ matrix.image-name }}
+          image-tag: ${{ github.event_name == 'pull_request' && 'pr-' + github.event.number || github.ref_name }}
+          registry-username: ${{ secrets.DOCKER_USERNAME }}
+          registry-password: ${{ secrets.DOCKER_PASSWORD }}
+          push: ${{ github.event_name != 'pull_request' }}
+          cache-from: ${{ env.REGISTRY_URL }}/${{ matrix.image-name }}:cache
+          cache-to: ${{ github.event_name != 'pull_request' && format('type=registry,ref={0}/{1}:cache,mode=max', env.REGISTRY_URL, matrix.image-name) || '' }}
+
+      - name: Build summary
+        run: |
+          echo "## Build Summary for ${{ matrix.service }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Service**: ${{ matrix.service }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Image**: ${{ env.REGISTRY_URL }}/${{ matrix.image-name }}:${{ github.event_name == 'pull_request' && 'pr-' + github.event.number || github.ref_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Status**: ${{ github.event_name == 'pull_request' && 'Build only (PR)' || 'Built and pushed' }}" >> $GITHUB_STEP_SUMMARY
+          if [ "${{ steps.build.outputs.image-id }}" != "" ]; then
+            echo "- **Image ID**: ${{ steps.build.outputs.image-id }}" >> $GITHUB_STEP_SUMMARY
+          fi
+
+  build-summary:
+    needs: [detect-changes, build-services]
+    if: always() && needs.detect-changes.outputs.services != ''
+    runs-on: ubuntu-latest
+    steps:
+      - name: Build Summary
+        run: |
+          echo "## 🚀 CI/CD Build Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Event**: ${{ github.event_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Branch**: ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Commit**: ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            echo "**Services Built**: ${{ needs.detect-changes.outputs.services }}" >> $GITHUB_STEP_SUMMARY
+            echo "**Status**: ✅ Build completed (no push to registry)" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "**Services Built & Pushed**: ${{ needs.detect-changes.outputs.services }}" >> $GITHUB_STEP_SUMMARY
+            echo "**Status**: 🚀 Build completed and pushed to registry" >> $GITHUB_STEP_SUMMARY
+          fi
+
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Registry**: ${{ env.REGISTRY_URL }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Build Time**: ${{ github.event.head_commit.timestamp }}" >> $GITHUB_STEP_SUMMARY
