@@ -43,7 +43,7 @@ jobs:
         run: |
           echo "=== DETECT-CHANGES JOB OUTPUTS ==="
           echo "services output: '${{ steps.detect.outputs.services }}'"
-          echo "services output length: ${#needs.detect-changes.outputs.services}"
+          echo "services output length: ${#steps.detect.outputs.services}"
           echo "services output type: $(echo '${{ steps.detect.outputs.services }}' | jq -R .)"
           echo "=== END OUTPUTS ==="
 
