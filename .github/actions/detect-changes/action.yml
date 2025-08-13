@@ -33,7 +33,7 @@ runs:
             SERVICES='["auth", "users-api", "projects-api", "tasks-api", "comments-api", "files-api", "genai-api", "intl-api", "location-api", "org-api", "permissions-api", "rxdb-api", "bff-web", "email"]'
             echo "services=$SERVICES" >> $GITHUB_OUTPUT
             echo "Manual trigger: Building all services"
-            # Don't exit here, let the script continue to ensure output is properly set
+            exit 0
           else
             # For non-force builds, continue with normal detection
             echo "Manual trigger: Detecting changed services"
