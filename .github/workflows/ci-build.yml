@@ -31,6 +31,7 @@ jobs:
           fetch-depth: 2
 
       - name: Detect service changes
+        id: detect
         uses: ./.github/actions/detect-changes
         with:
           force_build_all: ${{ github.event.inputs.force_build_all || 'false' }}
