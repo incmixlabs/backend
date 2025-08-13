@@ -8,6 +8,18 @@ on:
       - 'api/**/src/**'
       - 'api/**/package.json'
       - 'shared/**'
+  workflow_dispatch:
+    inputs:
+      force_build_all:
+        description: 'Force build all services (ignores change detection)'
+        required: false
+        default: false
+        type: boolean
+      target_branch:
+        description: 'Target branch for build (defaults to current branch)'
+        required: false
+        default: ''
+        type: string
 
 env:
   REGISTRY_URL: https://registry.incmix.com
@@ -21,11 +33,23 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
+          ref: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.target_branch || github.ref }}
           fetch-depth: 0
 
       - name: Detect changed services
         id: changes
         run: |
+          # Handle manual workflow dispatch
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            if [ "${{ github.event.inputs.force_build_all }}" = "true" ]; then
+              # Force build all services
+              SERVICES="auth users-api projects-api tasks-api comments-api files-api genai-api intl-api location-api org-api permissions-api rxdb-api bff-web email"
+              echo "services=$SERVICES" >> $GITHUB_OUTPUT
+              echo "Manual trigger: Building all services"
+              exit 0
+            fi
+          fi
+
           # Get changed files
           if [ "${{ github.event_name }}" = "pull_request" ]; then
             CHANGED_FILES=$(git diff --name-only origin/main...HEAD)
@@ -121,6 +145,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.target_branch || github.ref }}
 
       - name: Build Docker image
         id: build
@@ -163,6 +189,14 @@ jobs:
           if [ "${{ github.event_name }}" = "pull_request" ]; then
             echo "**Services Built**: ${{ needs.detect-changes.outputs.services }}" >> $GITHUB_STEP_SUMMARY
             echo "**Status**: ✅ Build completed (no push to registry)" >> $GITHUB_STEP_SUMMARY
+          elif [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            if [ "${{ github.event.inputs.force_build_all }}" = "true" ]; then
+              echo "**Services Built & Pushed**: All services (manual trigger)" >> $GITHUB_STEP_SUMMARY
+              echo "**Status**: 🚀 Manual build completed and pushed to registry" >> $GITHUB_STEP_SUMMARY
+            else
+              echo "**Services Built & Pushed**: ${{ needs.detect-changes.outputs.services }}" >> $GITHUB_STEP_SUMMARY
+              echo "**Status**: 🚀 Manual build completed and pushed to registry" >> $GITHUB_STEP_SUMMARY
+            fi
           else
             echo "**Services Built & Pushed**: ${{ needs.detect-changes.outputs.services }}" >> $GITHUB_STEP_SUMMARY
             echo "**Status**: 🚀 Build completed and pushed to registry" >> $GITHUB_STEP_SUMMARY
