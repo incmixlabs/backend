@@ -182,132 +182,6 @@ runs:
         echo "=== END REPOSITORY STRUCTURE VERIFICATION ==="
       shell: bash
 
-    - name: Fix context path and working directory
-      run: |
-        echo "=== CONTEXT PATH FIX ==="
-        echo "Original context: ${{ inputs.context }}"
-        echo "Original dockerfile: ${{ inputs.dockerfile }}"
-        echo ""
-
-        # Try to resolve the context path
-        if [ -d "${{ inputs.context }}" ]; then
-          echo "✓ Context directory exists"
-          echo "Context absolute path: $(realpath "${{ inputs.context }}")"
-          echo "Context relative path: ${{ inputs.context }}"
-        else
-          echo "✗ Context directory not found!"
-          echo "Trying to find it..."
-          find . -name "$(basename "${{ inputs.context }}")" -type d 2>/dev/null | head -5
-        fi
-
-        echo ""
-        # Try to resolve the dockerfile path
-        if [ -f "${{ inputs.dockerfile }}" ]; then
-          echo "✓ Dockerfile exists"
-          echo "Dockerfile absolute path: $(realpath "${{ inputs.dockerfile }}")"
-          echo "Dockerfile relative path: ${{ inputs.dockerfile }}"
-        else
-          echo "✗ Dockerfile not found!"
-          echo "Trying to find it..."
-          find . -name "$(basename "${{ inputs.dockerfile }}")" -type f 2>/dev/null | head -5
-        fi
-
-        echo ""
-        echo "Current working directory: $(pwd)"
-        echo "=== END CONTEXT PATH FIX ==="
-      shell: bash
-
-    - name: Change to repository root
-      run: |
-        echo "=== WORKING DIRECTORY CHANGE ==="
-        echo "Current working directory: $(pwd)"
-        echo "Repository root should be: $(pwd)"
-        echo "Checking if we're in the right place..."
-        if [ -d "api" ] && [ -f ".github/workflows/ci-build.yml" ]; then
-          echo "✓ We're in the repository root"
-        else
-          echo "✗ We're not in the repository root"
-          echo "Looking for repository root..."
-          # Try to find the repository root by looking for key files
-          if [ -f ".github/workflows/ci-build.yml" ]; then
-            echo "Found .github/workflows/ci-build.yml in current directory"
-          elif [ -f "../.github/workflows/ci-build.yml" ]; then
-            echo "Found .github/workflows/ci-build.yml in parent directory"
-            cd ..
-          elif [ -f "../../.github/workflows/ci-build.yml" ]; then
-            echo "Found .github/workflows/ci-build.yml in grandparent directory"
-            cd ../..
-          else
-            echo "Could not find repository root"
-          fi
-        fi
-        echo "Final working directory: $(pwd)"
-        echo "=== END WORKING DIRECTORY CHANGE ==="
-      shell: bash
-
-    - name: Ensure repository root context
-      run: |
-        echo "=== REPOSITORY ROOT CONTEXT VERIFICATION ==="
-        echo "Current working directory: $(pwd)"
-        echo ""
-        echo "Verifying repository root structure:"
-        echo "API directory: $([ -d "api" ] && echo "✓ EXISTS" || echo "✗ MISSING")"
-        echo "GitHub workflows: $([ -d ".github/workflows" ] && echo "✓ EXISTS" || echo "✗ MISSING")"
-        echo "Service config: $([ -f ".github/actions/service-config/services.json" ] && echo "✓ EXISTS" || echo "✗ MISSING")"
-        echo ""
-        echo "Repository root confirmed: $([ -d "api" ] && [ -f ".github/workflows/ci-build.yml" ] && echo "YES" || echo "NO")"
-        echo "=== END REPOSITORY ROOT VERIFICATION ==="
-      shell: bash
-
-    - name: Set build context and working directory
-      run: |
-        echo "=== BUILD CONTEXT SETUP ==="
-        echo "Current working directory: $(pwd)"
-        echo ""
-        echo "Input context: ${{ inputs.context }}"
-        echo "Input dockerfile: ${{ inputs.dockerfile }}"
-        echo ""
-        echo "Resolving paths from repository root:"
-        echo "Context path: ${{ inputs.context }}"
-        echo "Context absolute: $(realpath "${{ inputs.context }}" 2>/dev/null || echo "Relative path: ${{ inputs.context }}")"
-        echo "Dockerfile path: ${{ inputs.dockerfile }}"
-        echo "Dockerfile absolute: $(realpath "${{ inputs.dockerfile }}" 2>/dev/null || echo "Relative path: ${{ inputs.dockerfile }}")"
-        echo ""
-        echo "Verifying paths exist:"
-        echo "Context exists: $([ -d "${{ inputs.context }}" ] && echo "✓ YES" || echo "✗ NO")"
-        echo "Dockerfile exists: $([ -f "${{ inputs.dockerfile }}" ] && echo "✓ YES" || echo "✗ NO")"
-        echo ""
-        echo "Working directory is now repository root: $(pwd)"
-        echo "=== END BUILD CONTEXT SETUP ==="
-      shell: bash
-
-    - name: Final path verification before build
-      run: |
-        echo "=== FINAL PATH VERIFICATION ==="
-        echo "Working directory: $(pwd)"
-        echo ""
-        echo "Build context path: ${{ inputs.context }}"
-        echo "Build context absolute: $(realpath "${{ inputs.context }}" 2>/dev/null || echo "Relative path: ${{ inputs.context }}")"
-        echo "Build context exists: $([ -d "${{ inputs.context }}" ] && echo "YES" || echo "NO")"
-        echo ""
-        echo "Dockerfile path: ${{ inputs.dockerfile }}"
-        echo "Dockerfile absolute: $(realpath "${{ inputs.dockerfile }}" 2>/dev/null || echo "Relative path: ${{ inputs.dockerfile }}")"
-        echo "Dockerfile exists: $([ -f "${{ inputs.dockerfile }}" ] && echo "YES" || echo "NO")"
-        echo ""
-        echo "Context directory contents:"
-        if [ -d "${{ inputs.context }}" ]; then
-          ls -la "${{ inputs.context }}"
-        else
-          echo "Context directory not found!"
-        fi
-        echo ""
-        echo "Repository root verification:"
-        echo "API directory: $([ -d "api" ] && echo "✓ EXISTS" || echo "✗ MISSING")"
-        echo "GitHub workflows: $([ -d ".github/workflows" ] && echo "✓ EXISTS" || echo "✗ MISSING")"
-        echo "Current directory is repository root: $([ -d "api" ] && [ -f ".github/workflows/ci-build.yml" ] && echo "YES" || echo "NO")"
-        echo "=== END FINAL PATH VERIFICATION ==="
-      shell: bash
-
     - name: Format and validate context paths
       run: |
         echo "=== CONTEXT PATH FORMATTING ==="
@@ -332,8 +206,9 @@ runs:
           DOCKERFILE_PATH="./$DOCKERFILE_PATH"
         fi
 
-        echo "Formatted context: '$CONTEXT_PATH'"
-        echo "Formatted dockerfile: '$DOCKERFILE_PATH'"
+        echo "Formatted paths:"
+        echo "  Context: '$CONTEXT_PATH'"
+        echo "  Dockerfile: '$DOCKERFILE_PATH'"
         echo ""
 
         # Verify the formatted paths exist
@@ -349,158 +224,19 @@ runs:
         echo "=== END CONTEXT PATH FORMATTING ==="
       shell: bash
 
-    - name: Show final build configuration
-      run: |
-        echo "=== FINAL BUILD CONFIGURATION ==="
-        echo "Environment variables:"
-        echo "CONTEXT_PATH: $CONTEXT_PATH"
-        echo "DOCKERFILE_PATH: $DOCKERFILE_PATH"
-        echo ""
-        echo "Path verification:"
-        echo "Context exists: $([ -d "$CONTEXT_PATH" ] && echo "✓ YES" || echo "✗ NO")"
-        echo "Dockerfile exists: $([ -f "$DOCKERFILE_PATH" ] && echo "✓ YES" || echo "✗ NO")"
-        echo ""
-        echo "Context directory contents:"
-        if [ -d "$CONTEXT_PATH" ]; then
-          ls -la "$CONTEXT_PATH"
-        else
-          echo "Context directory not found!"
-        fi
-        echo ""
-        echo "Working directory: $(pwd)"
-        echo "Repository root confirmed: $([ -d "api" ] && [ -f ".github/workflows/ci-build.yml" ] && echo "YES" || echo "NO")"
-        echo "=== END FINAL BUILD CONFIGURATION ==="
-      shell: bash
-
-    - name: Test Docker build command manually
-      run: |
-        echo "=== MANUAL DOCKER BUILD TEST ==="
-        echo "Testing Docker build command manually to debug path issues..."
-        echo ""
-        echo "Working directory: $(pwd)"
-        echo "Context path: $CONTEXT_PATH"
-        echo "Dockerfile path: $DOCKERFILE_PATH"
-        echo ""
-        echo "Testing docker build command:"
-        echo "docker build --file $DOCKERFILE_PATH --tag test-image $CONTEXT_PATH"
-        echo ""
-        # Don't actually run the build, just show what would be executed
-        echo "This is a dry run to show the exact command that would be executed"
-        echo "=== END MANUAL DOCKER BUILD TEST ==="
-      shell: bash
-
-    - name: Debug Docker build action inputs
-      run: |
-        echo "=== DOCKER BUILD ACTION INPUTS DEBUG ==="
-        echo "About to call docker/build-push-action@v5 with:"
-        echo "  context: $CONTEXT_PATH"
-        echo "  file: $DOCKERFILE_PATH"
-        echo "  push: ${{ inputs.push == 'true' }}"
-        echo "  tags: ${{ steps.meta.outputs.tags }}"
-        echo "  labels: ${{ steps.meta.outputs.labels }}"
-        echo "  cache-from: ${{ inputs.cache-from }}"
-        echo "  cache-to: ${{ inputs.cache-to }}"
-        echo "  build-args: ${{ inputs.build-args }}"
-        echo "  platforms: ${{ inputs.platforms }}"
-        echo "  provenance: false"
-        echo "  outputs: type=image"
-        echo "  no-cache-filters: true"
-        echo ""
-        echo "Current working directory: $(pwd)"
-        echo "Repository root confirmed: $([ -d "api" ] && [ -f ".github/workflows/ci-build.yml" ] && echo "YES" || echo "NO")"
-        echo "=== END DOCKER BUILD ACTION INPUTS DEBUG ==="
-      shell: bash
-
     - name: Build and push Docker image
       id: build
-      run: |
-        echo "=== BUILDING DOCKER IMAGE ==="
-        echo "Using direct docker build command to avoid path resolution issues..."
-        echo ""
-        echo "Build parameters:"
-        echo "  Context: $CONTEXT_PATH"
-        echo "  Dockerfile: $DOCKERFILE_PATH"
-        echo "  Tags: ${{ steps.meta.outputs.tags }}"
-        echo "  Push: ${{ inputs.push == 'true' }}"
-        echo ""
-        echo "Starting Docker build..."
-
-        # Build the image with additional parameters
-        BUILD_CMD="docker build --file \"$DOCKERFILE_PATH\" --tag \"temp-image:latest\""
-
-        # Add build args if provided
-        if [ -n "${{ inputs.build-args }}" ]; then
-          echo "Adding build args: ${{ inputs.build-args }}"
-          echo "${{ inputs.build-args }}" | tr ',' '\n' | while read arg; do
-            if [ -n "$arg" ]; then
-              BUILD_CMD="$BUILD_CMD --build-arg \"$arg\""
-            fi
-          done
-        fi
-
-        # Add platforms if specified (for multi-platform builds)
-        if [ -n "${{ inputs.platforms }}" ] && [ "${{ inputs.platforms }}" != "linux/amd64" ]; then
-          echo "Adding platform: ${{ inputs.platforms }}"
-          BUILD_CMD="$BUILD_CMD --platform \"${{ inputs.platforms }}\""
-        fi
-
-        # Add cache from if provided
-        if [ -n "${{ inputs.cache-from }}" ]; then
-          echo "Adding cache from: ${{ inputs.cache-from }}"
-          BUILD_CMD="$BUILD_CMD --cache-from \"${{ inputs.cache-from }}\""
-        fi
-
-        # Add context path
-        BUILD_CMD="$BUILD_CMD \"$CONTEXT_PATH\""
-
-        echo "Full build command: $BUILD_CMD"
-        echo ""
-
-        # Execute the build command
-        eval $BUILD_CMD
-
-        if [ $? -eq 0 ]; then
-          echo "✓ Docker build successful!"
-
-          # Get image ID
-          IMAGE_ID=$(docker images --format "{{.ID}}" --filter "dangling=false" | head -n1)
-          echo "imageid=$IMAGE_ID" >> $GITHUB_OUTPUT
-
-          # Get image digest if available
-          IMAGE_DIGEST=$(docker images --format "{{.Digest}}" --filter "dangling=false" | head -n1)
-          if [ -n "$IMAGE_DIGEST" ] && [ "$IMAGE_DIGEST" != "<none>" ]; then
-            echo "digest=$IMAGE_DIGEST" >> $GITHUB_OUTPUT
-          else
-            echo "digest=" >> $GITHUB_OUTPUT
-          fi
-
-          # Add labels if provided
-          if [ -n "${{ steps.meta.outputs.labels }}" ]; then
-            echo "Adding labels to image..."
-            echo "${{ steps.meta.outputs.labels }}" | tr ',' '\n' | while read label; do
-              if [ -n "$label" ]; then
-                echo "Adding label: $label"
-                docker label "temp-image:latest" "$label"
-              fi
-            done
-          fi
-
-          # Push if requested
-          if [ "${{ inputs.push }}" = "true" ]; then
-            echo "Pushing image..."
-            # Parse tags and push
-            echo "${{ steps.meta.outputs.tags }}" | tr ',' '\n' | while read tag; do
-              if [ -n "$tag" ]; then
-                echo "Tagging and pushing: $tag"
-                docker tag "temp-image:latest" "$tag"
-                docker push "$tag"
-              fi
-            done
-          fi
-        else
-          echo "✗ Docker build failed!"
-          exit 1
-        fi
-
-        echo "=== END DOCKER BUILD ==="
-      shell: bash
+      uses: docker/build-push-action@v5
+      with:
+        context: ${{ env.CONTEXT_PATH }}
+        file: ${{ env.DOCKERFILE_PATH }}
+        push: ${{ inputs.push == 'true' }}
+        tags: ${{ steps.meta.outputs.tags }}
+        labels: ${{ steps.meta.outputs.labels }}
+        cache-from: ${{ inputs.cache-from }}
+        cache-to: ${{ inputs.cache-to }}
+        build-args: ${{ inputs.build-args }}
+        platforms: ${{ inputs.platforms }}
+        provenance: false
+        outputs: type=image
+        no-cache-filters: true
