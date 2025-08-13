@@ -17,7 +17,7 @@ on:
         type: string
 
 env:
-  REGISTRY_URL: ghcr.io/${{ github.repository_owner }}
+  REGISTRY_URL: https://registry.incmix.com
 
 jobs:
   detect-changes:
@@ -34,7 +34,7 @@ jobs:
         id: detect
         uses: ./.github/actions/detect-changes
         with:
-          force_build_all: ${{ github.event.inputs.force_build_all || 'false' }}
+          force_build_all: ${{ github.event.inputs.force_build_all || 'true' }}
           event_name: ${{ github.event_name }}
           target_branch: ${{ github.event.inputs.target_branch || 'main' }}
 
@@ -98,6 +98,7 @@ jobs:
           context: ${{ fromJSON(steps.service-config.outputs.config).context }}
           image-name: ${{ fromJSON(steps.service-config.outputs.config).image_name }}
           image-tag: ${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.number) || github.ref_name }}
+          registry: ${{ env.REGISTRY_URL }}
           registry-username: ${{ secrets.DOCKER_USERNAME }}
           registry-password: ${{ secrets.DOCKER_PASSWORD }}
           push: ${{ github.event_name != 'pull_request' }}
