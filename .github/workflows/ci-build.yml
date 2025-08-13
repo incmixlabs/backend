@@ -41,7 +41,6 @@ jobs:
         run: |
           echo "=== DETECT-CHANGES JOB OUTPUTS ==="
           echo "services output: '${{ steps.detect.outputs.services }}'"
-          echo "services output length: ${#steps.detect.outputs.services}"
           echo "services output type: $(echo '${{ steps.detect.outputs.services }}' | jq -R .)"
           echo "=== END OUTPUTS ==="
 
@@ -59,7 +58,6 @@ jobs:
         run: |
           echo "=== PRE-MATRIX DEBUG ==="
           echo "Raw services output: '${{ needs.detect-changes.outputs.services }}'"
-          echo "Services output length: ${#needs.detect-changes.outputs.services}"
           echo "Services output type: $(echo '${{ needs.detect-changes.outputs.services }}' | jq -R .)"
           echo "Is services empty: ${{ needs.detect-changes.outputs.services == '' }}"
           echo "Is services null: ${{ needs.detect-changes.outputs.services == null }}"
@@ -125,7 +123,6 @@ jobs:
         run: |
           echo "=== SERVICES OUTPUT DEBUG ==="
           echo "Services output: '${{ needs.detect-changes.outputs.services }}'"
-          echo "Services output length: ${#needs.detect-changes.outputs.services}"
           echo "Services output type: $(echo '${{ needs.detect-changes.outputs.services }}' | jq -R .)"
           echo "Is services empty: ${{ needs.detect-changes.outputs.services == '' }}"
           echo "Is services null: ${{ needs.detect-changes.outputs.services == null }}"
