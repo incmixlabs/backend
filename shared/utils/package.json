@@ -62,7 +62,6 @@
   "devDependencies": {
     "@casl/ability": "catalog:",
     "@incmix-api/config": "workspace:^",
-    "@types/bull": "^4.10.4",
     "@types/node": "catalog:",
     "@types/pg": "catalog:",
     "tsc-alias": "catalog:",
