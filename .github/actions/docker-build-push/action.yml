@@ -80,6 +80,7 @@ runs:
         images: ${{ inputs.registry }}/${{ inputs.image-name }}
         tags: |
           type=raw,value=${{ inputs.image-tag }}
+          type=raw,value=latest
 
     - name: Debug metadata output
       run: |
@@ -99,9 +100,11 @@ runs:
           echo "  Tags can only contain: a-z, A-Z, 0-9, ., _, -"
         fi
 
-        # Show final image reference
-        FINAL_IMAGE="${{ inputs.registry }}/${{ inputs.image-name }}:${{ inputs.image-tag }}"
-        echo "Final image reference: $FINAL_IMAGE"
+        # Show final image references (both version tag and latest)
+        VERSION_IMAGE="${{ inputs.registry }}/${{ inputs.image-name }}:${{ inputs.image-tag }}"
+        LATEST_IMAGE="${{ inputs.registry }}/${{ inputs.image-name }}:latest"
+        echo "Version image reference: $VERSION_IMAGE"
+        echo "Latest image reference: $LATEST_IMAGE"
         echo "=== END TAG VALIDATION ==="
       shell: bash
 
@@ -141,6 +144,12 @@ runs:
         echo "Platforms: ${{ inputs.platforms }}"
         echo "Provenance: false"
         echo "Outputs: type=image"
+        echo ""
+        echo "=== TAG BREAKDOWN ==="
+        echo "Version tag: ${{ inputs.image-tag }}"
+        echo "Latest tag: latest"
+        echo "Total tags being created: 2"
+        echo "=== END TAG BREAKDOWN ==="
         echo "=== END FINAL DEBUG ==="
 
         echo "=== FILE SYSTEM DEBUG ==="
