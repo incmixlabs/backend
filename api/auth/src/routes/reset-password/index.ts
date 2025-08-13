@@ -86,10 +86,10 @@ resetPasswordRoutes.openapi(sendForgetPasswordEmailRoute, async (c) => {
       c,
       user.id,
       email,
-      "forgot_password"
+      "reset_password"
     )
 
-    await sendForgetPasswordEmail(c, email, verificationCode)
+    await sendForgetPasswordEmail(c, email, verificationCode, user.id)
     const t = await useTranslation(c)
     const msg = await t.text(MAIL_SENT)
     return c.json({ message: msg }, 200)
@@ -114,7 +114,7 @@ resetPasswordRoutes.openapi(forgetPassword, async (c) => {
         id: user.id,
       },
       code,
-      "forgot_password"
+      "reset_password"
     )
     const t = await useTranslation(c)
     if (!validCode) {
