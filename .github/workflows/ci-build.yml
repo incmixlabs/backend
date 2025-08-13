@@ -129,7 +129,7 @@ jobs:
           dockerfile: ${{ matrix.dockerfile }}
           context: ${{ matrix.context }}
           image-name: ${{ matrix.image-name }}
-          image-tag: ${{ github.event_name == 'pull_request' && 'pr-' + github.event.number || github.ref_name }}
+          image-tag: ${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.number) || github.ref_name }}
           registry-username: ${{ secrets.DOCKER_USERNAME }}
           registry-password: ${{ secrets.DOCKER_PASSWORD }}
           push: ${{ github.event_name != 'pull_request' }}
@@ -140,7 +140,7 @@ jobs:
         run: |
           echo "## Build Summary for ${{ matrix.service }}" >> $GITHUB_STEP_SUMMARY
           echo "- **Service**: ${{ matrix.service }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Image**: ${{ env.REGISTRY_URL }}/${{ matrix.image-name }}:${{ github.event_name == 'pull_request' && 'pr-' + github.event.number || github.ref_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Image**: ${{ env.REGISTRY_URL }}/${{ matrix.image-name }}:${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.number) || github.ref_name }}" >> $GITHUB_STEP_SUMMARY
           echo "- **Status**: ${{ github.event_name == 'pull_request' && 'Build only (PR)' || 'Built and pushed' }}" >> $GITHUB_STEP_SUMMARY
           if [ "${{ steps.build.outputs.image-id }}" != "" ]; then
             echo "- **Image ID**: ${{ steps.build.outputs.image-id }}" >> $GITHUB_STEP_SUMMARY
