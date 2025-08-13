@@ -83,6 +83,12 @@
       "dockerfile": "api/email/Dockerfile",
       "context": ".",
       "image_name": "email-service"
+    },
+    {
+      "name": "db",
+      "dockerfile": "db/Dockerfile",
+      "context": ".",
+      "image_name": "db"
     }
   ]
 }
