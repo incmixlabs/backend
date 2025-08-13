@@ -93,8 +93,8 @@ runs:
           SERVICES='[]'
           echo "No services changed, setting SERVICES to: $SERVICES"
         else
-          # Create proper JSON array using jq
-          SERVICES=$(printf '%s\n' "${SERVICES_ARRAY[@]}" | jq -R . | jq -s .)
+          # Create proper JSON array using jq (compact format, no pretty printing)
+          SERVICES=$(printf '%s\n' "${SERVICES_ARRAY[@]}" | jq -R . | jq -s -c .)
           echo "Services array before JSON conversion: [${SERVICES_ARRAY[*]}]"
           echo "Services to build: ${SERVICES_ARRAY[*]}"
           echo "Setting SERVICES to: $SERVICES"
