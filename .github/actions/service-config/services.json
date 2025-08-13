@@ -1,0 +1,88 @@
+{
+  "services": [
+    {
+      "name": "auth",
+      "dockerfile": "api/auth/Dockerfile",
+      "context": "api/auth",
+      "image_name": "auth-service"
+    },
+    {
+      "name": "users-api",
+      "dockerfile": "api/users-api/Dockerfile",
+      "context": "api/users-api",
+      "image_name": "users-api"
+    },
+    {
+      "name": "projects-api",
+      "dockerfile": "api/projects-api/Dockerfile",
+      "context": "api/projects-api",
+      "image_name": "projects-api"
+    },
+    {
+      "name": "tasks-api",
+      "dockerfile": "api/tasks-api/Dockerfile",
+      "context": "api/tasks-api",
+      "image_name": "tasks-api"
+    },
+    {
+      "name": "comments-api",
+      "dockerfile": "api/comments-api/Dockerfile",
+      "context": "api/comments-api",
+      "image_name": "comments-api"
+    },
+    {
+      "name": "files-api",
+      "dockerfile": "api/files-api/Dockerfile",
+      "context": "api/files-api",
+      "image_name": "files-api"
+    },
+    {
+      "name": "genai-api",
+      "dockerfile": "api/genai-api/Dockerfile",
+      "context": "api/genai-api",
+      "image_name": "genai-api"
+    },
+    {
+      "name": "intl-api",
+      "dockerfile": "api/intl-api/Dockerfile",
+      "context": "api/intl-api",
+      "image_name": "intl-api"
+    },
+    {
+      "name": "location-api",
+      "dockerfile": "api/location-api/Dockerfile",
+      "context": "api/location-api",
+      "image_name": "location-api"
+    },
+    {
+      "name": "org-api",
+      "dockerfile": "api/org-api/Dockerfile",
+      "context": "api/org-api",
+      "image_name": "org-api"
+    },
+    {
+      "name": "permissions-api",
+      "dockerfile": "api/permissions-api/Dockerfile",
+      "context": "api/permissions-api",
+      "image_name": "permissions-api"
+    },
+    {
+      "name": "rxdb-api",
+      "dockerfile": "api/rxdb-api/Dockerfile",
+      "context": "api/rxdb-api",
+      "image_name": "rxdb-api"
+    },
+    {
+      "name": "bff-web",
+      "dockerfile": "api/bff-web/Dockerfile",
+      "context": "api/bff-web",
+      "image_name": "bff-web"
+    },
+    {
+      "name": "email",
+      "dockerfile": "api/email/Dockerfile",
+      "context": "api/email",
+      "image_name": "email-service"
+    }
+  ]
+}

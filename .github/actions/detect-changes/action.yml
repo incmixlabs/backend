@@ -1,0 +1,76 @@
+name: 'Detect Service Changes'
+description: 'Detects which services have changed and outputs a JSON array of service names'
+
+inputs:
+  force_build_all:
+    description: 'Force build all services (for manual workflow dispatch)'
+    required: false
+    default: 'false'
+  event_name:
+    description: 'GitHub event name (pull_request, push, workflow_dispatch)'
+    required: true
+  target_branch:
+    description: 'Target branch for comparison (default: main)'
+    required: false
+    default: 'main'
+
+outputs:
+  services:
+    description: 'JSON array of services that need to be built'
+    value: ${{ steps.detect.outputs.services }}
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Detect service changes
+      id: detect
+      shell: bash
+      run: |
+        # Handle manual workflow dispatch
+        if [ "${{ inputs.event_name }}" = "workflow_dispatch" ]; then
+          if [ "${{ inputs.force_build_all }}" = "true" ]; then
+            # Force build all services
+            SERVICES='["auth", "users-api", "projects-api", "tasks-api", "comments-api", "files-api", "genai-api", "intl-api", "location-api", "org-api", "permissions-api", "rxdb-api", "bff-web", "email"]'
+            echo "services=$SERVICES" >> $GITHUB_OUTPUT
+            echo "Manual trigger: Building all services"
+            # Don't exit here, let the script continue to ensure output is properly set
+          else
+            # For non-force builds, continue with normal detection
+            echo "Manual trigger: Detecting changed services"
+          fi
+        fi
+
+        # Get changed files
+        if [ "${{ inputs.event_name }}" = "pull_request" ]; then
+          CHANGED_FILES=$(git diff --name-only origin/${{ inputs.target_branch }}...HEAD)
+        else
+          CHANGED_FILES=$(git diff --name-only HEAD~1 HEAD)
+        fi
+
+        # Extract service names from changed files
+        SERVICES_ARRAY=()
+        for file in $CHANGED_FILES; do
+          if [[ $file =~ ^api/([^/]+)/ ]]; then
+            SERVICE=${BASH_REMATCH[1]}
+            if [[ ! " ${SERVICES_ARRAY[@]} " =~ " $SERVICE " ]]; then
+              SERVICES_ARRAY+=("$SERVICE")
+            fi
+          fi
+        done
+
+        # Also check shared directory changes
+        if echo "$CHANGED_FILES" | grep -q "^shared/"; then
+          # If shared code changed, build all services
+          SERVICES_ARRAY=("auth" "users-api" "projects-api" "tasks-api" "comments-api" "files-api" "genai-api" "intl-api" "location-api" "org-api" "permissions-api" "rxdb-api" "bff-web" "email")
+        fi
+
+        # Convert array to JSON format
+        if [ ${#SERVICES_ARRAY[@]} -eq 0 ]; then
+          SERVICES='[]'
+        else
+          # Create proper JSON array using jq
+          SERVICES=$(printf '%s\n' "${SERVICES_ARRAY[@]}" | jq -R . | jq -s .)
+        fi
+
+        echo "services=$SERVICES" >> $GITHUB_OUTPUT
+        echo "Changed services: $SERVICES"
