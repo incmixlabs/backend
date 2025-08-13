@@ -26,10 +26,18 @@ runs:
       id: detect
       shell: bash
       run: |
-        # Handle manual workflow dispatch
+        # Initialize variables
         FORCE_BUILD_ALL=false
+        SERVICES="[]"
+
+        echo "Event name: ${{ inputs.event_name }}"
+        echo "Force build all: '${{ inputs.force_build_all }}'"
+        echo "Force build all type: $(echo '${{ inputs.force_build_all }}' | jq -R .)"
+
+        # Handle manual workflow dispatch
         if [ "${{ inputs.event_name }}" = "workflow_dispatch" ]; then
-          if [ "${{ inputs.force_build_all }}" = "true" ]; then
+          echo "Workflow dispatch detected"
+          if [ "${{ inputs.force_build_all }}" = "true" ] || [ "${{ inputs.force_build_all }}" = true ] || [ "${{ inputs.force_build_all }}" = "1" ]; then
             FORCE_BUILD_ALL=true
             echo "Manual trigger: Force building all services"
           else
@@ -65,15 +73,55 @@ runs:
         # Handle force build all case
         if [ "$FORCE_BUILD_ALL" = "true" ]; then
           SERVICES='["auth", "users-api", "projects-api", "tasks-api", "comments-api", "files-api", "genai-api", "intl-api", "location-api", "org-api", "permissions-api", "rxdb-api", "bff-web", "email"]'
+          echo "Force build all enabled, setting SERVICES to: $SERVICES"
         else
           # Convert array to JSON format
           if [ ${#SERVICES_ARRAY[@]} -eq 0 ]; then
             SERVICES='[]'
+            echo "No services changed, setting SERVICES to: $SERVICES"
           else
             # Create proper JSON array using jq
             SERVICES=$(printf '%s\n' "${SERVICES_ARRAY[@]}" | jq -R . | jq -s .)
+            echo "Services changed, setting SERVICES to: $SERVICES"
           fi
         fi
 
+        echo "Final SERVICES value: $SERVICES"
+
+        # Ensure SERVICES is not empty
+        if [ -z "$SERVICES" ]; then
+          echo "ERROR: SERVICES is empty, setting default value"
+          SERVICES='[]'
+        fi
+
+        # Validate JSON format
+        if ! echo "$SERVICES" | jq . > /dev/null 2>&1; then
+          echo "ERROR: Invalid JSON format, setting default value"
+          SERVICES='[]'
+        fi
+
+        echo "Final validated SERVICES: $SERVICES"
+
+        # Test output
+        echo "Testing output..."
         echo "services=$SERVICES" >> $GITHUB_OUTPUT
+        echo "Output file contents:"
+        cat $GITHUB_OUTPUT || echo "No output file found"
+
+        # Additional debug info
+        echo "=== DEBUG INFO ==="
+        echo "GITHUB_OUTPUT file path: $GITHUB_OUTPUT"
+        echo "Current working directory: $(pwd)"
+        echo "Output file exists: $([ -f "$GITHUB_OUTPUT" ] && echo "Yes" || echo "No")"
+        echo "Output file permissions: $(ls -la "$GITHUB_OUTPUT" 2>/dev/null || echo "File not found")"
+        echo "Output file size: $(wc -c < "$GITHUB_OUTPUT" 2>/dev/null || echo "0")"
+        echo "=== END DEBUG INFO ==="
+
+        # Final fallback - ensure we always have a valid output
+        if ! grep -q "services=" $GITHUB_OUTPUT; then
+          echo "services=$SERVICES" >> $GITHUB_OUTPUT
+          echo "Fallback output added"
+        fi
+
         echo "Changed services: $SERVICES"
+

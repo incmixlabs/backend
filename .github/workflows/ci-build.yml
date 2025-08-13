@@ -39,15 +39,48 @@ jobs:
           event_name: ${{ github.event_name }}
           target_branch: ${{ github.event.inputs.target_branch || 'main' }}
 
+      - name: Debug - Show job outputs
+        run: |
+          echo "=== DETECT-CHANGES JOB OUTPUTS ==="
+          echo "services output: '${{ steps.detect.outputs.services }}'"
+          echo "services output length: ${#needs.detect-changes.outputs.services}"
+          echo "services output type: $(echo '${{ steps.detect.outputs.services }}' | jq -R .)"
+          echo "=== END OUTPUTS ==="
+
   build-services:
     needs: detect-changes
-    if: needs.detect-changes.outputs.services != '[]'
+    if: needs.detect-changes.outputs.services != '[]' && needs.detect-changes.outputs.services != '' && needs.detect-changes.outputs.services != null
     runs-on: ubuntu-latest
     strategy:
       matrix:
         service: ${{ fromJSON(needs.detect-changes.outputs.services) }}
 
+    # Add debug step to see the services output
     steps:
+      - name: Debug - Check services output
+        run: |
+          echo "Raw services output: '${{ needs.detect-changes.outputs.services }}'"
+          echo "Services output length: ${#needs.detect-changes.outputs.services}"
+          echo "Services output type: $(echo '${{ needs.detect-changes.outputs.services }}' | jq -R .)"
+          echo "Is services empty: ${{ needs.detect-changes.outputs.services == '' }}"
+          echo "Is services null: ${{ needs.detect-changes.outputs.services == null }}"
+          echo "Services output JSON validation:"
+          echo '${{ needs.detect-changes.outputs.services }}' | jq . || echo "Invalid JSON"
+
+      - name: Debug - Test fromJSON function
+        run: |
+          echo "Testing fromJSON with services output..."
+          SERVICES='${{ needs.detect-changes.outputs.services }}'
+          echo "Services variable: $SERVICES"
+          echo "Services length: ${#SERVICES}"
+
+          if [ -n "$SERVICES" ]; then
+            echo "Services is not empty, testing fromJSON..."
+            echo "$SERVICES" | jq . || echo "Invalid JSON format"
+          else
+            echo "Services is empty or null"
+          fi
+
       - name: Checkout code
         uses: actions/checkout@v4
         with:
@@ -84,3 +117,27 @@ jobs:
           event_name: ${{ github.event_name }}
           pr_number: ${{ github.event.number }}
           image_id: ${{ steps.build.outputs.image-id }}
+
+  debug-services-output:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.services == '[]' || needs.detect-changes.outputs.services == '' || needs.detect-changes.outputs.services == null
+    runs-on: ubuntu-latest
+    steps:
+      - name: Debug - Services output is empty
+        run: |
+          echo "=== SERVICES OUTPUT DEBUG ==="
+          echo "Services output: '${{ needs.detect-changes.outputs.services }}'"
+          echo "Services output length: ${#needs.detect-changes.outputs.services}"
+          echo "Services output type: $(echo '${{ needs.detect-changes.outputs.services }}' | jq -R .)"
+          echo "Is services empty: ${{ needs.detect-changes.outputs.services == '' }}"
+          echo "Is services null: ${{ needs.detect-changes.outputs.services == null }}"
+          echo "Is services '[]': ${{ needs.detect-changes.outputs.services == '[]' }}"
+          echo "=== END DEBUG ==="
+
+          # Try to parse as JSON to see what we get
+          echo "Attempting to parse services as JSON:"
+          echo '${{ needs.detect-changes.outputs.services }}' | jq . || echo "Failed to parse as JSON"
+
+          # Show the raw output in different formats
+          echo "Raw output in hex:"
+          echo -n '${{ needs.detect-changes.outputs.services }}' | xxd
