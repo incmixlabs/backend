@@ -84,12 +84,48 @@ jobs:
         with:
           ref: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.target_branch || github.ref }}
 
+      - name: Debug repository structure after checkout
+        run: |
+          echo "=== REPOSITORY STRUCTURE AFTER CHECKOUT ==="
+          echo "Current working directory: $(pwd)"
+          echo "Repository contents:"
+          ls -la
+          echo ""
+          echo "API directory exists: $([ -d "api" ] && echo "YES" || echo "NO")"
+          if [ -d "api" ]; then
+            echo "API directory contents:"
+            ls -la api/
+          fi
+          echo ""
+          echo "Git status:"
+          git status --porcelain
+          echo "=== END REPOSITORY STRUCTURE DEBUG ==="
+        shell: bash
+
       - name: Load service configuration
         id: service-config
         run: |
           # Find the service config for the current matrix service
           SERVICE_CONFIG=$(cat .github/actions/service-config/services.json | jq -r --arg name "${{ matrix.service }}" '.services[] | select(.name == $name) | tojson')
           echo "config=$SERVICE_CONFIG" >> $GITHUB_OUTPUT
+
+          echo "=== SERVICE CONFIGURATION DEBUG ==="
+          echo "Matrix service: ${{ matrix.service }}"
+          echo "Raw service config: $SERVICE_CONFIG"
+          echo ""
+          echo "Parsed configuration:"
+          echo "$SERVICE_CONFIG" | jq .
+          echo ""
+          echo "Individual fields:"
+          echo "Dockerfile: $(echo "$SERVICE_CONFIG" | jq -r '.dockerfile')"
+          echo "Context: $(echo "$SERVICE_CONFIG" | jq -r '.context')"
+          echo "Image name: $(echo "$SERVICE_CONFIG" | jq -r '.image_name')"
+          echo ""
+          echo "Path verification:"
+          echo "Context exists: $([ -d "$(echo "$SERVICE_CONFIG" | jq -r '.context')" ] && echo "YES" || echo "NO")"
+          echo "Dockerfile exists: $([ -f "$(echo "$SERVICE_CONFIG" | jq -r '.dockerfile')" ] && echo "YES" || echo "NO")"
+          echo "=== END SERVICE CONFIGURATION DEBUG ==="
+        shell: bash
 
       - name: Debug Docker build parameters
         run: |

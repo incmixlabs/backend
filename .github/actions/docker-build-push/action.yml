@@ -142,6 +142,170 @@ runs:
         echo "Provenance: false"
         echo "Outputs: type=image"
         echo "=== END FINAL DEBUG ==="
+
+        echo "=== FILE SYSTEM DEBUG ==="
+        echo "Current working directory: $(pwd)"
+        echo "Directory contents:"
+        ls -la
+        echo ""
+        echo "Context path exists: $([ -d "${{ inputs.context }}" ] && echo "YES" || echo "NO")"
+        echo "Context path contents:"
+        if [ -d "${{ inputs.context }}" ]; then
+          ls -la "${{ inputs.context }}"
+        else
+          echo "Context directory not found!"
+        fi
+        echo ""
+        echo "Dockerfile exists: $([ -f "${{ inputs.dockerfile }}" ] && echo "YES" || echo "NO")"
+        echo "Dockerfile path: ${{ inputs.dockerfile }}"
+        echo "=== END FILE SYSTEM DEBUG ==="
+      shell: bash
+
+    - name: Verify repository structure
+      run: |
+        echo "=== REPOSITORY STRUCTURE VERIFICATION ==="
+        echo "Repository root: $(pwd)"
+        echo ""
+        echo "API directory exists: $([ -d "api" ] && echo "YES" || echo "NO")"
+        if [ -d "api" ]; then
+          echo "API directory contents:"
+          ls -la api/
+        fi
+        echo ""
+        echo "Target context directory: ${{ inputs.context }}"
+        echo "Target context absolute path: $(realpath "${{ inputs.context }}" 2>/dev/null || echo "Cannot resolve")"
+        echo "Target context relative to repo root: $([ -d "${{ inputs.context }}" ] && echo "EXISTS" || echo "NOT FOUND")"
+        echo ""
+        echo "Target Dockerfile: ${{ inputs.dockerfile }}"
+        echo "Target Dockerfile absolute path: $(realpath "${{ inputs.dockerfile }}" 2>/dev/null || echo "Cannot resolve")"
+        echo "Target Dockerfile relative to repo root: $([ -f "${{ inputs.dockerfile }}" ] && echo "EXISTS" || echo "NOT FOUND")"
+        echo "=== END REPOSITORY STRUCTURE VERIFICATION ==="
+      shell: bash
+
+    - name: Fix context path and working directory
+      run: |
+        echo "=== CONTEXT PATH FIX ==="
+        echo "Original context: ${{ inputs.context }}"
+        echo "Original dockerfile: ${{ inputs.dockerfile }}"
+        echo ""
+
+        # Try to resolve the context path
+        if [ -d "${{ inputs.context }}" ]; then
+          echo "✓ Context directory exists"
+          echo "Context absolute path: $(realpath "${{ inputs.context }}")"
+          echo "Context relative path: ${{ inputs.context }}"
+        else
+          echo "✗ Context directory not found!"
+          echo "Trying to find it..."
+          find . -name "$(basename "${{ inputs.context }}")" -type d 2>/dev/null | head -5
+        fi
+
+        echo ""
+        # Try to resolve the dockerfile path
+        if [ -f "${{ inputs.dockerfile }}" ]; then
+          echo "✓ Dockerfile exists"
+          echo "Dockerfile absolute path: $(realpath "${{ inputs.dockerfile }}")"
+          echo "Dockerfile relative path: ${{ inputs.dockerfile }}"
+        else
+          echo "✗ Dockerfile not found!"
+          echo "Trying to find it..."
+          find . -name "$(basename "${{ inputs.dockerfile }}")" -type f 2>/dev/null | head -5
+        fi
+
+        echo ""
+        echo "Current working directory: $(pwd)"
+        echo "=== END CONTEXT PATH FIX ==="
+      shell: bash
+
+    - name: Change to repository root
+      run: |
+        echo "=== WORKING DIRECTORY CHANGE ==="
+        echo "Current working directory: $(pwd)"
+        echo "Repository root should be: $(pwd)"
+        echo "Checking if we're in the right place..."
+        if [ -d "api" ] && [ -f ".github/workflows/ci-build.yml" ]; then
+          echo "✓ We're in the repository root"
+        else
+          echo "✗ We're not in the repository root"
+          echo "Looking for repository root..."
+          # Try to find the repository root by looking for key files
+          if [ -f ".github/workflows/ci-build.yml" ]; then
+            echo "Found .github/workflows/ci-build.yml in current directory"
+          elif [ -f "../.github/workflows/ci-build.yml" ]; then
+            echo "Found .github/workflows/ci-build.yml in parent directory"
+            cd ..
+          elif [ -f "../../.github/workflows/ci-build.yml" ]; then
+            echo "Found .github/workflows/ci-build.yml in grandparent directory"
+            cd ../..
+          else
+            echo "Could not find repository root"
+          fi
+        fi
+        echo "Final working directory: $(pwd)"
+        echo "=== END WORKING DIRECTORY CHANGE ==="
+      shell: bash
+
+    - name: Ensure repository root context
+      run: |
+        echo "=== REPOSITORY ROOT CONTEXT VERIFICATION ==="
+        echo "Current working directory: $(pwd)"
+        echo ""
+        echo "Verifying repository root structure:"
+        echo "API directory: $([ -d "api" ] && echo "✓ EXISTS" || echo "✗ MISSING")"
+        echo "GitHub workflows: $([ -d ".github/workflows" ] && echo "✓ EXISTS" || echo "✗ MISSING")"
+        echo "Service config: $([ -f ".github/actions/service-config/services.json" ] && echo "✓ EXISTS" || echo "✗ MISSING")"
+        echo ""
+        echo "Repository root confirmed: $([ -d "api" ] && [ -f ".github/workflows/ci-build.yml" ] && echo "YES" || echo "NO")"
+        echo "=== END REPOSITORY ROOT VERIFICATION ==="
+      shell: bash
+
+    - name: Set build context and working directory
+      run: |
+        echo "=== BUILD CONTEXT SETUP ==="
+        echo "Current working directory: $(pwd)"
+        echo ""
+        echo "Input context: ${{ inputs.context }}"
+        echo "Input dockerfile: ${{ inputs.dockerfile }}"
+        echo ""
+        echo "Resolving paths from repository root:"
+        echo "Context path: ${{ inputs.context }}"
+        echo "Context absolute: $(realpath "${{ inputs.context }}" 2>/dev/null || echo "Relative path: ${{ inputs.context }}")"
+        echo "Dockerfile path: ${{ inputs.dockerfile }}"
+        echo "Dockerfile absolute: $(realpath "${{ inputs.dockerfile }}" 2>/dev/null || echo "Relative path: ${{ inputs.dockerfile }}")"
+        echo ""
+        echo "Verifying paths exist:"
+        echo "Context exists: $([ -d "${{ inputs.context }}" ] && echo "✓ YES" || echo "✗ NO")"
+        echo "Dockerfile exists: $([ -f "${{ inputs.dockerfile }}" ] && echo "✓ YES" || echo "✗ NO")"
+        echo ""
+        echo "Working directory is now repository root: $(pwd)"
+        echo "=== END BUILD CONTEXT SETUP ==="
+      shell: bash
+
+    - name: Final path verification before build
+      run: |
+        echo "=== FINAL PATH VERIFICATION ==="
+        echo "Working directory: $(pwd)"
+        echo ""
+        echo "Build context path: ${{ inputs.context }}"
+        echo "Build context absolute: $(realpath "${{ inputs.context }}" 2>/dev/null || echo "Relative path: ${{ inputs.context }}")"
+        echo "Build context exists: $([ -d "${{ inputs.context }}" ] && echo "YES" || echo "NO")"
+        echo ""
+        echo "Dockerfile path: ${{ inputs.dockerfile }}"
+        echo "Dockerfile absolute: $(realpath "${{ inputs.dockerfile }}" 2>/dev/null || echo "Relative path: ${{ inputs.dockerfile }}")"
+        echo "Dockerfile exists: $([ -f "${{ inputs.dockerfile }}" ] && echo "YES" || echo "NO")"
+        echo ""
+        echo "Context directory contents:"
+        if [ -d "${{ inputs.context }}" ]; then
+          ls -la "${{ inputs.context }}"
+        else
+          echo "Context directory not found!"
+        fi
+        echo ""
+        echo "Repository root verification:"
+        echo "API directory: $([ -d "api" ] && echo "✓ EXISTS" || echo "✗ MISSING")"
+        echo "GitHub workflows: $([ -d ".github/workflows" ] && echo "✓ EXISTS" || echo "✗ MISSING")"
+        echo "Current directory is repository root: $([ -d "api" ] && [ -f ".github/workflows/ci-build.yml" ] && echo "YES" || echo "NO")"
+        echo "=== END FINAL PATH VERIFICATION ==="
       shell: bash
 
     - name: Build and push Docker image
