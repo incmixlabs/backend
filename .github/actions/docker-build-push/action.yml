@@ -20,7 +20,7 @@ inputs:
   registry:
     description: 'Docker registry URL'
     required: false
-    default: https://registry.incmix.com
+    default: 'registry.incmix.com'
   registry-username:
     description: 'Docker registry username (from secrets)'
     required: true
@@ -69,7 +69,7 @@ runs:
     - name: Log in to Docker Registry
       uses: docker/login-action@v3
       with:
-        registry: ${{ inputs.registry }}
+        registry: https://${{ inputs.registry }}
         username: ${{ inputs.registry-username }}
         password: ${{ inputs.registry-password }}
 
@@ -79,10 +79,31 @@ runs:
       with:
         images: ${{ inputs.registry }}/${{ inputs.image-name }}
         tags: |
-          type=ref,event=branch
-          type=ref,event=pr
-          type=sha,prefix={{branch}}-
           type=raw,value=${{ inputs.image-tag }}
+
+    - name: Debug metadata output
+      run: |
+        echo "=== METADATA ACTION OUTPUT DEBUG ==="
+        echo "Input image tag: ${{ inputs.image-tag }}"
+        echo "Generated tags: ${{ steps.meta.outputs.tags }}"
+        echo "Generated labels: ${{ steps.meta.outputs.labels }}"
+        echo "Full image reference: ${{ inputs.registry }}/${{ inputs.image-name }}"
+        echo "=== END METADATA DEBUG ==="
+
+        # Validate tag format
+        echo "=== TAG VALIDATION ==="
+        if [[ "${{ inputs.image-tag }}" =~ ^[a-zA-Z0-9._-]+$ ]]; then
+          echo "✓ Tag format is valid: ${{ inputs.image-tag }}"
+        else
+          echo "✗ Tag format is invalid: ${{ inputs.image-tag }}"
+          echo "  Tags can only contain: a-z, A-Z, 0-9, ., _, -"
+        fi
+
+        # Show final image reference
+        FINAL_IMAGE="${{ inputs.registry }}/${{ inputs.image-name }}:${{ inputs.image-tag }}"
+        echo "Final image reference: $FINAL_IMAGE"
+        echo "=== END TAG VALIDATION ==="
+      shell: bash
 
     - name: Debug build configuration
       run: |
@@ -98,6 +119,29 @@ runs:
         echo "Tags: ${{ steps.meta.outputs.tags }}"
         echo "Labels: ${{ steps.meta.outputs.labels }}"
         echo "=== END DEBUG ==="
+
+        echo "=== METADATA DEBUG ==="
+        echo "Full image reference: ${{ inputs.registry }}/${{ inputs.image-name }}"
+        echo "Generated tags: ${{ steps.meta.outputs.tags }}"
+        echo "Generated labels: ${{ steps.meta.outputs.labels }}"
+        echo "=== END METADATA DEBUG ==="
+      shell: bash
+
+    - name: Final build parameters debug
+      run: |
+        echo "=== FINAL BUILD PARAMETERS ==="
+        echo "Context: ${{ inputs.context }}"
+        echo "File: ${{ inputs.dockerfile }}"
+        echo "Push: ${{ inputs.push }}"
+        echo "Tags: ${{ steps.meta.outputs.tags }}"
+        echo "Labels: ${{ steps.meta.outputs.labels }}"
+        echo "Cache from: ${{ inputs.cache-from }}"
+        echo "Cache to: ${{ inputs.cache-to }}"
+        echo "Build args: ${{ inputs.build-args }}"
+        echo "Platforms: ${{ inputs.platforms }}"
+        echo "Provenance: false"
+        echo "Outputs: type=image"
+        echo "=== END FINAL DEBUG ==="
       shell: bash
 
     - name: Build and push Docker image

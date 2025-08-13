@@ -17,7 +17,7 @@ on:
         type: string
 
 env:
-  REGISTRY_URL: https://registry.incmix.com
+  REGISTRY_URL: registry.incmix.com
 
 jobs:
   detect-changes:
@@ -34,7 +34,7 @@ jobs:
         id: detect
         uses: ./.github/actions/detect-changes
         with:
-          force_build_all: ${{ github.event.inputs.force_build_all || 'true' }}
+          force_build_all: true
           event_name: ${{ github.event_name }}
           target_branch: ${{ github.event.inputs.target_branch || 'main' }}
 
@@ -58,6 +58,7 @@ jobs:
       - name: Debug - Check services output before matrix
         run: |
           echo "=== PRE-MATRIX DEBUG ==="
+          echo "Registry URL: ${{ env.REGISTRY_URL }}"
           echo "Raw services output: '${{ needs.detect-changes.outputs.services }}'"
           echo "Services output type: $(echo '${{ needs.detect-changes.outputs.services }}' | jq -R .)"
           echo "Is services empty: ${{ needs.detect-changes.outputs.services == '' }}"
@@ -89,6 +90,19 @@ jobs:
           # Find the service config for the current matrix service
           SERVICE_CONFIG=$(cat .github/actions/service-config/services.json | jq -r --arg name "${{ matrix.service }}" '.services[] | select(.name == $name) | tojson')
           echo "config=$SERVICE_CONFIG" >> $GITHUB_OUTPUT
+
+      - name: Debug Docker build parameters
+        run: |
+          echo "=== DOCKER BUILD PARAMETERS DEBUG ==="
+          echo "Service: ${{ matrix.service }}"
+          echo "Registry URL: ${{ env.REGISTRY_URL }}"
+          echo "Dockerfile: ${{ fromJSON(steps.service-config.outputs.config).dockerfile }}"
+          echo "Context: ${{ fromJSON(steps.service-config.outputs.config).context }}"
+          echo "Image name: ${{ fromJSON(steps.service-config.outputs.config).image_name }}"
+          echo "Image tag: ${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.number) || github.ref_name }}"
+          echo "Full image reference: ${{ env.REGISTRY_URL }}/${{ fromJSON(steps.service-config.outputs.config).image_name }}:${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.number) || github.ref_name }}"
+          echo "=== END DEBUG ==="
+        shell: bash
 
       - name: Build Docker image
         id: build
