@@ -308,19 +308,199 @@ runs:
         echo "=== END FINAL PATH VERIFICATION ==="
       shell: bash
 
+    - name: Format and validate context paths
+      run: |
+        echo "=== CONTEXT PATH FORMATTING ==="
+        echo "Original context: '${{ inputs.context }}'"
+        echo "Original dockerfile: '${{ inputs.dockerfile }}'"
+        echo ""
+
+        # Ensure context path is properly formatted
+        CONTEXT_PATH="${{ inputs.context }}"
+        DOCKERFILE_PATH="${{ inputs.dockerfile }}"
+
+        # Remove leading slash if present
+        CONTEXT_PATH="${CONTEXT_PATH#/}"
+        DOCKERFILE_PATH="${DOCKERFILE_PATH#/}"
+
+        # Ensure it starts with . if it's a relative path
+        if [[ "$CONTEXT_PATH" != .* ]] && [[ "$CONTEXT_PATH" != /* ]]; then
+          CONTEXT_PATH="./$CONTEXT_PATH"
+        fi
+
+        if [[ "$DOCKERFILE_PATH" != .* ]] && [[ "$DOCKERFILE_PATH" != /* ]]; then
+          DOCKERFILE_PATH="./$DOCKERFILE_PATH"
+        fi
+
+        echo "Formatted context: '$CONTEXT_PATH'"
+        echo "Formatted dockerfile: '$DOCKERFILE_PATH'"
+        echo ""
+
+        # Verify the formatted paths exist
+        echo "Path verification:"
+        echo "Context exists: $([ -d "$CONTEXT_PATH" ] && echo "✓ YES" || echo "✗ NO")"
+        echo "Dockerfile exists: $([ -f "$DOCKERFILE_PATH" ] && echo "✓ YES" || echo "✗ NO")"
+        echo ""
+
+        # Store formatted paths for the build step
+        echo "CONTEXT_PATH=$CONTEXT_PATH" >> $GITHUB_ENV
+        echo "DOCKERFILE_PATH=$DOCKERFILE_PATH" >> $GITHUB_ENV
+
+        echo "=== END CONTEXT PATH FORMATTING ==="
+      shell: bash
+
+    - name: Show final build configuration
+      run: |
+        echo "=== FINAL BUILD CONFIGURATION ==="
+        echo "Environment variables:"
+        echo "CONTEXT_PATH: $CONTEXT_PATH"
+        echo "DOCKERFILE_PATH: $DOCKERFILE_PATH"
+        echo ""
+        echo "Path verification:"
+        echo "Context exists: $([ -d "$CONTEXT_PATH" ] && echo "✓ YES" || echo "✗ NO")"
+        echo "Dockerfile exists: $([ -f "$DOCKERFILE_PATH" ] && echo "✓ YES" || echo "✗ NO")"
+        echo ""
+        echo "Context directory contents:"
+        if [ -d "$CONTEXT_PATH" ]; then
+          ls -la "$CONTEXT_PATH"
+        else
+          echo "Context directory not found!"
+        fi
+        echo ""
+        echo "Working directory: $(pwd)"
+        echo "Repository root confirmed: $([ -d "api" ] && [ -f ".github/workflows/ci-build.yml" ] && echo "YES" || echo "NO")"
+        echo "=== END FINAL BUILD CONFIGURATION ==="
+      shell: bash
+
+    - name: Test Docker build command manually
+      run: |
+        echo "=== MANUAL DOCKER BUILD TEST ==="
+        echo "Testing Docker build command manually to debug path issues..."
+        echo ""
+        echo "Working directory: $(pwd)"
+        echo "Context path: $CONTEXT_PATH"
+        echo "Dockerfile path: $DOCKERFILE_PATH"
+        echo ""
+        echo "Testing docker build command:"
+        echo "docker build --file $DOCKERFILE_PATH --tag test-image $CONTEXT_PATH"
+        echo ""
+        # Don't actually run the build, just show what would be executed
+        echo "This is a dry run to show the exact command that would be executed"
+        echo "=== END MANUAL DOCKER BUILD TEST ==="
+      shell: bash
+
+    - name: Debug Docker build action inputs
+      run: |
+        echo "=== DOCKER BUILD ACTION INPUTS DEBUG ==="
+        echo "About to call docker/build-push-action@v5 with:"
+        echo "  context: $CONTEXT_PATH"
+        echo "  file: $DOCKERFILE_PATH"
+        echo "  push: ${{ inputs.push == 'true' }}"
+        echo "  tags: ${{ steps.meta.outputs.tags }}"
+        echo "  labels: ${{ steps.meta.outputs.labels }}"
+        echo "  cache-from: ${{ inputs.cache-from }}"
+        echo "  cache-to: ${{ inputs.cache-to }}"
+        echo "  build-args: ${{ inputs.build-args }}"
+        echo "  platforms: ${{ inputs.platforms }}"
+        echo "  provenance: false"
+        echo "  outputs: type=image"
+        echo "  no-cache-filters: true"
+        echo ""
+        echo "Current working directory: $(pwd)"
+        echo "Repository root confirmed: $([ -d "api" ] && [ -f ".github/workflows/ci-build.yml" ] && echo "YES" || echo "NO")"
+        echo "=== END DOCKER BUILD ACTION INPUTS DEBUG ==="
+      shell: bash
+
     - name: Build and push Docker image
       id: build
-      uses: docker/build-push-action@v5
-      with:
-        context: ${{ inputs.context }}
-        file: ${{ inputs.dockerfile }}
-        push: ${{ inputs.push == 'true' }}
-        tags: ${{ steps.meta.outputs.tags }}
-        labels: ${{ steps.meta.outputs.labels }}
-        cache-from: ${{ inputs.cache-from }}
-        cache-to: ${{ inputs.cache-to }}
-        build-args: ${{ inputs.build-args }}
-        platforms: ${{ inputs.platforms }}
-        provenance: false
-        outputs: type=image
-        no-cache-filters: true
+      run: |
+        echo "=== BUILDING DOCKER IMAGE ==="
+        echo "Using direct docker build command to avoid path resolution issues..."
+        echo ""
+        echo "Build parameters:"
+        echo "  Context: $CONTEXT_PATH"
+        echo "  Dockerfile: $DOCKERFILE_PATH"
+        echo "  Tags: ${{ steps.meta.outputs.tags }}"
+        echo "  Push: ${{ inputs.push == 'true' }}"
+        echo ""
+        echo "Starting Docker build..."
+
+        # Build the image with additional parameters
+        BUILD_CMD="docker build --file \"$DOCKERFILE_PATH\" --tag \"temp-image:latest\""
+
+        # Add build args if provided
+        if [ -n "${{ inputs.build-args }}" ]; then
+          echo "Adding build args: ${{ inputs.build-args }}"
+          echo "${{ inputs.build-args }}" | tr ',' '\n' | while read arg; do
+            if [ -n "$arg" ]; then
+              BUILD_CMD="$BUILD_CMD --build-arg \"$arg\""
+            fi
+          done
+        fi
+
+        # Add platforms if specified (for multi-platform builds)
+        if [ -n "${{ inputs.platforms }}" ] && [ "${{ inputs.platforms }}" != "linux/amd64" ]; then
+          echo "Adding platform: ${{ inputs.platforms }}"
+          BUILD_CMD="$BUILD_CMD --platform \"${{ inputs.platforms }}\""
+        fi
+
+        # Add cache from if provided
+        if [ -n "${{ inputs.cache-from }}" ]; then
+          echo "Adding cache from: ${{ inputs.cache-from }}"
+          BUILD_CMD="$BUILD_CMD --cache-from \"${{ inputs.cache-from }}\""
+        fi
+
+        # Add context path
+        BUILD_CMD="$BUILD_CMD \"$CONTEXT_PATH\""
+
+        echo "Full build command: $BUILD_CMD"
+        echo ""
+
+        # Execute the build command
+        eval $BUILD_CMD
+
+        if [ $? -eq 0 ]; then
+          echo "✓ Docker build successful!"
+
+          # Get image ID
+          IMAGE_ID=$(docker images --format "{{.ID}}" --filter "dangling=false" | head -n1)
+          echo "imageid=$IMAGE_ID" >> $GITHUB_OUTPUT
+
+          # Get image digest if available
+          IMAGE_DIGEST=$(docker images --format "{{.Digest}}" --filter "dangling=false" | head -n1)
+          if [ -n "$IMAGE_DIGEST" ] && [ "$IMAGE_DIGEST" != "<none>" ]; then
+            echo "digest=$IMAGE_DIGEST" >> $GITHUB_OUTPUT
+          else
+            echo "digest=" >> $GITHUB_OUTPUT
+          fi
+
+          # Add labels if provided
+          if [ -n "${{ steps.meta.outputs.labels }}" ]; then
+            echo "Adding labels to image..."
+            echo "${{ steps.meta.outputs.labels }}" | tr ',' '\n' | while read label; do
+              if [ -n "$label" ]; then
+                echo "Adding label: $label"
+                docker label "temp-image:latest" "$label"
+              fi
+            done
+          fi
+
+          # Push if requested
+          if [ "${{ inputs.push }}" = "true" ]; then
+            echo "Pushing image..."
+            # Parse tags and push
+            echo "${{ steps.meta.outputs.tags }}" | tr ',' '\n' | while read tag; do
+              if [ -n "$tag" ]; then
+                echo "Tagging and pushing: $tag"
+                docker tag "temp-image:latest" "$tag"
+                docker push "$tag"
+              fi
+            done
+          fi
+        else
+          echo "✗ Docker build failed!"
+          exit 1
+        fi
+
+        echo "=== END DOCKER BUILD ==="
+      shell: bash
