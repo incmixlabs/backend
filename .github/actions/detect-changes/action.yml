@@ -27,13 +27,11 @@ runs:
       shell: bash
       run: |
         # Handle manual workflow dispatch
+        FORCE_BUILD_ALL=false
         if [ "${{ inputs.event_name }}" = "workflow_dispatch" ]; then
           if [ "${{ inputs.force_build_all }}" = "true" ]; then
-            # Force build all services
-            SERVICES='["auth", "users-api", "projects-api", "tasks-api", "comments-api", "files-api", "genai-api", "intl-api", "location-api", "org-api", "permissions-api", "rxdb-api", "bff-web", "email"]'
-            echo "services=$SERVICES" >> $GITHUB_OUTPUT
-            echo "Manual trigger: Building all services"
-            exit 0
+            FORCE_BUILD_ALL=true
+            echo "Manual trigger: Force building all services"
           else
             # For non-force builds, continue with normal detection
             echo "Manual trigger: Detecting changed services"
@@ -64,12 +62,17 @@ runs:
           SERVICES_ARRAY=("auth" "users-api" "projects-api" "tasks-api" "comments-api" "files-api" "genai-api" "intl-api" "location-api" "org-api" "permissions-api" "rxdb-api" "bff-web" "email")
         fi
 
-        # Convert array to JSON format
-        if [ ${#SERVICES_ARRAY[@]} -eq 0 ]; then
-          SERVICES='[]'
+        # Handle force build all case
+        if [ "$FORCE_BUILD_ALL" = "true" ]; then
+          SERVICES='["auth", "users-api", "projects-api", "tasks-api", "comments-api", "files-api", "genai-api", "intl-api", "location-api", "org-api", "permissions-api", "rxdb-api", "bff-web", "email"]'
         else
-          # Create proper JSON array using jq
-          SERVICES=$(printf '%s\n' "${SERVICES_ARRAY[@]}" | jq -R . | jq -s .)
+          # Convert array to JSON format
+          if [ ${#SERVICES_ARRAY[@]} -eq 0 ]; then
+            SERVICES='[]'
+          else
+            # Create proper JSON array using jq
+            SERVICES=$(printf '%s\n' "${SERVICES_ARRAY[@]}" | jq -R . | jq -s .)
+          fi
         fi
 
         echo "services=$SERVICES" >> $GITHUB_OUTPUT
