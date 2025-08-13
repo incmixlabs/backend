@@ -8,7 +8,7 @@ on:
       force_build_all:
         description: 'Force build all services'
         required: false
-        default: false
+        default: true
         type: boolean
       target_branch:
         description: 'Target branch for comparison'
@@ -47,37 +47,37 @@ jobs:
 
   build-services:
     needs: detect-changes
-    if: needs.detect-changes.outputs.services != '[]' && needs.detect-changes.outputs.services != '' && needs.detect-changes.outputs.services != null
+    if: needs.detect-changes.outputs.services != '[]' && needs.detect-changes.outputs.services != '' && needs.detect-changes.outputs.services != null && needs.detect-changes.outputs.services != 'null'
     runs-on: ubuntu-latest
     strategy:
       matrix:
         service: ${{ fromJSON(needs.detect-changes.outputs.services) }}
 
-    # Add debug step to see the services output
+    # Add debug step to see the services output before matrix strategy
     steps:
-      - name: Debug - Check services output
+      - name: Debug - Check services output before matrix
         run: |
+          echo "=== PRE-MATRIX DEBUG ==="
           echo "Raw services output: '${{ needs.detect-changes.outputs.services }}'"
           echo "Services output length: ${#needs.detect-changes.outputs.services}"
           echo "Services output type: $(echo '${{ needs.detect-changes.outputs.services }}' | jq -R .)"
           echo "Is services empty: ${{ needs.detect-changes.outputs.services == '' }}"
           echo "Is services null: ${{ needs.detect-changes.outputs.services == null }}"
+          echo "Is services '[]': ${{ needs.detect-changes.outputs.services == '[]' }}"
+          echo "Is services 'null': ${{ needs.detect-changes.outputs.services == 'null' }}"
           echo "Services output JSON validation:"
           echo '${{ needs.detect-changes.outputs.services }}' | jq . || echo "Invalid JSON"
 
-      - name: Debug - Test fromJSON function
-        run: |
-          echo "Testing fromJSON with services output..."
-          SERVICES='${{ needs.detect-changes.outputs.services }}'
-          echo "Services variable: $SERVICES"
-          echo "Services length: ${#SERVICES}"
-
-          if [ -n "$SERVICES" ]; then
-            echo "Services is not empty, testing fromJSON..."
-            echo "$SERVICES" | jq . || echo "Invalid JSON format"
+          # Test fromJSON function
+          echo "Testing fromJSON function:"
+          SERVICES_JSON='${{ needs.detect-changes.outputs.services }}'
+          if [ -n "$SERVICES_JSON" ] && [ "$SERVICES_JSON" != "null" ] && [ "$SERVICES_JSON" != "[]" ]; then
+            echo "Services JSON is valid, parsing..."
+            echo "$SERVICES_JSON" | jq . || echo "Failed to parse as JSON"
           else
-            echo "Services is empty or null"
+            echo "Services JSON is empty, null, or []"
           fi
+          echo "=== END PRE-MATRIX DEBUG ==="
 
       - name: Checkout code
         uses: actions/checkout@v4
@@ -118,7 +118,7 @@ jobs:
 
   debug-services-output:
     needs: detect-changes
-    if: needs.detect-changes.outputs.services == '[]' || needs.detect-changes.outputs.services == '' || needs.detect-changes.outputs.services == null
+    if: needs.detect-changes.outputs.services == '[]' || needs.detect-changes.outputs.services == '' || needs.detect-changes.outputs.services == null || needs.detect-changes.outputs.services == 'null'
     runs-on: ubuntu-latest
     steps:
       - name: Debug - Services output is empty
@@ -130,6 +130,7 @@ jobs:
           echo "Is services empty: ${{ needs.detect-changes.outputs.services == '' }}"
           echo "Is services null: ${{ needs.detect-changes.outputs.services == null }}"
           echo "Is services '[]': ${{ needs.detect-changes.outputs.services == '[]' }}"
+          echo "Is services 'null': ${{ needs.detect-changes.outputs.services == 'null' }}"
           echo "=== END DEBUG ==="
 
           # Try to parse as JSON to see what we get

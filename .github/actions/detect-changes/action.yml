@@ -117,6 +117,14 @@ runs:
         echo "Output file size: $(wc -c < "$GITHUB_OUTPUT" 2>/dev/null || echo "0")"
         echo "=== END DEBUG INFO ==="
 
+        # Show the exact content being written
+        echo "=== OUTPUT CONTENT DEBUG ==="
+        echo "Writing 'services=$SERVICES' to output file"
+        echo "SERVICES variable value: '$SERVICES'"
+        echo "SERVICES variable length: ${#SERVICES}"
+        echo "SERVICES variable type: $(echo "$SERVICES" | jq -R .)"
+        echo "=== END OUTPUT CONTENT DEBUG ==="
+
         # Final fallback - ensure we always have a valid output
         if ! grep -q "services=" $GITHUB_OUTPUT; then
           echo "services=$SERVICES" >> $GITHUB_OUTPUT
