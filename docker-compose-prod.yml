@@ -55,6 +55,8 @@ services:
       EMAIL_API_URL: ${EMAIL_API_URL:-http://email-api:8989/api/email}
       USERS_API_URL: ${USERS_API_URL:-http://users-api:9191/api/users}
       GOOGLE_REDIRECT_URL: ${GOOGLE_REDIRECT_URL}
+      # Service URLs
+      INTL_API_URL: ${INTL_API_URL:-http://intl-api:9090/api/intl}
     networks:
       - incmix-network
     depends_on:
@@ -73,6 +75,8 @@ services:
       # Email service
       SENDGRID_API_KEY: ${SENDGRID_API_KEY}
       SENDGRID_WEBHOOK_KEY: ${SENDGRID_WEBHOOK_KEY}
+      # Service URLs
+      INTL_API_URL: ${INTL_API_URL:-http://intl-api:9090/api/intl}
     networks:
       - incmix-network
     depends_on:
@@ -92,6 +96,7 @@ services:
       AUTH_API_URL: ${AUTH_API_URL:-http://auth-api:8787/api/auth}
       FILES_API_URL: ${FILES_API_URL:-http://files-api:8282/api/files}
       ORG_API_URL: ${ORG_API_URL:-http://org-api:9292/api/org}
+      INTL_API_URL: ${INTL_API_URL:-http://intl-api:9090/api/intl}
     networks:
       - incmix-network
     depends_on:
@@ -110,6 +115,7 @@ services:
       # Service URLs
       AUTH_API_URL: ${AUTH_API_URL:-http://auth-api:8787/api/auth}
       USERS_API_URL: ${USERS_API_URL:-http://users-api:9191/api/users}
+      INTL_API_URL: ${INTL_API_URL:-http://intl-api:9090/api/intl}
     networks:
       - incmix-network
     depends_on:
@@ -128,6 +134,7 @@ services:
       # Service URLs
       AUTH_API_URL: ${AUTH_API_URL:-http://auth-api:8787/api/auth}
       USERS_API_URL: ${USERS_API_URL:-http://users-api:9191/api/users}
+      INTL_API_URL: ${INTL_API_URL:-http://intl-api:9090/api/intl}
     networks:
       - incmix-network
     depends_on:
@@ -160,6 +167,7 @@ services:
       PORT: 8282
       # Service URLs
       AUTH_API_URL: ${AUTH_API_URL:-http://auth-api:8787/api/auth}
+      INTL_API_URL: ${INTL_API_URL:-http://intl-api:9090/api/intl}
       # AWS/S3 configuration
       AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
       AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
@@ -184,6 +192,7 @@ services:
       # Service URLs
       AUTH_API_URL: ${AUTH_API_URL:-http://auth-api:8787/api/auth}
       ORG_API_URL: ${ORG_API_URL:-http://org-api:9292/api/org}
+      INTL_API_URL: ${INTL_API_URL:-http://intl-api:9090/api/intl}
       # AI/ML services
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
       GOOGLE_AI_API_KEY: ${GOOGLE_AI_API_KEY}
@@ -206,6 +215,7 @@ services:
       # Service URLs
       AUTH_API_URL: ${AUTH_API_URL:-http://auth-api:8787/api/auth}
       ORG_API_URL: ${ORG_API_URL:-http://org-api:9292/api/org}
+      INTL_API_URL: ${INTL_API_URL:-http://intl-api:9090/api/intl}
     networks:
       - incmix-network
     depends_on:
@@ -224,6 +234,7 @@ services:
       # Service URLs
       AUTH_API_URL: ${AUTH_API_URL:-http://auth-api:8787/api/auth}
       ORG_API_URL: ${ORG_API_URL:-http://org-api:9292/api/org}
+      INTL_API_URL: ${INTL_API_URL:-http://intl-api:9090/api/intl}
     networks:
       - incmix-network
     depends_on:
@@ -237,6 +248,8 @@ services:
       COOKIE_NAME: ${COOKIE_NAME}
       DOMAIN: ${DOMAIN}
       PORT: 9494
+      # Service URLs
+      INTL_API_URL: ${INTL_API_URL:-http://intl-api:9090/api/intl}
       # Location and weather services
       WEATHER_URL: ${WEATHER_URL}
       LOCATION_URL: ${LOCATION_URL}
@@ -264,6 +277,7 @@ services:
       # Service URLs
       AUTH_API_URL: ${AUTH_API_URL:-http://auth-api:8787/api/auth}
       ORG_API_URL: ${ORG_API_URL:-http://org-api:9292/api/org}
+      INTL_API_URL: ${INTL_API_URL:-http://intl-api:9090/api/intl}
     networks:
       - incmix-network
     depends_on:
@@ -282,6 +296,7 @@ services:
       # Service URLs
       AUTH_API_URL: ${AUTH_API_URL:-http://auth-api:8787/api/auth}
       ORG_API_URL: ${ORG_API_URL:-http://org-api:9292/api/org}
+      INTL_API_URL: ${INTL_API_URL:-http://intl-api:9090/api/intl}
       # AI/ML services
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
       GOOGLE_AI_API_KEY: ${GOOGLE_AI_API_KEY}
