@@ -89,6 +89,10 @@ jobs:
     if: ${{ github.event_name != 'pull_request' && always() }}
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.target_branch || github.ref }}
       - name: Trigger Coolify deployment
         uses: ./.github/actions/trigger-coolify-deployment
         with:
