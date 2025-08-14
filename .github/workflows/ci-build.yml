@@ -85,8 +85,8 @@ jobs:
           image_id: ${{ steps.build.outputs.image-id }}
 
   trigger-coolify-deployment:
-    needs: [build-services]
-    if: ${{ github.event_name != 'pull_request' && always() }}
+    needs: [detect-changes, build-services]
+    if: ${{ github.event_name != 'pull_request' && needs.detect-changes.outputs.services != '[]' && needs.detect-changes.outputs.services != '' && needs.detect-changes.outputs.services != null && needs.detect-changes.outputs.services != 'null' }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
