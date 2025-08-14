@@ -13,10 +13,14 @@ inputs:
   image-name:
     description: 'Name of the Docker image (without tag)'
     required: true
-  image-tag:
-    description: 'Tag for the Docker image'
+  image-tags:
+    description: 'Comma-separated list of tags for the Docker image'
     required: false
     default: 'latest'
+  registry:
+    description: 'Docker registry URL'
+    required: false
+    default: 'registry.incmix.com'
   registry-username:
     description: 'Docker registry username (from secrets)'
     required: true
@@ -59,33 +63,72 @@ runs:
       uses: docker/setup-buildx-action@v3
       with:
         driver-opts: |
-          image=moby/buildkit:v0.12.0
-        buildkitd-flags: --debug
+          image=moby/buildkit:v0.13.0
 
     - name: Log in to Docker Registry
       uses: docker/login-action@v3
       with:
-        registry: https://registry.incmix.com
+        registry: ${{ inputs.registry }}
         username: ${{ inputs.registry-username }}
         password: ${{ inputs.registry-password }}
+
+    - name: Parse image tags
+      id: tags
+      run: |
+        # Parse comma-separated tags and format them for docker/metadata-action
+        IFS=',' read -ra TAGS <<< "${{ inputs.image-tags }}"
+        TAG_LIST=""
+        for tag in "${TAGS[@]}"; do
+          # Trim whitespace
+          tag=$(echo "$tag" | xargs)
+          if [ -n "$tag" ]; then
+            TAG_LIST="${TAG_LIST}type=raw,value=${tag}\n"
+          fi
+        done
+        # Remove trailing newline and store in output
+        TAG_LIST=$(echo -e "$TAG_LIST" | sed '$d')
+        echo "tags<<EOF" >> $GITHUB_OUTPUT
+        echo -e "$TAG_LIST" >> $GITHUB_OUTPUT
+        echo "EOF" >> $GITHUB_OUTPUT
+      shell: bash
 
     - name: Extract metadata
       id: meta
       uses: docker/metadata-action@v5
       with:
-        images: https://registry.incmix.com/${{ inputs.image-name }}
-        tags: |
-          type=ref,event=branch
-          type=ref,event=pr
-          type=sha,prefix={{branch}}-
-          type=raw,value=${{ inputs.image-tag }}
+        images: ${{ inputs.registry }}/${{ inputs.image-name }}
+        tags: ${{ steps.tags.outputs.tags }}
+
+    - name: Format and validate context paths
+      run: |
+        # Ensure context path is properly formatted
+        CONTEXT_PATH="${{ inputs.context }}"
+        DOCKERFILE_PATH="${{ inputs.dockerfile }}"
+
+        # Remove leading slash if present
+        CONTEXT_PATH="${CONTEXT_PATH#/}"
+        DOCKERFILE_PATH="${DOCKERFILE_PATH#/}"
+
+        # Ensure it starts with . if it's a relative path
+        if [[ "$CONTEXT_PATH" != .* ]] && [[ "$CONTEXT_PATH" != /* ]]; then
+          CONTEXT_PATH="./$CONTEXT_PATH"
+        fi
+
+        if [[ "$DOCKERFILE_PATH" != .* ]] && [[ "$DOCKERFILE_PATH" != /* ]]; then
+          DOCKERFILE_PATH="./$DOCKERFILE_PATH"
+        fi
+
+        # Store formatted paths for the build step
+        echo "CONTEXT_PATH=$CONTEXT_PATH" >> $GITHUB_ENV
+        echo "DOCKERFILE_PATH=$DOCKERFILE_PATH" >> $GITHUB_ENV
+      shell: bash
 
     - name: Build and push Docker image
       id: build
       uses: docker/build-push-action@v5
       with:
-        context: ${{ inputs.context }}
-        file: ${{ inputs.dockerfile }}
+        context: ${{ env.CONTEXT_PATH }}
+        file: ${{ env.DOCKERFILE_PATH }}
         push: ${{ inputs.push == 'true' }}
         tags: ${{ steps.meta.outputs.tags }}
         labels: ${{ steps.meta.outputs.labels }}
@@ -93,12 +136,6 @@ runs:
         cache-to: ${{ inputs.cache-to }}
         build-args: ${{ inputs.build-args }}
         platforms: ${{ inputs.platforms }}
-        outputs: type=docker,dest=/tmp/image.tar
         provenance: false
-
-    - name: Load image metadata
-      run: |
-        docker load --input /tmp/image.tar
-        echo "imageid=$(docker images --format "{{.ID}}" --filter "dangling=false" | head -n1)" >> $GITHUB_OUTPUT
-        echo "digest=$(docker images --format "{{.Digest}}" --filter "dangling=false" | head -n1)" >> $GITHUB_OUTPUT
-      shell: bash
+        outputs: type=image
+        no-cache-filters: true

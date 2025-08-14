@@ -138,7 +138,7 @@ authRoutes.openapi(signup, async (c) => {
         {
           id: userId,
           email,
-          emailVerifiedAt: null,
+          emailVerifiedAt: new Date().toISOString(),
           isSuperAdmin: false,
         },
         fullName,
@@ -146,14 +146,15 @@ authRoutes.openapi(signup, async (c) => {
         tx
       )
 
-      const verificationCode = await generateVerificationCode(
-        c,
-        userId,
-        email,
-        "email_verification",
-        tx
-      )
-      sendVerificationEmail(c, email, verificationCode, userId)
+      // TODO: Uncomment this when we have a way to send verification emails
+      // const verificationCode = await generateVerificationCode(
+      //   c,
+      //   userId,
+      //   email,
+      //   "email_verification",
+      //   tx
+      // )
+      // sendVerificationEmail(c, email, verificationCode, userId)
 
       return { profile, user }
     })

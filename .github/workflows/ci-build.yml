@@ -2,9 +2,7 @@ name: CI Build
 
 on:
   push:
-    branches: [main, develop]
-  pull_request:
-    branches: [main, develop]
+    branches: [main]
   workflow_dispatch:
     inputs:
       force_build_all:
@@ -19,7 +17,7 @@ on:
         type: string
 
 env:
-  REGISTRY_URL: ghcr.io/${{ github.repository_owner }}
+  REGISTRY_URL: registry.incmix.com
 
 jobs:
   detect-changes:
@@ -33,54 +31,22 @@ jobs:
           fetch-depth: 2
 
       - name: Detect service changes
+        id: detect
         uses: ./.github/actions/detect-changes
         with:
-          force_build_all: ${{ github.event.inputs.force_build_all || 'false' }}
+          force_build_all: ${{ github.event.inputs.force_build_all || false }}
           event_name: ${{ github.event_name }}
           target_branch: ${{ github.event.inputs.target_branch || 'main' }}
 
-      - name: Debug - Show job outputs
-        run: |
-          echo "=== DETECT-CHANGES JOB OUTPUTS ==="
-          echo "services output: '${{ steps.detect.outputs.services }}'"
-          echo "services output length: ${#steps.detect.outputs.services}"
-          echo "services output type: $(echo '${{ steps.detect.outputs.services }}' | jq -R .)"
-          echo "=== END OUTPUTS ==="
-
   build-services:
     needs: detect-changes
-    if: needs.detect-changes.outputs.services != '[]' && needs.detect-changes.outputs.services != '' && needs.detect-changes.outputs.services != null
+    if: needs.detect-changes.outputs.services != '[]' && needs.detect-changes.outputs.services != '' && needs.detect-changes.outputs.services != null && needs.detect-changes.outputs.services != 'null'
     runs-on: ubuntu-latest
     strategy:
       matrix:
         service: ${{ fromJSON(needs.detect-changes.outputs.services) }}
 
-    # Add debug step to see the services output
     steps:
-      - name: Debug - Check services output
-        run: |
-          echo "Raw services output: '${{ needs.detect-changes.outputs.services }}'"
-          echo "Services output length: ${#needs.detect-changes.outputs.services}"
-          echo "Services output type: $(echo '${{ needs.detect-changes.outputs.services }}' | jq -R .)"
-          echo "Is services empty: ${{ needs.detect-changes.outputs.services == '' }}"
-          echo "Is services null: ${{ needs.detect-changes.outputs.services == null }}"
-          echo "Services output JSON validation:"
-          echo '${{ needs.detect-changes.outputs.services }}' | jq . || echo "Invalid JSON"
-
-      - name: Debug - Test fromJSON function
-        run: |
-          echo "Testing fromJSON with services output..."
-          SERVICES='${{ needs.detect-changes.outputs.services }}'
-          echo "Services variable: $SERVICES"
-          echo "Services length: ${#SERVICES}"
-
-          if [ -n "$SERVICES" ]; then
-            echo "Services is not empty, testing fromJSON..."
-            echo "$SERVICES" | jq . || echo "Invalid JSON format"
-          else
-            echo "Services is empty or null"
-          fi
-
       - name: Checkout code
         uses: actions/checkout@v4
         with:
@@ -89,7 +55,6 @@ jobs:
       - name: Load service configuration
         id: service-config
         run: |
-          # Find the service config for the current matrix service
           SERVICE_CONFIG=$(cat .github/actions/service-config/services.json | jq -r --arg name "${{ matrix.service }}" '.services[] | select(.name == $name) | tojson')
           echo "config=$SERVICE_CONFIG" >> $GITHUB_OUTPUT
 
@@ -100,7 +65,8 @@ jobs:
           dockerfile: ${{ fromJSON(steps.service-config.outputs.config).dockerfile }}
           context: ${{ fromJSON(steps.service-config.outputs.config).context }}
           image-name: ${{ fromJSON(steps.service-config.outputs.config).image_name }}
-          image-tag: ${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.number) || github.ref_name }}
+          image-tags: ${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.number) || (github.ref_name == 'main' && format('{0},latest', github.ref_name)) || github.ref_name }}
+          registry: ${{ env.REGISTRY_URL }}
           registry-username: ${{ secrets.DOCKER_USERNAME }}
           registry-password: ${{ secrets.DOCKER_PASSWORD }}
           push: ${{ github.event_name != 'pull_request' }}
@@ -115,29 +81,69 @@ jobs:
           registry_url: ${{ env.REGISTRY_URL }}
           image_tag: ${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.number) || github.ref_name }}
           event_name: ${{ github.event_name }}
-          pr_number: ${{ github.event.number }}
           image_id: ${{ steps.build.outputs.image-id }}
 
-  debug-services-output:
-    needs: detect-changes
-    if: needs.detect-changes.outputs.services == '[]' || needs.detect-changes.outputs.services == '' || needs.detect-changes.outputs.services == null
+  trigger-coolify-deployment:
+    needs: [detect-changes, build-services]
+    if: ${{ github.event_name != 'pull_request' && needs.detect-changes.outputs.services != '[]' && needs.detect-changes.outputs.services != '' && needs.detect-changes.outputs.services != null && needs.detect-changes.outputs.services != 'null' }}
     runs-on: ubuntu-latest
     steps:
-      - name: Debug - Services output is empty
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.target_branch || github.ref }}
+      - name: Trigger Coolify deployment
+        uses: ./.github/actions/trigger-coolify-deployment
+        with:
+          webhook_url: ${{ secrets.COOLIFY_WEBHOOK_URL }}
+          coolify_token: ${{ secrets.COOLIFY_TOKEN }}
+
+  coolify-deployment-summary:
+    needs: [build-services, trigger-coolify-deployment]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deployment Summary
         run: |
-          echo "=== SERVICES OUTPUT DEBUG ==="
-          echo "Services output: '${{ needs.detect-changes.outputs.services }}'"
-          echo "Services output length: ${#needs.detect-changes.outputs.services}"
-          echo "Services output type: $(echo '${{ needs.detect-changes.outputs.services }}' | jq -R .)"
-          echo "Is services empty: ${{ needs.detect-changes.outputs.services == '' }}"
-          echo "Is services null: ${{ needs.detect-changes.outputs.services == null }}"
-          echo "Is services '[]': ${{ needs.detect-changes.outputs.services == '[]' }}"
-          echo "=== END DEBUG ==="
+          # Write comprehensive summary to GitHub Actions job summary
+          echo "# 🚀 CI/CD Pipeline Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## 📦 Build Services Status" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
 
-          # Try to parse as JSON to see what we get
-          echo "Attempting to parse services as JSON:"
-          echo '${{ needs.detect-changes.outputs.services }}' | jq . || echo "Failed to parse as JSON"
+          if [ "${{ needs.build-services.result }}" == "success" ]; then
+            echo "✅ All services built successfully" | tee -a $GITHUB_STEP_SUMMARY
+            echo "**Status:** ✅ Success" >> $GITHUB_STEP_SUMMARY
+            echo "**Details:** All services were built and pushed to the registry successfully." >> $GITHUB_STEP_SUMMARY
+          elif [ "${{ needs.build-services.result }}" == "skipped" ]; then
+            echo "✅ All services built successfully" | tee -a $GITHUB_STEP_SUMMARY
+            echo "**Status:** ⏭️ Skipped" >> $GITHUB_STEP_SUMMARY
+            echo "**Details:** No services required building (no changes detected)." >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ Some services failed to build" | tee -a $GITHUB_STEP_SUMMARY
+            echo "**Status:** ❌ Failed" >> $GITHUB_STEP_SUMMARY
+            echo "**Details:** One or more services failed to build. Check the build logs for details." >> $GITHUB_STEP_SUMMARY
+          fi
 
-          # Show the raw output in different formats
-          echo "Raw output in hex:"
-          echo -n '${{ needs.detect-changes.outputs.services }}' | xxd
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## 🚀 Coolify Deployment Status" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          if [ "${{ needs.trigger-coolify-deployment.result }}" == "success" ]; then
+            echo "✅ Coolify deployment triggered successfully" | tee -a $GITHUB_STEP_SUMMARY
+            echo "**Status:** ✅ Success" >> $GITHUB_STEP_SUMMARY
+            echo "**Details:** Deployment has been triggered successfully for all built services." >> $GITHUB_STEP_SUMMARY
+          elif [ "${{ needs.trigger-coolify-deployment.result }}" == "skipped" ]; then
+            echo "✅ Coolify deployment skipped" | tee -a $GITHUB_STEP_SUMMARY
+            echo "**Status:** ⏭️ Skipped" >> $GITHUB_STEP_SUMMARY
+            echo "**Details:** No deployment needed (no services were built)." >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ Coolify deployment failed" | tee -a $GITHUB_STEP_SUMMARY
+            echo "**Status:** ❌ Failed" >> $GITHUB_STEP_SUMMARY
+            echo "**Details:** Failed to trigger Coolify deployment. Check the deployment logs for details." >> $GITHUB_STEP_SUMMARY
+          fi
+
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "---" >> $GITHUB_STEP_SUMMARY
+          echo "*This summary was generated automatically by the CI/CD pipeline.*" >> $GITHUB_STEP_SUMMARY
+        shell: bash
