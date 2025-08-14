@@ -5,81 +5,13 @@
 # This file is designed to work with Coolify deployment platform.
 # All environment variables are now configurable via Coolify resource configuration.
 #
-# The services will automatically pick up environment variables from Coolify.
+# Each service only receives the environment variables it actually needs.
 # No hardcoded values - everything is configurable.
 #
 # =============================================================================
 
 version: "3.8"
 name: "incmix"
-x-api-common: &api-common
-  environment:
-    # Database
-    DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?sslmode=disable
-    POSTGRES_DB: ${POSTGRES_DB}
-    POSTGRES_USER: ${POSTGRES_USER}
-    POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-
-    # API URLs - configurable via Coolify environment variables
-    AUTH_API_URL: ${AUTH_API_URL:-http://auth-api:8787/api/auth}
-    EMAIL_API_URL: ${EMAIL_API_URL:-http://email-api:8989/api/email}
-    USERS_API_URL: ${USERS_API_URL:-http://users-api:9191/api/users}
-    INTL_API_URL: ${INTL_API_URL:-http://intl-api:9090/api/intl}
-    ORG_API_URL: ${ORG_API_URL:-http://org-api:9292/api/org}
-    FILES_API_URL: ${FILES_API_URL:-http://files-api:8282/api/files}
-    TASKS_API_URL: ${TASKS_API_URL:-http://tasks-api:8888/api/tasks}
-    LOCATION_API_URL: ${LOCATION_API_URL:-http://location-api:9494/api/location}
-    GENAI_API_URL: ${GENAI_API_URL:-http://genai-api:8383/api/genai}
-    PROJECTS_API_URL: ${PROJECTS_API_URL:-http://projects-api:8484/api/projects}
-    PERMISSIONS_API_URL: ${PERMISSIONS_API_URL:-http://permissions-api:9393/api/permissions}
-    RXDB_SYNC_API_URL: ${RXDB_SYNC_API_URL:-http://rxdb-api:8686/api/rxdb-sync}
-    COMMENTS_API_URL: ${COMMENTS_API_URL:-http://comments-api:8585/api/comments}
-
-    # Service configuration
-    NODE_ENV: ${NODE_ENV}
-    COOKIE_NAME: ${COOKIE_NAME}
-    DOMAIN: ${DOMAIN}
-    FRONTEND_URL: ${FRONTEND_URL}
-
-    # OAuth and authentication
-    GOOGLE_REDIRECT_URL: ${GOOGLE_REDIRECT_URL}
-    GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
-    GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
-
-    # Email service (SendGrid)
-    SENDGRID_API_KEY: ${SENDGRID_API_KEY}
-    SENDGRID_WEBHOOK_KEY: ${SENDGRID_WEBHOOK_KEY}
-
-    # AWS/S3 configuration
-    AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
-    AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
-    AWS_REGION: ${AWS_REGION}
-    AWS_ENDPOINT_URL_S3: ${AWS_ENDPOINT_URL_S3}
-    BUCKET_NAME: ${BUCKET_NAME}
-
-    # AI/ML services
-    GOOGLE_AI_API_KEY: ${GOOGLE_AI_API_KEY}
-    ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
-    FIGMA_TOKEN: ${FIGMA_TOKEN}
-
-    # Location and weather services
-    LOCATION_API_KEY: ${LOCATION_API_KEY}
-    LOCATION_URL: ${LOCATION_URL}
-    WEATHER_API_KEY: ${WEATHER_API_KEY}
-    WEATHER_URL: ${WEATHER_URL}
-
-    # Search and news services
-    SERP_API_KEY: ${SERP_API_KEY}
-    SERP_NEWS_URL: ${SERP_NEWS_URL}
-
-    # Redis configuration
-    UPSTASH_REDIS_REST_URL: ${UPSTASH_REDIS_REST_URL}
-    UPSTASH_REDIS_REST_TOKEN: ${UPSTASH_REDIS_REST_TOKEN}
-
-  networks:
-    - incmix-network
-  depends_on:
-    - postgres
 
 services:
   postgres:
@@ -95,6 +27,7 @@ services:
       - incmix-db-data:/var/lib/postgresql/data
     networks:
       - incmix-network
+
   # backend:
   #   image: electricsql/electric
   #   environment:
@@ -104,76 +37,293 @@ services:
   #     - 3000:3000
   #   depends_on:
   #     - postgres
+
   auth-api:
-    <<: *api-common
     image: registry.incmix.com/auth-service:latest
-    # Internal access only - no external ports
+    environment:
+      # Database
+      DATABASE_URL: ${DATABASE_URL}
+      # Service configuration
+      NODE_ENV: ${NODE_ENV}
+      COOKIE_NAME: ${COOKIE_NAME}
+      DOMAIN: ${DOMAIN}
+      PORT: 8787
+      # OAuth and authentication
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
+      FRONTEND_URL: ${FRONTEND_URL}
+      EMAIL_API_URL: ${EMAIL_API_URL:-http://email-api:8989/api/email}
+      USERS_API_URL: ${USERS_API_URL:-http://users-api:9191/api/users}
+      GOOGLE_REDIRECT_URL: ${GOOGLE_REDIRECT_URL}
+    networks:
+      - incmix-network
+    depends_on:
+      - postgres
 
   email-api:
-    <<: *api-common
     image: registry.incmix.com/email-service:latest
-    # Internal access only - no external ports
+    environment:
+      # Database
+      DATABASE_URL: ${DATABASE_URL}
+      # Service configuration
+      NODE_ENV: ${NODE_ENV}
+      COOKIE_NAME: ${COOKIE_NAME}
+      DOMAIN: ${DOMAIN}
+      PORT: 8989
+      # Email service
+      SENDGRID_API_KEY: ${SENDGRID_API_KEY}
+      SENDGRID_WEBHOOK_KEY: ${SENDGRID_WEBHOOK_KEY}
+    networks:
+      - incmix-network
+    depends_on:
+      - postgres
 
   users-api:
-    <<: *api-common
     image: registry.incmix.com/users-api:latest
-    # Internal access only - no external ports
+    environment:
+      # Database
+      DATABASE_URL: ${DATABASE_URL}
+      # Service configuration
+      NODE_ENV: ${NODE_ENV}
+      COOKIE_NAME: ${COOKIE_NAME}
+      DOMAIN: ${DOMAIN}
+      PORT: 9191
+      # Service URLs
+      AUTH_API_URL: ${AUTH_API_URL:-http://auth-api:8787/api/auth}
+      FILES_API_URL: ${FILES_API_URL:-http://files-api:8282/api/files}
+      ORG_API_URL: ${ORG_API_URL:-http://org-api:9292/api/org}
+    networks:
+      - incmix-network
+    depends_on:
+      - postgres
 
   org-api:
-    <<: *api-common
     image: registry.incmix.com/org-api:latest
-    # Internal access only - no external ports
+    environment:
+      # Database
+      DATABASE_URL: ${DATABASE_URL}
+      # Service configuration
+      NODE_ENV: ${NODE_ENV}
+      COOKIE_NAME: ${COOKIE_NAME}
+      DOMAIN: ${DOMAIN}
+      PORT: 9292
+      # Service URLs
+      AUTH_API_URL: ${AUTH_API_URL:-http://auth-api:8787/api/auth}
+      USERS_API_URL: ${USERS_API_URL:-http://users-api:9191/api/users}
+    networks:
+      - incmix-network
+    depends_on:
+      - postgres
 
   permissions-api:
-    <<: *api-common
     image: registry.incmix.com/permissions-api:latest
-    # Internal access only - no external ports
+    environment:
+      # Database
+      DATABASE_URL: ${DATABASE_URL}
+      # Service configuration
+      NODE_ENV: ${NODE_ENV}
+      COOKIE_NAME: ${COOKIE_NAME}
+      DOMAIN: ${DOMAIN}
+      PORT: 9393
+      # Service URLs
+      AUTH_API_URL: ${AUTH_API_URL:-http://auth-api:8787/api/auth}
+      USERS_API_URL: ${USERS_API_URL:-http://users-api:9191/api/users}
+    networks:
+      - incmix-network
+    depends_on:
+      - postgres
 
   intl-api:
-    <<: *api-common
     image: registry.incmix.com/intl-api:latest
-    # Internal access only - no external ports
+    environment:
+      # Database
+      DATABASE_URL: ${DATABASE_URL}
+      # Service configuration
+      NODE_ENV: ${NODE_ENV}
+      COOKIE_NAME: ${COOKIE_NAME}
+      DOMAIN: ${DOMAIN}
+      PORT: 9090
+      # Service URLs
+      AUTH_API_URL: ${AUTH_API_URL:-http://auth-api:8787/api/auth}
+    networks:
+      - incmix-network
+    depends_on:
+      - postgres
 
   files-api:
-    <<: *api-common
     image: registry.incmix.com/files-api:latest
-    # Internal access only - no external ports
+    environment:
+      # Service configuration
+      NODE_ENV: ${NODE_ENV}
+      COOKIE_NAME: ${COOKIE_NAME}
+      DOMAIN: ${DOMAIN}
+      PORT: 8282
+      # Service URLs
+      AUTH_API_URL: ${AUTH_API_URL:-http://auth-api:8787/api/auth}
+      # AWS/S3 configuration
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
+      AWS_REGION: ${AWS_REGION}
+      AWS_ENDPOINT_URL_S3: ${AWS_ENDPOINT_URL_S3}
+      BUCKET_NAME: ${BUCKET_NAME}
+    networks:
+      - incmix-network
+    depends_on:
+      - postgres
 
   genai-api:
-    <<: *api-common
     image: registry.incmix.com/genai-api:latest
-    # Internal access only - no external ports
+    environment:
+      # Database
+      DATABASE_URL: ${DATABASE_URL}
+      # Service configuration
+      NODE_ENV: ${NODE_ENV}
+      COOKIE_NAME: ${COOKIE_NAME}
+      DOMAIN: ${DOMAIN}
+      PORT: 8383
+      # Service URLs
+      AUTH_API_URL: ${AUTH_API_URL:-http://auth-api:8787/api/auth}
+      ORG_API_URL: ${ORG_API_URL:-http://org-api:9292/api/org}
+      # AI/ML services
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
+      GOOGLE_AI_API_KEY: ${GOOGLE_AI_API_KEY}
+      FIGMA_TOKEN: ${FIGMA_TOKEN}
+    networks:
+      - incmix-network
+    depends_on:
+      - postgres
 
   projects-api:
-    <<: *api-common
     image: registry.incmix.com/projects-api:latest
-    # Internal access only - no external ports
+    environment:
+      # Database
+      DATABASE_URL: ${DATABASE_URL}
+      # Service configuration
+      NODE_ENV: ${NODE_ENV}
+      COOKIE_NAME: ${COOKIE_NAME}
+      DOMAIN: ${DOMAIN}
+      PORT: 8484
+      # Service URLs
+      AUTH_API_URL: ${AUTH_API_URL:-http://auth-api:8787/api/auth}
+      ORG_API_URL: ${ORG_API_URL:-http://org-api:9292/api/org}
+    networks:
+      - incmix-network
+    depends_on:
+      - postgres
 
   tasks-api:
-    <<: *api-common
     image: registry.incmix.com/tasks-api:latest
-    # Internal access only - no external ports
+    environment:
+      # Database
+      DATABASE_URL: ${DATABASE_URL}
+      # Service configuration
+      NODE_ENV: ${NODE_ENV}
+      COOKIE_NAME: ${COOKIE_NAME}
+      DOMAIN: ${DOMAIN}
+      PORT: 8888
+      # Service URLs
+      AUTH_API_URL: ${AUTH_API_URL:-http://auth-api:8787/api/auth}
+      ORG_API_URL: ${ORG_API_URL:-http://org-api:9292/api/org}
+    networks:
+      - incmix-network
+    depends_on:
+      - postgres
 
   location-api:
-    <<: *api-common
     image: registry.incmix.com/location-api:latest
-    # Internal access only - no external ports
+    environment:
+      # Service configuration
+      NODE_ENV: ${NODE_ENV}
+      COOKIE_NAME: ${COOKIE_NAME}
+      DOMAIN: ${DOMAIN}
+      PORT: 9494
+      # Location and weather services
+      WEATHER_URL: ${WEATHER_URL}
+      LOCATION_URL: ${LOCATION_URL}
+      SERP_NEWS_URL: ${SERP_NEWS_URL}
+      WEATHER_API_KEY: ${WEATHER_API_KEY}
+      LOCATION_API_KEY: ${LOCATION_API_KEY}
+      SERP_API_KEY: ${SERP_API_KEY}
+      UPSTASH_REDIS_REST_URL: ${UPSTASH_REDIS_REST_URL}
+      UPSTASH_REDIS_REST_TOKEN: ${UPSTASH_REDIS_REST_TOKEN}
+    networks:
+      - incmix-network
+    depends_on:
+      - postgres
 
   comments-api:
-    <<: *api-common
     image: registry.incmix.com/comments-api:latest
-    # Internal access only - no external ports
+    environment:
+      # Database
+      DATABASE_URL: ${DATABASE_URL}
+      # Service configuration
+      NODE_ENV: ${NODE_ENV}
+      COOKIE_NAME: ${COOKIE_NAME}
+      DOMAIN: ${DOMAIN}
+      PORT: 8585
+      # Service URLs
+      AUTH_API_URL: ${AUTH_API_URL:-http://auth-api:8787/api/auth}
+      ORG_API_URL: ${ORG_API_URL:-http://org-api:9292/api/org}
+    networks:
+      - incmix-network
+    depends_on:
+      - postgres
 
   rxdb-api:
-    <<: *api-common
     image: registry.incmix.com/rxdb-api:latest
-    # Internal access only - no external ports
+    environment:
+      # Database
+      DATABASE_URL: ${DATABASE_URL}
+      # Service configuration
+      NODE_ENV: ${NODE_ENV}
+      COOKIE_NAME: ${COOKIE_NAME}
+      DOMAIN: ${DOMAIN}
+      PORT: 8686
+      # Service URLs
+      AUTH_API_URL: ${AUTH_API_URL:-http://auth-api:8787/api/auth}
+      ORG_API_URL: ${ORG_API_URL:-http://org-api:9292/api/org}
+      # AI/ML services
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
+      GOOGLE_AI_API_KEY: ${GOOGLE_AI_API_KEY}
+      FIGMA_TOKEN: ${FIGMA_TOKEN}
+    networks:
+      - incmix-network
+    depends_on:
+      - postgres
 
   bff-web:
-    <<: *api-common
     image: registry.incmix.com/bff-web:latest
+    environment:
+      # Service configuration
+      NODE_ENV: ${NODE_ENV}
+      COOKIE_NAME: ${COOKIE_NAME}
+      DOMAIN: ${DOMAIN}
+      PORT: 8080
+      # All API URLs (BFF needs access to all services)
+      AUTH_API_URL: ${AUTH_API_URL:-http://auth-api:8787/api/auth}
+      ORG_API_URL: ${ORG_API_URL:-http://org-api:9292/api/org}
+      INTL_API_URL: ${INTL_API_URL:-http://intl-api:9090/api/intl}
+      GENAI_API_URL: ${GENAI_API_URL:-http://genai-api:8383/api/genai}
+      PROJECTS_API_URL: ${PROJECTS_API_URL:-http://projects-api:8484/api/projects}
+      TASKS_API_URL: ${TASKS_API_URL:-http://tasks-api:8888/api/tasks}
+      COMMENTS_API_URL: ${COMMENTS_API_URL:-http://comments-api:8585/api/comments}
+      USERS_API_URL: ${USERS_API_URL:-http://users-api:9191/api/users}
+      FILES_API_URL: ${FILES_API_URL:-http://files-api:8282/api/files}
+      EMAIL_API_URL: ${EMAIL_API_URL:-http://email-api:8989/api/email}
+      LOCATION_API_URL: ${LOCATION_API_URL:-http://location-api:9494/api/location}
+      RXDB_SYNC_API_URL: ${RXDB_SYNC_API_URL:-http://rxdb-api:8686/api/rxdb-sync}
+      PERMISSIONS_API_URL: ${PERMISSIONS_API_URL:-http://permissions-api:9393/api/permissions}
+      # Frontend and OAuth (needed for BFF)
+      FRONTEND_URL: ${FRONTEND_URL}
+      GOOGLE_REDIRECT_URL: ${GOOGLE_REDIRECT_URL}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
     ports:
       - 8081:8080  # Only public access point
+    networks:
+      - incmix-network
+    depends_on:
+      - postgres
 
 volumes:
   incmix-db-data:
