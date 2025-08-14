@@ -19,7 +19,6 @@ x-api-common: &api-common
     POSTGRES_DB: ${POSTGRES_DB}
     POSTGRES_USER: ${POSTGRES_USER}
     POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-    PGDATA: ${PGDATA}
 
     # API URLs - configurable via Coolify environment variables
     AUTH_API_URL: ${AUTH_API_URL:-http://auth-api:8787/api/auth}
