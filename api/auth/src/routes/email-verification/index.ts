@@ -49,7 +49,7 @@ emailVerificationRoutes.openapi(sendVerificationEmailRoute, async (c) => {
       "email_verification"
     )
 
-    sendVerificationEmail(c, email, verificationCode)
+    sendVerificationEmail(c, email, verificationCode, user.id)
     const msg = await t.text(MAIL_SENT)
     return c.json({ message: msg }, 200)
   } catch (error) {
