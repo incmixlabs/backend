@@ -16,7 +16,6 @@ runs:
       id: deploy
       run: |
         echo "🚀 Triggering Coolify deployment for all built services"
-        echo "🔗 Webhook: ${{ inputs.webhook_url }}"
 
         # Make the webhook request to trigger deployment
         RESPONSE=$(curl -s -w "\n%{http_code}" \

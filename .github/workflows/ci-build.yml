@@ -65,7 +65,7 @@ jobs:
           dockerfile: ${{ fromJSON(steps.service-config.outputs.config).dockerfile }}
           context: ${{ fromJSON(steps.service-config.outputs.config).context }}
           image-name: ${{ fromJSON(steps.service-config.outputs.config).image_name }}
-          image-tag: ${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.number) || github.ref_name }}
+          image-tags: ${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.number) || (github.ref_name == 'main' && format('{0},latest', github.ref_name)) || github.ref_name }}
           registry: ${{ env.REGISTRY_URL }}
           registry-username: ${{ secrets.DOCKER_USERNAME }}
           registry-password: ${{ secrets.DOCKER_PASSWORD }}
