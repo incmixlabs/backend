@@ -313,11 +313,6 @@ services:
       LOCATION_API_URL: ${LOCATION_API_URL:-http://location-api:9494/api/location}
       RXDB_SYNC_API_URL: ${RXDB_SYNC_API_URL:-http://rxdb-api:8686/api/rxdb-sync}
       PERMISSIONS_API_URL: ${PERMISSIONS_API_URL:-http://permissions-api:9393/api/permissions}
-      # Frontend and OAuth (needed for BFF)
-      FRONTEND_URL: ${FRONTEND_URL}
-      GOOGLE_REDIRECT_URL: ${GOOGLE_REDIRECT_URL}
-      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
-      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
     ports:
       - 8081:8080  # Only public access point
     networks:
