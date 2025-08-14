@@ -107,60 +107,44 @@ jobs:
       - name: Deployment Summary
         run: |
           # Write comprehensive summary to GitHub Actions job summary
-          cat << 'EOF' >> $GITHUB_STEP_SUMMARY
-          # 🚀 CI/CD Pipeline Summary
-
-          ## 📦 Build Services Status
-          EOF
+          echo "# 🚀 CI/CD Pipeline Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## 📦 Build Services Status" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
 
           if [ "${{ needs.build-services.result }}" == "success" ]; then
             echo "✅ All services built successfully" | tee -a $GITHUB_STEP_SUMMARY
-            cat << 'EOF' >> $GITHUB_STEP_SUMMARY
-            **Status:** ✅ Success
-            **Details:** All services were built and pushed to the registry successfully.
-            EOF
+            echo "**Status:** ✅ Success" >> $GITHUB_STEP_SUMMARY
+            echo "**Details:** All services were built and pushed to the registry successfully." >> $GITHUB_STEP_SUMMARY
           elif [ "${{ needs.build-services.result }}" == "skipped" ]; then
             echo "✅ All services built successfully" | tee -a $GITHUB_STEP_SUMMARY
-            cat << 'EOF' >> $GITHUB_STEP_SUMMARY
-            **Status:** ⏭️ Skipped
-            **Details:** No services required building (no changes detected).
-            EOF
+            echo "**Status:** ⏭️ Skipped" >> $GITHUB_STEP_SUMMARY
+            echo "**Details:** No services required building (no changes detected)." >> $GITHUB_STEP_SUMMARY
           else
             echo "❌ Some services failed to build" | tee -a $GITHUB_STEP_SUMMARY
-            cat << 'EOF' >> $GITHUB_STEP_SUMMARY
-            **Status:** ❌ Failed
-            **Details:** One or more services failed to build. Check the build logs for details.
-            EOF
+            echo "**Status:** ❌ Failed" >> $GITHUB_STEP_SUMMARY
+            echo "**Details:** One or more services failed to build. Check the build logs for details." >> $GITHUB_STEP_SUMMARY
           fi
 
-          cat << 'EOF' >> $GITHUB_STEP_SUMMARY
-
-          ## 🚀 Coolify Deployment Status
-          EOF
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## 🚀 Coolify Deployment Status" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
 
           if [ "${{ needs.trigger-coolify-deployment.result }}" == "success" ]; then
             echo "✅ Coolify deployment triggered successfully" | tee -a $GITHUB_STEP_SUMMARY
-            cat << 'EOF' >> $GITHUB_STEP_SUMMARY
-            **Status:** ✅ Success
-            **Details:** Deployment has been triggered successfully for all built services.
-            EOF
+            echo "**Status:** ✅ Success" >> $GITHUB_STEP_SUMMARY
+            echo "**Details:** Deployment has been triggered successfully for all built services." >> $GITHUB_STEP_SUMMARY
           elif [ "${{ needs.trigger-coolify-deployment.result }}" == "skipped" ]; then
-            echo "✅ Coolify deployment triggered successfully" | tee -a $GITHUB_STEP_SUMMARY
-            cat << 'EOF' >> $GITHUB_STEP_SUMMARY
-            **Status:** ⏭️ Skipped
-            **Details:** No deployment needed (no services were built).
-            EOF
+            echo "✅ Coolify deployment skipped" | tee -a $GITHUB_STEP_SUMMARY
+            echo "**Status:** ⏭️ Skipped" >> $GITHUB_STEP_SUMMARY
+            echo "**Details:** No deployment needed (no services were built)." >> $GITHUB_STEP_SUMMARY
           else
             echo "❌ Coolify deployment failed" | tee -a $GITHUB_STEP_SUMMARY
-            cat << 'EOF' >> $GITHUB_STEP_SUMMARY
-            **Status:** ❌ Failed
-            **Details:** Failed to trigger Coolify deployment. Check the deployment logs for details.
-            EOF
+            echo "**Status:** ❌ Failed" >> $GITHUB_STEP_SUMMARY
+            echo "**Details:** Failed to trigger Coolify deployment. Check the deployment logs for details." >> $GITHUB_STEP_SUMMARY
           fi
 
-          cat << 'EOF' >> $GITHUB_STEP_SUMMARY
-
-          ---
-          *This summary was generated automatically by the CI/CD pipeline.*
-          EOF
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "---" >> $GITHUB_STEP_SUMMARY
+          echo "*This summary was generated automatically by the CI/CD pipeline.*" >> $GITHUB_STEP_SUMMARY
         shell: bash
