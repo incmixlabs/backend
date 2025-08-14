@@ -81,7 +81,6 @@ jobs:
           registry_url: ${{ env.REGISTRY_URL }}
           image_tag: ${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.number) || github.ref_name }}
           event_name: ${{ github.event_name }}
-          pr_number: ${{ github.number }}
           image_id: ${{ steps.build.outputs.image-id }}
 
   trigger-coolify-deployment:
