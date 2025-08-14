@@ -1,10 +1,82 @@
+# =============================================================================
+# INCMIX PRODUCTION DOCKER COMPOSE
+# =============================================================================
+#
+# This file is designed to work with Coolify deployment platform.
+# All environment variables are now configurable via Coolify resource configuration.
+#
+# The services will automatically pick up environment variables from Coolify.
+# No hardcoded values - everything is configurable.
+#
+# =============================================================================
+
+version: "3.8"
 name: "incmix"
 x-api-common: &api-common
   environment:
+    # Database
     DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?sslmode=disable
-    TURBO_TOKEN: ${TURBO_TOKEN}
-  env_file:
-    - .services
+    POSTGRES_DB: ${POSTGRES_DB}
+    POSTGRES_USER: ${POSTGRES_USER}
+    POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    PGDATA: ${PGDATA}
+
+    # API URLs - configurable via Coolify environment variables
+    AUTH_API_URL: ${AUTH_API_URL:-http://auth-api:8787/api/auth}
+    EMAIL_API_URL: ${EMAIL_API_URL:-http://email-api:8989/api/email}
+    USERS_API_URL: ${USERS_API_URL:-http://users-api:9191/api/users}
+    INTL_API_URL: ${INTL_API_URL:-http://intl-api:9090/api/intl}
+    ORG_API_URL: ${ORG_API_URL:-http://org-api:9292/api/org}
+    FILES_API_URL: ${FILES_API_URL:-http://files-api:8282/api/files}
+    TASKS_API_URL: ${TASKS_API_URL:-http://tasks-api:8888/api/tasks}
+    LOCATION_API_URL: ${LOCATION_API_URL:-http://location-api:9494/api/location}
+    GENAI_API_URL: ${GENAI_API_URL:-http://genai-api:8383/api/genai}
+    PROJECTS_API_URL: ${PROJECTS_API_URL:-http://projects-api:8484/api/projects}
+    PERMISSIONS_API_URL: ${PERMISSIONS_API_URL:-http://permissions-api:9393/api/permissions}
+    RXDB_SYNC_API_URL: ${RXDB_SYNC_API_URL:-http://rxdb-api:8686/api/rxdb-sync}
+    COMMENTS_API_URL: ${COMMENTS_API_URL:-http://comments-api:8585/api/comments}
+
+    # Service configuration
+    NODE_ENV: ${NODE_ENV}
+    COOKIE_NAME: ${COOKIE_NAME}
+    DOMAIN: ${DOMAIN}
+    FRONTEND_URL: ${FRONTEND_URL}
+
+    # OAuth and authentication
+    GOOGLE_REDIRECT_URL: ${GOOGLE_REDIRECT_URL}
+    GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
+    GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
+
+    # Email service (SendGrid)
+    SENDGRID_API_KEY: ${SENDGRID_API_KEY}
+    SENDGRID_WEBHOOK_KEY: ${SENDGRID_WEBHOOK_KEY}
+
+    # AWS/S3 configuration
+    AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
+    AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
+    AWS_REGION: ${AWS_REGION}
+    AWS_ENDPOINT_URL_S3: ${AWS_ENDPOINT_URL_S3}
+    BUCKET_NAME: ${BUCKET_NAME}
+
+    # AI/ML services
+    GOOGLE_AI_API_KEY: ${GOOGLE_AI_API_KEY}
+    ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
+    FIGMA_TOKEN: ${FIGMA_TOKEN}
+
+    # Location and weather services
+    LOCATION_API_KEY: ${LOCATION_API_KEY}
+    LOCATION_URL: ${LOCATION_URL}
+    WEATHER_API_KEY: ${WEATHER_API_KEY}
+    WEATHER_URL: ${WEATHER_URL}
+
+    # Search and news services
+    SERP_API_KEY: ${SERP_API_KEY}
+    SERP_NEWS_URL: ${SERP_NEWS_URL}
+
+    # Redis configuration
+    UPSTASH_REDIS_REST_URL: ${UPSTASH_REDIS_REST_URL}
+    UPSTASH_REDIS_REST_TOKEN: ${UPSTASH_REDIS_REST_TOKEN}
+
   networks:
     - incmix-network
   depends_on:
@@ -12,15 +84,13 @@ x-api-common: &api-common
 
 services:
   postgres:
-    build:
-      context: .
-      dockerfile: db/Dockerfile
+    image: registry.incmix.com/db:latest
     restart: always
     environment:
-      POSTGRES_DB: ${POSTGRES_DB:-incmix}
-      POSTGRES_USER: ${POSTGRES_USER:-postgres}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-password}
-      PGDATA: ${PGDATA:-/var/lib/postgresql/data}
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      PGDATA: ${PGDATA}
       # POSTGRES_EXTENSIONS: plv8, btree_gist, hstore, pgvector, pgcrypto, CITEXT, pg_trgm, pg_cron, plpython3u
     ports:
       - ${POSTGRES_PORT:-54321}:5432
@@ -39,128 +109,75 @@ services:
   #     - postgres
   auth-api:
     <<: *api-common
-    build:
-      context: .
-      dockerfile: api/auth/Dockerfile
+    image: registry.incmix.com/auth-service:latest
     ports:
       - 8787:8787
   email-api:
     <<: *api-common
-    build:
-      context: .
-      dockerfile: api/email/Dockerfile
+    image: registry.incmix.com/email-service:latest
     ports:
       - 8989:8989
-    depends_on:
-      - auth-api
   users-api:
     <<: *api-common
-    build:
-      context: .
-      dockerfile: api/users-api/Dockerfile
+    image: registry.incmix.com/users-api:latest
     ports:
       - 9191:9191
-    depends_on:
-      - email-api
   org-api:
     <<: *api-common
-    build:
-      context: .
-      dockerfile: api/org-api/Dockerfile
+    image: registry.incmix.com/org-api:latest
     ports:
       - 9292:9292
-    depends_on:
-      - users-api
   permissions-api:
     <<: *api-common
-    build:
-      context: .
-      dockerfile: api/permissions-api/Dockerfile
+    image: registry.incmix.com/permissions-api:latest
     ports:
       - 9393:9393
-    depends_on:
-      - org-api
   intl-api:
     <<: *api-common
-    build:
-      context: .
-      dockerfile: api/intl-api/Dockerfile
+    image: registry.incmix.com/intl-api:latest
     ports:
       - 9090:9090
-    depends_on:
-      - permissions-api
   files-api:
     <<: *api-common
-    build:
-      context: .
-      dockerfile: api/files-api/Dockerfile
+    image: registry.incmix.com/files-api:latest
     ports:
       - 8282:8282
-    depends_on:
-      - intl-api
   genai-api:
     <<: *api-common
-    build:
-      context: .
-      dockerfile: api/genai-api/Dockerfile
+    image: registry.incmix.com/genai-api:latest
     ports:
       - 8383:8383
-    depends_on:
-      - files-api
   projects-api:
     <<: *api-common
-    build:
-      context: .
-      dockerfile: api/projects-api/Dockerfile
+    image: registry.incmix.com/projects-api:latest
     ports:
       - 8484:8484
-    depends_on:
-      - genai-api
   tasks-api:
     <<: *api-common
-    build:
-      context: .
-      dockerfile: api/tasks-api/Dockerfile
+    image: registry.incmix.com/tasks-api:latest
     ports:
       - 8888:8888
-    depends_on:
-      - projects-api
   location-api:
     <<: *api-common
-    build:
-      context: .
-      dockerfile: api/location-api/Dockerfile
+    image: registry.incmix.com/location-api:latest
     ports:
       - 9494:9494
-    depends_on:
-      - tasks-api
   comments-api:
     <<: *api-common
-    build:
-      context: .
-      dockerfile: api/comments-api/Dockerfile
+    image: registry.incmix.com/comments-api:latest
     ports:
       - 8585:8585
-    depends_on:
-      - location-api
   rxdb-api:
     <<: *api-common
-    build:
-      context: .
-      dockerfile: api/rxdb-api/Dockerfile
+    image: registry.incmix.com/rxdb-api:latest
     ports:
       - 8686:8686
-    depends_on:
-      - comments-api
   bff-web:
     <<: *api-common
-    build:
-      context: .
-      dockerfile: api/bff-web/Dockerfile
+    image: registry.incmix.com/bff-web:latest
     ports:
       - 8081:8080
-    depends_on:
-      - rxdb-api
+
 volumes:
   incmix-db-data:
 

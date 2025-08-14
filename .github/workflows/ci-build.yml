@@ -34,16 +34,9 @@ jobs:
         id: detect
         uses: ./.github/actions/detect-changes
         with:
-          force_build_all: true
+          force_build_all: ${{ github.event.inputs.force_build_all || false }}
           event_name: ${{ github.event_name }}
           target_branch: ${{ github.event.inputs.target_branch || 'main' }}
-
-      - name: Debug - Show job outputs
-        run: |
-          echo "=== DETECT-CHANGES JOB OUTPUTS ==="
-          echo "services output: '${{ steps.detect.outputs.services }}'"
-          echo "services output type: $(echo '${{ steps.detect.outputs.services }}' | jq -R .)"
-          echo "=== END OUTPUTS ==="
 
   build-services:
     needs: detect-changes
@@ -53,92 +46,17 @@ jobs:
       matrix:
         service: ${{ fromJSON(needs.detect-changes.outputs.services) }}
 
-    # Add debug step to see the services output before matrix strategy
     steps:
-      - name: Debug - Check services output before matrix
-        run: |
-          echo "=== PRE-MATRIX DEBUG ==="
-          echo "Registry URL: ${{ env.REGISTRY_URL }}"
-          echo "Raw services output: '${{ needs.detect-changes.outputs.services }}'"
-          echo "Services output type: $(echo '${{ needs.detect-changes.outputs.services }}' | jq -R .)"
-          echo "Is services empty: ${{ needs.detect-changes.outputs.services == '' }}"
-          echo "Is services null: ${{ needs.detect-changes.outputs.services == null }}"
-          echo "Is services '[]': ${{ needs.detect-changes.outputs.services == '[]' }}"
-          echo "Is services 'null': ${{ needs.detect-changes.outputs.services == 'null' }}"
-          echo "Services output JSON validation:"
-          echo '${{ needs.detect-changes.outputs.services }}' | jq . || echo "Invalid JSON"
-
-          # Test fromJSON function
-          echo "Testing fromJSON function:"
-          SERVICES_JSON='${{ needs.detect-changes.outputs.services }}'
-          if [ -n "$SERVICES_JSON" ] && [ "$SERVICES_JSON" != "null" ] && [ "$SERVICES_JSON" != "[]" ]; then
-            echo "Services JSON is valid, parsing..."
-            echo "$SERVICES_JSON" | jq . || echo "Failed to parse as JSON"
-          else
-            echo "Services JSON is empty, null, or []"
-          fi
-          echo "=== END PRE-MATRIX DEBUG ==="
-
       - name: Checkout code
         uses: actions/checkout@v4
         with:
           ref: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.target_branch || github.ref }}
 
-      - name: Debug repository structure after checkout
-        run: |
-          echo "=== REPOSITORY STRUCTURE AFTER CHECKOUT ==="
-          echo "Current working directory: $(pwd)"
-          echo "Repository contents:"
-          ls -la
-          echo ""
-          echo "API directory exists: $([ -d "api" ] && echo "YES" || echo "NO")"
-          if [ -d "api" ]; then
-            echo "API directory contents:"
-            ls -la api/
-          fi
-          echo ""
-          echo "Git status:"
-          git status --porcelain
-          echo "=== END REPOSITORY STRUCTURE DEBUG ==="
-        shell: bash
-
       - name: Load service configuration
         id: service-config
         run: |
-          # Find the service config for the current matrix service
           SERVICE_CONFIG=$(cat .github/actions/service-config/services.json | jq -r --arg name "${{ matrix.service }}" '.services[] | select(.name == $name) | tojson')
           echo "config=$SERVICE_CONFIG" >> $GITHUB_OUTPUT
-
-          echo "=== SERVICE CONFIGURATION DEBUG ==="
-          echo "Matrix service: ${{ matrix.service }}"
-          echo "Raw service config: $SERVICE_CONFIG"
-          echo ""
-          echo "Parsed configuration:"
-          echo "$SERVICE_CONFIG" | jq .
-          echo ""
-          echo "Individual fields:"
-          echo "Dockerfile: $(echo "$SERVICE_CONFIG" | jq -r '.dockerfile')"
-          echo "Context: $(echo "$SERVICE_CONFIG" | jq -r '.context')"
-          echo "Image name: $(echo "$SERVICE_CONFIG" | jq -r '.image_name')"
-          echo ""
-          echo "Path verification:"
-          echo "Context exists: $([ -d "$(echo "$SERVICE_CONFIG" | jq -r '.context')" ] && echo "YES" || echo "NO")"
-          echo "Dockerfile exists: $([ -f "$(echo "$SERVICE_CONFIG" | jq -r '.dockerfile')" ] && echo "YES" || echo "NO")"
-          echo "=== END SERVICE CONFIGURATION DEBUG ==="
-        shell: bash
-
-      - name: Debug Docker build parameters
-        run: |
-          echo "=== DOCKER BUILD PARAMETERS DEBUG ==="
-          echo "Service: ${{ matrix.service }}"
-          echo "Registry URL: ${{ env.REGISTRY_URL }}"
-          echo "Dockerfile: ${{ fromJSON(steps.service-config.outputs.config).dockerfile }}"
-          echo "Context: ${{ fromJSON(steps.service-config.outputs.config).context }}"
-          echo "Image name: ${{ fromJSON(steps.service-config.outputs.config).image_name }}"
-          echo "Image tag: ${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.number) || github.ref_name }}"
-          echo "Full image reference: ${{ env.REGISTRY_URL }}/${{ fromJSON(steps.service-config.outputs.config).image_name }}:${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.number) || github.ref_name }}"
-          echo "=== END DEBUG ==="
-        shell: bash
 
       - name: Build Docker image
         id: build
@@ -163,29 +81,36 @@ jobs:
           registry_url: ${{ env.REGISTRY_URL }}
           image_tag: ${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.number) || github.ref_name }}
           event_name: ${{ github.event_name }}
-          pr_number: ${{ github.event.number }}
+          pr_number: ${{ github.number }}
           image_id: ${{ steps.build.outputs.image-id }}
 
-  debug-services-output:
-    needs: detect-changes
-    if: needs.detect-changes.outputs.services == '[]' || needs.detect-changes.outputs.services == '' || needs.detect-changes.outputs.services == null || needs.detect-changes.outputs.services == 'null'
+  trigger-coolify-deployment:
+    needs: [build-services]
+    if: ${{ github.event_name != 'pull_request' && always() }}
     runs-on: ubuntu-latest
     steps:
-      - name: Debug - Services output is empty
+      - name: Trigger Coolify deployment
+        uses: ./.github/actions/trigger-coolify-deployment
+        with:
+          webhook_url: ${{ secrets.COOLIFY_WEBHOOK_URL }}
+          coolify_token: ${{ secrets.COOLIFY_TOKEN }}
+
+  coolify-deployment-summary:
+    needs: [build-services, trigger-coolify-deployment]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deployment Summary
         run: |
-          echo "=== SERVICES OUTPUT DEBUG ==="
-          echo "Services output: '${{ needs.detect-changes.outputs.services }}'"
-          echo "Services output type: $(echo '${{ needs.detect-changes.outputs.services }}' | jq -R .)"
-          echo "Is services empty: ${{ needs.detect-changes.outputs.services == '' }}"
-          echo "Is services null: ${{ needs.detect-changes.outputs.services == null }}"
-          echo "Is services '[]': ${{ needs.detect-changes.outputs.services == '[]' }}"
-          echo "Is services 'null': ${{ needs.detect-changes.outputs.services == 'null' }}"
-          echo "=== END DEBUG ==="
+          if [ "${{ needs.build-services.result }}" == "success" ]; then
+            echo "✅ All services built successfully"
+          else
+            echo "❌ Some services failed to build"
+          fi
 
-          # Try to parse as JSON to see what we get
-          echo "Attempting to parse services as JSON:"
-          echo '${{ needs.detect-changes.outputs.services }}' | jq . || echo "Failed to parse as JSON"
-
-          # Show the raw output in different formats
-          echo "Raw output in hex:"
-          echo -n '${{ needs.detect-changes.outputs.services }}' | xxd
+          if [ "${{ needs.trigger-coolify-deployment.result }}" == "success" ]; then
+            echo "✅ Coolify deployment triggered successfully"
+          else
+            echo "❌ Coolify deployment failed"
+          fi
+        shell: bash

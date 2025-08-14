@@ -82,122 +82,8 @@ runs:
           type=raw,value=${{ inputs.image-tag }}
           type=raw,value=latest
 
-    - name: Debug metadata output
-      run: |
-        echo "=== METADATA ACTION OUTPUT DEBUG ==="
-        echo "Input image tag: ${{ inputs.image-tag }}"
-        echo "Generated tags: ${{ steps.meta.outputs.tags }}"
-        echo "Generated labels: ${{ steps.meta.outputs.labels }}"
-        echo "Full image reference: ${{ inputs.registry }}/${{ inputs.image-name }}"
-        echo "=== END METADATA DEBUG ==="
-
-        # Validate tag format
-        echo "=== TAG VALIDATION ==="
-        if [[ "${{ inputs.image-tag }}" =~ ^[a-zA-Z0-9._-]+$ ]]; then
-          echo "✓ Tag format is valid: ${{ inputs.image-tag }}"
-        else
-          echo "✗ Tag format is invalid: ${{ inputs.image-tag }}"
-          echo "  Tags can only contain: a-z, A-Z, 0-9, ., _, -"
-        fi
-
-        # Show final image references (both version tag and latest)
-        VERSION_IMAGE="${{ inputs.registry }}/${{ inputs.image-name }}:${{ inputs.image-tag }}"
-        LATEST_IMAGE="${{ inputs.registry }}/${{ inputs.image-name }}:latest"
-        echo "Version image reference: $VERSION_IMAGE"
-        echo "Latest image reference: $LATEST_IMAGE"
-        echo "=== END TAG VALIDATION ==="
-      shell: bash
-
-    - name: Debug build configuration
-      run: |
-        echo "=== BUILD CONFIGURATION DEBUG ==="
-        echo "Context: ${{ inputs.context }}"
-        echo "Dockerfile: ${{ inputs.dockerfile }}"
-        echo "Image name: ${{ inputs.image-name }}"
-        echo "Registry: ${{ inputs.registry }}"
-        echo "Push: ${{ inputs.push }}"
-        echo "Cache from: ${{ inputs.cache-from }}"
-        echo "Cache to: ${{ inputs.cache-to }}"
-        echo "Platforms: ${{ inputs.platforms }}"
-        echo "Tags: ${{ steps.meta.outputs.tags }}"
-        echo "Labels: ${{ steps.meta.outputs.labels }}"
-        echo "=== END DEBUG ==="
-
-        echo "=== METADATA DEBUG ==="
-        echo "Full image reference: ${{ inputs.registry }}/${{ inputs.image-name }}"
-        echo "Generated tags: ${{ steps.meta.outputs.tags }}"
-        echo "Generated labels: ${{ steps.meta.outputs.labels }}"
-        echo "=== END METADATA DEBUG ==="
-      shell: bash
-
-    - name: Final build parameters debug
-      run: |
-        echo "=== FINAL BUILD PARAMETERS ==="
-        echo "Context: ${{ inputs.context }}"
-        echo "File: ${{ inputs.dockerfile }}"
-        echo "Push: ${{ inputs.push }}"
-        echo "Tags: ${{ steps.meta.outputs.tags }}"
-        echo "Labels: ${{ steps.meta.outputs.labels }}"
-        echo "Cache from: ${{ inputs.cache-from }}"
-        echo "Cache to: ${{ inputs.cache-to }}"
-        echo "Build args: ${{ inputs.build-args }}"
-        echo "Platforms: ${{ inputs.platforms }}"
-        echo "Provenance: false"
-        echo "Outputs: type=image"
-        echo ""
-        echo "=== TAG BREAKDOWN ==="
-        echo "Version tag: ${{ inputs.image-tag }}"
-        echo "Latest tag: latest"
-        echo "Total tags being created: 2"
-        echo "=== END TAG BREAKDOWN ==="
-        echo "=== END FINAL DEBUG ==="
-
-        echo "=== FILE SYSTEM DEBUG ==="
-        echo "Current working directory: $(pwd)"
-        echo "Directory contents:"
-        ls -la
-        echo ""
-        echo "Context path exists: $([ -d "${{ inputs.context }}" ] && echo "YES" || echo "NO")"
-        echo "Context path contents:"
-        if [ -d "${{ inputs.context }}" ]; then
-          ls -la "${{ inputs.context }}"
-        else
-          echo "Context directory not found!"
-        fi
-        echo ""
-        echo "Dockerfile exists: $([ -f "${{ inputs.dockerfile }}" ] && echo "YES" || echo "NO")"
-        echo "Dockerfile path: ${{ inputs.dockerfile }}"
-        echo "=== END FILE SYSTEM DEBUG ==="
-      shell: bash
-
-    - name: Verify repository structure
-      run: |
-        echo "=== REPOSITORY STRUCTURE VERIFICATION ==="
-        echo "Repository root: $(pwd)"
-        echo ""
-        echo "API directory exists: $([ -d "api" ] && echo "YES" || echo "NO")"
-        if [ -d "api" ]; then
-          echo "API directory contents:"
-          ls -la api/
-        fi
-        echo ""
-        echo "Target context directory: ${{ inputs.context }}"
-        echo "Target context absolute path: $(realpath "${{ inputs.context }}" 2>/dev/null || echo "Cannot resolve")"
-        echo "Target context relative to repo root: $([ -d "${{ inputs.context }}" ] && echo "EXISTS" || echo "NOT FOUND")"
-        echo ""
-        echo "Target Dockerfile: ${{ inputs.dockerfile }}"
-        echo "Target Dockerfile absolute path: $(realpath "${{ inputs.dockerfile }}" 2>/dev/null || echo "Cannot resolve")"
-        echo "Target Dockerfile relative to repo root: $([ -f "${{ inputs.dockerfile }}" ] && echo "EXISTS" || echo "NOT FOUND")"
-        echo "=== END REPOSITORY STRUCTURE VERIFICATION ==="
-      shell: bash
-
     - name: Format and validate context paths
       run: |
-        echo "=== CONTEXT PATH FORMATTING ==="
-        echo "Original context: '${{ inputs.context }}'"
-        echo "Original dockerfile: '${{ inputs.dockerfile }}'"
-        echo ""
-
         # Ensure context path is properly formatted
         CONTEXT_PATH="${{ inputs.context }}"
         DOCKERFILE_PATH="${{ inputs.dockerfile }}"
@@ -215,22 +101,9 @@ runs:
           DOCKERFILE_PATH="./$DOCKERFILE_PATH"
         fi
 
-        echo "Formatted paths:"
-        echo "  Context: '$CONTEXT_PATH'"
-        echo "  Dockerfile: '$DOCKERFILE_PATH'"
-        echo ""
-
-        # Verify the formatted paths exist
-        echo "Path verification:"
-        echo "Context exists: $([ -d "$CONTEXT_PATH" ] && echo "✓ YES" || echo "✗ NO")"
-        echo "Dockerfile exists: $([ -f "$DOCKERFILE_PATH" ] && echo "✓ YES" || echo "✗ NO")"
-        echo ""
-
         # Store formatted paths for the build step
         echo "CONTEXT_PATH=$CONTEXT_PATH" >> $GITHUB_ENV
         echo "DOCKERFILE_PATH=$DOCKERFILE_PATH" >> $GITHUB_ENV
-
-        echo "=== END CONTEXT PATH FORMATTING ==="
       shell: bash
 
     - name: Build and push Docker image

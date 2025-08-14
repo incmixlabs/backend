@@ -30,19 +30,10 @@ runs:
         FORCE_BUILD_ALL=false
         SERVICES="[]"
 
-        echo "Event name: ${{ inputs.event_name }}"
-        echo "Force build all: '${{ inputs.force_build_all }}'"
-        echo "Force build all type: $(echo '${{ inputs.force_build_all }}' | jq -R .)"
-
         # Handle manual workflow dispatch
         if [ "${{ inputs.event_name }}" = "workflow_dispatch" ]; then
-          echo "Workflow dispatch detected"
           if [ "${{ inputs.force_build_all }}" = "true" ] || [ "${{ inputs.force_build_all }}" = true ] || [ "${{ inputs.force_build_all }}" = "1" ]; then
             FORCE_BUILD_ALL=true
-            echo "Manual trigger: Force building all services"
-          else
-            # For non-force builds, continue with normal detection
-            echo "Manual trigger: Detecting changed services"
           fi
         fi
 
@@ -78,72 +69,30 @@ runs:
         if echo "$CHANGED_FILES" | grep -q "^shared/"; then
           # If shared code changed, build all services
           SERVICES_ARRAY=("${ALL_SERVICES[@]}")
-          echo "Shared directory changed, building all services: [${ALL_SERVICES[*]}]"
         fi
 
         # Handle force build all case
         if [ "$FORCE_BUILD_ALL" = "true" ]; then
-          # Use the same array and convert to JSON
           SERVICES_ARRAY=("${ALL_SERVICES[@]}")
-          echo "Force build all enabled, building all services: [${ALL_SERVICES[*]}]"
         fi
 
-        # Convert array to JSON format consistently
+        # Convert array to JSON format
         if [ ${#SERVICES_ARRAY[@]} -eq 0 ]; then
           SERVICES='[]'
-          echo "No services changed, setting SERVICES to: $SERVICES"
         else
-          # Create proper JSON array using jq (compact format, no pretty printing)
           SERVICES=$(printf '%s\n' "${SERVICES_ARRAY[@]}" | jq -R . | jq -s -c .)
-          echo "Services array before JSON conversion: [${SERVICES_ARRAY[*]}]"
-          echo "Services to build: ${SERVICES_ARRAY[*]}"
-          echo "Setting SERVICES to: $SERVICES"
         fi
-
-        echo "Final SERVICES value: $SERVICES"
 
         # Ensure SERVICES is not empty
         if [ -z "$SERVICES" ]; then
-          echo "ERROR: SERVICES is empty, setting default value"
           SERVICES='[]'
         fi
 
         # Validate JSON format
         if ! echo "$SERVICES" | jq . > /dev/null 2>&1; then
-          echo "ERROR: Invalid JSON format, setting default value"
           SERVICES='[]'
         fi
 
-        echo "Final validated SERVICES: $SERVICES"
-
-        # Test output
-        echo "Testing output..."
+        # Set output
         echo "services=$SERVICES" >> $GITHUB_OUTPUT
-        echo "Output file contents:"
-        cat $GITHUB_OUTPUT || echo "No output file found"
-
-        # Additional debug info
-        echo "=== DEBUG INFO ==="
-        echo "GITHUB_OUTPUT file path: $GITHUB_OUTPUT"
-        echo "Current working directory: $(pwd)"
-        echo "Output file exists: $([ -f "$GITHUB_OUTPUT" ] && echo "Yes" || echo "No")"
-        echo "Output file permissions: $(ls -la "$GITHUB_OUTPUT" 2>/dev/null || echo "File not found")"
-        echo "Output file size: $(wc -c < "$GITHUB_OUTPUT" 2>/dev/null || echo "0")"
-        echo "=== END DEBUG INFO ==="
-
-        # Show the exact content being written
-        echo "=== OUTPUT CONTENT DEBUG ==="
-        echo "Writing 'services=$SERVICES' to output file"
-        echo "SERVICES variable value: '$SERVICES'"
-        echo "SERVICES variable length: ${#SERVICES}"
-        echo "SERVICES variable type: $(echo "$SERVICES" | jq -R .)"
-        echo "=== END OUTPUT CONTENT DEBUG ==="
-
-        # Final fallback - ensure we always have a valid output
-        if ! grep -q "services=" $GITHUB_OUTPUT; then
-          echo "services=$SERVICES" >> $GITHUB_OUTPUT
-          echo "Fallback output added"
-        fi
-
-        echo "Changed services: $SERVICES"
 
