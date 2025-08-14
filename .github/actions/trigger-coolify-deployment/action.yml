@@ -32,7 +32,7 @@ runs:
         echo "📡 Response Status: $HTTP_STATUS"
         echo "📄 Response Body: $RESPONSE_BODY"
 
-        # Check if deployment was triggered successfully
+                # Check if deployment was triggered successfully
         if [ "$HTTP_STATUS" -eq 200 ] || [ "$HTTP_STATUS" -eq 201 ] || [ "$HTTP_STATUS" -eq 202 ]; then
           echo "✅ Coolify deployment triggered successfully for all services"
           echo "deployment_status=success" >> $GITHUB_OUTPUT

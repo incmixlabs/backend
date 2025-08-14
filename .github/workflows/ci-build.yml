@@ -106,15 +106,61 @@ jobs:
     steps:
       - name: Deployment Summary
         run: |
+          # Write comprehensive summary to GitHub Actions job summary
+          cat << 'EOF' >> $GITHUB_STEP_SUMMARY
+          # 🚀 CI/CD Pipeline Summary
+
+          ## 📦 Build Services Status
+          EOF
+
           if [ "${{ needs.build-services.result }}" == "success" ]; then
-            echo "✅ All services built successfully"
+            echo "✅ All services built successfully" | tee -a $GITHUB_STEP_SUMMARY
+            cat << 'EOF' >> $GITHUB_STEP_SUMMARY
+            **Status:** ✅ Success
+            **Details:** All services were built and pushed to the registry successfully.
+            EOF
+          elif [ "${{ needs.build-services.result }}" == "skipped" ]; then
+            echo "✅ All services built successfully" | tee -a $GITHUB_STEP_SUMMARY
+            cat << 'EOF' >> $GITHUB_STEP_SUMMARY
+            **Status:** ⏭️ Skipped
+            **Details:** No services required building (no changes detected).
+            EOF
           else
-            echo "❌ Some services failed to build"
+            echo "❌ Some services failed to build" | tee -a $GITHUB_STEP_SUMMARY
+            cat << 'EOF' >> $GITHUB_STEP_SUMMARY
+            **Status:** ❌ Failed
+            **Details:** One or more services failed to build. Check the build logs for details.
+            EOF
           fi
 
+          cat << 'EOF' >> $GITHUB_STEP_SUMMARY
+
+          ## 🚀 Coolify Deployment Status
+          EOF
+
           if [ "${{ needs.trigger-coolify-deployment.result }}" == "success" ]; then
-            echo "✅ Coolify deployment triggered successfully"
+            echo "✅ Coolify deployment triggered successfully" | tee -a $GITHUB_STEP_SUMMARY
+            cat << 'EOF' >> $GITHUB_STEP_SUMMARY
+            **Status:** ✅ Success
+            **Details:** Deployment has been triggered successfully for all built services.
+            EOF
+          elif [ "${{ needs.trigger-coolify-deployment.result }}" == "skipped" ]; then
+            echo "✅ Coolify deployment triggered successfully" | tee -a $GITHUB_STEP_SUMMARY
+            cat << 'EOF' >> $GITHUB_STEP_SUMMARY
+            **Status:** ⏭️ Skipped
+            **Details:** No deployment needed (no services were built).
+            EOF
           else
-            echo "❌ Coolify deployment failed"
+            echo "❌ Coolify deployment failed" | tee -a $GITHUB_STEP_SUMMARY
+            cat << 'EOF' >> $GITHUB_STEP_SUMMARY
+            **Status:** ❌ Failed
+            **Details:** Failed to trigger Coolify deployment. Check the deployment logs for details.
+            EOF
           fi
+
+          cat << 'EOF' >> $GITHUB_STEP_SUMMARY
+
+          ---
+          *This summary was generated automatically by the CI/CD pipeline.*
+          EOF
         shell: bash
