@@ -92,8 +92,7 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       PGDATA: ${PGDATA}
       # POSTGRES_EXTENSIONS: plv8, btree_gist, hstore, pgvector, pgcrypto, CITEXT, pg_trgm, pg_cron, plpython3u
-    ports:
-      - ${POSTGRES_PORT:-54321}:5432
+    # Internal access only - no external ports
     volumes:
       - incmix-db-data:/var/lib/postgresql/data
     networks:
@@ -110,73 +109,73 @@ services:
   auth-api:
     <<: *api-common
     image: registry.incmix.com/auth-service:latest
-    ports:
-      - 8787:8787
+    # Internal access only - no external ports
+
   email-api:
     <<: *api-common
     image: registry.incmix.com/email-service:latest
-    ports:
-      - 8989:8989
+    # Internal access only - no external ports
+
   users-api:
     <<: *api-common
     image: registry.incmix.com/users-api:latest
-    ports:
-      - 9191:9191
+    # Internal access only - no external ports
+
   org-api:
     <<: *api-common
     image: registry.incmix.com/org-api:latest
-    ports:
-      - 9292:9292
+    # Internal access only - no external ports
+
   permissions-api:
     <<: *api-common
     image: registry.incmix.com/permissions-api:latest
-    ports:
-      - 9393:9393
+    # Internal access only - no external ports
+
   intl-api:
     <<: *api-common
     image: registry.incmix.com/intl-api:latest
-    ports:
-      - 9090:9090
+    # Internal access only - no external ports
+
   files-api:
     <<: *api-common
     image: registry.incmix.com/files-api:latest
-    ports:
-      - 8282:8282
+    # Internal access only - no external ports
+
   genai-api:
     <<: *api-common
     image: registry.incmix.com/genai-api:latest
-    ports:
-      - 8383:8383
+    # Internal access only - no external ports
+
   projects-api:
     <<: *api-common
     image: registry.incmix.com/projects-api:latest
-    ports:
-      - 8484:8484
+    # Internal access only - no external ports
+
   tasks-api:
     <<: *api-common
     image: registry.incmix.com/tasks-api:latest
-    ports:
-      - 8888:8888
+    # Internal access only - no external ports
+
   location-api:
     <<: *api-common
     image: registry.incmix.com/location-api:latest
-    ports:
-      - 9494:9494
+    # Internal access only - no external ports
+
   comments-api:
     <<: *api-common
     image: registry.incmix.com/comments-api:latest
-    ports:
-      - 8585:8585
+    # Internal access only - no external ports
+
   rxdb-api:
     <<: *api-common
     image: registry.incmix.com/rxdb-api:latest
-    ports:
-      - 8686:8686
+    # Internal access only - no external ports
+
   bff-web:
     <<: *api-common
     image: registry.incmix.com/bff-web:latest
     ports:
-      - 8081:8080
+      - 8081:8080  # Only public access point
 
 volumes:
   incmix-db-data:
