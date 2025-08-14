@@ -40,5 +40,6 @@ export const RequestSchema = z
   .object({
     recipient: z.string().email().openapi({ example: "john.doe@example.com" }),
     body: VerificationEmailSchema.or(ResetPasswordSchema),
+    requestedBy: z.string().openapi({ example: "lamwdlm121" }),
   })
   .openapi("Request Schema")

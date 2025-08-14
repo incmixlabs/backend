@@ -160,7 +160,8 @@ export async function generateVerificationCode(
 export const sendVerificationEmail = (
   c: Context,
   recipient: string,
-  verificationCode: string
+  verificationCode: string,
+  requestedBy: string
 ) => {
   const verificationLink = `${env(c).FRONTEND_URL}/email-verification?code=${verificationCode}&email=${recipient}`
   const emailUrl = `${env(c).EMAIL_API_URL}`
@@ -177,6 +178,7 @@ export const sendVerificationEmail = (
         template: "VerificationEmail",
       },
       recipient,
+      requestedBy,
     }),
     headers: {
       "content-type": "application/json",
@@ -188,7 +190,8 @@ export const sendVerificationEmail = (
 export const sendForgetPasswordEmail = async (
   c: Context,
   recipient: string,
-  verificationCode: string
+  verificationCode: string,
+  requestedBy: string
 ) => {
   console.log(recipient)
   const emailUrl = env(c).EMAIL_API_URL
@@ -203,6 +206,7 @@ export const sendForgetPasswordEmail = async (
         payload: { resetPasswordLink, username },
         template: "ResetPasswordEmail",
       },
+      requestedBy,
       recipient,
     }),
     headers: {
