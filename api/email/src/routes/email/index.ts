@@ -15,13 +15,13 @@ emailRoutes.openapi(sendMail, async (c) => {
   try {
     const params = c.req.valid("json")
 
-    const res = await sendEmail(envVars.SENDGRID_API_KEY, params)
+    const res = await sendEmail(envVars.RESEND_API_KEY, params)
 
     let status: Status = "pending"
     let shouldRetry = false
     if (res.status !== 200) {
       status = "failed"
-      shouldRetry = true
+      shouldRetry = res.status >= 500
     }
 
     await c
@@ -33,7 +33,7 @@ emailRoutes.openapi(sendMail, async (c) => {
         payload: JSON.stringify(params.body.payload),
         status,
         userId: params.requestedBy,
-        sgId: res.id,
+        resendId: res.id ?? null,
         shouldRetry,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),

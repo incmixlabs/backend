@@ -7,8 +7,7 @@ const healthcheckRoutes = createHealthCheckRoute<HonoApp>({
     DATABASE_URL: envVars.DATABASE_URL,
     INTL_API_URL: envVars.INTL_API_URL,
     COOKIE_NAME: envVars.COOKIE_NAME,
-    SENDGRID_API_KEY: envVars.SENDGRID_API_KEY,
-    SENDGRID_WEBHOOK_KEY: envVars.SENDGRID_WEBHOOK_KEY,
+    RESEND_API_KEY: envVars.RESEND_API_KEY,
   },
 
   checks: [

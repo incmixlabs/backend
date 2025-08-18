@@ -73,8 +73,7 @@ services:
       DOMAIN: ${DOMAIN}
       PORT: 8989
       # Email service
-      SENDGRID_API_KEY: ${SENDGRID_API_KEY}
-      SENDGRID_WEBHOOK_KEY: ${SENDGRID_WEBHOOK_KEY}
+      RESEND_API_KEY: ${RESEND_API_KEY}
       # Service URLs
       INTL_API_URL: ${INTL_API_URL:-http://intl-api:9090/api/intl}
     networks:

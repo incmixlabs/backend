@@ -4,7 +4,6 @@ import type { KyselyDb, Provider, TokenType } from "@incmix-api/utils/db-schema"
 import { generateRandomId } from "@/auth/utils"
 import { generateSentryHeaders } from "@incmix-api/utils"
 import { ServerError } from "@incmix-api/utils/errors"
-import { UserRoles } from "@incmix/utils/types"
 import { env } from "hono/adapter"
 import { TimeSpan, createDate, isWithinExpirationDate } from "oslo"
 import { alphabet, generateRandomString } from "oslo/crypto"
@@ -157,7 +156,7 @@ export async function generateVerificationCode(
   return code
 }
 
-export const sendVerificationEmail = (
+export const sendVerificationEmail = async (
   c: Context,
   recipient: string,
   verificationCode: string,
@@ -165,12 +164,9 @@ export const sendVerificationEmail = (
 ) => {
   const verificationLink = `${env(c).FRONTEND_URL}/email-verification?code=${verificationCode}&email=${recipient}`
   const emailUrl = `${env(c).EMAIL_API_URL}`
-  console.log({
-    recipient,
-    verificationLink,
-  })
+
   const sentryHeaders = generateSentryHeaders(c)
-  fetch(emailUrl, {
+  await fetch(emailUrl, {
     method: "POST",
     body: JSON.stringify({
       body: {
@@ -193,7 +189,6 @@ export const sendForgetPasswordEmail = async (
   verificationCode: string,
   requestedBy: string
 ) => {
-  console.log(recipient)
   const emailUrl = env(c).EMAIL_API_URL
   const [username] = recipient.split("@")
   const resetPasswordLink = `${env(c).FRONTEND_URL}/reset-password?code=${verificationCode}&email=${recipient}`
@@ -217,11 +212,6 @@ export const sendForgetPasswordEmail = async (
   const res = await fetch(request)
 
   if (!res.ok) throw new ServerError()
-  console.log({
-    recipient,
-    resetPasswordLink,
-    verificationCode,
-  })
 }
 
 export function convertSecondsToHours(seconds: number): string {

@@ -19,8 +19,8 @@ const EnvSchema = z.object({
   INTL_API_URL: z.string().url(),
   COOKIE_NAME: z.string().default("incmix_session"),
   DOMAIN: z.string().default("localhost"),
-  SENDGRID_API_KEY: z.string(),
-  SENDGRID_WEBHOOK_KEY: z.string(),
+  RESEND_API_KEY: z.string(),
+  EMAIL_FROM: z.string().default("Incmix <no-reply@incmix.com>"),
 })
 
 export type Env = z.infer<typeof EnvSchema>

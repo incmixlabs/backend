@@ -12,12 +12,11 @@ export type SendEmailReponse = {
   type?: string
 }
 export async function sendEmail(
-  SENDGRID_API_KEY: string,
+  RESEND_API_KEY: string,
   params: z.infer<typeof RequestSchema>
 ): Promise<SendEmailReponse> {
   const { recipient, body } = params
 
-  let id: string | undefined = ""
   const type = body.template
   let title = ""
   let template = ""
@@ -60,13 +59,13 @@ export async function sendEmail(
   subject: string
   html: string*/
   const res = await emailSender.send({
-    apiKey: SENDGRID_API_KEY,
+    apiKey: RESEND_API_KEY,
     to: recipient,
     subject: title,
     html: template,
   })
 
-  if (res.status !== 202) {
+  if (res.status !== 200 || !res.id) {
     return {
       message: "Failed to send Email",
       type,
@@ -74,7 +73,6 @@ export async function sendEmail(
       status: 500,
     }
   }
-  id = res.headers.get("X-Message-ID") ?? undefined
 
-  return { message: "Email Sent", id, status: 200 }
+  return { message: "Email Sent", id: res.id, status: 200 }
 }

@@ -20,8 +20,8 @@ type EmailQueueTable = {
   template: EmailTemplateName
   payload: string
   status: Status
-  sgId: string | null
-  sendgridData: string | null
+  resendId: string | null
+  resendData: string | null
   userId: string
   shouldRetry: boolean
   createdAt: ColumnType<Date, string, never>
