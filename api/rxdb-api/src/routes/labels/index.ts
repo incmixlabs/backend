@@ -2,13 +2,13 @@ import type { HonoApp } from "@/types"
 import { OpenAPIHono } from "@hono/zod-openapi"
 import { zValidator } from "@hono/zod-validator"
 import { ERROR_UNAUTHORIZED } from "@incmix-api/utils"
+import type { Label } from "@incmix-api/utils/db-schema"
 import {
   BadRequestError,
   UnauthorizedError,
   zodError,
 } from "@incmix-api/utils/errors"
 import { useTranslation } from "@incmix-api/utils/middleware"
-import type { Label } from "@incmix-api/utils/db-schema"
 import { PullLabelsSchema, PushLabelsSchema } from "./types"
 
 const labelsRoutes = new OpenAPIHono<HonoApp>({
