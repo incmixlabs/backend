@@ -66,6 +66,7 @@ projectRoutes.openapi(createProject, async (c) => {
       throw new UnauthorizedError(msg)
     }
     const {
+      id,
       budget,
       description,
       logo,
@@ -95,7 +96,7 @@ projectRoutes.openapi(createProject, async (c) => {
       const msg = await t.text(ERROR_PROJECT_EXISTS)
       throw new ConflictError(msg)
     }
-    const id = nanoid(6)
+
     const createdProject = await c
       .get("db")
       .transaction()
@@ -171,7 +172,7 @@ projectRoutes.openapi(createProject, async (c) => {
         const project = await tx
           .insertInto("projects")
           .values({
-            id,
+            id: id ?? nanoid(6),
             name,
             orgId,
             createdBy: user.id,
@@ -201,7 +202,7 @@ projectRoutes.openapi(createProject, async (c) => {
         }
         const insertableMembers: NewProjectMember[] = [
           {
-            projectId: id,
+            projectId: project.id,
             userId: user.id,
             role: role.name,
             roleId: role.id,
@@ -245,7 +246,7 @@ projectRoutes.openapi(createProject, async (c) => {
                 throw new ServerError(msg)
               }
               return {
-                projectId: id,
+                projectId: project.id,
                 userId: member.id,
                 role: member.role,
                 roleId: role.id,

@@ -37,9 +37,8 @@ tasksRoutes.post("/pull", zValidator("query", PullTasksSchema), async (c) => {
     let query = c
       .get("db")
       .selectFrom("tasks")
-      .innerJoin("taskAssignments", "tasks.id", "taskAssignments.taskId")
+      .leftJoin("taskAssignments", "taskAssignments.userId", "tasks.id")
       .selectAll()
-      .where("taskAssignments.userId", "=", user.id)
 
     // If lastPulledAt is provided, only get tasks updated since then
     if (lastPulledAt) {
@@ -48,7 +47,7 @@ tasksRoutes.post("/pull", zValidator("query", PullTasksSchema), async (c) => {
 
     // Execute the query
     const tasks = await query.execute()
-
+    console.log(tasks)
     // Format for RxDB sync protocol
     // RxDB expects a specific format with documents and an optional checkpoint
     return c.json(
@@ -154,8 +153,9 @@ tasksRoutes.post("/push", zValidator("json", PushTasksSchema), async (c) => {
 
       // Check if the user has permission to modify this task
       if (
-        realMasterState?.assignedTo.some((a) => a.id !== user.id) &&
-        realMasterState.createdBy !== user.id
+        realMasterState &&
+        (realMasterState?.assignedTo.some((a) => a.id !== user.id) ||
+          realMasterState.createdBy !== user.id)
       ) {
         conflicts.push({
           error: "Unauthorized to modify this task",
@@ -163,7 +163,11 @@ tasksRoutes.post("/push", zValidator("json", PushTasksSchema), async (c) => {
         })
         continue
       }
-
+      console.log(
+        "realMasterState",
+        realMasterState?.updatedAt,
+        new Date(changeRow?.assumedMasterState?.updatedAt ?? 0).toISOString()
+      )
       // Detect conflicts by comparing the assumed master state with the real master state
       if (
         (realMasterState && !changeRow.assumedMasterState) ||
@@ -200,7 +204,7 @@ tasksRoutes.post("/push", zValidator("json", PushTasksSchema), async (c) => {
                 refUrls: JSON.stringify(newDoc.refUrls),
                 attachments: JSON.stringify(newDoc.attachments),
                 checklist: JSON.stringify(newDoc.checklist),
-                updatedAt: new Date().toISOString(),
+                updatedAt: new Date(newDoc.updatedAt).toISOString(),
                 updatedBy: user.id,
               })
               .where("id", "=", newDoc.id)
@@ -256,28 +260,35 @@ tasksRoutes.post("/push", zValidator("json", PushTasksSchema), async (c) => {
               continue
             }
 
-            // Insert new task
+            // Insert new task - reorder columns alphabetically to match CamelCasePlugin
             const insertedTask = await c
               .get("db")
               .insertInto("tasks")
               .values({
-                ...newDoc,
-                taskOrder: newDoc.order,
-                createdBy: user.id,
-                updatedBy: user.id,
-                createdAt: new Date().toISOString(),
-                updatedAt: new Date().toISOString(),
                 acceptanceCriteria: JSON.stringify(newDoc.acceptanceCriteria),
-                labelsTags: JSON.stringify(newDoc.labelsTags),
-                refUrls: JSON.stringify(newDoc.refUrls),
                 attachments: JSON.stringify(newDoc.attachments),
                 checklist: JSON.stringify(newDoc.checklist),
-                startDate: newDoc.startDate
-                  ? new Date(newDoc.startDate).toISOString()
-                  : null,
+                completed: newDoc.completed,
+                createdAt: new Date(newDoc.createdAt).toISOString(),
+                createdBy: user.id,
+                description: newDoc.description,
                 endDate: newDoc.endDate
                   ? new Date(newDoc.endDate).toISOString()
                   : null,
+                id: newDoc.id,
+                labelsTags: JSON.stringify(newDoc.labelsTags),
+                name: newDoc.name,
+                parentTaskId: null,
+                priorityId: newDoc.priorityId,
+                projectId: newDoc.projectId,
+                refUrls: JSON.stringify(newDoc.refUrls),
+                startDate: newDoc.startDate
+                  ? new Date(newDoc.startDate).toISOString()
+                  : null,
+                statusId: newDoc.statusId,
+                taskOrder: newDoc.order,
+                updatedAt: new Date(newDoc.updatedAt).toISOString(),
+                updatedBy: user.id,
               })
               .returningAll()
               .executeTakeFirst()
@@ -288,7 +299,7 @@ tasksRoutes.post("/push", zValidator("json", PushTasksSchema), async (c) => {
                 id: insertedTask.id,
                 updatedAt: insertedTask.updatedAt,
               }
-              if (newDoc.assignedTo) {
+              if (newDoc.assignedTo.length > 0) {
                 await c
                   .get("db")
                   .insertInto("taskAssignments")
@@ -303,6 +314,7 @@ tasksRoutes.post("/push", zValidator("json", PushTasksSchema), async (c) => {
             }
           }
         } catch (error) {
+          console.log(error)
           conflicts.push({
             error: error instanceof Error ? error.message : "Unknown error",
             document: newDoc,

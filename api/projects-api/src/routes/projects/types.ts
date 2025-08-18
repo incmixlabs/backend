@@ -33,6 +33,7 @@ export const CreateProjectSchema = ProjectSchema.pick({
   endDate: true,
   company: true,
 }).extend({
+  id: z.string().optional().openapi({ example: "2hek2bkjh" }),
   logo: z.custom<File>(),
   budget: z
     .number({ coerce: true })

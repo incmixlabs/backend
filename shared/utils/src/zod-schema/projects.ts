@@ -10,7 +10,7 @@ export const taskStatusEnum = [
 ] as const
 export type TaskStatus = (typeof taskStatusEnum)[number]
 
-export const labelTypeEnum = ["status", "priority", "tag"] as const
+export const labelTypeEnum = ["status", "priority"] as const
 export type LabelType = (typeof labelTypeEnum)[number]
 
 export const timeTypeEnum = ["day", "days", "week", "month", "year"] as const
