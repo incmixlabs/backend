@@ -21,7 +21,7 @@ emailRoutes.openapi(sendMail, async (c) => {
     let shouldRetry = false
     if (res.status !== 200) {
       status = "failed"
-      shouldRetry = true
+      shouldRetry = res.status >= 500
     }
 
     await c
@@ -33,7 +33,7 @@ emailRoutes.openapi(sendMail, async (c) => {
         payload: JSON.stringify(params.body.payload),
         status,
         userId: params.requestedBy,
-        resendId: res.id,
+        resendId: res.id ?? null,
         shouldRetry,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),

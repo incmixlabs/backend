@@ -17,7 +17,6 @@ export async function sendEmail(
 ): Promise<SendEmailReponse> {
   const { recipient, body } = params
 
-  let id: string | undefined = ""
   const type = body.template
   let title = ""
   let template = ""
@@ -74,7 +73,6 @@ export async function sendEmail(
       status: 500,
     }
   }
-  id = res.id
 
-  return { message: "Email Sent", id, status: 200 }
+  return { message: "Email Sent", id: res.id, status: 200 }
 }

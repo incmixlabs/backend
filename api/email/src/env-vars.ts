@@ -20,6 +20,7 @@ const EnvSchema = z.object({
   COOKIE_NAME: z.string().default("incmix_session"),
   DOMAIN: z.string().default("localhost"),
   RESEND_API_KEY: z.string(),
+  EMAIL_FROM: z.string().default("Incmix <no-reply@incmix.com>"),
 })
 
 export type Env = z.infer<typeof EnvSchema>

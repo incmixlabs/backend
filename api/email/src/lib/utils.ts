@@ -1,5 +1,6 @@
 import { ServerError } from "@incmix-api/utils/errors"
 import { Resend } from "resend"
+import { envVars } from "../env-vars"
 
 export type EmailSender = {
   apiKey: string
@@ -13,16 +14,15 @@ export const emailSender = {
     const resend = new Resend(apiKey)
 
     const result = await resend.emails.send({
-      from: "Incmix <no-reply@incmix.com>",
+      from: envVars.EMAIL_FROM,
       to: [to],
       subject,
       html,
     })
     if (result.error) throw new ServerError(result.error.message)
 
-    // Return a response object that matches the expected interface
     return {
-      status: 200, // Resend returns 202 on success
+      status: 200,
       id: result.data?.id,
       ok: true,
     }
