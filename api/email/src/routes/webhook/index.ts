@@ -1,46 +1,42 @@
 // import { EmailQueue } from "@/dbSchema"
 // import type { HonoApp } from "@/types"
 // import { OpenAPIHono } from "@hono/zod-openapi"
-// import { EventWebhook, EventWebhookHeader } from "@sendgrid/eventwebhook"
+// import { verifyResendWebhookSignature } from "@/lib/webhook-verification"
 
 // const webhookRoutes = new OpenAPIHono<HonoApp>()
 // webhookRoutes.post("", async (c) => {
 //   const body = await c.req.raw.text()
-//   const signature = c.req.header(EventWebhookHeader.SIGNATURE())
-//   const timestamp = c.req.header(EventWebhookHeader.TIMESTAMP())
+//   const signature = c.req.header("resend-signature")
 
-//   console.log(c.req, body, signature, timestamp)
+//   console.log(c.req, body, signature)
 
-//   if (!body.length || !signature || !timestamp)
+//   if (!body.length || !signature)
 //     return c.json({ message: "Failed" }, 400)
 
-//   const key = c.env.SENDGRID_WEBHOOK_KEY
-//   console.log(key)
-
-//   const webhook = new EventWebhook()
-//   const ecPublicKey = webhook.convertPublicKeyToECDSA(key)
-
-//   const valid = webhook.verifySignature(ecPublicKey, body, signature, timestamp)
+//   // Verify Resend webhook signature
+//   const webhookSecret = c.env.RESEND_WEBHOOK_SECRET
+//   const valid = verifyResendWebhookSignature(body, signature, webhookSecret)
 //   if (!valid) return c.json({ message: "Verification Failed" }, 400)
 
 //   const events = JSON.parse(body)
 
-//   for (const body of events) {
-//     const [msgId] = body["sg_message_id"]?.split(".") as string[]
+//   for (const event of events) {
+//     const messageId = event.data?.id
 
-//     if (!msgId) return c.json({ message: "failed" }, 400)
-//     if (body["event"] !== "delivered") {
+//     if (!messageId) return c.json({ message: "failed" }, 400)
+
+//     if (event.type !== "email.delivered") {
 //       await c.env.DB.prepare(
-//         "update email_queue set status = ?, should_retry = ?, sendgrid_data = ? where sg_id = ?"
+//         "update email_queue set status = ?, should_retry = ?, resend_data = ? where resend_id = ?"
 //       )
-//         .bind("failed", false, JSON.stringify(body), msgId)
+//         .bind("failed", false, JSON.stringify(event), messageId)
 //         .run<EmailQueue>()
 //     } else {
 //       await c.env.DB.prepare(
-//         "update email_queue set status = ?, should_retry = ?, sendgrid_data = ? where sg_id = ?"
+//         "update email_queue set status = ?, should_retry = ?, resend_data = ? where resend_id = ?"
+//         .bind("delivered", false, JSON.stringify(event), messageId)
+//         .run<EmailQueue>()
 //       )
-//         .bind("delivered", false, JSON.stringify(body), msgId)
-//         .run<EmailQueueRow>()
 //     }
 //   }
 //   return c.json({ message: "success" }, 200)

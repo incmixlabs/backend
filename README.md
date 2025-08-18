@@ -50,17 +50,17 @@ If you're working on a service that hasn't been migrated yet:
 
 *Backend APIs*
 
-| Endpoint       | Service      |
-| -------------- | ------------ |
-| *location-api* |              |
-| weather        | tomorrow.io  |
-| news           | serpapi.com  |
-| ip location    | radar.io     |
-| *auth-api*     |              |
-| google auth    | google.com   |
-| session auth   | custom       |
-| *email-api*    |              |
-| email          | sendgrid.com |
+| Endpoint       | Service     |
+| -------------- | ----------- |
+| *location-api* |             |
+| weather        | tomorrow.io |
+| news           | serpapi.com |
+| ip location    | radar.io    |
+| *auth-api*     |             |
+| google auth    | google.com  |
+| session auth   | custom      |
+| *email-api*    |             |
+| email          | resend.com  |
 
 ## How to Run
 1. Install Docker
