@@ -45,6 +45,20 @@ projectsRoutes.post(
 
       const projectIds = await getUserProjectIds(c, user.id)
 
+      // Guard against empty projectIds array to avoid "IN ()" SQL predicate
+      if (!projectIds || projectIds.length === 0) {
+        // Return empty result without executing DB query or advancing checkpoint
+        return c.json(
+          {
+            documents: [],
+            checkpoint: {
+              updatedAt: new Date().getTime(),
+            },
+          },
+          200
+        )
+      }
+
       // Query builder to get user's projects from organizations they're members of
       const query = c
         .get("db")
@@ -239,7 +253,7 @@ projectsRoutes.post(
           .executeTakeFirst()
 
         // Check if the user has permission to modify this project
-        if (realMasterState && realMasterState.createdBy !== user.id) {
+        if (!realMasterState) {
           conflicts.push({
             error: "Unauthorized to modify this project",
             document: newDoc,
@@ -355,24 +369,78 @@ projectsRoutes.post(
                   updatedAt: insertedProject.updatedAt,
                 }
 
-                const insertableMembers = newDoc.members.map((m) => ({
-                  projectId: insertedProject.id,
-                  userId: m.id,
-                  isOwner: m.isOwner,
-                  createdBy: user.id,
-                  updatedBy: user.id,
-                  role: m.role,
-                  roleId: 1,
-                  createdAt: new Date().toISOString(),
-                  updatedAt: new Date().toISOString(),
-                }))
+                // Validate each member before creating insertableMembers
+                if (newDoc.members && newDoc.members.length > 0) {
+                  // Get all member IDs to validate in a single query
+                  const memberIds = newDoc.members.map((m) => m.id)
 
-                // Add user as project member with owner role
-                await c
-                  .get("db")
-                  .insertInto("projectMembers")
-                  .values(insertableMembers)
-                  .execute()
+                  // Query userProfiles to verify all members exist
+                  const existingUsers = await c
+                    .get("db")
+                    .selectFrom("userProfiles")
+                    .select(["id", "fullName", "email"])
+                    .where("id", "in", memberIds)
+                    .execute()
+
+                  // Check if all members were found
+                  if (existingUsers.length !== memberIds.length) {
+                    const foundIds = existingUsers.map((u) => u.id)
+                    const missingIds = memberIds.filter(
+                      (id) => !foundIds.includes(id)
+                    )
+                    conflicts.push({
+                      error: `Users not found: ${missingIds.join(", ")}`,
+                      document: newDoc,
+                    })
+                    continue
+                  }
+
+                  // Verify that current user can add these members to the project
+                  // Check if all target users are members of the same organization
+                  const orgMembers = await c
+                    .get("db")
+                    .selectFrom("members")
+                    .select(["userId"])
+                    .where((eb) =>
+                      eb.and([
+                        eb("orgId", "=", newDoc.orgId),
+                        eb("userId", "in", memberIds),
+                      ])
+                    )
+                    .execute()
+
+                  if (orgMembers.length !== memberIds.length) {
+                    const foundOrgMemberIds = orgMembers.map((m) => m.userId)
+                    const missingOrgMemberIds = memberIds.filter(
+                      (id) => !foundOrgMemberIds.includes(id)
+                    )
+                    conflicts.push({
+                      error: `Users are not members of the organization: ${missingOrgMemberIds.join(", ")}`,
+                      document: newDoc,
+                    })
+                    continue
+                  }
+
+                  // All validations passed, create insertableMembers
+                  const insertableMembers = newDoc.members.map((m) => ({
+                    projectId: insertedProject.id,
+                    userId: m.id,
+                    isOwner: m.isOwner,
+                    createdBy: user.id,
+                    updatedBy: user.id,
+                    role: m.role,
+                    roleId: 1,
+                    createdAt: new Date().toISOString(),
+                    updatedAt: new Date().toISOString(),
+                  }))
+
+                  // Add project members
+                  await c
+                    .get("db")
+                    .insertInto("projectMembers")
+                    .values(insertableMembers)
+                    .execute()
+                }
               }
             }
           } catch (error) {

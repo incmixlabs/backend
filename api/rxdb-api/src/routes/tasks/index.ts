@@ -42,6 +42,20 @@ tasksRoutes.post("/pull", zValidator("query", PullTasksSchema), async (c) => {
 
     const projectIds = await getUserProjectIds(c, user.id)
 
+    // Guard against empty projectIds array to avoid "IN ()" SQL predicate
+    if (!projectIds || projectIds.length === 0) {
+      // Return empty result without executing DB query or advancing checkpoint
+      return c.json(
+        {
+          documents: [],
+          checkpoint: {
+            updatedAt: new Date().getTime(),
+          },
+        },
+        200
+      )
+    }
+
     // Query builder to get user's tasks
     const query = c
       .get("db")
@@ -125,7 +139,6 @@ tasksRoutes.post("/pull", zValidator("query", PullTasksSchema), async (c) => {
     )
 
     if (!results.success) {
-      console.log(results.error)
       throw new ServerError("Invalid tasks")
     }
     const parsedTasks = results.data
@@ -244,11 +257,7 @@ tasksRoutes.post("/push", zValidator("json", PushTasksSchema), async (c) => {
         })
         continue
       }
-      console.log(
-        "realMasterState",
-        realMasterState?.updatedAt,
-        new Date(changeRow?.assumedMasterState?.updatedAt ?? 0).toISOString()
-      )
+
       // Detect conflicts by comparing the assumed master state with the real master state
       if (
         (realMasterState && !changeRow.assumedMasterState) ||
@@ -395,7 +404,6 @@ tasksRoutes.post("/push", zValidator("json", PushTasksSchema), async (c) => {
             }
           }
         } catch (error) {
-          console.log(error)
           conflicts.push({
             error: error instanceof Error ? error.message : "Unknown error",
             document: newDoc,

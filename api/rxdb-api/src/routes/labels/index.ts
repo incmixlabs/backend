@@ -41,6 +41,20 @@ labelsRoutes.post("/pull", zValidator("query", PullLabelsSchema), async (c) => {
 
     const projectIds = await getUserProjectIds(c, user.id)
 
+    // Guard against empty projectIds array to avoid "IN ()" SQL predicate
+    if (!projectIds || projectIds.length === 0) {
+      // Return empty result without executing DB query or advancing checkpoint
+      return c.json(
+        {
+          documents: [],
+          checkpoint: {
+            updatedAt: new Date().getTime(),
+          },
+        },
+        200
+      )
+    }
+
     // Query builder to get user's labels from projects they're members of
     const query = c
       .get("db")
