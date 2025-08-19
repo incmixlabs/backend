@@ -206,7 +206,7 @@ orgRoutes.openapi(createOrganisation, async (c) => {
 
     const orgId = nanoid(15)
     const dbRoles = await findAllRoles(c)
-    console.log(dbRoles)
+
     if (!dbRoles.length) {
       const msg = await t.text(ERROR_NO_ROLES)
       throw new ServerError(msg)
