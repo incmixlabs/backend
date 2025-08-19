@@ -77,6 +77,8 @@ projectRoutes.openapi(createProject, async (c) => {
       startDate,
       endDate,
       status,
+      acceptanceCriteria,
+      checklist,
     } = c.req.valid("form")
 
     const org = await getOrganizationById(c, orgId)
@@ -180,13 +182,14 @@ projectRoutes.openapi(createProject, async (c) => {
             createdAt: new Date().toISOString(),
             updatedAt: new Date().toISOString(),
             logo: logoUrl,
+            acceptanceCriteria: acceptanceCriteria ?? "[]",
+            checklist: checklist ?? "[]",
             status,
             startDate,
             endDate,
             budget,
             description,
             company,
-            checklist: JSON.stringify([]),
           })
           .returningAll()
           .executeTakeFirst()

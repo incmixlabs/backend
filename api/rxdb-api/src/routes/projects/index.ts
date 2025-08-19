@@ -11,13 +11,13 @@ import {
 } from "@incmix-api/utils/errors"
 import { useTranslation } from "@incmix-api/utils/middleware"
 import { jsonArrayFrom } from "kysely/helpers/postgres"
+import { getUserProjectIds } from "../lib/db"
 import {
   ProjectSchemaWithTimeStamps,
   type ProjectWithTimeStamps,
   PullProjectsSchema,
   PushProjectsSchema,
 } from "./types"
-import { getUserProjectIds } from "../lib/db"
 
 const projectsRoutes = new OpenAPIHono<HonoApp>({
   defaultHook: zodError,

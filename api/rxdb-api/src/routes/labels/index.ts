@@ -10,13 +10,13 @@ import {
   zodError,
 } from "@incmix-api/utils/errors"
 import { useTranslation } from "@incmix-api/utils/middleware"
+import { getUserProjectIds } from "../lib/db"
 import {
   LabelSchemaWithTimeStamps,
   type LabelWithTimeStamps,
   PullLabelsSchema,
   PushLabelsSchema,
 } from "./types"
-import { getUserProjectIds } from "../lib/db"
 
 const labelsRoutes = new OpenAPIHono<HonoApp>({
   defaultHook: zodError,

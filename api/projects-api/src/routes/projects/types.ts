@@ -40,6 +40,8 @@ export const CreateProjectSchema = ProjectSchema.pick({
     .int()
     .nullish()
     .openapi({ example: 10000 }),
+  acceptanceCriteria: z.string().optional(),
+  checklist: z.string().optional(),
   members: z.string().optional().openapi({ example: "user1,user2,user3" }),
 })
 

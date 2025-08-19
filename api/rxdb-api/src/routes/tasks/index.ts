@@ -11,13 +11,13 @@ import {
 import { useTranslation } from "@incmix-api/utils/middleware"
 import type { Task } from "@incmix-api/utils/zod-schema"
 import { jsonArrayFrom } from "kysely/helpers/postgres"
+import { getUserProjectIds } from "../lib/db"
 import {
   PullTasksSchema,
   PushTasksSchema,
   TaskSchemaWithTimeStamps,
   type TaskWithTimeStamps,
 } from "./types"
-import { getUserProjectIds } from "../lib/db"
 
 const tasksRoutes = new OpenAPIHono<HonoApp>({
   defaultHook: zodError,
