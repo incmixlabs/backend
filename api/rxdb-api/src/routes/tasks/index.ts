@@ -110,11 +110,24 @@ tasksRoutes.post("/pull", zValidator("query", PullTasksSchema), async (c) => {
       tasks.map(
         (task) =>
           ({
-            ...task,
+            id: task.id,
+            name: task.name,
+            description: task.description,
+            completed: task.completed,
+            projectId: task.projectId,
+            statusId: task.statusId,
+            priorityId: task.priorityId,
+            taskOrder: task.taskOrder,
             startDate: task.startDate
               ? new Date(task.startDate).getTime()
               : null,
             endDate: task.endDate ? new Date(task.endDate).getTime() : null,
+            acceptanceCriteria: task.acceptanceCriteria,
+            labelsTags: task.labelsTags,
+            refUrls: task.refUrls,
+            attachments: task.attachments,
+            checklist: task.checklist,
+            parentTaskId: task.parentTaskId,
             createdAt: new Date(task.createdAt).getTime(),
             updatedAt: new Date(task.updatedAt).getTime(),
             isSubtask: task.parentTaskId !== null,

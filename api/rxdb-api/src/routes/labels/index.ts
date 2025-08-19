@@ -93,7 +93,13 @@ labelsRoutes.post("/pull", zValidator("query", PullLabelsSchema), async (c) => {
       labels.map(
         (label) =>
           ({
-            ...label,
+            id: label.id,
+            projectId: label.projectId,
+            type: label.type,
+            name: label.name,
+            description: label.description,
+            color: label.color,
+            order: label.order,
             createdBy: {
               id: label.createdBy,
               name: label.createdByName,

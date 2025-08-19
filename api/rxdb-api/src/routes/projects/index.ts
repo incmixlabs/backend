@@ -116,13 +116,22 @@ projectsRoutes.post(
         projects.map(
           (project) =>
             ({
-              ...project,
+              id: project.id,
+              name: project.name,
+              orgId: project.orgId,
+              status: project.status,
               startDate: project.startDate
                 ? new Date(project.startDate).getTime()
                 : null,
               endDate: project.endDate
                 ? new Date(project.endDate).getTime()
                 : null,
+              budget: project.budget,
+              description: project.description,
+              company: project.company,
+              logo: project.logo,
+              checklist: project.checklist,
+              acceptanceCriteria: project.acceptanceCriteria,
               createdAt: new Date(project.createdAt).getTime(),
               updatedAt: new Date(project.updatedAt).getTime(),
               progress: 0,
