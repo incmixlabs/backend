@@ -5,13 +5,15 @@ export const PullLabelsSchema = z.object({
   lastPulledAt: z.string().optional(),
 })
 
-const LabelSchemaWithTimeStamps = LabelSchema.omit({
+export const LabelSchemaWithTimeStamps = LabelSchema.omit({
   createdAt: true,
   updatedAt: true,
 }).extend({
   createdAt: z.number(),
   updatedAt: z.number(),
 })
+
+export type LabelWithTimeStamps = z.infer<typeof LabelSchemaWithTimeStamps>
 
 export const PushLabelsSchema = z.object({
   changeRows: z.array(

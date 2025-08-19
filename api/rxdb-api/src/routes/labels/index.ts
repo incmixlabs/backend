@@ -5,11 +5,18 @@ import { ERROR_UNAUTHORIZED } from "@incmix-api/utils"
 import type { Label } from "@incmix-api/utils/db-schema"
 import {
   BadRequestError,
+  ServerError,
   UnauthorizedError,
   zodError,
 } from "@incmix-api/utils/errors"
 import { useTranslation } from "@incmix-api/utils/middleware"
-import { PullLabelsSchema, PushLabelsSchema } from "./types"
+import {
+  LabelSchemaWithTimeStamps,
+  type LabelWithTimeStamps,
+  PullLabelsSchema,
+  PushLabelsSchema,
+} from "./types"
+import { getUserProjectIds } from "../lib/db"
 
 const labelsRoutes = new OpenAPIHono<HonoApp>({
   defaultHook: zodError,
@@ -32,31 +39,72 @@ labelsRoutes.post("/pull", zValidator("query", PullLabelsSchema), async (c) => {
       ? new Date(Number(lastPulledAt))
       : new Date(0)
 
+    const projectIds = await getUserProjectIds(c, user.id)
+
     // Query builder to get user's labels from projects they're members of
-    let query = c
+    const query = c
       .get("db")
       .selectFrom("labels")
-      .innerJoin(
-        "projectMembers",
+      .innerJoin("userProfiles as up", "labels.createdBy", "up.id")
+      .innerJoin("userProfiles as up2", "labels.updatedBy", "up2.id")
+      .select([
+        "labels.id",
         "labels.projectId",
-        "projectMembers.projectId"
-      )
-      .selectAll()
-      .where("projectMembers.userId", "=", user.id)
-
-    // If lastPulledAt is provided, only get labels updated since then
-    if (lastPulledAt) {
-      query = query.where("labels.updatedAt", ">=", lastPulledAtDate)
-    }
+        "labels.type",
+        "labels.name",
+        "labels.description",
+        "labels.color",
+        "labels.order",
+        "labels.createdAt",
+        "labels.updatedAt",
+        "labels.createdBy",
+        "labels.updatedBy",
+        "up.fullName as createdByName",
+        "up.avatar as createdByImage",
+        "up2.fullName as updatedByName",
+        "up2.avatar as updatedByImage",
+      ])
+      .where((eb) => {
+        const ands = [eb("labels.projectId", "in", projectIds)]
+        if (lastPulledAt) {
+          ands.push(eb("labels.updatedAt", ">=", lastPulledAtDate))
+        }
+        return eb.and(ands)
+      })
 
     // Execute the query
     const labels = await query.execute()
+
+    const results = LabelSchemaWithTimeStamps.array().safeParse(
+      labels.map(
+        (label) =>
+          ({
+            ...label,
+            createdBy: {
+              id: label.createdBy,
+              name: label.createdByName,
+              image: label.createdByImage ?? undefined,
+            },
+            updatedBy: {
+              id: label.updatedBy,
+              name: label.updatedByName,
+              image: label.updatedByImage ?? undefined,
+            },
+            createdAt: new Date(label.createdAt).getTime(),
+            updatedAt: new Date(label.updatedAt).getTime(),
+          }) satisfies LabelWithTimeStamps
+      )
+    )
+
+    if (!results.success) {
+      throw new ServerError("Invalid labels")
+    }
 
     // Format for RxDB sync protocol
     // RxDB expects a specific format with documents and an optional checkpoint
     return c.json(
       {
-        documents: labels,
+        documents: results.data,
         checkpoint: {
           updatedAt: new Date().getTime(),
         },

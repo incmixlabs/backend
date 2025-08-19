@@ -81,6 +81,8 @@ export const ProjectSchema = z.object({
   timeLeft: z.string().openapi({ example: "2 weeks" }),
   members: z.array(ProjectMemberSchema),
   orgId: z.string().openapi({ example: "org123" }),
+  checklist: z.array(ChecklistSchema).default([]),
+  acceptanceCriteria: z.array(ChecklistItemSchema).default([]),
   status: z.enum(projectStatus).openapi({ example: "started" }),
   startDate: z
     .string()
