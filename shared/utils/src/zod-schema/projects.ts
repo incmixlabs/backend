@@ -22,10 +22,18 @@ const UserSchema = z.object({
   image: z.string().max(500).optional(),
 })
 
+// this is same for checklis and acceptence criteria
+export const ChecklistItemSchema = z.object({
+  id: z.string().max(100),
+  text: z.string().max(500),
+  checked: z.boolean().default(false),
+  order: z.number().int().min(0).default(0),
+})
+
 export const CommentSchema = z.object({
   id: z.string().max(100),
   content: z.string().max(2000),
-  createdAt: z.string().datetime(),
+  createdAt: z.number(),
   createdBy: UserSchema,
 })
 
@@ -53,7 +61,7 @@ export type ProjectMember = z.infer<typeof ProjectMemberSchema>
 
 export const ChecklistSchema = z.object({
   id: z.string().openapi({ example: "2hek2bkjh" }),
-  title: z.string().openapi({ example: "Checklist item" }),
+  text: z.string().openapi({ example: "Checklist item" }),
   checked: z.boolean().openapi({ example: false }),
   order: z.number().int().nonnegative().openapi({ example: 1 }),
 })
@@ -135,8 +143,8 @@ export const LabelSchema = z.object({
   color: z.string().max(50),
   order: z.number().int().min(0).default(0),
   description: z.string().max(500).default(""),
-  createdAt: z.string().datetime().openapi({ example: "2025-01-01T00:00:00Z" }),
-  updatedAt: z.string().datetime().openapi({ example: "2025-01-01T00:00:00Z" }),
+  createdAt: z.number(),
+  updatedAt: z.number(),
   createdBy: UserSchema,
   updatedBy: UserSchema,
 })
@@ -147,28 +155,28 @@ export const TaskSchema = z.object({
   name: z.string().max(500),
   statusId: z.string().max(100),
   priorityId: z.string().max(100),
-  order: z.number().int().min(0).default(0),
-  startDate: z
-    .string()
-    .datetime()
-    .nullish()
-    .openapi({ example: "2025-01-01T00:00:00Z" }),
-  endDate: z
-    .string()
-    .datetime()
-    .nullish()
-    .openapi({ example: "2025-01-01T00:00:00Z" }),
+
+  parentTaskId: z.string().max(100).nullable().default(null),
+  isSubtask: z.boolean().default(false),
+
+  taskOrder: z.number().int().min(0).default(0),
+
+  startDate: z.number().optional(),
+  endDate: z.number().optional(),
+
   description: z.string().max(2000).default(""),
-  acceptanceCriteria: z.array(ChecklistSchema).default([]),
-  checklist: z.array(ChecklistSchema).default([]),
+  acceptanceCriteria: z.array(ChecklistItemSchema).default([]),
+  checklist: z.array(ChecklistItemSchema).default([]),
   completed: z.boolean().default(false),
   refUrls: z.array(RefUrlSchema).default([]),
   labelsTags: z.array(LabelTagSchema).default([]),
   attachments: z.array(AttachmentSchema).default([]),
   assignedTo: z.array(UserSchema).default([]),
-  subTasks: z.array(SubTaskSchema).default([]),
-  createdAt: z.string().datetime().openapi({ example: "2025-01-01T00:00:00Z" }),
-  updatedAt: z.string().datetime().openapi({ example: "2025-01-01T00:00:00Z" }),
+
+  comments: z.array(CommentSchema).default([]),
+
+  createdAt: z.number(),
+  updatedAt: z.number(),
   createdBy: UserSchema,
   updatedBy: UserSchema,
 })

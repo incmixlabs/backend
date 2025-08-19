@@ -47,7 +47,7 @@ export async function getCommentById(
   return {
     id: comment.id,
     content: comment.content,
-    createdAt: comment.createdAt.toISOString(),
+    createdAt: comment.createdAt.getTime(),
     createdBy: {
       id: createdBy.id,
       name: createdBy.name,
@@ -70,7 +70,7 @@ export async function listTaskComments(c: Context, taskId: string) {
     return {
       id: comment.id,
       content: comment.content,
-      createdAt: comment.createdAt.toISOString(),
+      createdAt: comment.createdAt.getTime(),
       createdBy: {
         id: createdBy.id,
         name: createdBy.name,
@@ -94,7 +94,7 @@ export async function listProjectComments(c: Context, projectId: string) {
     return {
       id: comment.id,
       content: comment.content,
-      createdAt: comment.createdAt.toISOString(),
+      createdAt: comment.createdAt.getTime(),
       createdBy: {
         id: createdBy.id,
         name: createdBy.name,

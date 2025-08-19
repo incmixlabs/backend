@@ -75,7 +75,7 @@ tasksRoutes.openapi(createTask, async (c) => {
 
     const {
       projectId,
-      order,
+      taskOrder,
       assignedTo,
       startDate,
       endDate,
@@ -143,7 +143,7 @@ tasksRoutes.openapi(createTask, async (c) => {
             id: taskId,
             name,
             description,
-            taskOrder: order,
+            taskOrder,
             projectId,
             statusId,
             priorityId,
@@ -207,7 +207,7 @@ tasksRoutes.openapi(updateTask, async (c) => {
     }
     const {
       assignedTo,
-      order,
+      taskOrder,
       statusId,
       priorityId,
       name,
@@ -269,7 +269,7 @@ tasksRoutes.openapi(updateTask, async (c) => {
       .set({
         name,
         description,
-        taskOrder: order,
+        taskOrder,
         statusId,
         priorityId,
         parentTaskId,
@@ -412,7 +412,7 @@ tasksRoutes.openapi(addTaskChecklist, async (c) => {
     const id = nanoid(6)
     const newChecklist = {
       id,
-      title: checklist.title,
+      title: checklist.text,
       checked: checklist.checked,
       order: checklist.order,
     }
@@ -463,7 +463,7 @@ tasksRoutes.openapi(updateTaskChecklist, async (c) => {
     // Build the updated checklist item
     const updatedChecklist = {
       id: checklistId,
-      ...(checklist.title !== undefined ? { title: checklist.title } : {}),
+      ...(checklist.text !== undefined ? { text: checklist.text } : {}),
       ...(checklist.checked !== undefined
         ? { checked: checklist.checked }
         : {}),

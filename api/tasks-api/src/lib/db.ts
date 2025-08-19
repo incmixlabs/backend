@@ -110,10 +110,12 @@ export async function getTaskById(c: Context, taskId: string) {
         name: a.name,
         image: a.image ?? undefined,
       })),
-      createdAt: task.createdAt.toISOString(),
-      updatedAt: task.updatedAt.toISOString(),
-      startDate: task.startDate?.toISOString(),
-      endDate: task.endDate?.toISOString(),
+      createdAt: task.createdAt.getTime(),
+      updatedAt: task.updatedAt.getTime(),
+      startDate: task.startDate?.getTime(),
+      endDate: task.endDate?.getTime(),
+      isSubtask: task.parentTaskId !== null,
+      comments: [],
     }
 
   return null
@@ -166,10 +168,12 @@ export async function getTasks(c: Context, userId: string): Promise<Task[]> {
           name: a.name,
           image: a.image ?? undefined,
         })),
-        createdAt: task.createdAt.toISOString(),
-        updatedAt: task.updatedAt.toISOString(),
-        startDate: task.startDate?.toISOString(),
-        endDate: task.endDate?.toISOString(),
+        createdAt: task.createdAt.getTime(),
+        updatedAt: task.updatedAt.getTime(),
+        startDate: task.startDate?.getTime(),
+        endDate: task.endDate?.getTime(),
+        isSubtask: task.parentTaskId !== null,
+        comments: [],
       }
 
     return []
@@ -184,7 +188,7 @@ function buildTaskQuery(c: Context) {
       "tasks.id",
       "tasks.name",
       "tasks.description",
-      "tasks.taskOrder as order",
+      "tasks.taskOrder",
       "tasks.createdAt",
       "tasks.updatedAt",
       "tasks.projectId",
@@ -204,7 +208,7 @@ function buildTaskQuery(c: Context) {
           .selectFrom("tasks as st")
           .select([
             "st.id",
-            "st.taskOrder as order",
+            "st.taskOrder",
             "st.name",
             "st.description",
             "st.completed",

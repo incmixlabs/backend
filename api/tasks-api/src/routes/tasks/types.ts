@@ -14,11 +14,7 @@ export const ChecklistIdSchema = z.object({
   checklistId: z.string().openapi({ example: "2hek2bkjh" }),
 })
 
-export const TaskListSchema = z.array(
-  TaskSchema.omit({
-    subTasks: true,
-  })
-)
+export const TaskListSchema = z.array(TaskSchema)
 
 export const TaskIdListSchema = z.object({
   taskIds: z.array(TaskSchema.pick({ id: true })),
@@ -27,7 +23,7 @@ export const TaskIdListSchema = z.object({
 export const CreateTaskSchema = TaskSchema.pick({
   name: true,
   description: true,
-  order: true,
+  taskOrder: true,
   projectId: true,
   statusId: true,
   priorityId: true,
@@ -52,7 +48,7 @@ export const CreateTaskSchema = TaskSchema.pick({
 export const UpdateTaskSchema = TaskSchema.pick({
   name: true,
   description: true,
-  order: true,
+  taskOrder: true,
   projectId: true,
   statusId: true,
   priorityId: true,

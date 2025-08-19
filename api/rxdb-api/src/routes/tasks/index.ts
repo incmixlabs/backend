@@ -189,7 +189,7 @@ tasksRoutes.post("/push", zValidator("json", PushTasksSchema), async (c) => {
                 name: newDoc.name,
                 description: newDoc.description,
                 completed: newDoc.completed,
-                taskOrder: newDoc.order,
+                taskOrder: newDoc.taskOrder,
                 projectId: newDoc.projectId,
                 statusId: newDoc.statusId,
                 priorityId: newDoc.priorityId,
@@ -286,7 +286,7 @@ tasksRoutes.post("/push", zValidator("json", PushTasksSchema), async (c) => {
                   ? new Date(newDoc.startDate).toISOString()
                   : null,
                 statusId: newDoc.statusId,
-                taskOrder: newDoc.order,
+                taskOrder: newDoc.taskOrder,
                 updatedAt: new Date(newDoc.updatedAt).toISOString(),
                 updatedBy: user.id,
               })

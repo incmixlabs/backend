@@ -521,7 +521,7 @@ projectRoutes.openapi(addProjectChecklist, async (c) => {
     const id = nanoid(6)
     const newChecklist: Checklist = {
       id,
-      title: checklist.title,
+      text: checklist.text,
       checked: checklist.checked,
       order: checklist.order,
     }
@@ -563,7 +563,7 @@ projectRoutes.openapi(updateProjectChecklist, async (c) => {
 
     const updatedChecklist: Checklist = {
       id: checklistId,
-      title: checklist.title,
+      text: checklist.text,
       checked: checklist.checked,
       order: checklist.order,
     }
