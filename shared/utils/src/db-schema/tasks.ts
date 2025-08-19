@@ -1,6 +1,7 @@
 import type { Checklist } from "@incmix-api/utils/zod-schema"
 import type {
   Attachment,
+  ChecklistItem,
   LabelTag,
   LabelType,
   RefUrl,
@@ -78,6 +79,7 @@ type ProjectsTable = {
   company: string | null
   logo: string | null
   checklist: JSONColumnType<Checklist[]>
+  acceptanceCriteria: JSONColumnType<ChecklistItem[]>
   createdAt: ColumnType<Date, string, never>
   updatedAt: ColumnType<Date, string, string>
   createdBy: ColumnType<string, string, never>

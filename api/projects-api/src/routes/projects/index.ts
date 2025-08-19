@@ -36,6 +36,10 @@ import {
 } from "@incmix-api/utils/errors"
 import { useTranslation } from "@incmix-api/utils/middleware"
 import type { Checklist } from "@incmix-api/utils/zod-schema"
+import {
+  ChecklistItemSchema,
+  ChecklistSchema,
+} from "@incmix-api/utils/zod-schema"
 import { env } from "hono/adapter"
 import { sql } from "kysely"
 import { nanoid } from "nanoid"
@@ -77,7 +81,32 @@ projectRoutes.openapi(createProject, async (c) => {
       startDate,
       endDate,
       status,
+      acceptanceCriteria,
+      checklist,
     } = c.req.valid("form")
+
+    // Parse acceptanceCriteria (default to [] if empty)
+    const parsedAcceptanceCriteria = acceptanceCriteria
+      ? JSON.parse(acceptanceCriteria)
+      : []
+    const acceptanceCriteriaResult = ChecklistItemSchema.array().safeParse(
+      parsedAcceptanceCriteria
+    )
+    if (!acceptanceCriteriaResult.success) {
+      const msg = await t.text(ERROR_PROJECT_CREATE_FAILED)
+      throw new BadRequestError(msg)
+    }
+
+    const validatedAcceptanceCriteria = acceptanceCriteriaResult.data
+
+    // Parse checklist (default to [] if empty)
+    const parsedChecklist = checklist ? JSON.parse(checklist) : []
+    const checklistResult = ChecklistSchema.array().safeParse(parsedChecklist)
+    if (!checklistResult.success) {
+      const msg = await t.text(ERROR_PROJECT_CREATE_FAILED)
+      throw new BadRequestError(msg)
+    }
+    const validatedChecklist = checklistResult.data
 
     const org = await getOrganizationById(c, orgId)
     if (!org) {
@@ -180,13 +209,14 @@ projectRoutes.openapi(createProject, async (c) => {
             createdAt: new Date().toISOString(),
             updatedAt: new Date().toISOString(),
             logo: logoUrl,
+            acceptanceCriteria: JSON.stringify(validatedAcceptanceCriteria),
+            checklist: JSON.stringify(validatedChecklist),
             status,
             startDate,
             endDate,
             budget,
             description,
             company,
-            checklist: JSON.stringify([]),
           })
           .returningAll()
           .executeTakeFirst()

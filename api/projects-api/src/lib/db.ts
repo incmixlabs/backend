@@ -102,6 +102,7 @@ export async function getProjectById(
       "logo",
       "description",
       "checklist",
+      "acceptanceCriteria",
       jsonArrayFrom(
         eb
           .selectFrom("projectMembers")
@@ -203,6 +204,7 @@ export async function getUserProjects(
       "projects.logo",
       "projects.description",
       "projects.checklist",
+      "projects.acceptanceCriteria",
       jsonArrayFrom(
         eb
           .selectFrom("projectMembers")

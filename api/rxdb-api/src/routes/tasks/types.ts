@@ -5,17 +5,19 @@ export const PullTasksSchema = z.object({
   lastPulledAt: z.string().optional(),
 })
 
-const TaskSchemaWithTimeStamps = TaskSchema.omit({
+export const TaskSchemaWithTimeStamps = TaskSchema.omit({
   startDate: true,
   endDate: true,
   createdAt: true,
   updatedAt: true,
 }).extend({
-  startDate: z.number(),
-  endDate: z.number(),
+  startDate: z.number().nullish(),
+  endDate: z.number().nullish(),
   createdAt: z.number(),
   updatedAt: z.number(),
 })
+
+export type TaskWithTimeStamps = z.infer<typeof TaskSchemaWithTimeStamps>
 
 export const PushTasksSchema = z.object({
   changeRows: z.array(
