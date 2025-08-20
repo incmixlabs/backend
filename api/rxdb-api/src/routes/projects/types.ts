@@ -14,8 +14,6 @@ const RxdbProjectSchema = ProjectSchema.pick({
   status: true,
   budget: true,
   description: true,
-  createdBy: true,
-  updatedBy: true,
 })
 
 export const ProjectSchemaWithTimeStamps = RxdbProjectSchema.extend({
@@ -23,6 +21,8 @@ export const ProjectSchemaWithTimeStamps = RxdbProjectSchema.extend({
   endDate: z.number().nullish(),
   createdAt: z.number(),
   updatedAt: z.number(),
+  createdBy: z.string(),
+  updatedBy: z.string(),
 })
 
 export type ProjectWithTimeStamps = z.infer<typeof ProjectSchemaWithTimeStamps>

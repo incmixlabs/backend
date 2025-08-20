@@ -113,19 +113,11 @@ projectsRoutes.post(
               budget: project.budget,
               description: project.description,
               company: project.company,
-              logo: project.logo,
+              logo: project.logo ?? undefined,
               createdAt: new Date(project.createdAt).getTime(),
               updatedAt: new Date(project.updatedAt).getTime(),
-              createdBy: {
-                id: project.createdBy,
-                name: project.createdByName,
-                image: project.createdByImage ?? undefined,
-              },
-              updatedBy: {
-                id: project.updatedBy,
-                name: project.updatedByName,
-                image: project.updatedByImage ?? undefined,
-              },
+              createdBy: project.createdBy,
+              updatedBy: project.updatedBy,
             }) satisfies ProjectWithTimeStamps
         )
       )
