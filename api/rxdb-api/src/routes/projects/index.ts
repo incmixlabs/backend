@@ -65,7 +65,7 @@ projectsRoutes.post(
         .selectFrom("projects")
         .innerJoin("userProfiles as up", "projects.createdBy", "up.id")
         .innerJoin("userProfiles as up2", "projects.updatedBy", "up2.id")
-        .select((eb) => [
+        .select([
           "projects.id",
           "projects.name",
           "projects.orgId",
@@ -76,30 +76,14 @@ projectsRoutes.post(
           "projects.description",
           "projects.company",
           "projects.logo",
-          "projects.checklist",
           "projects.createdAt",
           "projects.updatedAt",
           "projects.createdBy",
           "projects.updatedBy",
-          "projects.acceptanceCriteria",
           "up.fullName as createdByName",
           "up.avatar as createdByImage",
           "up2.fullName as updatedByName",
           "up2.avatar as updatedByImage",
-          jsonArrayFrom(
-            eb
-              .selectFrom("projectMembers")
-              .innerJoin("userProfiles as up", "projectMembers.userId", "up.id")
-              .select([
-                "projectMembers.userId as id",
-                "projectMembers.role",
-                "projectMembers.isOwner",
-                "up.fullName as name",
-                "up.email",
-                "up.avatar as image",
-              ])
-              .whereRef("projectMembers.projectId", "=", "projects.id")
-          ).as("members"),
         ])
         .where((eb) => {
           const ands = [eb("projects.id", "in", projectIds)]
@@ -130,20 +114,8 @@ projectsRoutes.post(
               description: project.description,
               company: project.company,
               logo: project.logo,
-              checklist: project.checklist,
-              acceptanceCriteria: project.acceptanceCriteria,
               createdAt: new Date(project.createdAt).getTime(),
               updatedAt: new Date(project.updatedAt).getTime(),
-              progress: 0,
-              timeLeft: "0",
-              members: project.members.map((m) => ({
-                id: m.id,
-                name: m.name,
-                email: m.email,
-                image: m.image ?? undefined,
-                role: m.role,
-                isOwner: m.isOwner,
-              })),
               createdBy: {
                 id: project.createdBy,
                 name: project.createdByName,
@@ -188,300 +160,225 @@ projectsRoutes.post(
   }
 )
 
-projectsRoutes.post(
-  "/push",
-  zValidator("json", PushProjectsSchema),
-  async (c) => {
-    try {
-      const user = c.get("user")
-      const t = await useTranslation(c)
+// projectsRoutes.post(
+//   "/push",
+//   zValidator("json", PushProjectsSchema),
+//   async (c) => {
+//     try {
+//       const user = c.get("user")
+//       const t = await useTranslation(c)
 
-      if (!user) {
-        const msg = await t.text(ERROR_UNAUTHORIZED)
-        throw new UnauthorizedError(msg)
-      }
+//       if (!user) {
+//         const msg = await t.text(ERROR_UNAUTHORIZED)
+//         throw new UnauthorizedError(msg)
+//       }
 
-      // Get change rows from the client
-      const { changeRows } = c.req.valid("json")
+//       // Get change rows from the client
+//       const { changeRows } = c.req.valid("json")
 
-      // Validate incoming data
-      if (!Array.isArray(changeRows)) {
-        throw new BadRequestError(
-          "Invalid request format: expected an array of changed rows"
-        )
-      }
+//       // Validate incoming data
+//       if (!Array.isArray(changeRows)) {
+//         throw new BadRequestError(
+//           "Invalid request format: expected an array of changed rows"
+//         )
+//       }
 
-      const conflicts = []
-      const event = {
-        documents: [] as Project[],
-        checkpoint: null as { id: string; updatedAt: Date } | null,
-      }
+//       const conflicts = []
+//       const event = {
+//         documents: [] as Project[],
+//         checkpoint: null as { id: string; updatedAt: Date } | null,
+//       }
 
-      // Process each change row
-      for (const changeRow of changeRows) {
-        // Ensure the document belongs to the user or is assigned to them
-        const newDoc = changeRow.newDocumentState
+//       // Process each change row
+//       for (const changeRow of changeRows) {
+//         // Ensure the document belongs to the user or is assigned to them
+//         const newDoc = changeRow.newDocumentState
 
-        if (!newDoc || !newDoc.id) {
-          conflicts.push({
-            error: "Invalid document format: missing id",
-            document: newDoc,
-          })
-          continue
-        }
+//         if (!newDoc || !newDoc.id) {
+//           conflicts.push({
+//             error: "Invalid document format: missing id",
+//             document: newDoc,
+//           })
+//           continue
+//         }
 
-        // Get the real current state from the database
-        const realMasterState = await c
-          .get("db")
-          .selectFrom("projects")
-          .innerJoin(
-            "projectMembers",
-            "projects.id",
-            "projectMembers.projectId"
-          )
-          .select([
-            "projects.id",
-            "projects.name",
-            "projects.orgId",
-            "projects.status",
-            "projects.startDate",
-            "projects.endDate",
-            "projects.budget",
-            "projects.description",
-            "projects.acceptanceCriteria",
-            "projects.checklist",
-            "projects.company",
-            "projects.logo",
-            "projects.createdAt",
-            "projects.updatedAt",
-            "projects.createdBy",
-            "projects.updatedBy",
-          ])
-          .where("projects.id", "=", newDoc.id)
-          .where("projectMembers.userId", "=", user.id)
-          .executeTakeFirst()
+//         // Get the real current state from the database
+//         const realMasterState = await c
+//           .get("db")
+//           .selectFrom("projects")
+//           .innerJoin(
+//             "projectMembers",
+//             "projects.id",
+//             "projectMembers.projectId"
+//           )
+//           .select([
+//             "projects.id",
+//             "projects.name",
+//             "projects.orgId",
+//             "projects.status",
+//             "projects.startDate",
+//             "projects.endDate",
+//             "projects.budget",
+//             "projects.description",
+//             "projects.company",
+//             "projects.logo",
+//             "projects.createdAt",
+//             "projects.updatedAt",
+//             "projects.createdBy",
+//             "projects.updatedBy",
+//           ])
+//           .where((eb) =>
+//             eb.and([
+//               eb("projects.id", "=", newDoc.id),
+//               eb("projectMembers.userId", "=", user.id),
+//             ])
+//           )
+//           .executeTakeFirst()
 
-        // Check if the user has permission to modify this project
-        if (!realMasterState) {
-          conflicts.push({
-            error: "Unauthorized to modify this project",
-            document: newDoc,
-          })
-          continue
-        }
+//         // Check if the user has permission to modify this project
+//         if (!realMasterState) {
+//           conflicts.push({
+//             error: "Unauthorized to modify this project",
+//             document: newDoc,
+//           })
+//           continue
+//         }
 
-        // Detect conflicts by comparing the assumed master state with the real master state
-        if (
-          (realMasterState && !changeRow.assumedMasterState) ||
-          (realMasterState &&
-            changeRow.assumedMasterState &&
-            realMasterState.updatedAt >
-              new Date(changeRow.assumedMasterState.updatedAt))
-        ) {
-          // We have a conflict - return the current server state
-          conflicts.push(realMasterState)
-        } else {
-          try {
-            if (realMasterState) {
-              // Update existing project
-              const updatedProject = await c
-                .get("db")
-                .updateTable("projects")
-                .set({
-                  name: newDoc.name,
-                  description: newDoc.description,
-                  status: newDoc.status,
-                  startDate: newDoc.startDate
-                    ? new Date(newDoc.startDate).toISOString()
-                    : null,
-                  endDate: newDoc.endDate
-                    ? new Date(newDoc.endDate).toISOString()
-                    : null,
-                  budget: newDoc.budget,
-                  company: newDoc.company,
-                  logo: newDoc.logo,
-                  checklist: JSON.stringify(newDoc.checklist),
-                  acceptanceCriteria: JSON.stringify(newDoc.acceptanceCriteria),
-                  updatedAt: new Date(newDoc.updatedAt).toISOString(),
-                  updatedBy: user.id,
-                })
-                .where("id", "=", newDoc.id)
-                .returningAll()
-                .executeTakeFirst()
+//         // Detect conflicts by comparing the assumed master state with the real master state
+//         if (
+//           (realMasterState && !changeRow.assumedMasterState) ||
+//           (realMasterState &&
+//             changeRow.assumedMasterState &&
+//             realMasterState.updatedAt >
+//               new Date(changeRow.assumedMasterState.updatedAt))
+//         ) {
+//           // We have a conflict - return the current server state
+//           conflicts.push(realMasterState)
+//         } else {
+//           try {
+//             if (realMasterState) {
+//               // Update existing project
+//               const updatedProject = await c
+//                 .get("db")
+//                 .updateTable("projects")
+//                 .set({
+//                   name: newDoc.name,
+//                   description: newDoc.description,
+//                   status: newDoc.status,
+//                   startDate: newDoc.startDate
+//                     ? new Date(newDoc.startDate).toISOString()
+//                     : null,
+//                   endDate: newDoc.endDate
+//                     ? new Date(newDoc.endDate).toISOString()
+//                     : null,
+//                   budget: newDoc.budget,
+//                   company: newDoc.company,
+//                   logo: newDoc.logo,
+//                   updatedAt: new Date(newDoc.updatedAt).toISOString(),
+//                   updatedBy: user.id,
+//                 })
+//                 .where("id", "=", newDoc.id)
+//                 .returningAll()
+//                 .executeTakeFirst()
 
-              if (updatedProject) {
-                event.documents.push(updatedProject as unknown as Project)
-                event.checkpoint = {
-                  id: updatedProject.id,
-                  updatedAt: updatedProject.updatedAt,
-                }
-              }
-            } else {
-              // Create new project - verify required fields
-              if (!newDoc.name || !newDoc.orgId) {
-                conflicts.push({
-                  error: "Missing required fields: name and orgId are required",
-                  document: newDoc,
-                })
-                continue
-              }
+//               if (updatedProject) {
+//                 event.documents.push(updatedProject as unknown as Project)
+//                 event.checkpoint = {
+//                   id: updatedProject.id,
+//                   updatedAt: updatedProject.updatedAt,
+//                 }
+//               }
+//             } else {
+//               // Create new project - verify required fields
+//               if (!newDoc.name || !newDoc.orgId) {
+//                 conflicts.push({
+//                   error: "Missing required fields: name and orgId are required",
+//                   document: newDoc,
+//                 })
+//                 continue
+//               }
 
-              // Verify organization exists and user is a member
-              const orgMember = await c
-                .get("db")
-                .selectFrom("members")
-                .select("orgId")
-                .where((eb) =>
-                  eb.and([
-                    eb("orgId", "=", newDoc.orgId),
-                    eb("userId", "=", user.id),
-                  ])
-                )
-                .executeTakeFirst()
+//               // Verify organization exists and user is a member
+//               const orgMember = await c
+//                 .get("db")
+//                 .selectFrom("members")
+//                 .select("orgId")
+//                 .where((eb) =>
+//                   eb.and([
+//                     eb("orgId", "=", newDoc.orgId),
+//                     eb("userId", "=", user.id),
+//                   ])
+//                 )
+//                 .executeTakeFirst()
 
-              if (!orgMember) {
-                conflicts.push({
-                  error: "Organization not found or user is not a member",
-                  document: newDoc,
-                })
-                continue
-              }
+//               if (!orgMember) {
+//                 conflicts.push({
+//                   error: "Organization not found or user is not a member",
+//                   document: newDoc,
+//                 })
+//                 continue
+//               }
 
-              // Insert new project
-              const insertedProject = await c
-                .get("db")
-                .insertInto("projects")
-                .values({
-                  ...newDoc,
-                  createdBy: user.id,
-                  updatedBy: user.id,
-                  createdAt: new Date(newDoc.createdAt).toISOString(),
-                  updatedAt: new Date(newDoc.updatedAt).toISOString(),
-                  startDate: newDoc.startDate
-                    ? new Date(newDoc.startDate).toISOString()
-                    : null,
-                  endDate: newDoc.endDate
-                    ? new Date(newDoc.endDate).toISOString()
-                    : null,
-                  checklist: JSON.stringify(newDoc.checklist || []),
-                  acceptanceCriteria: JSON.stringify(
-                    newDoc.acceptanceCriteria || []
-                  ),
-                })
-                .returningAll()
-                .executeTakeFirst()
+//               // Insert new project
+//               const insertedProject = await c
+//                 .get("db")
+//                 .insertInto("projects")
+//                 .values({
+//                   ...newDoc,
+//                   createdBy: user.id,
+//                   updatedBy: user.id,
+//                   createdAt: new Date(newDoc.createdAt).toISOString(),
+//                   updatedAt: new Date(newDoc.updatedAt).toISOString(),
+//                   startDate: newDoc.startDate
+//                     ? new Date(newDoc.startDate).toISOString()
+//                     : null,
+//                   endDate: newDoc.endDate
+//                     ? new Date(newDoc.endDate).toISOString()
+//                     : null,
+//                   checklist: "[]",
+//                   acceptanceCriteria: "[]",
+//                 })
+//                 .returningAll()
+//                 .executeTakeFirst()
 
-              if (insertedProject) {
-                event.documents.push(insertedProject as unknown as Project)
-                event.checkpoint = {
-                  id: insertedProject.id,
-                  updatedAt: insertedProject.updatedAt,
-                }
+//               if (insertedProject) {
+//                 event.documents.push(insertedProject as unknown as Project)
+//                 event.checkpoint = {
+//                   id: insertedProject.id,
+//                   updatedAt: insertedProject.updatedAt,
+//                 }
+//               }
+//             }
+//           } catch (error) {
+//             conflicts.push({
+//               error: error instanceof Error ? error.message : "Unknown error",
+//               document: newDoc,
+//             })
+//           }
+//         }
+//       }
 
-                // Validate each member before creating insertableMembers
-                if (newDoc.members && newDoc.members.length > 0) {
-                  // Get all member IDs to validate in a single query
-                  const memberIds = newDoc.members.map((m) => m.id)
+//       // In a real-world scenario, you might have a push stream mechanism
+//       // that notifies other clients about changes
+//       // if (event.documents.length > 0) {
+//       //   myPullStream$.next(event);
+//       // }
 
-                  // Query userProfiles to verify all members exist
-                  const existingUsers = await c
-                    .get("db")
-                    .selectFrom("userProfiles")
-                    .select(["id", "fullName", "email"])
-                    .where("id", "in", memberIds)
-                    .execute()
+//       // Return conflicts to the client
+//       return c.json(conflicts, 200)
+//     } catch (error) {
+//       let message = "Failed to sync projects from client"
+//       if (error instanceof Error) message = error.message
 
-                  // Check if all members were found
-                  if (existingUsers.length !== memberIds.length) {
-                    const foundIds = existingUsers.map((u) => u.id)
-                    const missingIds = memberIds.filter(
-                      (id) => !foundIds.includes(id)
-                    )
-                    conflicts.push({
-                      error: `Users not found: ${missingIds.join(", ")}`,
-                      document: newDoc,
-                    })
-                    continue
-                  }
-
-                  // Verify that current user can add these members to the project
-                  // Check if all target users are members of the same organization
-                  const orgMembers = await c
-                    .get("db")
-                    .selectFrom("members")
-                    .select(["userId"])
-                    .where((eb) =>
-                      eb.and([
-                        eb("orgId", "=", newDoc.orgId),
-                        eb("userId", "in", memberIds),
-                      ])
-                    )
-                    .execute()
-
-                  if (orgMembers.length !== memberIds.length) {
-                    const foundOrgMemberIds = orgMembers.map((m) => m.userId)
-                    const missingOrgMemberIds = memberIds.filter(
-                      (id) => !foundOrgMemberIds.includes(id)
-                    )
-                    conflicts.push({
-                      error: `Users are not members of the organization: ${missingOrgMemberIds.join(", ")}`,
-                      document: newDoc,
-                    })
-                    continue
-                  }
-
-                  // All validations passed, create insertableMembers
-                  const insertableMembers = newDoc.members.map((m) => ({
-                    projectId: insertedProject.id,
-                    userId: m.id,
-                    isOwner: m.isOwner,
-                    createdBy: user.id,
-                    updatedBy: user.id,
-                    role: m.role,
-                    roleId: 1,
-                    createdAt: new Date().toISOString(),
-                    updatedAt: new Date().toISOString(),
-                  }))
-
-                  // Add project members
-                  await c
-                    .get("db")
-                    .insertInto("projectMembers")
-                    .values(insertableMembers)
-                    .execute()
-                }
-              }
-            }
-          } catch (error) {
-            conflicts.push({
-              error: error instanceof Error ? error.message : "Unknown error",
-              document: newDoc,
-            })
-          }
-        }
-      }
-
-      // In a real-world scenario, you might have a push stream mechanism
-      // that notifies other clients about changes
-      // if (event.documents.length > 0) {
-      //   myPullStream$.next(event);
-      // }
-
-      // Return conflicts to the client
-      return c.json(conflicts, 200)
-    } catch (error) {
-      let message = "Failed to sync projects from client"
-      if (error instanceof Error) message = error.message
-
-      return c.json(
-        {
-          message,
-          success: false,
-        },
-        500
-      )
-    }
-  }
-)
+//       return c.json(
+//         {
+//           message,
+//           success: false,
+//         },
+//         500
+//       )
+//     }
+//   }
+// )
 
 export default projectsRoutes

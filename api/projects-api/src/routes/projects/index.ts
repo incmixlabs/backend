@@ -39,6 +39,7 @@ import type { Checklist } from "@incmix-api/utils/zod-schema"
 import {
   ChecklistItemSchema,
   ChecklistSchema,
+  ProjectSchema,
 } from "@incmix-api/utils/zod-schema"
 import { env } from "hono/adapter"
 import { sql } from "kysely"
@@ -302,10 +303,10 @@ projectRoutes.openapi(createProject, async (c) => {
           throw new BadRequestError(msg)
         }
 
-        return project.id
+        return { project, insertedMembers }
       })
 
-    const newProject = await getProjectById(c, createdProject)
+    const newProject = await getProjectById(c, createdProject.project.id)
 
     return c.json(newProject, 201)
   } catch (error) {
