@@ -56,14 +56,7 @@ type LabelsTable = {
   updatedBy: string
 }
 
-export const projectStatus = [
-  "todo",
-  "started",
-  "on_hold",
-  "cancelled",
-  "completed",
-  "archived",
-] as const
+export const projectStatus = ["all", "started", "on-hold", "completed"] as const
 
 export type ProjectStatus = (typeof projectStatus)[number]
 

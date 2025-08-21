@@ -175,8 +175,6 @@ export const TaskSchema = z.object({
   attachments: z.array(AttachmentSchema).default([]),
   assignedTo: z.array(UserSchema).default([]),
 
-  comments: z.array(CommentSchema).default([]),
-
   createdAt: z.number(),
   updatedAt: z.number(),
   createdBy: UserSchema,

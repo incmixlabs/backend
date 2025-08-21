@@ -5,16 +5,24 @@ export const PullProjectsSchema = z.object({
   lastPulledAt: z.string().optional(),
 })
 
-export const ProjectSchemaWithTimeStamps = ProjectSchema.omit({
-  startDate: true,
-  endDate: true,
-  createdAt: true,
-  updatedAt: true,
-}).extend({
+const RxdbProjectSchema = ProjectSchema.pick({
+  id: true,
+  name: true,
+  orgId: true,
+  company: true,
+  logo: true,
+  status: true,
+  budget: true,
+  description: true,
+})
+
+export const ProjectSchemaWithTimeStamps = RxdbProjectSchema.extend({
   startDate: z.number().nullish(),
   endDate: z.number().nullish(),
   createdAt: z.number(),
   updatedAt: z.number(),
+  createdBy: z.string(),
+  updatedBy: z.string(),
 })
 
 export type ProjectWithTimeStamps = z.infer<typeof ProjectSchemaWithTimeStamps>

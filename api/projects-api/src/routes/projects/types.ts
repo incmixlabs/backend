@@ -22,6 +22,8 @@ export const ProjectListSchema = ProjectSchema.omit({
   updatedAt: true,
   startDate: true,
   endDate: true,
+  checklist: true,
+  acceptanceCriteria: true,
 }).array()
 
 export const CreateProjectSchema = ProjectSchema.pick({
