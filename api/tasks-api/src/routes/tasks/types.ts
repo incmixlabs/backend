@@ -84,3 +84,14 @@ export const UpdateTaskChecklistSchema = z.object({
 export const RemoveTaskChecklistSchema = z.object({
   checklistIds: z.array(z.string()).openapi({ example: ["2hek2bkjh"] }),
 })
+
+export const JobSchema = z.object({
+  taskId: z.string().openapi({ example: "2hek2bkjh" }),
+  jobTitle: z.string().openapi({ example: "Task Title" }),
+  jobId: z.string().optional().openapi({ example: "2hek2bkjh" }),
+  status: z.enum(["pending", "in_progress", "completed", "failed"]).openapi({
+    example: "pending",
+  }),
+})
+
+export type JobSchema = z.infer<typeof JobSchema>

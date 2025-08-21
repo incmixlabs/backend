@@ -11,7 +11,9 @@ import {
   TaskListSchema,
   UpdateTaskChecklistSchema,
   UpdateTaskSchema,
+  JobSchema,
 } from "./types"
+import { z } from "@hono/zod-openapi"
 
 export const listTasks = createRoute({
   method: "get",
@@ -463,6 +465,50 @@ export const bulkAiGenTask = createRoute({
         },
       },
       description: "Error response when task update fails",
+    },
+    500: {
+      content: {
+        "application/json": {
+          schema: ResponseSchema,
+        },
+      },
+      description: "Internal Server Error",
+    },
+  },
+})
+
+export const getJobStatus = createRoute({
+  method: "get",
+  path: "/jobs/status",
+  summary: "Get Job Status",
+  tags: ["Tasks"],
+  description: "Get the current status of a job by job ID",
+
+  security: [{ cookieAuth: [] }],
+  responses: {
+    200: {
+      content: {
+        "application/json": {
+          schema: JobSchema.array(),
+        },
+      },
+      description: "Returns the current status of the specified job",
+    },
+    401: {
+      content: {
+        "application/json": {
+          schema: ResponseSchema,
+        },
+      },
+      description: "Error response when not authenticated",
+    },
+    404: {
+      content: {
+        "application/json": {
+          schema: ResponseSchema,
+        },
+      },
+      description: "Error response when job not found",
     },
     500: {
       content: {

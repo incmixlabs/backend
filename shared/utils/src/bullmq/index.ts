@@ -1,8 +1,7 @@
 import { type Job, Queue, type QueueOptions, Worker } from "bullmq"
 
 type EnvVars = {
-  REDIS_HOST: string
-  REDIS_PORT: number
+  REDIS_URL: string
   REDIS_PASSWORD: string
 }
 
@@ -19,6 +18,7 @@ function createNewQueue(
 export type UserStoryJobData = {
   taskId: string
   title: string
+  createdBy: string
 }
 
 const USER_STORY_QUEUE_NAME = "user-story"
@@ -26,8 +26,7 @@ const USER_STORY_QUEUE_NAME = "user-story"
 export function setupUserStoryQueue(envVars: EnvVars): Queue<UserStoryJobData> {
   return createNewQueue(USER_STORY_QUEUE_NAME, {
     connection: {
-      host: envVars.REDIS_HOST,
-      port: envVars.REDIS_PORT,
+      url: envVars.REDIS_URL,
       password: envVars.REDIS_PASSWORD,
     },
     defaultJobOptions: {
@@ -53,8 +52,7 @@ export function startUserStoryWorker<T>(
 ) {
   const worker = new Worker(USER_STORY_QUEUE_NAME, callback, {
     connection: {
-      host: envVars.REDIS_HOST,
-      port: envVars.REDIS_PORT,
+      url: envVars.REDIS_URL,
       password: envVars.REDIS_PASSWORD,
     },
     autorun: false,

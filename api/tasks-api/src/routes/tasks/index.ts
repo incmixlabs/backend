@@ -16,6 +16,7 @@ import {
   bulkAiGenTask,
   createTask,
   deleteTask,
+  getJobStatus,
   listTasks,
   removeTaskChecklist,
   taskById,
@@ -40,6 +41,7 @@ import {
 } from "@incmix-api/utils/queue"
 import { env } from "hono/adapter"
 import { nanoid } from "nanoid"
+import type { JobSchema } from "./types"
 const tasksRoutes = new OpenAPIHono<HonoApp>({
   defaultHook: zodError,
 })
@@ -575,21 +577,106 @@ tasksRoutes.openapi(bulkAiGenTask, async (c) => {
 
     const queue = setupUserStoryQueue(env(c))
 
-    for (const task of tasks) {
-      await addUserStoryToQueue(queue, {
-        taskId: task.id,
-        title: task.name,
-      })
-    }
+    try {
+      for (const task of tasks) {
+        await addUserStoryToQueue(queue, {
+          taskId: task.id,
+          title: task.name,
+          createdBy: user.id,
+        })
+      }
 
-    return c.json(
-      { message: `${tasks.length} Tasks queued for AI generation` },
-      200
-    )
+      return c.json(
+        { message: `${tasks.length} Tasks queued for AI generation` },
+        200
+      )
+    } finally {
+      await queue.close()
+    }
   } catch (error) {
     return await processError<typeof bulkAiGenTask>(c, error, [
       "{{ default }}",
       "bulk-ai-gen-task",
+    ])
+  }
+})
+
+tasksRoutes.openapi(getJobStatus, async (c) => {
+  try {
+    const user = c.get("user")
+    const t = await useTranslation(c)
+    if (!user) {
+      const msg = await t.text(ERROR_UNAUTHORIZED)
+      throw new UnauthorizedError(msg)
+    }
+
+    // Get the job status from the BullMQ queue
+    // Since this is for AI generation jobs, we'll check the queue status
+    const queue = setupUserStoryQueue(env(c))
+
+    try {
+      const jobs = (await queue.getJobs()).filter(
+        (job) => job.data.createdBy === user.id
+      )
+
+      const result: JobSchema[] = []
+      for (const job of jobs) {
+        // Get job status and progress
+        const jobState = await job.getState()
+
+        switch (jobState) {
+          case "waiting":
+          case "delayed":
+            result.push({
+              taskId: job.data.taskId,
+              jobTitle: job.data.title,
+              status: "pending",
+              jobId: job.id,
+            })
+            break
+          case "active":
+          case "waiting-children":
+            result.push({
+              taskId: job.data.taskId,
+              jobTitle: job.data.title,
+              status: "in_progress",
+              jobId: job.id,
+            })
+            break
+          case "completed":
+            result.push({
+              taskId: job.data.taskId,
+              jobTitle: job.data.title,
+              status: "completed",
+              jobId: job.id,
+            })
+            break
+          case "failed":
+            result.push({
+              taskId: job.data.taskId,
+              jobTitle: job.data.title,
+              status: "failed",
+              jobId: job.id,
+            })
+            break
+          default:
+            result.push({
+              taskId: job.data.taskId,
+              jobTitle: job.data.title,
+              status: "pending",
+              jobId: job.id,
+            })
+            break
+        }
+      }
+      return c.json(result, 200)
+    } finally {
+      await queue.close()
+    }
+  } catch (error) {
+    return await processError<typeof getJobStatus>(c, error, [
+      "{{ default }}",
+      "get-job-status",
     ])
   }
 })

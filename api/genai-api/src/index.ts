@@ -12,6 +12,7 @@ import { startUserStoryWorker } from "@incmix-api/utils/queue"
 import { nanoid } from "nanoid"
 import { envVars } from "./env-vars"
 import { generateUserStory } from "./lib/services"
+import type { DeepPartial } from "ai"
 const app = new OpenAPIHono<HonoApp>()
 
 const globalStore = new KVStore({}, 900)
@@ -21,33 +22,39 @@ setupKvStore(app, BASE_PATH, globalStore)
 middlewares(app)
 routes(app)
 
-serve(
-  {
-    fetch: app.fetch,
-    port: envVars.PORT,
-  },
-  (info) => {
-    console.log(`Server is running on port ${info.port}`)
-  }
-)
-
 const worker = startUserStoryWorker(envVars, async (job) => {
+  console.log(`Processing job ${job.id} for task ${job.data.taskId}`)
   const db = initDb(envVars.DATABASE_URL)
   const task = await db
     .selectFrom("tasks")
     .selectAll()
     .where("id", "=", job.data.taskId)
     .executeTakeFirst()
-
   if (!task) {
     throw new Error("Task not found")
   }
+  console.log(`Task found: ${task?.name}`)
 
   try {
+    console.log(`Generating user story for task ${task.name}`)
     const userStoryResult = generateUserStory(task.name, undefined, "free")
 
-    const result = await userStoryResult.object
-
+    const stream = await userStoryResult.partialObjectStream
+    const result: DeepPartial<{
+      userStory: {
+        description: string
+        acceptanceCriteria: string[]
+        checklist: string[]
+      }
+    }> = {}
+    for await (const chunk of stream) {
+      console.log(`User story result: ${JSON.stringify(chunk)}`)
+      result.userStory = {
+        ...result.userStory,
+        ...chunk.userStory,
+      }
+    }
+    console.log(`User story result: ${JSON.stringify(result)}`)
     if (!result || !result.userStory) {
       console.error(
         `Invalid response from AI service for task ${job.data.taskId}:`,
@@ -58,52 +65,53 @@ const worker = startUserStoryWorker(envVars, async (job) => {
       )
     }
 
-    const { userStory } = result
+    const { description, acceptanceCriteria, checklist } = result.userStory
 
     if (
-      !userStory ||
-      !userStory.description ||
-      !userStory.acceptanceCriteria ||
-      !userStory.checklist
+      description !== undefined &&
+      acceptanceCriteria !== undefined &&
+      checklist !== undefined
     ) {
-      console.error(
-        `Incomplete user story data for task ${job.data.taskId}:`,
-        userStory
-      )
-      return Promise.resolve(
-        `failed to generate user story for task ${job.data.taskId}: incomplete data`
-      )
+      console.log(`Updating task ${job.data.taskId} with user story`)
+      await db.transaction().execute(async (tx) => {
+        const updateResult = await tx
+          .updateTable("tasks")
+          .set({
+            description,
+            acceptanceCriteria: JSON.stringify(
+              acceptanceCriteria.map((item, i) => ({
+                id: nanoid(),
+                title: item,
+                checked: false,
+                order: i,
+              }))
+            ),
+            checklist: JSON.stringify(
+              checklist.map((item, i) => ({
+                id: nanoid(),
+                title: item,
+                checked: false,
+                order: i,
+              }))
+            ),
+          })
+          .where("id", "=", job.data.taskId)
+          .returningAll()
+          .executeTakeFirst()
+        console.log(`Update result: ${JSON.stringify(updateResult)}`)
+        return updateResult
+      })
+
+      console.log(`Task ${job.data.taskId} updated`)
+      return Promise.resolve(`updated task ${job.data.taskId}`)
     }
-
-    await db.transaction().execute(async (tx) => {
-      const updateResult = await tx
-        .updateTable("tasks")
-        .set({
-          description: userStory.description,
-          acceptanceCriteria: JSON.stringify(
-            userStory.acceptanceCriteria.map((item, i) => ({
-              id: nanoid(),
-              title: item,
-              checked: false,
-              order: i,
-            }))
-          ),
-          checklist: JSON.stringify(
-            userStory.checklist.map((item, i) => ({
-              id: nanoid(),
-              title: item,
-              checked: false,
-              order: i,
-            }))
-          ),
-        })
-        .where("id", "=", job.data.taskId)
-        .executeTakeFirst()
-
-      return updateResult
-    })
-
-    return Promise.resolve(`updated task ${job.data.taskId}`)
+    console.error(
+      `Incomplete user story data for task ${job.data.taskId}:`,
+      result.userStory
+    )
+    return Promise.resolve(
+      `failed to generate user story for task ${job.data.taskId}: incomplete data`
+    )
   } catch (error) {
     console.error(
       `Error generating user story for task ${job.data.taskId}:`,
@@ -116,5 +124,20 @@ const worker = startUserStoryWorker(envVars, async (job) => {
 })
 
 worker.run()
+
+serve(
+  {
+    fetch: app.fetch,
+    port: envVars.PORT,
+  },
+  (info) => {
+    console.log(`Server is running on port ${info.port}`)
+  }
+)
+
+process.on("SIGINT", async () => {
+  await worker.close()
+  process.exit(0)
+})
 
 export default app
