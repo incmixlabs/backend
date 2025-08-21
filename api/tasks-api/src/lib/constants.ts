@@ -76,7 +76,7 @@ export const ERROR_COMMENT_NOT_FOUND = {
   key: "comment_not_found",
 }
 
-export const ERROR_INVALID_TYPE = {
+export const ERROR_INVALID_JOB_TYPE = {
   namespace: "errors",
-  key: "invalid_type",
+  key: "invalid_job_type",
 }

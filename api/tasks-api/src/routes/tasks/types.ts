@@ -101,5 +101,8 @@ export type JobSchema = z.infer<typeof JobSchema>
 
 export const BulkAiGenTaskSchema = z.object({
   type: z.enum(["user-story", "codegen"]),
-  taskIds: z.array(z.string()),
+  taskIds: z
+    .array(z.string())
+    .min(1)
+    .openapi({ example: ["2hek2bkjh"] }),
 })

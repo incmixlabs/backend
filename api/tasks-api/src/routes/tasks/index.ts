@@ -3,7 +3,7 @@ import {
   ERROR_CHECKLIST_NOT_FOUND,
   ERROR_CHECKLIST_UPDATE_FAILED,
   ERROR_COLUMN_NOT_FOUND,
-  ERROR_INVALID_TYPE,
+  ERROR_INVALID_JOB_TYPE,
   ERROR_PROJECT_NOT_FOUND,
   ERROR_TASK_DELETE_FAIL,
   ERROR_TASK_INSERT_FAIL,
@@ -570,7 +570,7 @@ tasksRoutes.openapi(bulkAiGenTask, async (c) => {
     const tasks = await c
       .get("db")
       .selectFrom("tasks")
-      .select(["id", "name", "description"])
+      .select(["id", "name", "description", "refUrls"])
       .where(
         "id",
         "in",
@@ -607,10 +607,15 @@ tasksRoutes.openapi(bulkAiGenTask, async (c) => {
 
       try {
         for (const task of tasks) {
+          const figmaUrl = task.refUrls.find((url) => url.type === "figma")
+          if (!figmaUrl) {
+            continue
+          }
           await addToCodegenQueue(queue, {
             taskId: task.id,
             title: task.name,
             createdBy: user.id,
+            figmaUrl: figmaUrl.url,
           })
         }
 
@@ -623,7 +628,7 @@ tasksRoutes.openapi(bulkAiGenTask, async (c) => {
       }
     }
 
-    const msg = await t.text(ERROR_INVALID_TYPE)
+    const msg = await t.text(ERROR_INVALID_JOB_TYPE)
     throw new UnprocessableEntityError(msg)
   } catch (error) {
     return await processError<typeof bulkAiGenTask>(c, error, [

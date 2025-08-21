@@ -25,7 +25,7 @@ const EnvSchema = z.object({
   GOOGLE_AI_API_KEY: z.string().optional(),
   FIGMA_TOKEN: z.string().optional(),
   REDIS_URL: z.string().url("localhost"),
-  REDIS_PASSWORD: z.string().default("redis_password"),
+  REDIS_PASSWORD: z.string().optional(),
 })
 
 export type ENV = z.infer<typeof EnvSchema>

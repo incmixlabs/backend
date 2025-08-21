@@ -2,7 +2,7 @@ import { type Job, Queue, type QueueOptions, Worker } from "bullmq"
 
 type EnvVars = {
   REDIS_URL: string
-  REDIS_PASSWORD: string
+  REDIS_PASSWORD?: string
 }
 
 function createNewQueue(
@@ -63,7 +63,9 @@ export function startUserStoryWorker<T>(
   return worker
 }
 
-export function setupCodegenQueue(envVars: EnvVars): Queue<TaskJobData> {
+export function setupCodegenQueue(
+  envVars: EnvVars
+): Queue<TaskJobData & { figmaUrl: string }> {
   return createNewQueue(CODEGEN_QUEUE_NAME, {
     connection: {
       url: envVars.REDIS_URL,
@@ -73,15 +75,15 @@ export function setupCodegenQueue(envVars: EnvVars): Queue<TaskJobData> {
 }
 
 export function addToCodegenQueue(
-  queue: Queue<TaskJobData>,
-  data: TaskJobData
+  queue: Queue<TaskJobData & { figmaUrl: string }>,
+  data: TaskJobData & { figmaUrl: string }
 ) {
   return queue.add(CODEGEN_QUEUE_NAME, data)
 }
 
 export function startCodegenWorker<T>(
   envVars: EnvVars,
-  callback: (job: Job<TaskJobData>) => Promise<T>
+  callback: (job: Job<TaskJobData & { figmaUrl: string }>) => Promise<T>
 ) {
   const worker = new Worker(CODEGEN_QUEUE_NAME, callback, {
     connection: {

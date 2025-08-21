@@ -22,9 +22,10 @@ setupKvStore(app, BASE_PATH, globalStore)
 middlewares(app)
 routes(app)
 
+const globalDb = initDb(envVars.DATABASE_URL)
 const worker = startUserStoryWorker(envVars, async (job) => {
   console.log(`Processing job ${job.id} for task ${job.data.taskId}`)
-  const db = initDb(envVars.DATABASE_URL)
+  const db = globalDb ? globalDb : initDb(envVars.DATABASE_URL)
   const task = await db
     .selectFrom("tasks")
     .selectAll()

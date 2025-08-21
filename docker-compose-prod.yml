@@ -183,6 +183,8 @@ services:
     environment:
       # Database
       DATABASE_URL: ${DATABASE_URL}
+      REDIS_URL: ${REDIS_URL}
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
       # Service configuration
       NODE_ENV: ${NODE_ENV}
       COOKIE_NAME: ${COOKIE_NAME}
@@ -230,6 +232,8 @@ services:
       COOKIE_NAME: ${COOKIE_NAME}
       DOMAIN: ${DOMAIN}
       PORT: 8888
+      REDIS_URL: ${REDIS_URL}
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
       # Service URLs
       AUTH_API_URL: ${AUTH_API_URL:-http://auth-api:8787/api/auth}
       ORG_API_URL: ${ORG_API_URL:-http://org-api:9292/api/org}
