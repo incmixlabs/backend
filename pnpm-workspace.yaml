@@ -32,3 +32,4 @@ catalog:
   "@types/node": 22.10.1
   "@types/pg": 8.11.11
   "@types/react": 19.0.12
+  "@universal-middleware/hono": 0.4.16

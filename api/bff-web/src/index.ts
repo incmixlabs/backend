@@ -21,6 +21,11 @@ app.get("/api/timestamp-nano", (c) => {
   const currentTimeInNanoseconds = seconds * 1e9 + nanoseconds
   return c.json({ time: currentTimeInNanoseconds })
 })
+app.get("/api/env", (c) => {
+  return c.json(env(c))
+})
+app.get("/api/env-vars", (c) => {
+}
 app.get("/api/healthcheck", async (c) => {
   const apis = Object.entries(API)
   const healthChecks = apis
