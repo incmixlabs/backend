@@ -146,7 +146,6 @@ tasksRoutes.post("/pull", zValidator("query", PullTasksSchema), async (c) => {
               name: task.updatedByName,
               image: task.updatedByImage ?? undefined,
             },
-            comments: [],
           }) satisfies TaskWithTimeStamps
       )
     )
@@ -358,6 +357,20 @@ tasksRoutes.post("/push", zValidator("json", PushTasksSchema), async (c) => {
             if (!status) {
               conflicts.push({
                 error: "Status not found",
+                document: newDoc,
+              })
+              continue
+            }
+            const priority = await c
+              .get("db")
+              .selectFrom("labels")
+              .select("id")
+              .where("id", "=", newDoc.priorityId)
+              .executeTakeFirst()
+
+            if (!priority) {
+              conflicts.push({
+                error: "Priority not found",
                 document: newDoc,
               })
               continue
