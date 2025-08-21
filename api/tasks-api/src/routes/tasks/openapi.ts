@@ -3,17 +3,16 @@ import { TaskSchema } from "@incmix-api/utils/zod-schema"
 import { ResponseSchema } from "../types"
 import {
   AddTaskChecklistSchema,
+  BulkAiGenTaskSchema,
   ChecklistIdSchema,
   CreateTaskSchema,
   RemoveTaskChecklistSchema,
-  TaskIdListSchema,
   TaskIdSchema,
+  TaskJobsSchema,
   TaskListSchema,
   UpdateTaskChecklistSchema,
   UpdateTaskSchema,
-  JobSchema,
 } from "./types"
-import { z } from "@hono/zod-openapi"
 
 export const listTasks = createRoute({
   method: "get",
@@ -427,7 +426,7 @@ export const bulkAiGenTask = createRoute({
     body: {
       content: {
         "application/json": {
-          schema: TaskIdListSchema,
+          schema: BulkAiGenTaskSchema,
         },
       },
     },
@@ -489,7 +488,7 @@ export const getJobStatus = createRoute({
     200: {
       content: {
         "application/json": {
-          schema: JobSchema.array(),
+          schema: TaskJobsSchema,
         },
       },
       description: "Returns the current status of the specified job",

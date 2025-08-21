@@ -3,6 +3,7 @@ import {
   ERROR_CHECKLIST_NOT_FOUND,
   ERROR_CHECKLIST_UPDATE_FAILED,
   ERROR_COLUMN_NOT_FOUND,
+  ERROR_INVALID_TYPE,
   ERROR_PROJECT_NOT_FOUND,
   ERROR_TASK_DELETE_FAIL,
   ERROR_TASK_INSERT_FAIL,
@@ -36,12 +37,15 @@ import {
 } from "@incmix-api/utils/errors"
 import { useTranslation } from "@incmix-api/utils/middleware"
 import {
+  addToCodegenQueue,
   addUserStoryToQueue,
+  setupCodegenQueue,
   setupUserStoryQueue,
 } from "@incmix-api/utils/queue"
 import { env } from "hono/adapter"
 import { nanoid } from "nanoid"
 import type { JobSchema } from "./types"
+import { getJobState } from "@/lib/utils"
 const tasksRoutes = new OpenAPIHono<HonoApp>({
   defaultHook: zodError,
 })
@@ -562,8 +566,7 @@ tasksRoutes.openapi(bulkAiGenTask, async (c) => {
       throw new UnauthorizedError(msg)
     }
 
-    const { taskIds } = c.req.valid("json")
-
+    const { type, taskIds } = c.req.valid("json")
     const tasks = await c
       .get("db")
       .selectFrom("tasks")
@@ -571,28 +574,57 @@ tasksRoutes.openapi(bulkAiGenTask, async (c) => {
       .where(
         "id",
         "in",
-        taskIds.map((t) => t.id)
+        taskIds.map((id) => id)
       )
       .execute()
 
-    const queue = setupUserStoryQueue(env(c))
-
-    try {
-      for (const task of tasks) {
-        await addUserStoryToQueue(queue, {
-          taskId: task.id,
-          title: task.name,
-          createdBy: user.id,
-        })
-      }
-
-      return c.json(
-        { message: `${tasks.length} Tasks queued for AI generation` },
-        200
-      )
-    } finally {
-      await queue.close()
+    if (tasks.length === 0) {
+      const msg = await t.text(ERROR_TASK_NOT_FOUND)
+      throw new UnprocessableEntityError(msg)
     }
+
+    if (type === "user-story") {
+      const queue = setupUserStoryQueue(env(c))
+
+      try {
+        for (const task of tasks) {
+          await addUserStoryToQueue(queue, {
+            taskId: task.id,
+            title: task.name,
+            createdBy: user.id,
+          })
+        }
+
+        return c.json(
+          { message: `${tasks.length} Tasks queued for AI generation` },
+          200
+        )
+      } finally {
+        await queue.close()
+      }
+    } else if (type === "codegen") {
+      const queue = setupCodegenQueue(env(c))
+
+      try {
+        for (const task of tasks) {
+          await addToCodegenQueue(queue, {
+            taskId: task.id,
+            title: task.name,
+            createdBy: user.id,
+          })
+        }
+
+        return c.json(
+          { message: `${tasks.length} Tasks queued for AI generation` },
+          200
+        )
+      } finally {
+        await queue.close()
+      }
+    }
+
+    const msg = await t.text(ERROR_INVALID_TYPE)
+    throw new UnprocessableEntityError(msg)
   } catch (error) {
     return await processError<typeof bulkAiGenTask>(c, error, [
       "{{ default }}",
@@ -612,66 +644,47 @@ tasksRoutes.openapi(getJobStatus, async (c) => {
 
     // Get the job status from the BullMQ queue
     // Since this is for AI generation jobs, we'll check the queue status
-    const queue = setupUserStoryQueue(env(c))
-
+    const userStoryQueue = setupUserStoryQueue(env(c))
+    const codegenQueue = setupCodegenQueue(env(c))
     try {
-      const jobs = (await queue.getJobs()).filter(
+      const jobs = (await userStoryQueue.getJobs()).filter(
+        (job) => job.data.createdBy === user.id
+      )
+      const codegenJobs = (await codegenQueue.getJobs()).filter(
         (job) => job.data.createdBy === user.id
       )
 
-      const result: JobSchema[] = []
+      const result: {
+        userStory: JobSchema[]
+        codegen: JobSchema[]
+      } = {
+        userStory: [],
+        codegen: [],
+      }
       for (const job of jobs) {
-        // Get job status and progress
-        const jobState = await job.getState()
+        const jobState = await getJobState(job)
 
-        switch (jobState) {
-          case "waiting":
-          case "delayed":
-            result.push({
-              taskId: job.data.taskId,
-              jobTitle: job.data.title,
-              status: "pending",
-              jobId: job.id,
-            })
-            break
-          case "active":
-          case "waiting-children":
-            result.push({
-              taskId: job.data.taskId,
-              jobTitle: job.data.title,
-              status: "in_progress",
-              jobId: job.id,
-            })
-            break
-          case "completed":
-            result.push({
-              taskId: job.data.taskId,
-              jobTitle: job.data.title,
-              status: "completed",
-              jobId: job.id,
-            })
-            break
-          case "failed":
-            result.push({
-              taskId: job.data.taskId,
-              jobTitle: job.data.title,
-              status: "failed",
-              jobId: job.id,
-            })
-            break
-          default:
-            result.push({
-              taskId: job.data.taskId,
-              jobTitle: job.data.title,
-              status: "pending",
-              jobId: job.id,
-            })
-            break
-        }
+        result.userStory.push({
+          taskId: job.data.taskId,
+          jobTitle: job.data.title,
+          status: jobState,
+          jobId: job.id,
+        })
+      }
+      for (const job of codegenJobs) {
+        const jobState = await getJobState(job)
+
+        result.codegen.push({
+          taskId: job.data.taskId,
+          jobTitle: job.data.title,
+          status: jobState,
+          jobId: job.id,
+        })
       }
       return c.json(result, 200)
     } finally {
-      await queue.close()
+      await userStoryQueue.close()
+      await codegenQueue.close()
     }
   } catch (error) {
     return await processError<typeof getJobStatus>(c, error, [
