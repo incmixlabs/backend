@@ -9,10 +9,10 @@ import { initDb } from "@incmix-api/utils/db-schema"
 import { KVStore } from "@incmix-api/utils/kv-store"
 import { setupKvStore } from "@incmix-api/utils/middleware"
 import { startUserStoryWorker } from "@incmix-api/utils/queue"
+import type { DeepPartial } from "ai"
 import { nanoid } from "nanoid"
 import { envVars } from "./env-vars"
 import { generateUserStory } from "./lib/services"
-import type { DeepPartial } from "ai"
 const app = new OpenAPIHono<HonoApp>()
 
 const globalStore = new KVStore({}, 900)
@@ -94,6 +94,8 @@ const worker = startUserStoryWorker(envVars, async (job) => {
                 order: i,
               }))
             ),
+            updatedBy: job.data.createdBy,
+            updatedAt: new Date().toISOString(),
           })
           .where("id", "=", job.data.taskId)
           .returningAll()

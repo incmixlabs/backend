@@ -12,6 +12,7 @@ import {
 } from "@/lib/constants"
 import { getTaskById, getTasks } from "@/lib/db"
 
+import { getJobState } from "@/lib/utils"
 import {
   addTaskChecklist,
   bulkAiGenTask,
@@ -45,7 +46,6 @@ import {
 import { env } from "hono/adapter"
 import { nanoid } from "nanoid"
 import type { JobSchema } from "./types"
-import { getJobState } from "@/lib/utils"
 const tasksRoutes = new OpenAPIHono<HonoApp>({
   defaultHook: zodError,
 })
