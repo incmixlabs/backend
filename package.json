@@ -31,7 +31,9 @@
     "@commitlint/config-conventional": "19.6.0",
     "@faker-js/faker": "9.8.0",
     "@turbo/gen": "2.5.4",
+    "concurrently": "^9.2.0",
     "lefthook": "1.10.4",
+    "tsc-alias": "catalog:",
     "turbo": "2.5.4"
   },
   "trustedDependencies": [
