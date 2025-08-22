@@ -3,14 +3,16 @@ import {
   ERROR_CHECKLIST_NOT_FOUND,
   ERROR_CHECKLIST_UPDATE_FAILED,
   ERROR_COLUMN_NOT_FOUND,
+  ERROR_INVALID_JOB_TYPE,
   ERROR_PROJECT_NOT_FOUND,
   ERROR_TASK_DELETE_FAIL,
   ERROR_TASK_INSERT_FAIL,
   ERROR_TASK_NOT_FOUND,
   ERROR_TASK_UPDATE_FAIL,
 } from "@/lib/constants"
-import { getTaskById, getTasks } from "@/lib/db"
+import { getTaskById, getTasks, isProjectMember } from "@/lib/db"
 
+import { getJobState } from "@/lib/utils"
 import {
   addTaskChecklist,
   bulkAiGenTask,
@@ -35,11 +37,14 @@ import {
 } from "@incmix-api/utils/errors"
 import { useTranslation } from "@incmix-api/utils/middleware"
 import {
+  addToCodegenQueue,
   addUserStoryToQueue,
+  setupCodegenQueue,
   setupUserStoryQueue,
 } from "@incmix-api/utils/queue"
 import { env } from "hono/adapter"
 import { nanoid } from "nanoid"
+import type { JobSchema } from "./types"
 const tasksRoutes = new OpenAPIHono<HonoApp>({
   defaultHook: zodError,
 })
@@ -560,38 +565,102 @@ tasksRoutes.openapi(bulkAiGenTask, async (c) => {
       throw new UnauthorizedError(msg)
     }
 
-    const { taskIds } = c.req.valid("json")
+    const { type, taskIds } = c.req.valid("json")
 
+    // Fetch tasks with project information for authorization
     const tasks = await c
       .get("db")
       .selectFrom("tasks")
-      .select(["id", "name", "description"])
+      .select(["id", "name", "description", "refUrls", "projectId"])
       .where(
         "id",
         "in",
-        taskIds.map((t) => t.id)
+        taskIds.map((id) => id)
       )
       .execute()
 
-    const queue = setupUserStoryQueue(env(c))
-
-    for (const task of tasks) {
-      await addUserStoryToQueue(queue, {
-        taskId: task.id,
-        title: task.name,
-      })
+    if (tasks.length === 0) {
+      const msg = await t.text(ERROR_TASK_NOT_FOUND)
+      throw new UnprocessableEntityError(msg)
     }
 
-    return c.json(
-      { message: `${tasks.length} Tasks queued for AI generation` },
-      200
-    )
+    // Authorization check: ensure user has access to all tasks' projects
+    for (const task of tasks) {
+      const hasAccess = await isProjectMember(c, task.projectId, user.id)
+      if (!hasAccess) {
+        const msg = await t.text(ERROR_UNAUTHORIZED)
+        throw new UnauthorizedError(msg)
+      }
+    }
+
+    if (type === "user-story") {
+      const queue = setupUserStoryQueue(env(c))
+
+      try {
+        for (const task of tasks) {
+          await addUserStoryToQueue(queue, {
+            taskId: task.id,
+            title: task.name,
+            createdBy: user.id,
+          })
+        }
+
+        return c.json(
+          { message: `${tasks.length} Tasks queued for AI generation` },
+          200
+        )
+      } finally {
+        await queue.close()
+      }
+    } else if (type === "codegen") {
+      const queue = setupCodegenQueue(env(c))
+
+      try {
+        for (const task of tasks) {
+          const figmaUrl = task.refUrls.find((url) => url.type === "figma")
+          if (!figmaUrl) {
+            continue
+          }
+          await addToCodegenQueue(queue, {
+            taskId: task.id,
+            title: task.name,
+            createdBy: user.id,
+            figmaUrl: figmaUrl.url,
+          })
+        }
+
+        return c.json(
+          { message: `${tasks.length} Tasks queued for AI generation` },
+          200
+        )
+      } finally {
+        await queue.close()
+      }
+    }
+
+    const msg = await t.text(ERROR_INVALID_JOB_TYPE)
+    throw new UnprocessableEntityError(msg)
   } catch (error) {
     return await processError<typeof bulkAiGenTask>(c, error, [
       "{{ default }}",
       "bulk-ai-gen-task",
     ])
   }
+})
+
+// File: api/tasks-api/src/routes/tasks/openapi.ts
+
+export const getJobStatus = createRoute({
+  method: "get",
+  path: "/jobs/status",
+  summary: "Get AI job statuses for the current user",
+  description:
+    "Returns the current statuses of the authenticated user’s AI jobs across both user-story and codegen queues.",
+  tags: ["Tasks"],
+  security: [{ cookieAuth: [] }],
+  responses: {
+    // …rest of the responses…
+  },
 })
 
 export default tasksRoutes

@@ -1,9 +1,8 @@
 import { type Job, Queue, type QueueOptions, Worker } from "bullmq"
 
 type EnvVars = {
-  REDIS_HOST: string
-  REDIS_PORT: number
-  REDIS_PASSWORD: string
+  REDIS_URL: string
+  REDIS_PASSWORD?: string
 }
 
 function createNewQueue(
@@ -16,18 +15,19 @@ function createNewQueue(
   })
 }
 
-export type UserStoryJobData = {
+export type TaskJobData = {
   taskId: string
   title: string
+  createdBy: string
 }
 
 const USER_STORY_QUEUE_NAME = "user-story"
+const CODEGEN_QUEUE_NAME = "codegen"
 
-export function setupUserStoryQueue(envVars: EnvVars): Queue<UserStoryJobData> {
+export function setupUserStoryQueue(envVars: EnvVars): Queue<TaskJobData> {
   return createNewQueue(USER_STORY_QUEUE_NAME, {
     connection: {
-      host: envVars.REDIS_HOST,
-      port: envVars.REDIS_PORT,
+      url: envVars.REDIS_URL,
       password: envVars.REDIS_PASSWORD,
     },
     defaultJobOptions: {
@@ -41,20 +41,53 @@ export function setupUserStoryQueue(envVars: EnvVars): Queue<UserStoryJobData> {
 }
 
 export function addUserStoryToQueue(
-  queue: Queue<UserStoryJobData>,
-  data: UserStoryJobData
+  queue: Queue<TaskJobData>,
+  data: TaskJobData
 ) {
   return queue.add(USER_STORY_QUEUE_NAME, data)
 }
 
 export function startUserStoryWorker<T>(
   envVars: EnvVars,
-  callback: (job: Job<UserStoryJobData>) => Promise<T>
+  callback: (job: Job<TaskJobData>) => Promise<T>
 ) {
   const worker = new Worker(USER_STORY_QUEUE_NAME, callback, {
     connection: {
-      host: envVars.REDIS_HOST,
-      port: envVars.REDIS_PORT,
+      url: envVars.REDIS_URL,
+      password: envVars.REDIS_PASSWORD,
+    },
+    autorun: false,
+    concurrency: 2,
+  })
+
+  return worker
+}
+
+export function setupCodegenQueue(
+  envVars: EnvVars
+): Queue<TaskJobData & { figmaUrl: string }> {
+  return createNewQueue(CODEGEN_QUEUE_NAME, {
+    connection: {
+      url: envVars.REDIS_URL,
+      password: envVars.REDIS_PASSWORD,
+    },
+  })
+}
+
+export function addToCodegenQueue(
+  queue: Queue<TaskJobData & { figmaUrl: string }>,
+  data: TaskJobData & { figmaUrl: string }
+) {
+  return queue.add(CODEGEN_QUEUE_NAME, data)
+}
+
+export function startCodegenWorker<T>(
+  envVars: EnvVars,
+  callback: (job: Job<TaskJobData & { figmaUrl: string }>) => Promise<T>
+) {
+  const worker = new Worker(CODEGEN_QUEUE_NAME, callback, {
+    connection: {
+      url: envVars.REDIS_URL,
       password: envVars.REDIS_PASSWORD,
     },
     autorun: false,

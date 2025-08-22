@@ -3,11 +3,12 @@ import { TaskSchema } from "@incmix-api/utils/zod-schema"
 import { ResponseSchema } from "../types"
 import {
   AddTaskChecklistSchema,
+  BulkAiGenTaskSchema,
   ChecklistIdSchema,
   CreateTaskSchema,
   RemoveTaskChecklistSchema,
-  TaskIdListSchema,
   TaskIdSchema,
+  TaskJobsSchema,
   TaskListSchema,
   UpdateTaskChecklistSchema,
   UpdateTaskSchema,
@@ -425,7 +426,7 @@ export const bulkAiGenTask = createRoute({
     body: {
       content: {
         "application/json": {
-          schema: TaskIdListSchema,
+          schema: BulkAiGenTaskSchema,
         },
       },
     },
@@ -463,6 +464,52 @@ export const bulkAiGenTask = createRoute({
         },
       },
       description: "Error response when task update fails",
+    },
+    500: {
+      content: {
+        "application/json": {
+          schema: ResponseSchema,
+        },
+      },
+      description: "Internal Server Error",
+    },
+  },
+})
+
+export const getJobStatus = createRoute({
+  method: "get",
+  path: "/jobs/status",
+  summary: "Get User's Aggregated AI Job Statuses",
+  tags: ["Tasks"],
+  description:
+    "Get an aggregated list of the authenticated user's AI jobs from both user-story and codegen queues. Returns arrays of job objects with status, jobId, jobTitle, and taskId, filtered by the requesting user.",
+
+  security: [{ cookieAuth: [] }],
+  responses: {
+    200: {
+      content: {
+        "application/json": {
+          schema: TaskJobsSchema,
+        },
+      },
+      description:
+        "Returns an aggregated list of the authenticated user's AI job statuses from both queues",
+    },
+    401: {
+      content: {
+        "application/json": {
+          schema: ResponseSchema,
+        },
+      },
+      description: "Error response when not authenticated",
+    },
+    404: {
+      content: {
+        "application/json": {
+          schema: ResponseSchema,
+        },
+      },
+      description: "Error response when job not found",
     },
     500: {
       content: {

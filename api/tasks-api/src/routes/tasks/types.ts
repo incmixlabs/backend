@@ -16,10 +16,6 @@ export const ChecklistIdSchema = z.object({
 
 export const TaskListSchema = z.array(TaskSchema)
 
-export const TaskIdListSchema = z.object({
-  taskIds: z.array(TaskSchema.pick({ id: true })),
-})
-
 export const CreateTaskSchema = TaskSchema.pick({
   name: true,
   description: true,
@@ -83,4 +79,30 @@ export const UpdateTaskChecklistSchema = z.object({
 
 export const RemoveTaskChecklistSchema = z.object({
   checklistIds: z.array(z.string()).openapi({ example: ["2hek2bkjh"] }),
+})
+
+export const JobSchema = z.object({
+  taskId: z.string().openapi({ example: "2hek2bkjh" }),
+  jobTitle: z.string().openapi({ example: "Task Title" }),
+  jobId: z.string().optional().openapi({ example: "2hek2bkjh" }),
+  status: z
+    .enum(["pending", "in_progress", "completed", "failed", "unknown"])
+    .openapi({
+      example: "pending",
+    }),
+})
+
+export const TaskJobsSchema = z.object({
+  userStory: z.array(JobSchema),
+  codegen: z.array(JobSchema),
+})
+
+export type JobSchema = z.infer<typeof JobSchema>
+
+export const BulkAiGenTaskSchema = z.object({
+  type: z.enum(["user-story", "codegen"]),
+  taskIds: z
+    .array(z.string())
+    .min(1)
+    .openapi({ example: ["2hek2bkjh"] }),
 })

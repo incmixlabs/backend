@@ -4,11 +4,13 @@ import { OpenAPIHono } from "@hono/zod-openapi"
 import { middlewares } from "@/middleware"
 import { routes } from "@/routes"
 import type { HonoApp } from "@/types"
+import type { DeepPartial } from "@ai-sdk/ui-utils"
 import { serve } from "@hono/node-server"
 import { initDb } from "@incmix-api/utils/db-schema"
 import { KVStore } from "@incmix-api/utils/kv-store"
 import { setupKvStore } from "@incmix-api/utils/middleware"
 import { startUserStoryWorker } from "@incmix-api/utils/queue"
+import type { ChecklistItem } from "@incmix/utils/types"
 import { nanoid } from "nanoid"
 import { envVars } from "./env-vars"
 import { generateUserStory } from "./lib/services"
@@ -21,33 +23,52 @@ setupKvStore(app, BASE_PATH, globalStore)
 middlewares(app)
 routes(app)
 
-serve(
-  {
-    fetch: app.fetch,
-    port: envVars.PORT,
-  },
-  (info) => {
-    console.log(`Server is running on port ${info.port}`)
-  }
-)
+const mapToChecklistItems = (items: (string | undefined)[]): ChecklistItem[] =>
+  items
+    .filter(
+      (item): item is string => item !== undefined && item.trim().length > 0
+    )
+    .map((item, i) => ({
+      id: nanoid(),
+      text: item,
+      checked: false,
+      order: i,
+    }))
 
+const globalDb = initDb(envVars.DATABASE_URL)
 const worker = startUserStoryWorker(envVars, async (job) => {
-  const db = initDb(envVars.DATABASE_URL)
+  console.log(`Processing job ${job.id} for task ${job.data.taskId}`)
+  const db = globalDb
   const task = await db
     .selectFrom("tasks")
     .selectAll()
     .where("id", "=", job.data.taskId)
     .executeTakeFirst()
-
   if (!task) {
     throw new Error("Task not found")
   }
+  console.log(`Task found: ${task?.name}`)
 
   try {
+    console.log(`Generating user story for task ${task.name}`)
     const userStoryResult = generateUserStory(task.name, undefined, "free")
 
-    const result = await userStoryResult.object
-
+    const stream = userStoryResult.partialObjectStream
+    const result: DeepPartial<{
+      userStory: {
+        description: string
+        acceptanceCriteria: string[]
+        checklist: string[]
+      }
+    }> = {}
+    for await (const chunk of stream) {
+      console.log(`User story result: ${JSON.stringify(chunk)}`)
+      result.userStory = {
+        ...result.userStory,
+        ...chunk.userStory,
+      }
+    }
+    console.log(`User story result: ${JSON.stringify(result)}`)
     if (!result || !result.userStory) {
       console.error(
         `Invalid response from AI service for task ${job.data.taskId}:`,
@@ -58,63 +79,84 @@ const worker = startUserStoryWorker(envVars, async (job) => {
       )
     }
 
-    const { userStory } = result
+    const { description, acceptanceCriteria, checklist } = result.userStory
 
     if (
-      !userStory ||
-      !userStory.description ||
-      !userStory.acceptanceCriteria ||
-      !userStory.checklist
+      description?.trim()?.length &&
+      acceptanceCriteria?.length &&
+      checklist?.length
     ) {
-      console.error(
-        `Incomplete user story data for task ${job.data.taskId}:`,
-        userStory
-      )
-      return Promise.resolve(
-        `failed to generate user story for task ${job.data.taskId}: incomplete data`
-      )
+      console.log(`Updating task ${job.data.taskId} with user story`)
+
+      await db.transaction().execute(async (tx) => {
+        const updateResult = await tx
+          .updateTable("tasks")
+          .set({
+            description,
+            acceptanceCriteria: JSON.stringify(
+              mapToChecklistItems(acceptanceCriteria)
+            ),
+            checklist: JSON.stringify(mapToChecklistItems(checklist)),
+            updatedBy: job.data.createdBy,
+            updatedAt: new Date().toISOString(),
+          })
+          .where("id", "=", job.data.taskId)
+          .returningAll()
+          .executeTakeFirst()
+
+        if (!updateResult) {
+          throw new Error(
+            `Task update failed: not found for task ${job.data.taskId}`
+          )
+        }
+
+        console.log(`Update result: ${JSON.stringify(updateResult)}`)
+        return updateResult
+      })
+
+      console.log(`Task ${job.data.taskId} updated`)
+      return `updated task ${job.data.taskId}`
     }
-
-    await db.transaction().execute(async (tx) => {
-      const updateResult = await tx
-        .updateTable("tasks")
-        .set({
-          description: userStory.description,
-          acceptanceCriteria: JSON.stringify(
-            userStory.acceptanceCriteria.map((item, i) => ({
-              id: nanoid(),
-              title: item,
-              checked: false,
-              order: i,
-            }))
-          ),
-          checklist: JSON.stringify(
-            userStory.checklist.map((item, i) => ({
-              id: nanoid(),
-              title: item,
-              checked: false,
-              order: i,
-            }))
-          ),
-        })
-        .where("id", "=", job.data.taskId)
-        .executeTakeFirst()
-
-      return updateResult
-    })
-
-    return Promise.resolve(`updated task ${job.data.taskId}`)
+    console.error(
+      `Incomplete user story data for task ${job.data.taskId}:`,
+      result.userStory
+    )
+    return `failed to generate user story for task ${job.data.taskId}: incomplete data`
   } catch (error) {
     console.error(
       `Error generating user story for task ${job.data.taskId}:`,
       error
     )
-    return Promise.resolve(
-      `failed to generate user story for task ${job.data.taskId}: ${(error as Error).message}`
-    )
+    return `failed to generate user story for task ${job.data.taskId}: ${(error as Error).message}`
   }
 })
 
 worker.run()
 
+serve(
+  {
+    fetch: app.fetch,
+    port: envVars.PORT,
+  },
+  (info) => {
+    console.log(`Server is running on port ${info.port}`)
+  }
+)
+
+const shutdown = async (signal: NodeJS.Signals) => {
+  console.log(`Received ${signal}. Shutting down gracefully...`)
+  try {
+    await worker.close()
+  } catch (e) {
+    console.error("Error closing worker:", e)
+  }
+  try {
+    await globalDb.destroy()
+  } catch (e) {
+    console.error("Error closing DB:", e)
+  }
+}
+
+process.on("SIGINT", shutdown)
+process.on("SIGTERM", shutdown)
 export default app

@@ -21,9 +21,8 @@ const EnvSchema = z.object({
   AUTH_API_URL: z.string().url(),
   ORG_API_URL: z.string().url(),
   DOMAIN: z.string().default("localhost"),
-  REDIS_HOST: z.string().default("localhost"),
-  REDIS_PORT: z.coerce.number().default(6379),
-  REDIS_PASSWORD: z.string().default("redis_password"),
+  REDIS_URL: z.string().url(),
+  REDIS_PASSWORD: z.string().optional(),
 })
 
 export type ENV = z.infer<typeof EnvSchema>
