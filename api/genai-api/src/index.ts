@@ -25,7 +25,7 @@ routes(app)
 const globalDb = initDb(envVars.DATABASE_URL)
 const worker = startUserStoryWorker(envVars, async (job) => {
   console.log(`Processing job ${job.id} for task ${job.data.taskId}`)
-  const db = globalDb ? globalDb : initDb(envVars.DATABASE_URL)
+  const db = globalDb
   const task = await db
     .selectFrom("tasks")
     .selectAll()
@@ -40,7 +40,7 @@ const worker = startUserStoryWorker(envVars, async (job) => {
     console.log(`Generating user story for task ${task.name}`)
     const userStoryResult = generateUserStory(task.name, undefined, "free")
 
-    const stream = await userStoryResult.partialObjectStream
+    const stream = userStoryResult.partialObjectStream
     const result: DeepPartial<{
       userStory: {
         description: string
@@ -69,9 +69,9 @@ const worker = startUserStoryWorker(envVars, async (job) => {
     const { description, acceptanceCriteria, checklist } = result.userStory
 
     if (
-      description !== undefined &&
-      acceptanceCriteria !== undefined &&
-      checklist !== undefined
+      description?.trim()?.length &&
+      acceptanceCriteria?.length &&
+      checklist?.length
     ) {
       console.log(`Updating task ${job.data.taskId} with user story`)
       await db.transaction().execute(async (tx) => {
@@ -106,23 +106,19 @@ const worker = startUserStoryWorker(envVars, async (job) => {
       })
 
       console.log(`Task ${job.data.taskId} updated`)
-      return Promise.resolve(`updated task ${job.data.taskId}`)
+      return `updated task ${job.data.taskId}`
     }
     console.error(
       `Incomplete user story data for task ${job.data.taskId}:`,
       result.userStory
     )
-    return Promise.resolve(
-      `failed to generate user story for task ${job.data.taskId}: incomplete data`
-    )
+    return `failed to generate user story for task ${job.data.taskId}: incomplete data`
   } catch (error) {
     console.error(
       `Error generating user story for task ${job.data.taskId}:`,
       error
     )
-    return Promise.resolve(
-      `failed to generate user story for task ${job.data.taskId}: ${(error as Error).message}`
-    )
+    return `failed to generate user story for task ${job.data.taskId}: ${(error as Error).message}`
   }
 })
 
@@ -138,9 +134,20 @@ serve(
   }
 )
 
-process.on("SIGINT", async () => {
-  await worker.close()
-  process.exit(0)
-})
+const shutdown = async (signal: NodeJS.Signals) => {
+  console.log(`Received ${signal}. Shutting down gracefully...`)
+  try {
+    await worker.close()
+  } catch (e) {
+    console.error("Error closing worker:", e)
+  }
+  try {
+    await globalDb.destroy()
+  } catch (e) {
+    console.error("Error closing DB:", e)
+  }
+}
 
+process.on("SIGINT", shutdown)
+process.on("SIGTERM", shutdown)
 export default app
