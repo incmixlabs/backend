@@ -18,7 +18,6 @@ import {
   bulkAiGenTask,
   createTask,
   deleteTask,
-  getJobStatus,
   listTasks,
   removeTaskChecklist,
   taskById,
@@ -655,12 +654,13 @@ export const getJobStatus = createRoute({
   method: "get",
   path: "/jobs/status",
   summary: "Get AI job statuses for the current user",
-  description: "Returns the current statuses of the authenticated user’s AI jobs across both user-story and codegen queues.",
+  description:
+    "Returns the current statuses of the authenticated user’s AI jobs across both user-story and codegen queues.",
   tags: ["Tasks"],
   security: [{ cookieAuth: [] }],
   responses: {
     // …rest of the responses…
-  }
+  },
 })
 
 export default tasksRoutes
