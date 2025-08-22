@@ -10,6 +10,7 @@ import { initDb } from "@incmix-api/utils/db-schema"
 import { KVStore } from "@incmix-api/utils/kv-store"
 import { setupKvStore } from "@incmix-api/utils/middleware"
 import { startUserStoryWorker } from "@incmix-api/utils/queue"
+import type { ChecklistItem } from "@incmix/utils/types"
 import { nanoid } from "nanoid"
 import { envVars } from "./env-vars"
 import { generateUserStory } from "./lib/services"
@@ -21,6 +22,18 @@ setupKvStore(app, BASE_PATH, globalStore)
 
 middlewares(app)
 routes(app)
+
+const mapToChecklistItems = (items: (string | undefined)[]): ChecklistItem[] =>
+  items
+    .filter(
+      (item): item is string => item !== undefined && item.trim().length > 0
+    )
+    .map((item, i) => ({
+      id: nanoid(),
+      text: item,
+      checked: false,
+      order: i,
+    }))
 
 const globalDb = initDb(envVars.DATABASE_URL)
 const worker = startUserStoryWorker(envVars, async (job) => {
@@ -74,33 +87,29 @@ const worker = startUserStoryWorker(envVars, async (job) => {
       checklist?.length
     ) {
       console.log(`Updating task ${job.data.taskId} with user story`)
+
       await db.transaction().execute(async (tx) => {
         const updateResult = await tx
           .updateTable("tasks")
           .set({
             description,
             acceptanceCriteria: JSON.stringify(
-              acceptanceCriteria.map((item, i) => ({
-                id: nanoid(),
-                title: item,
-                checked: false,
-                order: i,
-              }))
+              mapToChecklistItems(acceptanceCriteria)
             ),
-            checklist: JSON.stringify(
-              checklist.map((item, i) => ({
-                id: nanoid(),
-                title: item,
-                checked: false,
-                order: i,
-              }))
-            ),
+            checklist: JSON.stringify(mapToChecklistItems(checklist)),
             updatedBy: job.data.createdBy,
             updatedAt: new Date().toISOString(),
           })
           .where("id", "=", job.data.taskId)
           .returningAll()
           .executeTakeFirst()
+
+        if (!updateResult) {
+          throw new Error(
+            `Task update failed: not found for task ${job.data.taskId}`
+          )
+        }
+
         console.log(`Update result: ${JSON.stringify(updateResult)}`)
         return updateResult
       })
