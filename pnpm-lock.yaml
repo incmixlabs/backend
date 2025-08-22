@@ -36,6 +36,9 @@ catalogs:
     '@types/react':
       specifier: 19.0.12
       version: 19.0.12
+    bullmq:
+      specifier: 5.56.10
+      version: 5.56.10
     hono:
       specifier: 4.6.16
       version: 4.6.16
@@ -938,6 +941,9 @@ importers:
       '@incmix/utils':
         specifier: 'catalog:'
         version: 0.36.3(@types/luxon@3.6.0)(luxon@3.4.2)
+      bullmq:
+        specifier: 'catalog:'
+        version: 5.56.10
       hono:
         specifier: 'catalog:'
         version: 4.6.16
@@ -1091,7 +1097,7 @@ importers:
         specifier: 2.0.6
         version: 2.0.6
       bullmq:
-        specifier: ^5.56.10
+        specifier: 'catalog:'
         version: 5.56.10
       hono:
         specifier: 'catalog:'

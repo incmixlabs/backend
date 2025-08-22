@@ -18,6 +18,7 @@ import {
   bulkAiGenTask,
   createTask,
   deleteTask,
+  getJobStatus,
   listTasks,
   removeTaskChecklist,
   taskById,
@@ -648,19 +649,65 @@ tasksRoutes.openapi(bulkAiGenTask, async (c) => {
   }
 })
 
-// File: api/tasks-api/src/routes/tasks/openapi.ts
+tasksRoutes.openapi(getJobStatus, async (c) => {
+  try {
+    const user = c.get("user")
+    const t = await useTranslation(c)
+    if (!user) {
+      const msg = await t.text(ERROR_UNAUTHORIZED)
+      throw new UnauthorizedError(msg)
+    }
 
-export const getJobStatus = createRoute({
-  method: "get",
-  path: "/jobs/status",
-  summary: "Get AI job statuses for the current user",
-  description:
-    "Returns the current statuses of the authenticated user’s AI jobs across both user-story and codegen queues.",
-  tags: ["Tasks"],
-  security: [{ cookieAuth: [] }],
-  responses: {
-    // …rest of the responses…
-  },
+    // Get the job status from the BullMQ queue
+    // Since this is for AI generation jobs, we'll check the queue status
+    const userStoryQueue = setupUserStoryQueue(env(c))
+    const codegenQueue = setupCodegenQueue(env(c))
+    try {
+      const jobs = (await userStoryQueue.getJobs()).filter(
+        (job) => job.data.createdBy === user.id
+      )
+      const codegenJobs = (await codegenQueue.getJobs()).filter(
+        (job) => job.data.createdBy === user.id
+      )
+
+      const result: {
+        userStory: JobSchema[]
+        codegen: JobSchema[]
+      } = {
+        userStory: [],
+        codegen: [],
+      }
+      for (const job of jobs) {
+        const jobState = await getJobState(job)
+
+        result.userStory.push({
+          taskId: job.data.taskId,
+          jobTitle: job.data.title,
+          status: jobState,
+          jobId: job.id,
+        })
+      }
+      for (const job of codegenJobs) {
+        const jobState = await getJobState(job)
+
+        result.codegen.push({
+          taskId: job.data.taskId,
+          jobTitle: job.data.title,
+          status: jobState,
+          jobId: job.id,
+        })
+      }
+      return c.json(result, 200)
+    } finally {
+      await userStoryQueue.close()
+      await codegenQueue.close()
+    }
+  } catch (error) {
+    return await processError<typeof getJobStatus>(c, error, [
+      "{{ default }}",
+      "get-job-status",
+    ])
+  }
 })
 
 export default tasksRoutes
