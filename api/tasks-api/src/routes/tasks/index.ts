@@ -10,7 +10,7 @@ import {
   ERROR_TASK_NOT_FOUND,
   ERROR_TASK_UPDATE_FAIL,
 } from "@/lib/constants"
-import { getTaskById, getTasks } from "@/lib/db"
+import { getTaskById, getTasks, isProjectMember } from "@/lib/db"
 
 import { getJobState } from "@/lib/utils"
 import {
@@ -567,10 +567,12 @@ tasksRoutes.openapi(bulkAiGenTask, async (c) => {
     }
 
     const { type, taskIds } = c.req.valid("json")
+
+    // Fetch tasks with project information for authorization
     const tasks = await c
       .get("db")
       .selectFrom("tasks")
-      .select(["id", "name", "description", "refUrls"])
+      .select(["id", "name", "description", "refUrls", "projectId"])
       .where(
         "id",
         "in",
@@ -581,6 +583,15 @@ tasksRoutes.openapi(bulkAiGenTask, async (c) => {
     if (tasks.length === 0) {
       const msg = await t.text(ERROR_TASK_NOT_FOUND)
       throw new UnprocessableEntityError(msg)
+    }
+
+    // Authorization check: ensure user has access to all tasks' projects
+    for (const task of tasks) {
+      const hasAccess = await isProjectMember(c, task.projectId, user.id)
+      if (!hasAccess) {
+        const msg = await t.text(ERROR_UNAUTHORIZED)
+        throw new UnauthorizedError(msg)
+      }
     }
 
     if (type === "user-story") {

@@ -479,9 +479,10 @@ export const bulkAiGenTask = createRoute({
 export const getJobStatus = createRoute({
   method: "get",
   path: "/jobs/status",
-  summary: "Get Job Status",
+  summary: "Get User's Aggregated AI Job Statuses",
   tags: ["Tasks"],
-  description: "Get the current status of a job by job ID",
+  description:
+    "Get an aggregated list of the authenticated user's AI jobs from both user-story and codegen queues. Returns arrays of job objects with status, jobId, jobTitle, and taskId, filtered by the requesting user.",
 
   security: [{ cookieAuth: [] }],
   responses: {
@@ -491,7 +492,8 @@ export const getJobStatus = createRoute({
           schema: TaskJobsSchema,
         },
       },
-      description: "Returns the current status of the specified job",
+      description:
+        "Returns an aggregated list of the authenticated user's AI job statuses from both queues",
     },
     401: {
       content: {
