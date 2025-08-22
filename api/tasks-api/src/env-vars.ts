@@ -23,6 +23,7 @@ const EnvSchema = z.object({
   DOMAIN: z.string().default("localhost"),
   REDIS_URL: z.string().url(),
   REDIS_PASSWORD: z.string().optional(),
+  MOCK_ENV: z.coerce.boolean().optional().default(false),
 })
 
 export type ENV = z.infer<typeof EnvSchema>
