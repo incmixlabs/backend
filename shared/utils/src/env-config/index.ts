@@ -20,7 +20,22 @@ const SERVICE_PORTS = {
   users: 9696,
   rxdb: 9797,
 } as const
-
+const dirs: { [K in keyof typeof SERVICE_PORTS]: string } = {
+  auth: "auth",
+  email: "email",
+  genai: "genai-api",
+  files: "files-api",
+  location: "location-api",
+  bff: "bff-web",
+  comments: "comments-api",
+  intl: "intl-api",
+  org: "org-api",
+  permissions: "permissions-api",
+  projects: "projects-api",
+  tasks: "tasks-api",
+  users: "users-api",
+  rxdb: "rxdb-api",
+}
 // Helper function to build API URLs with DOMAIN
 function buildApiUrl(port: number, path: string, domain?: string): string {
   const baseDomain = domain || "http://localhost"
@@ -165,7 +180,8 @@ export function createEnvConfig<T extends ServiceName>(
 
   // Service-specific env files get higher priority
   if (serviceName) {
-    const serviceDir = path.join(backendRoot, "api", `${serviceName}-api`)
+    const dir = dirs[serviceName]
+    const serviceDir = path.join(backendRoot, "api", `${dir}`)
     priorities[path.join(serviceDir, ".env")] = 30
     priorities[path.join(serviceDir, `.env.${nodeEnv}`)] = 40
   }
