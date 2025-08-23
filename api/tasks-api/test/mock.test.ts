@@ -274,15 +274,13 @@ describe("Mock Mode Tests", () => {
 
     it("should have consistent date formats", () => {
       mockTasks.forEach((task) => {
-        expect(() => new Date(task.createdAt)).not.toThrow()
-        expect(() => new Date(task.updatedAt)).not.toThrow()
-        if (task.startDate) {
-          expect(() => new Date(task.startDate)).not.toThrow()
-        }
-        if (task.endDate) {
-          expect(() => new Date(task.endDate)).not.toThrow()
-        }
+        const valid = (d: any) => !Number.isNaN(new Date(d).getTime())
+        expect(valid(task.createdAt)).toBe(true)
+        expect(valid(task.updatedAt)).toBe(true)
+        if (task.startDate) expect(valid(task.startDate)).toBe(true)
+        if (task.endDate) expect(valid(task.endDate)).toBe(true)
       })
+    })
     })
 
     it("should have valid checklist structure", () => {
