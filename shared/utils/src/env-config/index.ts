@@ -204,11 +204,10 @@ export function createEnvConfig<T extends ServiceName>(
   const result = schema.safeParse(process.env)
 
   if (!result.success) {
-    console.error("Environment validation failed:")
-    console.error(result.error.flatten())
-    process.exit(1)
+    const flat = result.error.flatten()
+    console.error("Environment validation failed:", flat)
+    throw new Error(`Environment validation failed`)
   }
-
   // Post-process to apply DOMAIN to API URLs if they use default values
   const env = result.data
   const domain = String(env.DOMAIN || "http://localhost")
