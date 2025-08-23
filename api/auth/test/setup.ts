@@ -86,6 +86,20 @@ vi.mock("@/auth/cookies", () => ({
   }),
 }))
 
+// Mock i18n helper functions
+vi.mock("@incmix-api/utils", async (importOriginal) => {
+  const actual = await importOriginal()
+  return {
+    ...(actual as any),
+    getDefaultLocale: vi.fn(async () => ({
+      code: "en",
+      is_default: true
+    })),
+    getAllMessages: vi.fn(async () => []),
+    getDefaultMessages: vi.fn(async () => [])
+  }
+})
+
 // Mock getCookie from hono/cookie
 vi.mock("hono/cookie", () => ({
   getCookie: vi.fn((c: any, name: string) => {
@@ -101,10 +115,12 @@ vi.mock("hono/cookie", () => ({
 vi.mock("hono/adapter", () => ({
   env: vi.fn(() => ({
     COOKIE_NAME: "auth-session",
-    DOMAIN: "localhost",
+    DOMAIN: "http://localhost",
     NODE_ENV: "test",
-    USERS_API_URL: "http://localhost/api/users",
-    DATABASE_URL: "test://localhost",
+    INTL_API_URL: "http://localhost:9090/api/intl",
+    EMAIL_API_URL: "http://localhost:8989/api/email",
+    USERS_API_URL: "http://localhost:9696/api/users",
+    DATABASE_URL: "postgresql://postgres:password@localhost:54321/incmix",
   })),
 }))
 
@@ -114,31 +130,31 @@ beforeAll(() => {
 
   // Set up default mock implementation
   mockFetch.mockImplementation(async (url: string, options?: RequestInit) => {
-    // Mock INTL service responses
-    if (url.includes("/locales/default")) {
+    // Mock INTL service responses (localhost:9090/api/intl)
+    if (url.includes("localhost:9090/api/intl/locales/default")) {
       return {
         ok: true,
         json: async () => ({ code: "en", is_default: true }),
       }
     }
 
-    if (url.includes("/api/intl")) {
+    if (url.includes("localhost:9090/api/intl/messages/")) {
       return {
         ok: true,
         json: async () => [],
       }
     }
 
-    // Mock email service responses
-    if (url.includes("/api/email")) {
+    // Mock email service responses (localhost:8989/api/email)
+    if (url.includes("localhost:8989/api/email")) {
       return {
         ok: true,
         json: async () => ({ message: "Mail sent" }),
       }
     }
 
-    // Mock users service responses
-    if (url.includes("/api/users")) {
+    // Mock users service responses (localhost:9696/api/users)
+    if (url.includes("localhost:9696/api/users")) {
       if (options?.method?.toLowerCase() === "delete") {
         return {
           ok: true,

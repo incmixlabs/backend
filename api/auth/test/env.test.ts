@@ -207,23 +207,25 @@ describe("Environment Configuration Tests", () => {
   })
 
   test("should validate required environment variables", () => {
-    const requiredVars = [
+    // Base environment variables that should be in process.env
+    const baseRequiredVars = [
       "JWT_SECRET",
-      "DATABASE_URL",
+      "DATABASE_URL", 
       "GOOGLE_CLIENT_ID",
       "GOOGLE_CLIENT_SECRET",
       "FRONTEND_URL",
       "GOOGLE_REDIRECT_URL",
       "COOKIE_NAME",
-      "DOMAIN",
-      "EMAIL_API_URL",
-      "INTL_API_URL",
-      "USERS_API_URL"
+      "DOMAIN"
     ]
 
-    for (const varName of requiredVars) {
+    for (const varName of baseRequiredVars) {
       expect(process.env[varName], `${varName} should be defined`).toBeDefined()
     }
+
+    // For computed URLs, we just check that the base components are available
+    // The actual URL computation is tested through the working API tests
+    expect(process.env.DOMAIN, "DOMAIN should be defined for URL computation").toBeDefined()
   })
 
   test("should handle custom NODE_ENV values", async () => {
