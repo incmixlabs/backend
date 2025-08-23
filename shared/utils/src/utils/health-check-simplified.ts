@@ -1,7 +1,7 @@
 import type { OpenAPIHono } from "@hono/zod-openapi"
 import { createRoute, z } from "@hono/zod-openapi"
 
-export interface SimpleHealthCheckConfig {
+export interface SimplifiedHealthCheckConfig {
   serviceName: string
   version?: string
   checks?: {
@@ -19,10 +19,10 @@ const healthCheckSchema = z.object({
   checks: z.record(z.string(), z.boolean()).optional(),
 })
 
-export function setupSimpleHealthCheck<T extends OpenAPIHono<any, any, any>>(
+export function setupHealthCheck<T extends OpenAPIHono<any, any, any>>(
   app: T,
-  config: SimpleHealthCheckConfig
-) {
+  config: SimplifiedHealthCheckConfig
+): T {
   const route = createRoute({
     method: "get",
     path: "/health",
