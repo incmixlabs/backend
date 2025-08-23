@@ -14,7 +14,10 @@
       ".vscode",
       "vitest-pool-workers",
       "package.json",
-      "pnpm-workspace.yaml"
+      "pnpm-workspace.yaml",
+      "**/*/*test*",
+      "**/*/*spec*",
+      "**/*/*mock*"
     ]
   },
   "formatter": {

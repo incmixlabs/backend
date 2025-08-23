@@ -1,5 +1,5 @@
 {
-  "extends": "@incmix-api/config/hono.json",
+  "extends": "../../shared/config/hono.json",
   "compilerOptions": {
     "baseUrl": "./",
     "outDir": "./dist",

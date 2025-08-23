@@ -17,8 +17,10 @@ middlewares(app)
 
 routes(app)
 
-serve({ fetch: app.fetch, port: envVars.PORT }, (info) => {
-  console.log(`Server is running on port ${info.port}`)
-})
+if (process.env.NODE_ENV !== "test") {
+  serve({ fetch: app.fetch, port: envVars.PORT }, (info) => {
+    console.log(`Server is running on port ${info.port}`)
+  })
+}
 
 export default app
