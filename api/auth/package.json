@@ -22,7 +22,11 @@
     "kysely-ctl": "0.12.1",
     "mailslurp-client": "15.20.2",
     "oslo": "1.2.1",
-    "path": "catalog:",
+// In api/auth/package.json, remove the npm “path” workspace/dependency entry:
+-    "path": "catalog:",
+
+// In your source files, replace any occurrence of:
+import path from "node:path"
     "pg": "catalog:",
     "zod": "catalog:"
   },
