@@ -16,7 +16,7 @@ const healthCheckSchema = z.object({
   service: z.string(),
   version: z.string().optional(),
   timestamp: z.number(),
-  checks: z.record(z.boolean()).optional(),
+  checks: z.record(z.string(), z.boolean()).optional(),
 })
 
 export function setupSimpleHealthCheck<T extends OpenAPIHono<any, any, any>>(
@@ -50,16 +50,22 @@ export function setupSimpleHealthCheck<T extends OpenAPIHono<any, any, any>>(
   })
 
   app.openapi(route, async (c) => {
-    const response = {
-      status: "healthy" as "healthy" | "unhealthy",
+    const response: {
+      status: "healthy" | "unhealthy"
+      service: string
+      version?: string
+      timestamp: number
+      checks?: Record<string, boolean>
+    } = {
+      status: "healthy",
       service: config.serviceName,
       version: config.version,
       timestamp: Date.now(),
-      checks: {} as Record<string, boolean>,
     }
 
     // Run all health checks if provided
     if (config.checks) {
+      const checks: Record<string, boolean> = {}
       const checkPromises = Object.entries(config.checks).map(
         async ([name, check]) => {
           if (check) {
@@ -78,11 +84,13 @@ export function setupSimpleHealthCheck<T extends OpenAPIHono<any, any, any>>(
       const checkResults = await Promise.all(checkPromises)
 
       for (const [name, result] of checkResults) {
-        response.checks[name as string] = result as boolean
+        checks[name as string] = result as boolean
         if (!result) {
           response.status = "unhealthy"
         }
       }
+
+      response.checks = checks
     }
 
     const statusCode = response.status === "healthy" ? 200 : 503

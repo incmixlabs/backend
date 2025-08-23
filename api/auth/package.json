@@ -17,12 +17,12 @@
     "@incmix/utils": "catalog:",
     "@playwright/test": "1.49.0",
     "arctic": "2.3.0",
-    "dotenv-expand": "catalog:",
     "hono": "catalog:",
     "kysely": "catalog:",
     "kysely-ctl": "0.12.1",
     "mailslurp-client": "15.20.2",
     "oslo": "1.2.1",
+    "path": "catalog:",
     "pg": "catalog:",
     "zod": "catalog:"
   },

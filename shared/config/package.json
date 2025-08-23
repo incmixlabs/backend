@@ -3,6 +3,16 @@
   "version": "0.0.0",
   "license": "MIT",
   "files": ["hono.json"],
+  "export": {
+    "env-vars": "env-vars.ts"
+  },
+  "main": "env-vars.ts",
+  "dependencies": {
+    "dotenv": "catalog:",
+    "dotenv-expand": "catalog:",
+    "path": "catalog:",
+    "zod": "catalog:"
+  },
   "devDependencies": {
     "typescript": "catalog:",
     "vitest": "catalog:"

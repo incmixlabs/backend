@@ -5,9 +5,9 @@ import { serve } from "@hono/node-server"
 import { API } from "@incmix/utils/env"
 import { Hono } from "hono"
 import { env } from "hono/adapter"
-import { type Env, envVars } from "./env-vars"
+import { envVars } from "./env-vars"
 import type { HonoApp } from "./types"
-
+type Env = typeof envVars
 const app = new Hono<HonoApp>()
 
 setupCors(app as any, "/api")

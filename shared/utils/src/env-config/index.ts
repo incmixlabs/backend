@@ -1,16 +1,30 @@
 import { z } from "zod"
+import { config } from "dotenv-mono"
+import { expand } from "dotenv-expand"
+import path from "node:path"
+import { fileURLToPath } from "node:url"
 
 // Base environment schema shared across all services
 const baseEnvSchema = z.object({
   NODE_ENV: z
     .enum(["development", "production", "test"])
     .default("development"),
-  PORT: z.coerce.number().default(3000),
-  DATABASE_URL: z.string().url(),
-  REDIS_URL: z.string().url().optional(),
-  SENTRY_DSN: z.string().url().optional(),
-  FRONTEND_URL: z.string().url().optional(),
-  API_URL: z.string().url().optional(),
+  DATABASE_URL: z.url(),
+  REDIS_URL: z.url().optional(),
+  SENTRY_DSN: z.url().optional(),
+  FRONTEND_URL: z.url().optional(),
+  API_URL: z.url().optional(),
+  GOOGLE_CLIENT_ID: z.string(),
+  GOOGLE_CLIENT_SECRET: z.string(),
+  EMAIL_API_URL: z.url(),
+  AUTH_API_URL: z.url(),
+  INTL_API_URL: z.url(),
+  USERS_API_URL: z.url(),
+  COOKIE_NAME: z.string().default("incmix_session"),
+  GOOGLE_REDIRECT_URL: z.url(),
+  DOMAIN: z.string().default("localhost"),
+  MOCK_ENV: z.string().default("false"),
+  LOCATION_API_URL: z.url(),
 })
 
 // Service-specific schema extensions
@@ -22,16 +36,19 @@ const serviceSchemas = {
     GOOGLE_CLIENT_SECRET: z.string().optional(),
     GITHUB_CLIENT_ID: z.string().optional(),
     GITHUB_CLIENT_SECRET: z.string().optional(),
+    PORT: z.coerce.number().default(8787),
   }),
   email: z.object({
-    EMAIL_FROM: z.string().email(),
+    EMAIL_FROM: z.email(),
     RESEND_API_KEY: z.string(),
     RESEND_WEBHOOK_SECRET: z.string().optional(),
+    PORT: z.coerce.number().default(8989),
   }),
   genai: z.object({
     OPENAI_API_KEY: z.string(),
     OPENAI_MODEL: z.string().default("gpt-4"),
     FIGMA_ACCESS_TOKEN: z.string().optional(),
+    PORT: z.coerce.number().default(8383),
   }),
   files: z.object({
     STORAGE_TYPE: z.enum(["local", "s3"]).default("local"),
@@ -40,11 +57,41 @@ const serviceSchemas = {
     AWS_ACCESS_KEY_ID: z.string().optional(),
     AWS_SECRET_ACCESS_KEY: z.string().optional(),
     S3_BUCKET: z.string().optional(),
+    PORT: z.coerce.number().default(8282),
   }),
   location: z.object({
     OPENWEATHER_API_KEY: z.string().optional(),
     NEWS_API_KEY: z.string().optional(),
+    PORT: z.coerce.number().default(9494),
   }),
+  bff: z.object({
+    PORT: z.coerce.number().default(8080),
+  }),
+  comments: z.object({
+    PORT: z.coerce.number().default(8081),
+  }),
+  intl: z.object({
+    PORT: z.coerce.number().default(9090),
+  }),
+  org: z.object({
+    PORT: z.coerce.number().default(9292),
+  }),
+  permissions: z.object({
+    PORT: z.coerce.number().default(9393),
+  }),
+  projects: z.object({
+    PORT: z.coerce.number().default(9494),
+  }),
+  tasks: z.object({
+    PORT: z.coerce.number().default(9595),
+  }),
+  users: z.object({
+    PORT: z.coerce.number().default(9696),
+  }),
+  rxdb: z.object({
+    PORT: z.coerce.number().default(9797),
+  }),
+
 }
 
 export type ServiceName = keyof typeof serviceSchemas
@@ -53,6 +100,42 @@ export function createEnvConfig<T extends ServiceName>(
   serviceName?: T,
   customSchema?: z.ZodObject<any>
 ) {
+  // Load environment variables using dotenv-mono
+  // This will merge root .env with service-specific .env and NODE_ENV specific files
+  const nodeEnv = process.env.NODE_ENV || "development"
+  
+  // Get the directory of the current module
+  const __dirname = path.dirname(fileURLToPath(import.meta.url))
+  
+  // Find the backend root directory (4 levels up from utils/src/env-config)
+  const backendRoot = path.resolve(__dirname, "../../../..")
+  
+  // Load env files in priority order (later files override earlier ones)
+  const envFiles = [
+    path.join(backendRoot, ".env"), // Root .env file
+    path.join(backendRoot, `.env.${nodeEnv}`), // Root NODE_ENV specific
+  ]
+  
+  // If we have a service name, also load service-specific env files
+  if (serviceName) {
+    const serviceDir = path.join(backendRoot, "api", `${serviceName}-api`)
+    envFiles.push(
+      path.join(serviceDir, ".env"), // Service .env file
+      path.join(serviceDir, `.env.${nodeEnv}`) // Service NODE_ENV specific
+    )
+  }
+  
+  // Load all env files using dotenv-mono
+  const dotenvResult = config({
+    files: envFiles,
+    override: true, // Later files override earlier ones
+  })
+  
+  // Expand variables (e.g., ${VAR} references)
+  if (dotenvResult) {
+    expand(dotenvResult)
+  }
+  
   let schema: z.ZodObject<any> = baseEnvSchema as z.ZodObject<any>
 
   // Add service-specific schema if provided
