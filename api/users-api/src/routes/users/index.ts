@@ -467,19 +467,17 @@ userRoutes.openapi(getAllUsers, async (c) => {
       (total?.count ?? 1) / (pagination?.pageSize ?? 10)
     )
 
-    const hasNextPage = totalPages > (pagination?.page ?? 1)
-    const hasPrevPage = (pagination?.page ?? 1) > 1
+    const _hasNextPage = totalPages > (pagination?.page ?? 1)
+    const _hasPrevPage = (pagination?.page ?? 1) > 1
 
     return c.json(
       {
-        results: combinedData,
-        metadata: {
+        data: combinedData,
+        pagination: {
           page: pagination?.page ?? 1,
-          pageSize: pagination?.pageSize ?? 10,
+          limit: pagination?.pageSize ?? 10,
           total: total?.count ?? 0,
-          pageCount: totalPages,
-          hasNextPage,
-          hasPrevPage,
+          totalPages,
         },
       },
       200
@@ -629,8 +627,8 @@ userRoutes.openapi(addProfilePicture, async (c) => {
       })
       throw new ServerError(msg)
     }
-    const { url: presignedUrl } =
-      (await presignedUrlResponse.json()) as z.infer<typeof presignedUrlSchema>
+    const presignedData = (await presignedUrlResponse.json()) as { url: string }
+    const presignedUrl = presignedData.url
 
     const uploadResponse = await fetch(presignedUrl, {
       method: "PUT",
@@ -725,8 +723,8 @@ userRoutes.openapi(deleteProfilePicture, async (c) => {
       throw new ServerError(msg)
     }
 
-    const { url: presignedUrl } =
-      (await presignedUrlResponse.json()) as z.infer<typeof presignedUrlSchema>
+    const presignedData = (await presignedUrlResponse.json()) as { url: string }
+    const presignedUrl = presignedData.url
 
     const deleteResponse = await fetch(presignedUrl, {
       method: "DELETE",
@@ -814,9 +812,8 @@ userRoutes.openapi(getProfilePicture, async (c) => {
       throw new ServerError(msg)
     }
 
-    const { url } = (await presignedUrlResponse.json()) as z.infer<
-      typeof presignedUrlSchema
-    >
+    const urlData = (await presignedUrlResponse.json()) as { url: string }
+    const url = urlData.url
 
     return c.json({ url }, 200)
   } catch (error) {

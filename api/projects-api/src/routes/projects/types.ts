@@ -37,11 +37,7 @@ export const CreateProjectSchema = ProjectSchema.pick({
 }).extend({
   id: z.string().optional().openapi({ example: "2hek2bkjh" }),
   logo: z.custom<File>(),
-  budget: z
-    .number({ coerce: true })
-    .int()
-    .nullish()
-    .openapi({ example: 10000 }),
+  budget: z.coerce.number().int().nullish().openapi({ example: 10000 }),
   acceptanceCriteria: z.string().optional(),
   checklist: z.string().optional(),
   members: z.string().optional().openapi({ example: "user1,user2,user3" }),

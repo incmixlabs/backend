@@ -45,6 +45,14 @@
     "./env-config": {
       "default": "./dist/src/env-config/index.js",
       "types": "./dist/src/env-config/index.d.ts"
+    },
+    "./service-bootstrap": {
+      "default": "./dist/src/service-bootstrap/index.js",
+      "types": "./dist/src/service-bootstrap/index.d.ts"
+    },
+    "./db-operations": {
+      "default": "./dist/src/db-operations/index.js",
+      "types": "./dist/src/db-operations/index.d.ts"
     }
   },
   "dependencies": {

@@ -12,7 +12,7 @@ export const getAllUsers = createRoute({
     200: {
       content: {
         "application/json": {
-          schema: PaginatedUserSchema,
+          schema: PaginatedUserSchema as any,
         },
       },
       description: "List of Users",

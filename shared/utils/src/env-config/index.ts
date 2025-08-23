@@ -1,7 +1,7 @@
-import { z } from "zod"
-import { load } from "dotenv-mono"
 import path from "node:path"
 import { fileURLToPath } from "node:url"
+import { load } from "dotenv-mono"
+import { z } from "zod"
 
 // Default ports for each service
 const SERVICE_PORTS = {
@@ -25,7 +25,9 @@ const SERVICE_PORTS = {
 function buildApiUrl(port: number, path: string, domain?: string): string {
   const baseDomain = domain || "http://localhost"
   // If domain doesn't include protocol, add http://
-  const fullDomain = baseDomain.includes("://") ? baseDomain : `http://${baseDomain}`
+  const fullDomain = baseDomain.includes("://")
+    ? baseDomain
+    : `http://${baseDomain}`
   return `${fullDomain}:${port}${path}`
 }
 
@@ -35,7 +37,7 @@ const baseEnvSchema = z.object({
     .enum(["development", "production", "test"])
     .default("development"),
   DATABASE_URL: z.url(),
-  REDIS_URL: z.url().optional(),
+  REDIS_URL: z.url(),
   SENTRY_DSN: z.url().optional(),
   FRONTEND_URL: z.url().optional(),
   API_URL: z.url().optional(),
@@ -82,6 +84,9 @@ const serviceSchemas = {
     OPENAI_API_KEY: z.string(),
     OPENAI_MODEL: z.string().default("gpt-4"),
     FIGMA_ACCESS_TOKEN: z.string().optional(),
+    FIGMA_TOKEN: z.string().optional(),
+    ANTHROPIC_API_KEY: z.string().optional(),
+    GOOGLE_AI_API_KEY: z.string().optional(),
     PORT: z.coerce.number().default(SERVICE_PORTS.genai),
   }),
   files: z.object({
@@ -91,11 +96,19 @@ const serviceSchemas = {
     AWS_ACCESS_KEY_ID: z.string().optional(),
     AWS_SECRET_ACCESS_KEY: z.string().optional(),
     S3_BUCKET: z.string().optional(),
+    BUCKET_NAME: z.string().optional(),
+    AWS_ENDPOINT_URL_S3: z.string().optional(),
     PORT: z.coerce.number().default(SERVICE_PORTS.files),
   }),
   location: z.object({
     OPENWEATHER_API_KEY: z.string().optional(),
     NEWS_API_KEY: z.string().optional(),
+    LOCATION_API_KEY: z.string(),
+    LOCATION_URL: z.string(),
+    WEATHER_API_KEY: z.string(),
+    WEATHER_URL: z.string(),
+    SERP_API_KEY: z.string(),
+    SERP_NEWS_URL: z.string(),
     PORT: z.coerce.number().default(SERVICE_PORTS.location),
   }),
   bff: z.object({
@@ -125,7 +138,6 @@ const serviceSchemas = {
   rxdb: z.object({
     PORT: z.coerce.number().default(SERVICE_PORTS.rxdb),
   }),
-
 }
 
 export type ServiceName = keyof typeof serviceSchemas
@@ -137,27 +149,27 @@ export function createEnvConfig<T extends ServiceName>(
   // Load environment variables using dotenv-mono
   // This will merge root .env with service-specific .env and NODE_ENV specific files
   const nodeEnv = process.env.NODE_ENV || "development"
-  
+
   // Get the directory of the current module
   const __dirname = path.dirname(fileURLToPath(import.meta.url))
-  
+
   // Find the backend root directory (4 levels up from utils/src/env-config)
   const backendRoot = path.resolve(__dirname, "../../../..")
-  
+
   // Set up priorities for different env files (higher number = higher priority)
   const priorities: Record<string, number> = {}
-  
+
   // Base priority: root .env files
   priorities[path.join(backendRoot, ".env")] = 10
   priorities[path.join(backendRoot, `.env.${nodeEnv}`)] = 20
-  
+
   // Service-specific env files get higher priority
   if (serviceName) {
     const serviceDir = path.join(backendRoot, "api", `${serviceName}-api`)
     priorities[path.join(serviceDir, ".env")] = 30
     priorities[path.join(serviceDir, `.env.${nodeEnv}`)] = 40
   }
-  
+
   // Load all env files using dotenv-mono with priorities
   // dotenv-mono automatically handles variable expansion
   try {
@@ -167,11 +179,13 @@ export function createEnvConfig<T extends ServiceName>(
       expand: true, // Enable variable expansion
       override: true, // Allow overriding existing env vars
     })
-  } catch (error) {
+  } catch (_error) {
     // Continue even if some env files don't exist
-    console.debug("Some env files may not exist, continuing with available files")
+    console.debug(
+      "Some env files may not exist, continuing with available files"
+    )
   }
-  
+
   let schema: z.ZodObject<any> = baseEnvSchema as z.ZodObject<any>
 
   // Add service-specific schema if provided
@@ -198,7 +212,7 @@ export function createEnvConfig<T extends ServiceName>(
   // Post-process to apply DOMAIN to API URLs if they use default values
   const env = result.data
   const domain = String(env.DOMAIN || "http://localhost")
-  
+
   // Apply domain to API URLs if they're using the default localhost
   if (!process.env.EMAIL_API_URL) {
     env.EMAIL_API_URL = buildApiUrl(SERVICE_PORTS.email, "/api/email", domain)
@@ -213,7 +227,11 @@ export function createEnvConfig<T extends ServiceName>(
     env.USERS_API_URL = buildApiUrl(SERVICE_PORTS.users, "/api/users", domain)
   }
   if (!process.env.LOCATION_API_URL) {
-    env.LOCATION_API_URL = buildApiUrl(SERVICE_PORTS.location, "/api/location", domain)
+    env.LOCATION_API_URL = buildApiUrl(
+      SERVICE_PORTS.location,
+      "/api/location",
+      domain
+    )
   }
   if (!process.env.GENAI_API_URL) {
     env.GENAI_API_URL = buildApiUrl(SERVICE_PORTS.genai, "/api/genai", domain)
@@ -225,16 +243,28 @@ export function createEnvConfig<T extends ServiceName>(
     env.BFF_API_URL = buildApiUrl(SERVICE_PORTS.bff, "/api/bff", domain)
   }
   if (!process.env.COMMENTS_API_URL) {
-    env.COMMENTS_API_URL = buildApiUrl(SERVICE_PORTS.comments, "/api/comments", domain)
+    env.COMMENTS_API_URL = buildApiUrl(
+      SERVICE_PORTS.comments,
+      "/api/comments",
+      domain
+    )
   }
   if (!process.env.ORG_API_URL) {
     env.ORG_API_URL = buildApiUrl(SERVICE_PORTS.org, "/api/org", domain)
   }
   if (!process.env.PERMISSIONS_API_URL) {
-    env.PERMISSIONS_API_URL = buildApiUrl(SERVICE_PORTS.permissions, "/api/permissions", domain)
+    env.PERMISSIONS_API_URL = buildApiUrl(
+      SERVICE_PORTS.permissions,
+      "/api/permissions",
+      domain
+    )
   }
   if (!process.env.PROJECTS_API_URL) {
-    env.PROJECTS_API_URL = buildApiUrl(SERVICE_PORTS.projects, "/api/projects", domain)
+    env.PROJECTS_API_URL = buildApiUrl(
+      SERVICE_PORTS.projects,
+      "/api/projects",
+      domain
+    )
   }
   if (!process.env.TASKS_API_URL) {
     env.TASKS_API_URL = buildApiUrl(SERVICE_PORTS.tasks, "/api/tasks", domain)
@@ -252,6 +282,16 @@ export type EmailEnv = BaseEnv & z.infer<typeof serviceSchemas.email>
 export type GenAIEnv = BaseEnv & z.infer<typeof serviceSchemas.genai>
 export type FilesEnv = BaseEnv & z.infer<typeof serviceSchemas.files>
 export type LocationEnv = BaseEnv & z.infer<typeof serviceSchemas.location>
+export type BffEnv = BaseEnv & z.infer<typeof serviceSchemas.bff>
+export type CommentsEnv = BaseEnv & z.infer<typeof serviceSchemas.comments>
+export type IntlEnv = BaseEnv & z.infer<typeof serviceSchemas.intl>
+export type OrgEnv = BaseEnv & z.infer<typeof serviceSchemas.org>
+export type PermissionsEnv = BaseEnv &
+  z.infer<typeof serviceSchemas.permissions>
+export type ProjectsEnv = BaseEnv & z.infer<typeof serviceSchemas.projects>
+export type TasksEnv = BaseEnv & z.infer<typeof serviceSchemas.tasks>
+export type UsersEnv = BaseEnv & z.infer<typeof serviceSchemas.users>
+export type RxdbEnv = BaseEnv & z.infer<typeof serviceSchemas.rxdb>
 
 // Export SERVICE_PORTS for external use
 export { SERVICE_PORTS }

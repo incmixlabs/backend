@@ -23,7 +23,7 @@ export const getCurrentUser = createRoute({
     200: {
       content: {
         "application/json": {
-          schema: AuthUserSessionSchema,
+          schema: AuthUserSessionSchema as any,
         },
       },
       description: "Returns current user data",
@@ -39,7 +39,7 @@ export const getCurrentUser = createRoute({
     401: {
       content: {
         "application/json": {
-          schema: MessageResponseSchema,
+          schema: MessageResponseSchema as any,
         },
       },
       description: "Error response when not authenticated",
@@ -56,7 +56,9 @@ export const validateSession = createRoute({
     200: {
       content: {
         "application/json": {
-          schema: AuthUserSchema,
+          schema: AuthUserSchema._def
+            ? AuthUserSchema
+            : (AuthUserSchema as any),
         },
       },
       description: "Returns current user data",
@@ -93,7 +95,7 @@ export const getUser = createRoute({
     200: {
       content: {
         "application/json": {
-          schema: AuthUserSchema,
+          schema: AuthUserSchema as any,
         },
       },
       description: "Returns user data",
@@ -169,7 +171,7 @@ export const signup = createRoute({
     201: {
       content: {
         "application/json": {
-          schema: AuthUserSchema.and(UserProfileSchema),
+          schema: AuthUserSchema.merge(UserProfileSchema) as any,
         },
       },
       description: "Creates a new User account",
@@ -211,7 +213,7 @@ export const login = createRoute({
     200: {
       content: {
         "application/json": {
-          schema: AuthUserSessionSchema,
+          schema: AuthUserSessionSchema as any,
         },
       },
       description: "Authenticates a User with Email/Password",

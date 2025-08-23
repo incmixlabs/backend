@@ -189,7 +189,7 @@ export const sendForgetPasswordEmail = async (
   verificationCode: string,
   requestedBy: string
 ) => {
-  const emailUrl = env(c).EMAIL_API_URL
+  const emailUrl = env(c).EMAIL_API_URL as string
   const [username] = recipient.split("@")
   const resetPasswordLink = `${env(c).FRONTEND_URL}/reset-password?code=${verificationCode}&email=${recipient}`
 

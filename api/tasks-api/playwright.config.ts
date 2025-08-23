@@ -3,7 +3,7 @@ export default defineConfig({
   testDir: "./e2e",
   use: {
     // All requests we send go to this API endpoint.
-    baseURL: "https://tasks-api-dev-prev.uincmix.workers.dev",
+    baseURL: process.env.E2E_BASE_URL || "http://localhost:8888",
     extraHTTPHeaders: {
       "content-type": "application/json",
       origin: "http://localhost:1420",

@@ -1,5 +1,11 @@
-import { getEnvSchema } from "@incmix-api/config"
-// Load environment variables from .env file
-const { env } = getEnvSchema(Number(process.env.PORT) || 8383)
+import { type GenAIEnv, createEnvConfig } from "@incmix-api/utils/env-config"
 
-export const envVars = env
+// Use the new env-config system with dotenv-mono
+// This will automatically merge:
+// 1. Root .env file
+// 2. Root .env.{NODE_ENV} file
+// 3. Service-specific .env file (if exists)
+// 4. Service-specific .env.{NODE_ENV} file (if exists)
+export const envVars = createEnvConfig("genai") as GenAIEnv
+export type Env = GenAIEnv
+export type ENV = GenAIEnv
