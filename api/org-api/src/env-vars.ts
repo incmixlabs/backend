@@ -8,4 +8,3 @@ import { type OrgEnv, createEnvConfig } from "@incmix-api/utils/env-config"
 // 4. Service-specific .env.{NODE_ENV} file (if exists)
 export const envVars = createEnvConfig("org") as OrgEnv
 export type Env = OrgEnv
-export type ENV = OrgEnv

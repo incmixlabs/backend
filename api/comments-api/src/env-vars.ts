@@ -8,4 +8,3 @@ import { type CommentsEnv, createEnvConfig } from "@incmix-api/utils/env-config"
 // 4. Service-specific .env.{NODE_ENV} file (if exists)
 export const envVars = createEnvConfig("comments") as CommentsEnv
 export type Env = CommentsEnv
-export type ENV = CommentsEnv

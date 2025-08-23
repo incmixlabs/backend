@@ -1083,19 +1083,6 @@ importers:
         version: 8.0.0
 
   shared/config:
-    dependencies:
-      dotenv:
-        specifier: 'catalog:'
-        version: 16.5.0
-      dotenv-expand:
-        specifier: 'catalog:'
-        version: 12.0.2
-      path:
-        specifier: 'catalog:'
-        version: 0.12.7
-      zod:
-        specifier: 'catalog:'
-        version: 4.0.17
     devDependencies:
       typescript:
         specifier: 'catalog:'

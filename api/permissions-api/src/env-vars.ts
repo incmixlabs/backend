@@ -11,4 +11,3 @@ import {
 // 4. Service-specific .env.{NODE_ENV} file (if exists)
 export const envVars = createEnvConfig("permissions") as PermissionsEnv
 export type Env = PermissionsEnv
-export type ENV = PermissionsEnv

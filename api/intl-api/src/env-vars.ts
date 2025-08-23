@@ -8,4 +8,3 @@ import { type IntlEnv, createEnvConfig } from "@incmix-api/utils/env-config"
 // 4. Service-specific .env.{NODE_ENV} file (if exists)
 export const envVars = createEnvConfig("intl") as IntlEnv
 export type Env = IntlEnv
-export type ENV = IntlEnv

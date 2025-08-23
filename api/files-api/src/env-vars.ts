@@ -8,4 +8,3 @@ import { type FilesEnv, createEnvConfig } from "@incmix-api/utils/env-config"
 // 4. Service-specific .env.{NODE_ENV} file (if exists)
 export const envVars = createEnvConfig("files") as FilesEnv
 export type Env = FilesEnv
-export type ENV = FilesEnv

@@ -8,4 +8,3 @@ import { type ProjectsEnv, createEnvConfig } from "@incmix-api/utils/env-config"
 // 4. Service-specific .env.{NODE_ENV} file (if exists)
 export const envVars = createEnvConfig("projects") as ProjectsEnv
 export type Env = ProjectsEnv
-export type ENV = ProjectsEnv
