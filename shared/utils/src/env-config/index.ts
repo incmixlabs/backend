@@ -206,7 +206,7 @@ export function createEnvConfig<T extends ServiceName>(
   if (!result.success) {
     const flat = result.error.flatten()
     console.error("Environment validation failed:", flat)
-    throw new Error(`Environment validation failed`)
+    throw new Error("Environment validation failed")
   }
   // Post-process to apply DOMAIN to API URLs if they use default values
   const env = result.data
