@@ -70,7 +70,7 @@ export const updateLocale = createRoute({
   middleware: [createAuthMiddleware()] as const,
   request: {
     params: z.object({
-      code: z.string({ required_error: "Code is required" }),
+      code: z.string({ message: "Code is required" }),
     }),
     body: {
       content: {
@@ -164,7 +164,7 @@ export const getLocale = createRoute({
   description: "Get existing locale",
   request: {
     params: z.object({
-      code: z.string({ required_error: "Code is required" }),
+      code: z.string({ message: "Code is required" }),
     }),
   },
   responses: {
@@ -229,7 +229,7 @@ export const deleteLocale = createRoute({
   description: "Delete existing locale",
   request: {
     params: z.object({
-      code: z.string({ required_error: "Code is required" }),
+      code: z.string({ message: "Code is required" }),
     }),
   },
   responses: {

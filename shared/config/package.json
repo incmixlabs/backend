@@ -3,6 +3,7 @@
   "version": "0.0.0",
   "license": "MIT",
   "files": ["hono.json"],
+  "main": "env-vars.ts",
   "devDependencies": {
     "typescript": "catalog:",
     "vitest": "catalog:"

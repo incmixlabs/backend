@@ -77,7 +77,7 @@ export const IdOrEmailSchema = z
 
 export const IdSchema = z.object({
   id: z
-    .string({ required_error: "ID is required" })
+    .string({ message: "ID is required" })
     .openapi({ example: "93jpbulpkkavxnz" }),
 })
 export const OrgIdSchema = z.object({
@@ -95,3 +95,42 @@ export const UploadFileSchema = z
     file: z.instanceof(File).openapi({}),
   })
   .openapi("Upload File")
+
+export const UserProfileSchema = z
+  .object({
+    id: z.string(),
+    name: z.string(),
+    email: z.string(),
+    profileImage: z.string().nullable().default(null),
+    avatar: z.string().nullable().default(null),
+    localeId: z.number(),
+  })
+  .openapi("UserProfile")
+
+export const PermissionSchema = z
+  .array(
+    z.object({
+      action: z.enum(["manage", "create", "read", "update", "delete"]),
+      subject: z.string(),
+      conditions: z.any().optional(),
+    })
+  )
+  .openapi("Permission")
+
+export const UserProfilePaginatedSchema = z
+  .object({
+    data: z.array(UserProfileSchema),
+    pagination: z.object({
+      page: z.number(),
+      limit: z.number(),
+      total: z.number(),
+      totalPages: z.number(),
+    }),
+  })
+  .openapi("UserProfilePaginated")
+
+export const OptionalPresignedUrlSchema = z
+  .object({
+    url: z.string().nullable(),
+  })
+  .openapi("OptionalPresignedUrl")

@@ -1,11 +1,4 @@
 import { createRoute } from "@hono/zod-openapi"
-
-import {
-  PermissionSchema,
-  UserProfilePaginatedSchema,
-  UserProfileSchema,
-  optionalPresignedUrlSchema,
-} from "@incmix/utils/types"
 import {
   FullNameSchema,
   IdOrEmailSchema,
@@ -13,8 +6,12 @@ import {
   MessageResponseSchema,
   OnboardingResponseSchema,
   OnboardingSchema,
+  OptionalPresignedUrlSchema,
   OrgIdSchema,
+  PermissionSchema,
   UploadFileSchema,
+  UserProfilePaginatedSchema,
+  UserProfileSchema,
 } from "./types"
 
 export const getUserpermissions = createRoute({
@@ -472,7 +469,7 @@ export const getProfilePicture = createRoute({
     200: {
       content: {
         "application/json": {
-          schema: optionalPresignedUrlSchema,
+          schema: OptionalPresignedUrlSchema,
         },
       },
       description: "Returns the profile picture",

@@ -1,16 +1,14 @@
 import { MessageResponseSchema } from "@/types"
 import { createRoute } from "@hono/zod-openapi"
 import {
-  MembersResponseSchema,
-  PermissionsResponseSchema,
-} from "@incmix/utils/types"
-import {
   CreateOrgSchema,
   MemberEmailSchema,
   MemberSchema,
+  MembersResponseSchema,
   OrgHandleSchema,
   OrgIdSchema,
   OrgSchema,
+  PermissionsResponseSchema,
   RemoveMembersSchema,
   SuccessSchema,
   UpdateOrgSchema,

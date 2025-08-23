@@ -43,7 +43,7 @@ export const getAllMessagesByLocale = createRoute({
   request: {
     params: z.object({
       locale: z
-        .string({ required_error: "Locale is required" })
+        .string({ message: "Locale is required" })
         .min(1)
         .openapi({ example: "en" }),
     }),
@@ -105,11 +105,11 @@ export const getMessagesByNamespace = createRoute({
   request: {
     params: z.object({
       locale: z
-        .string({ required_error: "Locale is required" })
+        .string({ message: "Locale is required" })
         .min(1)
         .openapi({ example: "en" }),
       namespace: z
-        .string({ required_error: "Namespace is required" })
+        .string({ message: "Namespace is required" })
         .min(1)
         .openapi({ example: "auth" }),
     }),
@@ -144,10 +144,10 @@ export const getMessage = createRoute({
   request: {
     params: z.object({
       locale: z
-        .string({ required_error: "Locale is required" })
+        .string({ message: "Locale is required" })
         .openapi({ example: "en" }),
       key: z
-        .string({ required_error: "Key is required" })
+        .string({ message: "Key is required" })
         .openapi({ example: "button_login" }),
     }),
   },
@@ -201,10 +201,10 @@ export const deleteMessages = createRoute({
             items: z
               .object({
                 locale: z
-                  .string({ required_error: "Locale is required" })
+                  .string({ message: "Locale is required" })
                   .openapi({ example: "en" }),
                 key: z
-                  .string({ required_error: "Key is required" })
+                  .string({ message: "Key is required" })
                   .openapi({ example: "button_login" }),
               })
               .array(),

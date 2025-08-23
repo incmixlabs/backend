@@ -68,7 +68,7 @@ oAuthRoutes.openapi(googleOAuth, async (c) => {
 oAuthRoutes.openapi(googleCallback, async (c) => {
   const stateCookie = getCookie(c, "state")
   const codeVerifierCookie = getCookie(c, "code_verifier")
-
+  // @ts-ignore - https://hono.dev/docs/api/request#valid
   const { state, code } = c.req.valid("query")
   const t = await useTranslation(c)
 

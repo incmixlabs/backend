@@ -63,9 +63,18 @@ const worker = startUserStoryWorker(envVars, async (job) => {
     }> = {}
     for await (const chunk of stream) {
       console.log(`User story result: ${JSON.stringify(chunk)}`)
-      result.userStory = {
-        ...result.userStory,
-        ...chunk.userStory,
+      const typedChunk = chunk as DeepPartial<{
+        userStory: {
+          description: string
+          acceptanceCriteria: string[]
+          checklist: string[]
+        }
+      }>
+      if (typedChunk.userStory) {
+        result.userStory = {
+          ...result.userStory,
+          ...typedChunk.userStory,
+        }
       }
     }
     console.log(`User story result: ${JSON.stringify(result)}`)

@@ -23,13 +23,13 @@ export const MemberEmailSchema = z
 export const OrgSchema = z
   .object({
     id: z
-      .string({ required_error: "Id is Required" })
+      .string({ message: "Id is Required" })
       .openapi({ example: "123456886" }),
     name: z
-      .string({ required_error: "Organisation Name is required" })
+      .string({ message: "Organisation Name is required" })
       .openapi({ example: "Test Organisation" }),
     handle: z
-      .string({ required_error: "Organisation Handle is required" })
+      .string({ message: "Organisation Handle is required" })
       .openapi({ example: "test-organisation" }),
     members: z.array(MemberSchema).openapi({
       example: [
@@ -65,7 +65,7 @@ export const SuccessSchema = z
 export const CreateOrgSchema = z
   .object({
     name: z
-      .string({ required_error: "Organisation Name is required" })
+      .string({ message: "Organisation Name is required" })
       .openapi({ example: "Test Organisation" }),
     handle: z.string().openapi({
       example: "test-organisation",
@@ -79,7 +79,7 @@ export const CreateOrgSchema = z
 export const UpdateOrgSchema = z
   .object({
     name: z
-      .string({ required_error: "Organisation Name is required" })
+      .string({ message: "Organisation Name is required" })
       .openapi({ example: "Test Organisation" }),
   })
   .openapi("Update Organisation")
@@ -90,9 +90,38 @@ export const RemoveMembersSchema = z.object({
     .min(1, "Atleast 1 Item is required"),
 })
 
+export const MembersResponseSchema = z
+  .array(
+    z.object({
+      userId: z.string(),
+      fullName: z.string(),
+      email: z.string(),
+      profileImage: z.string().nullable(),
+      avatar: z.string().nullable(),
+      role: z.string(),
+    })
+  )
+  .openapi("MembersResponse")
+
 export const PermissionsResponseSchema = z
-  .object({
-    canCreateProject: z.boolean(),
-    canCreateWorkspace: z.boolean(),
-  })
+  .array(
+    z.object({
+      action: z.enum(["manage", "create", "read", "update", "delete"]),
+      subject: z.enum([
+        "all",
+        "Organisation",
+        "Member",
+        "Project",
+        "Task",
+        "Comment",
+        "Document",
+        "Folder",
+        "File",
+        "ProjectMember",
+        "Role",
+        "Permission",
+      ]),
+      conditions: z.any().optional(),
+    })
+  )
   .openapi("PermissionsResponse")

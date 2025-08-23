@@ -6,9 +6,11 @@ export const S3 = new S3Client({
   endpoint: envVars.AWS_ENDPOINT_URL_S3,
   forcePathStyle: true,
   tls: false,
-
-  credentials: {
-    accessKeyId: envVars.AWS_ACCESS_KEY_ID,
-    secretAccessKey: envVars.AWS_SECRET_ACCESS_KEY,
-  },
+  ...(envVars.AWS_ACCESS_KEY_ID &&
+    envVars.AWS_SECRET_ACCESS_KEY && {
+      credentials: {
+        accessKeyId: envVars.AWS_ACCESS_KEY_ID,
+        secretAccessKey: envVars.AWS_SECRET_ACCESS_KEY,
+      },
+    }),
 })

@@ -1,5 +1,5 @@
 import type { HonoApp } from "@/types"
-import { OpenAPIHono } from "@hono/zod-openapi"
+import { OpenAPIHono, type RouteConfigToTypedResponse } from "@hono/zod-openapi"
 import {
   ConflictError,
   NotFoundError,
@@ -294,7 +294,7 @@ messageRoutes.openapi(getAllMessages, async (c) => {
         },
       },
       200
-    )
+    ) as unknown as RouteConfigToTypedResponse<typeof getAllMessages>
   } catch (error) {
     return await processError<typeof getAllMessages>(c, error, [
       "{{ default }}",

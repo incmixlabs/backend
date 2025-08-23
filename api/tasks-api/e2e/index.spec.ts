@@ -39,9 +39,10 @@ test("Delete Task by ID", async ({ request }) => {
 })
 
 test("Generate user story without login", async ({ request }) => {
-  const res = await request.post("/api/tasks/generate-user-story", {
+  const res = await request.post("/api/tasks/bulk-ai-gen", {
     data: {
-      prompt: "create a dashboard",
+      type: "user-story",
+      taskIds: [TASKID],
     },
   })
   expect(res.status()).toBe(401)
@@ -49,32 +50,32 @@ test("Generate user story without login", async ({ request }) => {
 
 test("Generate user story with free tier", async ({ request }) => {
   await login(request)
-  const res = await request.post("/api/tasks/generate-user-story", {
+  const res = await request.post("/api/tasks/bulk-ai-gen", {
     data: {
-      prompt: "create a dashboard",
-      userTier: "free",
+      type: "user-story",
+      taskIds: [TASKID],
     },
   })
   expect(res.status()).toBe(200)
   const data = await res.json()
-  expect(data.userStory).toBeDefined()
-  expect(typeof data.userStory).toBe("string")
-  expect(data.userStory.length).toBeGreaterThan(50)
+  expect(data.message).toBeDefined()
+  expect(typeof data.message).toBe("string")
+  expect(data.message).toContain("queued")
 })
 
 test("Generate user story with paid tier", async ({ request }) => {
   await login(request)
-  const res = await request.post("/api/tasks/generate-user-story", {
+  const res = await request.post("/api/tasks/bulk-ai-gen", {
     data: {
-      prompt: "create a dashboard",
-      userTier: "paid",
+      type: "user-story",
+      taskIds: [TASKID],
     },
   })
   expect(res.status()).toBe(200)
   const data = await res.json()
-  expect(data.userStory).toBeDefined()
-  expect(typeof data.userStory).toBe("string")
-  expect(data.userStory.length).toBeGreaterThan(50)
+  expect(data.message).toBeDefined()
+  expect(typeof data.message).toBe("string")
+  expect(data.message).toContain("queued")
 })
 
 async function login(request: APIRequestContext) {

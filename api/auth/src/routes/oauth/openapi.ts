@@ -39,7 +39,7 @@ export const googleCallback = createRoute({
   responses: {
     200: {
       content: {
-        "application/json": { schema: AuthUserSessionSchema },
+        "application/json": { schema: AuthUserSessionSchema as any },
       },
       description: "Login Successful",
     },

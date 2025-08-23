@@ -281,7 +281,6 @@ describe("Mock Mode Tests", () => {
         if (task.endDate) expect(valid(task.endDate)).toBe(true)
       })
     })
-    })
 
     it("should have valid checklist structure", () => {
       mockTasks.forEach((task) => {

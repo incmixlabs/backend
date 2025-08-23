@@ -1,5 +1,9 @@
+import * as dotenv from "dotenv"
 import tsconfigPaths from "vite-tsconfig-paths"
 import { defineConfig } from "vitest/config"
+
+// Load test environment variables from .env.test
+dotenv.config({ path: ".env.test" })
 
 export default defineConfig({
   plugins: [tsconfigPaths()],
@@ -13,17 +17,7 @@ export default defineConfig({
     dir: "./test",
     setupFiles: ["./test/setup.ts"],
     env: {
-      NODE_ENV: "test",
-      DATABASE_URL: "postgresql://postgres:password@localhost:54321/incmix",
-      GOOGLE_CLIENT_ID: "test-google-client-id",
-      GOOGLE_CLIENT_SECRET: "test-google-client-secret",
-      FRONTEND_URL: "http://localhost:1472",
-      GOOGLE_REDIRECT_URL: "http://localhost:1472/auth/google/callback",
-      COOKIE_NAME: "test_session",
-      DOMAIN: "localhost",
-      EMAIL_API_URL: "http://localhost:8787/api/email",
-      INTL_API_URL: "http://localhost:8787/api/intl",
-      USERS_API_URL: "http://localhost:8787/api/users",
+      ...process.env,
     },
   },
 })
