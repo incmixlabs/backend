@@ -229,64 +229,41 @@ export function createEnvConfig<T extends ServiceName>(
   const domain = String(env.DOMAIN || "http://localhost")
 
   // Apply domain to API URLs if they're using the default localhost
-  if (!process.env.EMAIL_API_URL) {
-    env.EMAIL_API_URL = buildApiUrl(SERVICE_PORTS.email, "/api/email", domain)
-  }
-  if (!process.env.AUTH_API_URL) {
-    env.AUTH_API_URL = buildApiUrl(SERVICE_PORTS.auth, "/api/auth", domain)
-  }
-  if (!process.env.INTL_API_URL) {
-    env.INTL_API_URL = buildApiUrl(SERVICE_PORTS.intl, "/api/intl", domain)
-  }
-  if (!process.env.USERS_API_URL) {
-    env.USERS_API_URL = buildApiUrl(SERVICE_PORTS.users, "/api/users", domain)
-  }
-  if (!process.env.LOCATION_API_URL) {
-    env.LOCATION_API_URL = buildApiUrl(
-      SERVICE_PORTS.location,
-      "/api/location",
-      domain
-    )
-  }
-  if (!process.env.GENAI_API_URL) {
-    env.GENAI_API_URL = buildApiUrl(SERVICE_PORTS.genai, "/api/genai", domain)
-  }
-  if (!process.env.FILES_API_URL) {
-    env.FILES_API_URL = buildApiUrl(SERVICE_PORTS.files, "/api/files", domain)
-  }
-  if (!process.env.BFF_API_URL) {
-    env.BFF_API_URL = buildApiUrl(SERVICE_PORTS.bff, "/api/bff", domain)
-  }
-  if (!process.env.COMMENTS_API_URL) {
-    env.COMMENTS_API_URL = buildApiUrl(
-      SERVICE_PORTS.comments,
-      "/api/comments",
-      domain
-    )
-  }
-  if (!process.env.ORG_API_URL) {
-    env.ORG_API_URL = buildApiUrl(SERVICE_PORTS.org, "/api/org", domain)
-  }
-  if (!process.env.PERMISSIONS_API_URL) {
-    env.PERMISSIONS_API_URL = buildApiUrl(
-      SERVICE_PORTS.permissions,
-      "/api/permissions",
-      domain
-    )
-  }
-  if (!process.env.PROJECTS_API_URL) {
-    env.PROJECTS_API_URL = buildApiUrl(
-      SERVICE_PORTS.projects,
-      "/api/projects",
-      domain
-    )
-  }
-  if (!process.env.TASKS_API_URL) {
-    env.TASKS_API_URL = buildApiUrl(SERVICE_PORTS.tasks, "/api/tasks", domain)
-  }
-  if (!process.env.RXDB_API_URL) {
-    env.RXDB_API_URL = buildApiUrl(SERVICE_PORTS.rxdb, "/api/rxdb", domain)
-  }
+
+  env.EMAIL_API_URL = buildApiUrl(SERVICE_PORTS.email, "/api/email", domain)
+
+  env.AUTH_API_URL = buildApiUrl(SERVICE_PORTS.auth, "/api/auth", domain)
+
+  env.INTL_API_URL = buildApiUrl(SERVICE_PORTS.intl, "/api/intl", domain)
+
+  env.USERS_API_URL = buildApiUrl(SERVICE_PORTS.users, "/api/users", domain)
+
+  env.LOCATION_API_URL = buildApiUrl(
+    SERVICE_PORTS.location,
+    "/api/location",
+    domain
+  )
+  env.GENAI_API_URL = buildApiUrl(SERVICE_PORTS.genai, "/api/genai", domain)
+  env.FILES_API_URL = buildApiUrl(SERVICE_PORTS.files, "/api/files", domain)
+  env.BFF_API_URL = buildApiUrl(SERVICE_PORTS.bff, "/api/bff", domain)
+  env.COMMENTS_API_URL = buildApiUrl(
+    SERVICE_PORTS.comments,
+    "/api/comments",
+    domain
+  )
+  env.ORG_API_URL = buildApiUrl(SERVICE_PORTS.org, "/api/org", domain)
+  env.PERMISSIONS_API_URL = buildApiUrl(
+    SERVICE_PORTS.permissions,
+    "/api/permissions",
+    domain
+  )
+  env.PROJECTS_API_URL = buildApiUrl(
+    SERVICE_PORTS.projects,
+    "/api/projects",
+    domain
+  )
+  env.TASKS_API_URL = buildApiUrl(SERVICE_PORTS.tasks, "/api/tasks", domain)
+  env.RXDB_API_URL = buildApiUrl(SERVICE_PORTS.rxdb, "/api/rxdb", domain)
 
   return env
 }
