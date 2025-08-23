@@ -1,45 +1,29 @@
-// import path from "node:path"
-// import {
-//   defineWorkersProject,
-//   readD1Migrations,
-// } from "@cloudflare/vitest-pool-workers/config"
-// import {
-//   emailService,
-//   filesService,
-//   intlService,
-//   usersService,
-// } from "./test/mocks"
+import tsconfigPaths from "vite-tsconfig-paths"
+import { defineConfig } from "vitest/config"
 
-// import tsconfigPaths from "vite-tsconfig-paths"
-// export default defineWorkersProject(async () => {
-//   // Read all migrations in the `migrations` directory
-//   const migrationsPath = path.join(__dirname, "migrations/d1")
-//   const migrations = await readD1Migrations(migrationsPath)
-
-//   return {
-//     plugins: [tsconfigPaths()],
-//     test: {
-//       dir: "./test",
-//       setupFiles: ["./test/apply-migrations.ts"],
-//       poolOptions: {
-//         workers: {
-//           singleWorker: true,
-//           main: "./src/index.ts",
-//           wrangler: {
-//             configPath: "./wrangler.toml",
-//             environment: "test",
-//           },
-//           miniflare: {
-//             bindings: { TEST_MIGRATIONS: migrations },
-//             serviceBindings: {
-//               EMAIL: emailService,
-//               INTL: intlService,
-//               FILES_API: filesService,
-//               USERS_API: usersService,
-//             },
-//           },
-//         },
-//       },
-//     },
-//   }
-// })
+export default defineConfig({
+  plugins: [tsconfigPaths()],
+  resolve: {
+    alias: {
+      "@": "/Users/umam3/projects/venturaz/incmix/backend/api/auth/src",
+      "@test": "/Users/umam3/projects/venturaz/incmix/backend/api/auth/test",
+    },
+  },
+  test: {
+    dir: "./test",
+    setupFiles: ["./test/setup.ts"],
+    env: {
+      NODE_ENV: "test",
+      DATABASE_URL: "postgresql://postgres:password@localhost:54321/incmix",
+      GOOGLE_CLIENT_ID: "test-google-client-id",
+      GOOGLE_CLIENT_SECRET: "test-google-client-secret",
+      FRONTEND_URL: "http://localhost:1472",
+      GOOGLE_REDIRECT_URL: "http://localhost:1472/auth/google/callback",
+      COOKIE_NAME: "test_session",
+      DOMAIN: "localhost",
+      EMAIL_API_URL: "http://localhost:8787/api/email",
+      INTL_API_URL: "http://localhost:8787/api/intl",
+      USERS_API_URL: "http://localhost:8787/api/users",
+    },
+  },
+})

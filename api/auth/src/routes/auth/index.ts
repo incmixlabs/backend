@@ -39,6 +39,7 @@ import {
   zodError,
 } from "@incmix-api/utils/errors"
 import { useTranslation } from "@incmix-api/utils/middleware"
+import { envVars } from "../../env-vars"
 
 const authRoutes = new OpenAPIHono<HonoApp>({
   defaultHook: zodError,
@@ -138,7 +139,7 @@ authRoutes.openapi(signup, async (c) => {
         {
           id: userId,
           email,
-          emailVerifiedAt: null,
+          emailVerifiedAt: envVars.MOCK_ENV ? Date.now().toString() : null,
           isSuperAdmin: false,
         },
         fullName,
@@ -194,7 +195,6 @@ authRoutes.openapi(login, async (c) => {
       const msg = await t.text(ERROR_INVALID_CREDENTIALS)
       throw new UnauthorizedError(msg)
     }
-
     if (!user.isActive) {
       const msg = await t.text(ACC_DISABLED)
       throw new ForbiddenError(msg)

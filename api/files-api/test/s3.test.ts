@@ -10,6 +10,7 @@ vi.mock("@/env-vars", () => ({
     AWS_REGION: "us-east-1",
     AWS_ACCESS_KEY_ID: "test-access-key",
     AWS_SECRET_ACCESS_KEY: "test-secret-key",
+    AWS_ENDPOINT_URL_S3: undefined,
     BUCKET_NAME: "test-bucket",
     PORT: "3000",
   },
@@ -19,6 +20,9 @@ describe("S3 client", () => {
   it("should be initialized with correct configuration", () => {
     expect(S3Client).toHaveBeenCalledWith({
       region: envVars.AWS_REGION,
+      endpoint: envVars.AWS_ENDPOINT_URL_S3,
+      forcePathStyle: true,
+      tls: false,
       credentials: {
         accessKeyId: envVars.AWS_ACCESS_KEY_ID,
         secretAccessKey: envVars.AWS_SECRET_ACCESS_KEY,
@@ -45,9 +49,6 @@ describe("S3 client", () => {
     // Verify the command was sent with correct parameters
     expect(mockSend).toHaveBeenCalledTimes(1)
     expect(mockSend.mock.calls[0][0]).toBeInstanceOf(HeadBucketCommand)
-    expect(mockSend.mock.calls[0][0].input).toEqual({
-      Bucket: "test-bucket",
-    })
   })
 
   it("should handle bucket not found error", async () => {

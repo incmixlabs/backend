@@ -1,7 +1,13 @@
-// import path from "node:path"
-// import { config } from "dotenv"
-// import { expand } from "dotenv-expand"
+import path from "node:path"
+import { config } from "dotenv"
+import { expand } from "dotenv-expand"
 import { z } from "zod"
+
+// Load environment variables from .env file
+const dotenvResult = config({
+  path: path.resolve(process.cwd(), ".env"),
+})
+expand(dotenvResult)
 
 const EnvSchema = z.object({
   NODE_ENV: z.string().default("development"),
@@ -16,12 +22,12 @@ const EnvSchema = z.object({
   COOKIE_NAME: z.string().default("incmix_session"),
   GOOGLE_REDIRECT_URL: z.string().url(),
   DOMAIN: z.string().default("localhost"),
+  MOCK_ENV: z.string().default("false"),
 })
 
 export type Env = z.infer<typeof EnvSchema>
 
 const { data: env, error } = EnvSchema.safeParse(process.env)
-
 if (error || !env) {
   console.error("❌ Invalid env:")
   console.error(JSON.stringify(error.flatten().fieldErrors, null, 2))
