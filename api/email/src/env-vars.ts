@@ -1,5 +1,4 @@
-import { getEnvSchema } from "@incmix-api/config"
-// Load environment variables from .env file
-const { env } = getEnvSchema(Number(process.env.PORT) || 8989)
+import { createEnvConfig } from "@incmix-api/utils/env-config"
 
-export const envVars = env
+// Use the new env-config system with dotenv-mono
+export const envVars = createEnvConfig("email")

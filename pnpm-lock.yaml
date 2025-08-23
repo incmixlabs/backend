@@ -183,6 +183,9 @@ importers:
       '@types/pg':
         specifier: 'catalog:'
         version: 8.11.11
+      dotenv:
+        specifier: 'catalog:'
+        version: 16.5.0
       tsc-alias:
         specifier: 'catalog:'
         version: 1.8.11

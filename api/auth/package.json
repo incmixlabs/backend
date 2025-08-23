@@ -30,6 +30,7 @@
     "@incmix-api/config": "workspace:^",
     "@types/node": "catalog:",
     "@types/pg": "catalog:",
+    "dotenv": "catalog:",
     "tsc-alias": "catalog:",
     "tsx": "catalog:",
     "typescript": "catalog:",
