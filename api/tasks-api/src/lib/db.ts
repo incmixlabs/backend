@@ -1,7 +1,11 @@
 import type { Context } from "@/types"
+import { CommonDbOperations } from "@incmix-api/utils/db-operations"
 import type { Task } from "@incmix-api/utils/zod-schema"
-
 import { jsonArrayFrom, jsonObjectFrom } from "kysely/helpers/postgres"
+
+export function getDbOperations(c: Context) {
+  return new CommonDbOperations(c.get("db"))
+}
 
 export function getProjectById(c: Context, projectId: string) {
   return c
@@ -12,113 +16,14 @@ export function getProjectById(c: Context, projectId: string) {
     .executeTakeFirst()
 }
 
-// export function getProjectWithColumnsAndTasks(c: Context, projectId: string) {
-//   return c
-//     .get("db")
-//     .selectFrom("projects")
-//     .selectAll()
-//     .select((eb) => [
-//       "id",
-//       "name",
-//       "orgId",
-//       "createdBy",
-//       "updatedBy",
-//       "createdAt",
-//       "updatedAt",
-//       "createdBy",
-//       "updatedBy",
-//       jsonArrayFrom(
-//         eb
-//           .selectFrom("labels")
-//           .select([
-//             "id",
-//             "order",
-//             "createdAt",
-//             "updatedAt",
-//             "createdBy",
-//             "updatedBy",
-//             "projectId",
-//             "type",
-//             "name",
-//             "color",
-//             "description",
-//           ])
-//           .whereRef("projectId", "=", "projects.id")
-//       ).as("labels"),
-//       jsonArrayFrom(
-//         eb
-//           .selectFrom("tasks")
-//           .select([
-//             "id",
-//             "projectId",
-//             "name",
-//             "statusId",
-//             "priorityId",
-//             "taskOrder",
-//             "startDate",
-//             "endDate",
-//             "createdAt",
-//             "updatedAt",
-//             "createdBy",
-//             "updatedBy",
-//             "projectId",
-//             "name",
-//             "description",
-//             "acceptanceCriteria",
-//             "checklist",
-//             "refUrls",
-//             "labelsTags",
-//             "attachments",
-//             "parentTaskId",
-//             "completed",
-//           ])
-//           .whereRef("projectId", "=", "projects.id")
-//       ).as("tasks"),
-//     ])
-//     .where("projects.id", "=", projectId)
-//     .executeTakeFirst()
-// }
-
 export async function getTaskById(c: Context, taskId: string) {
   const tasksQuery = buildTaskQuery(c)
-
   tasksQuery.where("tasks.id", "=", taskId)
 
   const task = await tasksQuery.executeTakeFirst()
-
   if (!task) return null
 
-  const createdBy = task.createdBy
-  const updatedBy = task.updatedBy
-  const assignedTo = task.assignedTo
-
-  if (createdBy && updatedBy && assignedTo)
-    return {
-      ...task,
-      createdBy: {
-        id: createdBy.id,
-        name: createdBy.name,
-        image: createdBy.image ?? undefined,
-      },
-      updatedBy: {
-        id: updatedBy.id,
-        name: updatedBy.name,
-        image: updatedBy.image ?? undefined,
-      },
-      assignedTo: assignedTo.map((a) => ({
-        id: a.id,
-        name: a.name,
-        image: a.image ?? undefined,
-      })),
-      createdAt: task.createdAt.getTime(),
-      updatedAt: task.updatedAt.getTime(),
-      startDate: task.startDate?.getTime(),
-      endDate: task.endDate?.getTime(),
-      isSubtask: task.parentTaskId !== null,
-      comments: [],
-    }
-
-  return null
+  return formatTask(task)
 }
 
 export async function isProjectMember(
@@ -126,58 +31,41 @@ export async function isProjectMember(
   projectId: string,
   userId: string
 ) {
-  const member = await c
-    .get("db")
-    .selectFrom("projectMembers")
-    .selectAll()
-    .where((eb) =>
-      eb.and([eb("projectId", "=", projectId), eb("userId", "=", userId)])
-    )
-    .executeTakeFirst()
-
-  return !!member
+  const dbOps = getDbOperations(c)
+  const membership = await dbOps.checkProjectMembership(userId, projectId)
+  return !!membership
 }
 
 export async function getTasks(c: Context, userId: string): Promise<Task[]> {
   const tasksQuery = buildTaskQuery(c)
-
   tasksQuery.where("taskAssignments.userId", "=", userId)
 
   const tasks = await tasksQuery.execute()
-
   return tasks.flatMap((task) => {
-    const createdBy = task.createdBy
-    const updatedBy = task.updatedBy
-    const assignedTo = task.assignedTo
-
-    if (createdBy && updatedBy && assignedTo)
-      return {
-        ...task,
-        createdBy: {
-          id: createdBy.id,
-          name: createdBy.name,
-          image: createdBy.image ?? undefined,
-        },
-        updatedBy: {
-          id: updatedBy.id,
-          name: updatedBy.name,
-          image: updatedBy.image ?? undefined,
-        },
-        assignedTo: assignedTo.map((a) => ({
-          id: a.id,
-          name: a.name,
-          image: a.image ?? undefined,
-        })),
-        createdAt: task.createdAt.getTime(),
-        updatedAt: task.updatedAt.getTime(),
-        startDate: task.startDate?.getTime(),
-        endDate: task.endDate?.getTime(),
-        isSubtask: task.parentTaskId !== null,
-        comments: [],
-      }
-
-    return []
+    const formatted = formatTask(task)
+    return formatted ? [formatted] : []
   })
+}
+
+export async function getTasksPaginated(
+  c: Context,
+  projectId: string,
+  page = 1,
+  limit = 10,
+  orderBy?: { column: string; direction: "asc" | "desc" }
+) {
+  const dbOps = getDbOperations(c)
+  const baseQuery = buildTaskQuery(c).where("tasks.projectId", "=", projectId)
+
+  const result = await dbOps.paginatedQuery(baseQuery, page, limit, orderBy)
+
+  return {
+    ...result,
+    data: result.data.flatMap((task: any) => {
+      const formatted = formatTask(task)
+      return formatted ? [formatted] : []
+    }),
+  }
 }
 
 function buildTaskQuery(c: Context) {
@@ -236,4 +124,37 @@ function buildTaskQuery(c: Context) {
       ).as("updatedBy"),
     ])
     .innerJoin("taskAssignments", "tasks.id", "taskAssignments.taskId")
+}
+
+function formatTask(task: any): Task | null {
+  const createdBy = task.createdBy
+  const updatedBy = task.updatedBy
+  const assignedTo = task.assignedTo
+
+  if (!createdBy || !updatedBy || !assignedTo) return null
+
+  return {
+    ...task,
+    createdBy: {
+      id: createdBy.id,
+      name: createdBy.name,
+      image: createdBy.image ?? undefined,
+    },
+    updatedBy: {
+      id: updatedBy.id,
+      name: updatedBy.name,
+      image: updatedBy.image ?? undefined,
+    },
+    assignedTo: assignedTo.map((a: any) => ({
+      id: a.id,
+      name: a.name,
+      image: a.image ?? undefined,
+    })),
+    createdAt: task.createdAt.getTime(),
+    updatedAt: task.updatedAt.getTime(),
+    startDate: task.startDate?.getTime(),
+    endDate: task.endDate?.getTime(),
+    isSubtask: task.parentTaskId !== null,
+    comments: [],
+  }
 }
