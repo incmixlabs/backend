@@ -13,6 +13,7 @@ claude
 .env.test.local
 .env.production.local
 .dev.vars
+.env*
 .secrets
 
 # Testing
