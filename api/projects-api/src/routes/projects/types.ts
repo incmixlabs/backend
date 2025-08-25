@@ -36,7 +36,11 @@ export const CreateProjectSchema = ProjectSchema.pick({
   company: true,
 }).extend({
   id: z.string().optional().openapi({ example: "2hek2bkjh" }),
-  logo: z.custom<File>(),
+  logo: z.string().optional().openapi({
+    type: "string",
+    format: "binary",
+    description: "Project logo file",
+  }),
   budget: z.coerce.number().int().nullish().openapi({ example: 10000 }),
   acceptanceCriteria: z.string().optional(),
   checklist: z.string().optional(),

@@ -1,27 +1,15 @@
 import { BASE_PATH } from "@/lib/constants"
-import { OpenAPIHono } from "@hono/zod-openapi"
-
 import { middlewares } from "@/middleware"
 import { routes } from "@/routes"
 import type { HonoApp } from "@/types"
-import { serve } from "@hono/node-server"
+import { createService } from "@incmix-api/utils"
 import { initDb } from "@incmix-api/utils/db-schema"
-import { KVStore } from "@incmix-api/utils/kv-store"
-import { setupKvStore } from "@incmix-api/utils/middleware"
 import { startUserStoryWorker } from "@incmix-api/utils/queue"
 import type { ChecklistItem } from "@incmix/utils/types"
 import type { DeepPartial } from "ai"
 import { nanoid } from "nanoid"
 import { envVars } from "./env-vars"
 import { generateUserStory } from "./lib/services"
-const app = new OpenAPIHono<HonoApp>()
-
-const globalStore = new KVStore({}, 900)
-
-setupKvStore(app, BASE_PATH, globalStore)
-
-middlewares(app)
-routes(app)
 
 const mapToChecklistItems = (items: (string | undefined)[]): ChecklistItem[] =>
   items
@@ -142,15 +130,19 @@ const worker = startUserStoryWorker(envVars, async (job) => {
 
 worker.run()
 
-serve(
-  {
-    fetch: app.fetch,
-    port: envVars.PORT,
+const service = createService<HonoApp["Bindings"], HonoApp["Variables"]>({
+  name: "genai-api",
+  port: envVars.PORT,
+  basePath: BASE_PATH,
+  setupMiddleware: (app) => {
+    middlewares(app)
   },
-  (info) => {
-    console.log(`Server is running on port ${info.port}`)
-  }
-)
+  setupRoutes: (app) => routes(app),
+})
+
+const { app, startServer } = service
+
+startServer()
 
 const shutdown = async (signal: NodeJS.Signals) => {
   console.log(`Received ${signal}. Shutting down gracefully...`)
@@ -168,4 +160,5 @@ const shutdown = async (signal: NodeJS.Signals) => {
 
 process.on("SIGINT", shutdown)
 process.on("SIGTERM", shutdown)
+
 export default app

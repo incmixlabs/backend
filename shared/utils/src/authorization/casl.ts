@@ -44,6 +44,7 @@ export class PermissionService {
 
   constructor(context: Context) {
     const user = context.get("user")
+
     if (!user) {
       throw new UnauthorizedError()
     }

@@ -1,8 +1,11 @@
+import { setupKvStore } from "@/middleware"
 import { serve } from "@hono/node-server"
 import { OpenAPIHono } from "@hono/zod-openapi"
-import type { Context, Env } from "hono"
+import { setupRbac } from "@incmix-api/utils/authorization"
+import type { Context } from "hono"
 import { logger } from "hono/logger"
 import { KVStore } from "../kv-store"
+import { setupOpenApi } from "./open-api"
 
 export interface ServiceConfig<
   TBindings extends object = Record<string, unknown>,
@@ -11,13 +14,14 @@ export interface ServiceConfig<
   name: string
   version?: string
   port: number
+  basePath: string
   setupMiddleware?: (
     app: OpenAPIHono<{ Bindings: TBindings; Variables: TVariables }>
   ) => void
   setupRoutes?: (
     app: OpenAPIHono<{ Bindings: TBindings; Variables: TVariables }>
   ) => void
-  setupRBAC?: () => void
+  needRBAC?: boolean
   onBeforeStart?: () => Promise<void>
   bindings?: TBindings
   variables?: TVariables
@@ -34,7 +38,7 @@ export function createService<
 
   // Initialize KVStore
   const kvStore = new KVStore({ name: config.name })
-
+  setupKvStore(app, config.basePath, kvStore)
   // Setup logger
   app.use(logger())
 
@@ -44,23 +48,15 @@ export function createService<
   }
 
   // Setup RBAC if provided
-  if (config.setupRBAC) {
-    config.setupRBAC()
+  if (config.needRBAC) {
+    setupRbac(app, config.basePath)
   }
 
+  setupOpenApi(app, config.basePath, config.name)
   // Setup routes if provided
   if (config.setupRoutes) {
     config.setupRoutes(app)
   }
-
-  // OpenAPI documentation endpoint
-  app.doc("/doc", {
-    openapi: "3.0.0",
-    info: {
-      version: config.version || "1.0.0",
-      title: `${config.name} API`,
-    },
-  })
 
   // Start server
   const startServer = async () => {

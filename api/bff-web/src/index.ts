@@ -23,6 +23,7 @@ app.get("/api/timestamp-nano", (c) => {
 })
 app.get("/api/healthcheck", async (c) => {
   const apis = Object.entries(API)
+  const cookies = c.req.raw.headers.get("cookie")
   const healthChecks = apis
     .filter(([key]) => key !== "RATELIMITS")
     .map(async ([key]) => {
@@ -30,6 +31,9 @@ app.get("/api/healthcheck", async (c) => {
       try {
         const response = await fetch(`${apiUrl}/healthcheck`, {
           method: "GET",
+          headers: {
+            Cookie: cookies ?? "",
+          },
           signal: AbortSignal.timeout(5000), // 5 second timeout
         })
 

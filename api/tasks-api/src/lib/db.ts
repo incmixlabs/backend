@@ -12,73 +12,6 @@ export function getProjectById(c: Context, projectId: string) {
     .executeTakeFirst()
 }
 
-// export function getProjectWithColumnsAndTasks(c: Context, projectId: string) {
-//   return c
-//     .get("db")
-//     .selectFrom("projects")
-//     .selectAll()
-//     .select((eb) => [
-//       "id",
-//       "name",
-//       "orgId",
-//       "createdBy",
-//       "updatedBy",
-//       "createdAt",
-//       "updatedAt",
-//       "createdBy",
-//       "updatedBy",
-//       jsonArrayFrom(
-//         eb
-//           .selectFrom("labels")
-//           .select([
-//             "id",
-//             "order",
-//             "createdAt",
-//             "updatedAt",
-//             "createdBy",
-//             "updatedBy",
-//             "projectId",
-//             "type",
-//             "name",
-//             "color",
-//             "description",
-//           ])
-//           .whereRef("projectId", "=", "projects.id")
-//       ).as("labels"),
-//       jsonArrayFrom(
-//         eb
-//           .selectFrom("tasks")
-//           .select([
-//             "id",
-//             "projectId",
-//             "name",
-//             "statusId",
-//             "priorityId",
-//             "taskOrder",
-//             "startDate",
-//             "endDate",
-//             "createdAt",
-//             "updatedAt",
-//             "createdBy",
-//             "updatedBy",
-//             "projectId",
-//             "name",
-//             "description",
-//             "acceptanceCriteria",
-//             "checklist",
-//             "refUrls",
-//             "labelsTags",
-//             "attachments",
-//             "parentTaskId",
-//             "completed",
-//           ])
-//           .whereRef("projectId", "=", "projects.id")
-//       ).as("tasks"),
-//     ])
-//     .where("projects.id", "=", projectId)
-//     .executeTakeFirst()
-// }
-
 export async function getTaskById(c: Context, taskId: string) {
   const tasksQuery = buildTaskQuery(c)
 
@@ -235,5 +168,5 @@ function buildTaskQuery(c: Context) {
           .whereRef("up3.id", "=", "tasks.updatedBy")
       ).as("updatedBy"),
     ])
-    .innerJoin("taskAssignments", "tasks.id", "taskAssignments.taskId")
+    .leftJoin("taskAssignments", "tasks.id", "taskAssignments.taskId")
 }

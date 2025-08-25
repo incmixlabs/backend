@@ -7,7 +7,6 @@ import {
   createAuthMiddleware,
   createI18nMiddleware,
   setupCors,
-  setupOpenApi,
   setupSentryMiddleware,
 } from "@incmix-api/utils/middleware"
 import { env } from "hono/adapter"
@@ -18,6 +17,7 @@ export const middlewares = (app: OpenAPIHono<HonoApp>) => {
 
   // Add mock middleware before auth if MOCK_ENV is true
   if (envVars.MOCK_ENV) {
+    console.log("🎭 MOCK_ENV", envVars.MOCK_ENV)
     console.log(
       "🎭 MOCK MODE ENABLED - Using mock data instead of real database"
     )
@@ -27,8 +27,6 @@ export const middlewares = (app: OpenAPIHono<HonoApp>) => {
   app.use(`${BASE_PATH}/*`, createAuthMiddleware())
   app.use(`${BASE_PATH}/*`, createI18nMiddleware())
   setupCors(app, BASE_PATH)
-
-  setupOpenApi(app, BASE_PATH, "Tasks Api")
 
   app.use(`${BASE_PATH}/*`, async (c, next) => {
     const db = initDb(env(c).DATABASE_URL)

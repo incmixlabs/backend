@@ -6,7 +6,6 @@ import {
   createAuthMiddleware,
   createI18nMiddleware,
   setupCors,
-  setupOpenApi,
   setupSentryMiddleware,
 } from "@incmix-api/utils/middleware"
 
@@ -16,6 +15,4 @@ export const middlewares = (app: OpenAPIHono<HonoApp>) => {
 
   app.use(`${BASE_PATH}/*`, createAuthMiddleware())
   app.use(`${BASE_PATH}/*`, createI18nMiddleware())
-
-  setupOpenApi(app, BASE_PATH, "File Storage API")
 }
