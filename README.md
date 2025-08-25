@@ -82,3 +82,8 @@ If you're working on a service that hasn't been migrated yet:
   ```bash
   find ./api/ -type f -name ".env" -delete
   ```
+
+## Testing
+1. supertest for testing PRS
+2. artillery weekly for manual load testing
+3. schemathesis daily for manual fuzzing testing
