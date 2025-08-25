@@ -5,7 +5,6 @@ import { initDb } from "@incmix-api/utils/db-schema"
 import {
   createI18nMiddleware,
   setupCors,
-  setupOpenApi,
   setupSentryMiddleware,
 } from "@incmix-api/utils/middleware"
 import { env } from "hono/adapter"
@@ -14,7 +13,6 @@ export const middlewares = (app: OpenAPIHono<HonoApp>) => {
   setupCors(app, BASE_PATH)
   setupSentryMiddleware(app, BASE_PATH, "email-api")
   app.use(`${BASE_PATH}/*`, createI18nMiddleware())
-  setupOpenApi(app, BASE_PATH, "Email Api")
 
   app.use(`${BASE_PATH}/*`, (c, next) => {
     c.set("db", initDb(env(c).DATABASE_URL))

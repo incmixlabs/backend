@@ -11,14 +11,14 @@ const SERVICE_PORTS = {
   files: 8282,
   location: 9494,
   bff: 8080,
-  comments: 8081,
+  comments: 8585,
   intl: 9090,
   org: 9292,
   permissions: 9393,
-  projects: 9494,
-  tasks: 9595,
-  users: 9696,
-  rxdb: 9797,
+  projects: 8484,
+  tasks: 8888,
+  users: 9191,
+  rxdb: 8686,
 } as const
 const dirs: { [K in keyof typeof SERVICE_PORTS]: string } = {
   auth: "auth",
@@ -52,7 +52,6 @@ const baseEnvSchema = z.object({
     .enum(["development", "production", "test"])
     .default("development"),
   DATABASE_URL: z.url(),
-  REDIS_URL: z.url(),
   SENTRY_DSN: z.url().optional(),
   FRONTEND_URL: z.url().optional(),
   API_URL: z.url().optional(),
@@ -65,7 +64,7 @@ const baseEnvSchema = z.object({
   USERS_API_URL: z.string().optional(),
   COOKIE_NAME: z.string().default("incmix_session"),
   GOOGLE_REDIRECT_URL: z.url(),
-  MOCK_ENV: z.string().default("false"),
+  MOCK_ENV: z.coerce.boolean().default(false),
   LOCATION_API_URL: z.string().optional(),
   GENAI_API_URL: z.string().optional(),
   FILES_API_URL: z.string().optional(),
@@ -81,8 +80,8 @@ const baseEnvSchema = z.object({
 // Service-specific schema extensions
 const serviceSchemas = {
   auth: z.object({
-    JWT_SECRET: z.string(),
-    JWT_EXPIRES_IN: z.string().default("7d"),
+    // JWT_SECRET: z.string(),
+    // JWT_EXPIRES_IN: z.string().default("7d"),
     GOOGLE_CLIENT_ID: z.string().optional(),
     GOOGLE_CLIENT_SECRET: z.string().optional(),
     GITHUB_CLIENT_ID: z.string().optional(),
@@ -96,13 +95,14 @@ const serviceSchemas = {
     PORT: z.coerce.number().default(SERVICE_PORTS.email),
   }),
   genai: z.object({
-    OPENAI_API_KEY: z.string(),
-    OPENAI_MODEL: z.string().default("gpt-4"),
+    // OPENAI_API_KEY: z.string(),
+    // OPENAI_MODEL: z.string().default("gpt-4"),
     FIGMA_ACCESS_TOKEN: z.string().optional(),
     FIGMA_TOKEN: z.string().optional(),
     ANTHROPIC_API_KEY: z.string().optional(),
     GOOGLE_AI_API_KEY: z.string().optional(),
     PORT: z.coerce.number().default(SERVICE_PORTS.genai),
+    REDIS_URL: z.url(),
   }),
   files: z.object({
     STORAGE_TYPE: z.enum(["local", "s3"]).default("local"),
@@ -124,6 +124,7 @@ const serviceSchemas = {
     WEATHER_URL: z.string(),
     SERP_API_KEY: z.string(),
     SERP_NEWS_URL: z.string(),
+    REDIS_URL: z.url(),
     PORT: z.coerce.number().default(SERVICE_PORTS.location),
   }),
   bff: z.object({
@@ -146,6 +147,7 @@ const serviceSchemas = {
   }),
   tasks: z.object({
     PORT: z.coerce.number().default(SERVICE_PORTS.tasks),
+    REDIS_URL: z.url(),
   }),
   users: z.object({
     PORT: z.coerce.number().default(SERVICE_PORTS.users),

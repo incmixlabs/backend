@@ -1,9 +1,9 @@
-import { envVars } from "@/env-vars"
 import { getLocationFromIp } from "@/lib/helper"
 
 import type { HonoApp } from "@/types"
 import { OpenAPIHono } from "@hono/zod-openapi"
 import { zodError } from "@incmix-api/utils/errors"
+import { env } from "hono/adapter"
 import { getNews, getNewsTopics } from "./openapi"
 import type { NewsApiResponse, NewsResponse, TopicApiResponse } from "./types"
 
@@ -13,7 +13,6 @@ newsRoutes.openapi(getNewsTopics, async (c) => {
   const { country } = c.req.valid("query")
 
   const searchParams = new URLSearchParams({
-    api_key: envVars.SERP_API_KEY,
     engine: "google_news",
     hl: "en",
   })
@@ -25,21 +24,25 @@ newsRoutes.openapi(getNewsTopics, async (c) => {
     searchParams.append("gl", country_code)
   }
 
-  // const redis = c.get("redis")
+  const redis = c.get("redis")
 
-  // const cache = await redis.get<{ menu_links: TopicApiResponse[] }>(
-  //   searchParams.toString()
-  // )
+  const key = searchParams.toString()
+  const cache = await redis.get(key)
 
-  // if (cache) {
-  //   console.log("news:cache hit")
-  //   return c.json(
-  //     { topics: cache.menu_links, country: searchParams.get("gl") ?? "us" },
-  //     200
-  //   )
-  // }
+  if (cache) {
+    console.log("news:cache hit")
+    const parsedCache = JSON.parse(cache) as TopicApiResponse[]
 
-  const res = await fetch(`${envVars.SERP_NEWS_URL}?${searchParams.toString()}`)
+    return c.json(
+      {
+        topics: parsedCache,
+        country: searchParams.get("gl") ?? "us",
+      },
+      200
+    )
+  }
+  searchParams.append("api_key", env(c).SERP_API_KEY)
+  const res = await fetch(`${env(c).SERP_NEWS_URL}?${searchParams.toString()}`)
   if (!res.ok) {
     const { error } = (await res.json()) as { error: string }
     return c.json({ message: error }, 400)
@@ -47,9 +50,11 @@ newsRoutes.openapi(getNewsTopics, async (c) => {
 
   const data = (await res.json()) as { menu_links: TopicApiResponse[] }
   // Expire after one day
-  // await redis.setex(searchParams.toString(), 60 * 60 * 24, data)
+  await redis.set(key, JSON.stringify(data.menu_links), {
+    EX: 60 * 60 * 24,
+  })
 
-  // console.log("news:cache miss")
+  console.log("news:cache miss")
   return c.json(
     { topics: data.menu_links, country: searchParams.get("gl") ?? "us" },
     200
@@ -62,7 +67,6 @@ newsRoutes.openapi(getNews, async (c) => {
     topic_token: topicToken,
     engine: "google_news",
     hl: "en",
-    api_key: envVars.SERP_API_KEY,
   })
 
   if (country) {
@@ -72,16 +76,19 @@ newsRoutes.openapi(getNews, async (c) => {
     searchParams.append("gl", country_code)
   }
 
-  // const redis = c.get("redis")
+  const redis = c.get("redis")
 
-  // const cache = await redis.get<NewsResponse>(searchParams.toString())
+  const key = searchParams.toString()
+  const cache = await redis.get(key)
 
-  // if (cache) {
-  //   console.log("news:cache hit")
-  //   return c.json(cache, 200)
-  // }
+  if (cache) {
+    console.log("news:cache hit")
+    const parsedCache = JSON.parse(cache as string) as NewsResponse
+    return c.json(parsedCache, 200)
+  }
+  searchParams.append("api_key", env(c).SERP_API_KEY)
 
-  const res = await fetch(`${envVars.SERP_NEWS_URL}?${searchParams.toString()}`)
+  const res = await fetch(`${env(c).SERP_NEWS_URL}?${searchParams.toString()}`)
   if (!res.ok) {
     const { error } = (await res.json()) as { error: string }
     return c.json({ message: error }, 400)
@@ -90,9 +97,11 @@ newsRoutes.openapi(getNews, async (c) => {
   const news = (await res.json()) as NewsApiResponse
   const parsed = parseNewsResults(news)
   // Expire after 15 mins
-  // await redis.setex(searchParams.toString(), 60 * 15, parsed)
+  await redis.set(key, JSON.stringify(parsed), {
+    EX: 60 * 15,
+  })
 
-  // console.log("news:cache miss")
+  console.log("news:cache miss")
   return c.json(parsed, 200)
 })
 

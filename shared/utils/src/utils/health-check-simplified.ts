@@ -25,7 +25,7 @@ export function setupHealthCheck<T extends OpenAPIHono<any, any, any>>(
 ): T {
   const route = createRoute({
     method: "get",
-    path: "/health",
+    path: "/",
     tags: ["Health"],
     summary: `${config.serviceName} health check`,
     description: `Check the health status of the ${config.serviceName} service`,

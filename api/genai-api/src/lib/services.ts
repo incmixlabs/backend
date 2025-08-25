@@ -109,7 +109,6 @@ export function generateUserStory(
         model: anthropic(MODEL_MAP[model]),
         prompt: enhancedPrompt,
         schema: UserStoryResponseSchema,
-        maxTokens: 1024,
       })
       return result
     }
@@ -122,7 +121,6 @@ export function generateUserStory(
       model: google(MODEL_MAP[model]),
       prompt: enhancedPrompt,
       schema: UserStoryResponseSchema.omit({ imageUrl: true }),
-      maxTokens: 1024,
     })
 
     return result
@@ -166,7 +164,6 @@ export function generateProject(
         model: anthropic(MODEL_MAP[model]),
         prompt: enhancedPrompt,
         schema: UserStoryResponseSchema.omit({ imageUrl: true }),
-        maxTokens: 1024,
       })
       return result
     }
@@ -179,7 +176,6 @@ export function generateProject(
       model: google(MODEL_MAP[model]),
       prompt: enhancedPrompt,
       schema: UserStoryResponseSchema.omit({ imageUrl: true }),
-      maxTokens: 1024,
     })
 
     return result
@@ -225,7 +221,6 @@ async function getAiResponseUsingTextPrompt(
       const result = await generateText({
         model: anthropic(MODEL_MAP[model]),
         prompt,
-        maxTokens: 1024,
       })
 
       return result.text
@@ -238,7 +233,6 @@ async function getAiResponseUsingTextPrompt(
     const result = await generateText({
       model: google(MODEL_MAP[model]),
       prompt,
-      maxTokens: 1024,
     })
 
     return result.text
@@ -291,7 +285,7 @@ async function getAiResponseUsingImagePrompt(
 
       const result = await generateText({
         model: anthropic(MODEL_MAP[model]),
-        maxTokens: 1024,
+
         messages: [
           {
             role: "user",
@@ -318,7 +312,7 @@ async function getAiResponseUsingImagePrompt(
 
     const result = await generateText({
       model: google(MODEL_MAP[model]),
-      maxTokens: 1024,
+
       messages: [
         {
           role: "user",
@@ -382,7 +376,6 @@ Return a JSON object with a single key 'userStories' whose value is an array of 
     const result = await generateText({
       model: anthropic(MODEL_MAP[model]),
       prompt: aiPrompt,
-      maxTokens: 2048,
     })
     aiResult = result.text
   } else {
@@ -392,7 +385,6 @@ Return a JSON object with a single key 'userStories' whose value is an array of 
     const result = await generateText({
       model: google(MODEL_MAP[model]),
       prompt: aiPrompt,
-      maxTokens: 2048,
     })
     aiResult = result.text
   }

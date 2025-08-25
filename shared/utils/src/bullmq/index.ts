@@ -1,5 +1,23 @@
 import { type Job, Queue, type QueueOptions, Worker } from "bullmq"
 
+/**
+ * DragonflyDB BullMQ Optimization Utilities
+ *
+ * For optimal performance with DragonflyDB, use hashtags in queue names.
+ * This ensures each queue is assigned to a specific DragonflyDB thread.
+ *
+ * @see https://www.dragonflydb.io/docs/integrations/bullmq#using-hashtags--optimized-configurations
+ */
+
+/**
+ * Creates a DragonflyDB-optimized queue name with hashtags
+ * This ensures the queue is assigned to a specific DragonflyDB thread
+ * for optimal performance and thread balancing
+ */
+function createOptimizedQueueName(name: string): string {
+  return `{${name}}`
+}
+
 type EnvVars = {
   REDIS_URL: string
   REDIS_PASSWORD?: string
@@ -21,9 +39,15 @@ export type TaskJobData = {
   createdBy: string
 }
 
-const USER_STORY_QUEUE_NAME = "user-story"
-const CODEGEN_QUEUE_NAME = "codegen"
+// Using hashtags for optimal DragonflyDB performance
+// Each queue gets assigned to a specific DragonflyDB thread for better performance
+const USER_STORY_QUEUE_NAME = createOptimizedQueueName("user-story")
+const CODEGEN_QUEUE_NAME = createOptimizedQueueName("codegen")
 
+/**
+ * Sets up the user story queue with DragonflyDB optimizations
+ * Uses hashtag-based queue naming for optimal thread assignment
+ */
 export function setupUserStoryQueue(envVars: EnvVars): Queue<TaskJobData> {
   return createNewQueue(USER_STORY_QUEUE_NAME, {
     connection: {
@@ -63,6 +87,10 @@ export function startUserStoryWorker<T>(
   return worker
 }
 
+/**
+ * Sets up the codegen queue with DragonflyDB optimizations
+ * Uses hashtag-based queue naming for optimal thread assignment
+ */
 export function setupCodegenQueue(
   envVars: EnvVars
 ): Queue<TaskJobData & { figmaUrl: string }> {
