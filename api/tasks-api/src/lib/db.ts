@@ -74,7 +74,15 @@ export async function isProjectMember(
 export async function getTasks(c: Context, userId: string): Promise<Task[]> {
   const tasksQuery = buildTaskQuery(c)
 
-  tasksQuery.where("taskAssignments.userId", "=", userId)
+  tasksQuery.where((eb) =>
+    eb.exists(
+      eb
+        .selectFrom("taskAssignments")
+        .select("taskAssignments.taskId")
+        .whereRef("taskAssignments.taskId", "=", "tasks.id")
+        .where("taskAssignments.userId", "=", userId)
+    )
+  )
 
   const tasks = await tasksQuery.execute()
 
@@ -168,5 +176,4 @@ function buildTaskQuery(c: Context) {
           .whereRef("up3.id", "=", "tasks.updatedBy")
       ).as("updatedBy"),
     ])
-    .leftJoin("taskAssignments", "tasks.id", "taskAssignments.taskId")
 }
