@@ -1,23 +1,31 @@
 import type { OpenAPIHono } from "@hono/zod-openapi"
-import { Redis } from "@upstash/redis/node"
 import type { Env as HonoEnv } from "hono"
+import { env } from "hono/adapter"
+import { createClient } from "redis"
+
 declare module "hono" {
   interface ContextVariableMap {
-    redis: Redis
+    redis: ReturnType<typeof createClient>
   }
 }
 
 type Env = {
-  Bindings: { UPSTASH_REDIS_REST_URL: string; UPSTASH_REDIS_REST_TOKEN: string }
+  Bindings: { REDIS_URL: string }
 } & HonoEnv
 
 export function setupRedisMiddleware<T extends Env>(
   app: OpenAPIHono<T>,
   basePath: string
 ) {
-  app.use(`${basePath}/*`, (c, next) => {
-    const redis = Redis.fromEnv()
+  app.use(`${basePath}/*`, async (c, next) => {
+    const redis = createClient({
+      url: env(c).REDIS_URL,
+    })
+
+    await redis.connect()
+
     c.set("redis", redis)
+
     return next()
   })
 }

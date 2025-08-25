@@ -31,7 +31,7 @@ const healthcheckRoutes = createHealthCheckRoute<HonoApp>({
     DOMAIN: envVars.DOMAIN,
     // Add other required environment variables
   },
-  
+
   // Set OpenAPI tags
   tags: ["Health Check"],
 })
@@ -53,7 +53,7 @@ const healthcheckRoutes = createHealthCheckRoute<HonoApp>({
   envVars: {
     // Environment variables to check
   },
-  
+
   // Add service-specific checks
   checks: [
     {
@@ -81,7 +81,7 @@ const healthcheckRoutes = createHealthCheckRoute<HonoApp>({
       },
     },
   ],
-  
+
   tags: ["Health Check"],
 })
 
@@ -92,12 +92,12 @@ export default healthcheckRoutes
 
 The `createHealthCheckRoute` function accepts a configuration object with the following options:
 
-| Option | Type | Description |
-|--------|------|-------------|
-| `envVars` | `Record<string, string \| undefined>` | Environment variables to check. Each missing or undefined variable will cause the health check to return DOWN status. |
-| `checks` | `Array<{ name: string, check: () => Promise<boolean> }>` | Custom health checks to perform. Each check should return a promise that resolves to a boolean (true = healthy). |
-| `tags` | `string[]` | OpenAPI tags for documentation. Defaults to `["Health Check"]`. |
-| `requireAuth` | `boolean` | Whether to require authentication for the health check endpoint. Defaults to `false`. |
+| Option        | Type                                                     | Description                                                                                                           |
+| ------------- | -------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| `envVars`     | `Record<string, string \| undefined>`                    | Environment variables to check. Each missing or undefined variable will cause the health check to return DOWN status. |
+| `checks`      | `Array<{ name: string, check: () => Promise<boolean> }>` | Custom health checks to perform. Each check should return a promise that resolves to a boolean (true = healthy).      |
+| `tags`        | `string[]`                                               | OpenAPI tags for documentation. Defaults to `["Health Check"]`.                                                       |
+| `requireAuth` | `boolean`                                                | Whether to require authentication for the health check endpoint. Defaults to `false`.                                 |
 
 ## Response Format
 

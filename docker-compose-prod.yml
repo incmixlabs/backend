@@ -28,12 +28,13 @@ services:
     networks:
       - incmix-network
   redis:
-    image: redis:8.2-alpine
+    image: docker.dragonflydb.io/dragonflydb/dragonfly:latest
     restart: always
+    command: --cluster_mode=emulated --lock_on_hashtags --requirepass ${REDIS_PASSWORD:-redis_password}
     environment:
       REDIS_PASSWORD: ${REDIS_PASSWORD:-redis_password}
     volumes:
-      - incmix-redis-data:/data
+      - incmix-dragonfly-data:/data
     networks:
       - incmix-network
   # backend:
@@ -191,7 +192,7 @@ services:
     environment:
       # Database
       DATABASE_URL: ${DATABASE_URL}
-      REDIS_URL: redis://redis:6379
+      REDIS_URL: redis://dragonfly:6379
       # Service configuration
       NODE_ENV: ${NODE_ENV}
       COOKIE_NAME: ${COOKIE_NAME}
@@ -239,7 +240,7 @@ services:
       COOKIE_NAME: ${COOKIE_NAME}
       DOMAIN: ${DOMAIN}
       PORT: 8888
-      REDIS_URL: redis://redis:6379
+      REDIS_URL: redis://dragonfly:6379
       # Service URLs
       AUTH_API_URL: ${AUTH_API_URL:-http://auth-api:8787/api/auth}
       ORG_API_URL: ${ORG_API_URL:-http://org-api:9292/api/org}
@@ -266,8 +267,7 @@ services:
       WEATHER_API_KEY: ${WEATHER_API_KEY}
       LOCATION_API_KEY: ${LOCATION_API_KEY}
       SERP_API_KEY: ${SERP_API_KEY}
-      UPSTASH_REDIS_REST_URL: ${UPSTASH_REDIS_REST_URL}
-      UPSTASH_REDIS_REST_TOKEN: ${UPSTASH_REDIS_REST_TOKEN}
+      REDIS_URL: redis://dragonfly:6379
     networks:
       - incmix-network
     depends_on:
@@ -346,6 +346,6 @@ services:
 
 volumes:
   incmix-db-data:
-  incmix-redis-data:
+  incmix-dragonfly-data:
 networks:
   incmix-network:

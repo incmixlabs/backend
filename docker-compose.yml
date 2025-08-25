@@ -21,21 +21,21 @@ services:
       - incmix-network
 
   redis:
-    image: redis:8.2-alpine
+    image: docker.dragonflydb.io/dragonflydb/dragonfly:latest
     restart: always
-    command: redis-server --requirepass ${REDIS_PASSWORD:-redis_password}
+    command: --cluster_mode=emulated --lock_on_hashtags --requirepass ${REDIS_PASSWORD:-redis_password}
     environment:
       REDIS_PASSWORD: ${REDIS_PASSWORD:-redis_password}
     ports:
       - 6379:6379
     volumes:
-      - incmix-redis-data:/data
+      - incmix-dragonfly-data:/data
     networks:
       - incmix-network
 
 volumes:
   incmix-db-data:
-  incmix-redis-data:
+  incmix-dragonfly-data:
 
 networks:
   incmix-network:

@@ -124,6 +124,7 @@ const serviceSchemas = {
     WEATHER_URL: z.string(),
     SERP_API_KEY: z.string(),
     SERP_NEWS_URL: z.string(),
+    REDIS_URL: z.url(),
     PORT: z.coerce.number().default(SERVICE_PORTS.location),
   }),
   bff: z.object({
