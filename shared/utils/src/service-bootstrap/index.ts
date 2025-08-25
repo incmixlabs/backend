@@ -6,6 +6,7 @@ import type { Context } from "hono"
 import { logger } from "hono/logger"
 import { KVStore } from "../kv-store"
 import { setupOpenApi } from "./open-api"
+import { shutdownRedis } from "../middleware/redis"
 
 export interface ServiceConfig<
   TBindings extends object = Record<string, unknown>,
@@ -70,6 +71,27 @@ export function createService<
     })
 
     console.log(`${config.name} running on port ${config.port}`)
+
+    // Setup graceful shutdown
+    const gracefulShutdown = async (signal: string) => {
+      console.log(`\nReceived ${signal}. Starting graceful shutdown...`)
+
+      try {
+        // Shutdown Redis client
+        await shutdownRedis()
+        console.log("Redis client shutdown completed")
+
+        // Exit gracefully
+        process.exit(0)
+      } catch (error) {
+        console.error("Error during graceful shutdown:", error)
+        process.exit(1)
+      }
+    }
+
+    // Handle shutdown signals
+    process.on("SIGTERM", () => gracefulShutdown("SIGTERM"))
+    process.on("SIGINT", () => gracefulShutdown("SIGINT"))
   }
 
   return {

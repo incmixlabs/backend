@@ -37,6 +37,12 @@ services:
       - incmix-dragonfly-data:/data
     networks:
       - incmix-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD:-redis_password}", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
   # backend:
   #   image: electricsql/electric
   #   environment:
