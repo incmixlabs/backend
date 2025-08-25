@@ -5,8 +5,8 @@ import { setupRbac } from "@incmix-api/utils/authorization"
 import type { Context } from "hono"
 import { logger } from "hono/logger"
 import { KVStore } from "../kv-store"
-import { setupOpenApi } from "./open-api"
 import { shutdownRedis } from "../middleware/redis"
+import { setupOpenApi } from "./open-api"
 
 export interface ServiceConfig<
   TBindings extends object = Record<string, unknown>,
