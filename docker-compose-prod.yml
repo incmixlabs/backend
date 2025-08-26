@@ -33,15 +33,15 @@ services:
   redis:
     image: docker.dragonflydb.io/dragonflydb/dragonfly:latest
     restart: always
-    command: --cluster_mode=emulated --lock_on_hashtags --requirepass ${REDIS_PASSWORD:-redis_password}
+    command: --cluster_mode=emulated --lock_on_hashtags --requirepass ${REDIS_PASSWORD}
     environment:
-      REDIS_PASSWORD: ${REDIS_PASSWORD:-redis_password}
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
     volumes:
       - incmix-dragonfly-data:/data
     networks:
       - incmix-network
     healthcheck:
-      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD:-redis_password}", "ping"]
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -201,7 +201,7 @@ services:
     environment:
       # Database
       DATABASE_URL: ${DATABASE_URL}
-      REDIS_URL: redis://:${REDIS_PASSWORD:-redis_password}@redis:6379
+      REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379
       # Service configuration
       NODE_ENV: ${NODE_ENV}
       COOKIE_NAME: ${COOKIE_NAME}
@@ -219,6 +219,7 @@ services:
       - incmix-network
     depends_on:
       - postgres
+      - redis
 
   projects-api:
     image: registry.incmix.com/projects-api:latest
@@ -249,7 +250,7 @@ services:
       COOKIE_NAME: ${COOKIE_NAME}
       DOMAIN: ${DOMAIN}
       PORT: 8888
-      REDIS_URL: redis://:${REDIS_PASSWORD:-redis_password}@redis:6379
+      REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379
       # Service URLs
       AUTH_API_URL: ${AUTH_API_URL:-http://auth-api:8787/api/auth}
       ORG_API_URL: ${ORG_API_URL:-http://org-api:9292/api/org}
@@ -258,6 +259,7 @@ services:
       - incmix-network
     depends_on:
       - postgres
+      - redis
 
   location-api:
     image: registry.incmix.com/location-api:latest
@@ -276,11 +278,12 @@ services:
       WEATHER_API_KEY: ${WEATHER_API_KEY}
       LOCATION_API_KEY: ${LOCATION_API_KEY}
       SERP_API_KEY: ${SERP_API_KEY}
-      REDIS_URL: redis://:${REDIS_PASSWORD:-redis_password}@redis:6379
+      REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379
     networks:
       - incmix-network
     depends_on:
       - postgres
+      - redis
 
   comments-api:
     image: registry.incmix.com/comments-api:latest

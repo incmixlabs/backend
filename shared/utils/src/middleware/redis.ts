@@ -159,8 +159,20 @@ export function setupRedisMiddleware<T extends Env>(
         console.warn(
           "Redis client unhealthy, attempting to recreate connection"
         )
-        // Force recreation of connection
-        redisClient = null
+        // Gracefully shutdown existing client before recreating
+        if (redisClient) {
+          try {
+            await redisClient.quit()
+            console.log("Existing Redis client shutdown successfully")
+          } catch (error) {
+            console.warn("Error shutting down existing Redis client:", error)
+            // Continue with recreation even if shutdown fails
+          } finally {
+            redisClient = null
+          }
+        }
+
+        // Create new healthy connection after old client is closed
         const healthyRedis = await getRedisClient(redisUrl)
         c.set("redis", healthyRedis)
       } else {

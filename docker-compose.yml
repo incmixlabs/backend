@@ -26,12 +26,16 @@ services:
     command: --cluster_mode=emulated --lock_on_hashtags --requirepass ${REDIS_PASSWORD:-redis_password}
     environment:
       REDIS_PASSWORD: ${REDIS_PASSWORD:-redis_password}
-    ports:
-      - 6379:6379
     volumes:
       - incmix-dragonfly-data:/data
     networks:
       - incmix-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD:-redis_password}", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
 
 volumes:
   incmix-db-data:
