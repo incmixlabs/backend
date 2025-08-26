@@ -3,24 +3,20 @@ import { BASE_PATH } from "@/lib/constants"
 import { middlewares } from "@/middleware"
 import { routes } from "@/routes"
 import type { HonoApp } from "@/types"
-import { serve } from "@hono/node-server"
-import { OpenAPIHono } from "@hono/zod-openapi"
-import { KVStore } from "@incmix-api/utils/kv-store"
-import { setupKvStore } from "@incmix-api/utils/middleware"
-const app = new OpenAPIHono<HonoApp>()
+import { createService } from "@incmix-api/utils"
 
-const globalStore = new KVStore()
+const service = createService<HonoApp["Bindings"], HonoApp["Variables"]>({
+  name: "auth-api",
+  port: envVars.PORT,
+  basePath: BASE_PATH,
+  setupMiddleware: (app) => {
+    middlewares(app)
+  },
+  setupRoutes: (app) => routes(app),
+})
 
-setupKvStore(app, BASE_PATH, globalStore)
+const { app, startServer } = service
 
-middlewares(app)
-
-routes(app)
-
-if (process.env.NODE_ENV !== "test") {
-  serve({ fetch: app.fetch, port: envVars.PORT }, (info) => {
-    console.log(`Server is running on port ${info.port}`)
-  })
-}
+startServer()
 
 export default app

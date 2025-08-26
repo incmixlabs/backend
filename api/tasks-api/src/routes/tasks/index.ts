@@ -332,6 +332,7 @@ tasksRoutes.openapi(updateTask, async (c) => {
 
 tasksRoutes.openapi(taskById, async (c) => {
   try {
+    console.log("taskById", c.req.valid("param"))
     const user = c.get("user")
     const t = await useTranslation(c)
     if (!user) {

@@ -6,7 +6,6 @@ import { initDb } from "@incmix-api/utils/db-schema"
 import {
   createI18nMiddleware,
   setupCors,
-  setupOpenApi,
   setupSentryMiddleware,
 } from "@incmix-api/utils/middleware"
 import { env } from "hono/adapter"
@@ -22,6 +21,4 @@ export const middlewares = (app: OpenAPIHono<HonoApp>) => {
 
   // Use custom authentication middleware
   app.use(`${BASE_PATH}/*`, authMiddleware)
-
-  setupOpenApi(app, BASE_PATH, "Auth Api")
 }
