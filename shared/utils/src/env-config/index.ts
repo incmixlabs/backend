@@ -51,19 +51,15 @@ const baseEnvSchema = z.object({
   NODE_ENV: z
     .enum(["development", "production", "test"])
     .default("development"),
-  DATABASE_URL: z.url(),
   SENTRY_DSN: z.url().optional(),
   FRONTEND_URL: z.url().optional(),
   API_URL: z.url().optional(),
-  GOOGLE_CLIENT_ID: z.string(),
-  GOOGLE_CLIENT_SECRET: z.string(),
   DOMAIN: z.string().default("http://localhost"),
   EMAIL_API_URL: z.string().optional(),
   AUTH_API_URL: z.string().optional(),
   INTL_API_URL: z.string().optional(),
   USERS_API_URL: z.string().optional(),
   COOKIE_NAME: z.string().default("incmix_session"),
-  GOOGLE_REDIRECT_URL: z.url(),
   MOCK_ENV: z.coerce.boolean().default(false),
   LOCATION_API_URL: z.string().optional(),
   GENAI_API_URL: z.string().optional(),
@@ -82,14 +78,15 @@ const serviceSchemas = {
   auth: z.object({
     // JWT_SECRET: z.string(),
     // JWT_EXPIRES_IN: z.string().default("7d"),
-    GOOGLE_CLIENT_ID: z.string().optional(),
-    GOOGLE_CLIENT_SECRET: z.string().optional(),
-    GITHUB_CLIENT_ID: z.string().optional(),
-    GITHUB_CLIENT_SECRET: z.string().optional(),
+    DATABASE_URL: z.url(),
+    GOOGLE_REDIRECT_URL: z.url(),
+    GOOGLE_CLIENT_ID: z.string(),
+    GOOGLE_CLIENT_SECRET: z.string(),
     PORT: z.coerce.number().default(SERVICE_PORTS.auth),
   }),
   email: z.object({
     EMAIL_FROM: z.email(),
+    DATABASE_URL: z.url(),
     RESEND_API_KEY: z.string(),
     RESEND_WEBHOOK_SECRET: z.string().optional(),
     PORT: z.coerce.number().default(SERVICE_PORTS.email),
@@ -97,6 +94,7 @@ const serviceSchemas = {
   genai: z.object({
     // OPENAI_API_KEY: z.string(),
     // OPENAI_MODEL: z.string().default("gpt-4"),
+    DATABASE_URL: z.url(),
     FIGMA_ACCESS_TOKEN: z.string().optional(),
     FIGMA_TOKEN: z.string().optional(),
     ANTHROPIC_API_KEY: z.string().optional(),
@@ -105,6 +103,7 @@ const serviceSchemas = {
     REDIS_URL: z.url(),
   }),
   files: z.object({
+    DATABASE_URL: z.url(),
     STORAGE_TYPE: z.enum(["local", "s3"]).default("local"),
     UPLOAD_DIR: z.string().optional(),
     AWS_REGION: z.string().optional(),
@@ -116,6 +115,7 @@ const serviceSchemas = {
     PORT: z.coerce.number().default(SERVICE_PORTS.files),
   }),
   location: z.object({
+    DATABASE_URL: z.url(),
     OPENWEATHER_API_KEY: z.string().optional(),
     NEWS_API_KEY: z.string().optional(),
     LOCATION_API_KEY: z.string(),
@@ -131,28 +131,36 @@ const serviceSchemas = {
     PORT: z.coerce.number().default(SERVICE_PORTS.bff),
   }),
   comments: z.object({
+    DATABASE_URL: z.url(),
     PORT: z.coerce.number().default(SERVICE_PORTS.comments),
   }),
   intl: z.object({
+    DATABASE_URL: z.url(),
     PORT: z.coerce.number().default(SERVICE_PORTS.intl),
   }),
   org: z.object({
+    DATABASE_URL: z.url(),
     PORT: z.coerce.number().default(SERVICE_PORTS.org),
   }),
   permissions: z.object({
+    DATABASE_URL: z.url(),
     PORT: z.coerce.number().default(SERVICE_PORTS.permissions),
   }),
   projects: z.object({
+    DATABASE_URL: z.url(),
     PORT: z.coerce.number().default(SERVICE_PORTS.projects),
   }),
   tasks: z.object({
+    DATABASE_URL: z.url(),
     PORT: z.coerce.number().default(SERVICE_PORTS.tasks),
     REDIS_URL: z.url(),
   }),
   users: z.object({
+    DATABASE_URL: z.url(),
     PORT: z.coerce.number().default(SERVICE_PORTS.users),
   }),
   rxdb: z.object({
+    DATABASE_URL: z.url(),
     PORT: z.coerce.number().default(SERVICE_PORTS.rxdb),
   }),
 }
