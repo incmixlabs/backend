@@ -1086,6 +1086,9 @@ importers:
       bullmq:
         specifier: 'catalog:'
         version: 5.56.10
+      dotenv:
+        specifier: 17.2.1
+        version: 17.2.1
       dotenv-expand:
         specifier: 'catalog:'
         version: 12.0.2

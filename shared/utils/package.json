@@ -55,24 +55,24 @@
       "types": "./dist/src/db-operations/index.d.ts"
     }
   },
-
   "dependencies": {
     "@casl/ability": "catalog:",
+    "@hono/node-server": "catalog:",
     "@hono/sentry": "1.2.0",
     "@hono/zod-openapi": "catalog:",
     "@incmix/utils": "catalog:",
     "@intlify/utils": "0.13.0",
     "@scalar/hono-api-reference": "0.5.163",
     "@sentry/utils": "8.42.0",
-    "redis": "5.8.2",
     "add": "2.0.6",
     "bullmq": "catalog:",
+    "dotenv": "17.2.1",
     "dotenv-expand": "catalog:",
     "dotenv-mono": "^1.5.0",
     "hono": "catalog:",
     "kysely": "catalog:",
     "pg": "catalog:",
-    "@hono/node-server": "catalog:",
+    "redis": "5.8.2",
     "zod": "catalog:"
   },
   "devDependencies": {

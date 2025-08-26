@@ -316,12 +316,8 @@ services:
       PORT: 8686
       # Service URLs
       AUTH_API_URL: ${AUTH_API_URL:-http://auth-api:8787/api/auth}
-      ORG_API_URL: ${ORG_API_URL:-http://org-api:9292/api/org}
       INTL_API_URL: ${INTL_API_URL:-http://intl-api:9090/api/intl}
-      # AI/ML services
-      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
-      GOOGLE_AI_API_KEY: ${GOOGLE_AI_API_KEY}
-      FIGMA_TOKEN: ${FIGMA_TOKEN}
+
     networks:
       - incmix-network
     depends_on:

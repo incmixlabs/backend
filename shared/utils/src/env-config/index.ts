@@ -1,6 +1,7 @@
+import fs from "node:fs"
 import path from "node:path"
 import { fileURLToPath } from "node:url"
-import { load } from "dotenv-mono"
+import { config } from "dotenv"
 import { z } from "zod"
 
 // Default ports for each service
@@ -51,117 +52,165 @@ const baseEnvSchema = z.object({
   NODE_ENV: z
     .enum(["development", "production", "test"])
     .default("development"),
+  DATABASE_URL: z.url(),
   SENTRY_DSN: z.url().optional(),
   FRONTEND_URL: z.url().optional(),
   API_URL: z.url().optional(),
   DOMAIN: z.string().default("http://localhost"),
-  EMAIL_API_URL: z.string().optional(),
-  AUTH_API_URL: z.string().optional(),
-  INTL_API_URL: z.string().optional(),
-  USERS_API_URL: z.string().optional(),
   COOKIE_NAME: z.string().default("incmix_session"),
   MOCK_ENV: z.coerce.boolean().default(false),
-  LOCATION_API_URL: z.string().optional(),
-  GENAI_API_URL: z.string().optional(),
-  FILES_API_URL: z.string().optional(),
-  BFF_API_URL: z.string().optional(),
-  COMMENTS_API_URL: z.string().optional(),
-  ORG_API_URL: z.string().optional(),
-  PERMISSIONS_API_URL: z.string().optional(),
-  PROJECTS_API_URL: z.string().optional(),
-  TASKS_API_URL: z.string().optional(),
-  RXDB_API_URL: z.string().optional(),
 })
 
 // Service-specific schema extensions
 const serviceSchemas = {
-  auth: z.object({
-    // JWT_SECRET: z.string(),
-    // JWT_EXPIRES_IN: z.string().default("7d"),
-    DATABASE_URL: z.url(),
+  auth: baseEnvSchema.extend({
     GOOGLE_REDIRECT_URL: z.url(),
     GOOGLE_CLIENT_ID: z.string(),
     GOOGLE_CLIENT_SECRET: z.string(),
     PORT: z.coerce.number().default(SERVICE_PORTS.auth),
+    // API URLs
+    EMAIL_API_URL: z.url(),
+    USERS_API_URL: z.url(),
+    INTL_API_URL: z.url(),
+    // Note: DATABASE_URL is inherited from baseEnvSchema
   }),
-  email: z.object({
+  email: baseEnvSchema.extend({
     EMAIL_FROM: z.email(),
-    DATABASE_URL: z.url(),
     RESEND_API_KEY: z.string(),
     RESEND_WEBHOOK_SECRET: z.string().optional(),
     PORT: z.coerce.number().default(SERVICE_PORTS.email),
+    // API URLs
+    INTL_API_URL: z.url(),
+    // Note: DATABASE_URL is inherited from baseEnvSchema
   }),
-  genai: z.object({
-    // OPENAI_API_KEY: z.string(),
-    // OPENAI_MODEL: z.string().default("gpt-4"),
-    DATABASE_URL: z.url(),
+  genai: baseEnvSchema.extend({
     FIGMA_ACCESS_TOKEN: z.string().optional(),
     FIGMA_TOKEN: z.string().optional(),
     ANTHROPIC_API_KEY: z.string().optional(),
     GOOGLE_AI_API_KEY: z.string().optional(),
     PORT: z.coerce.number().default(SERVICE_PORTS.genai),
     REDIS_URL: z.url(),
+    // API URLs
+    AUTH_API_URL: z.url(),
+    ORG_API_URL: z.url(),
+    INTL_API_URL: z.url(),
+    // Note: DATABASE_URL is inherited from baseEnvSchema
   }),
-  files: z.object({
-    DATABASE_URL: z.url(),
-    STORAGE_TYPE: z.enum(["local", "s3"]).default("local"),
+  files: baseEnvSchema.extend({
+    STORAGE_TYPE: z.enum(["local", "s3"]).default("s3"),
     UPLOAD_DIR: z.string().optional(),
-    AWS_REGION: z.string().optional(),
-    AWS_ACCESS_KEY_ID: z.string().optional(),
-    AWS_SECRET_ACCESS_KEY: z.string().optional(),
-    S3_BUCKET: z.string().optional(),
+    AWS_REGION: z.string(),
+    AWS_ACCESS_KEY_ID: z.string(),
+    AWS_SECRET_ACCESS_KEY: z.string(),
+    S3_BUCKET: z.string(),
     BUCKET_NAME: z.string().optional(),
-    AWS_ENDPOINT_URL_S3: z.string().optional(),
+    AWS_ENDPOINT_URL_S3: z.string(),
     PORT: z.coerce.number().default(SERVICE_PORTS.files),
+    // API URLs
+    AUTH_API_URL: z.url(),
+    INTL_API_URL: z.url(),
+    // Note: DATABASE_URL is inherited from baseEnvSchema
   }),
-  location: z.object({
-    DATABASE_URL: z.url(),
-    OPENWEATHER_API_KEY: z.string().optional(),
-    NEWS_API_KEY: z.string().optional(),
-    LOCATION_API_KEY: z.string(),
-    LOCATION_URL: z.string(),
-    WEATHER_API_KEY: z.string(),
-    WEATHER_URL: z.string(),
-    SERP_API_KEY: z.string(),
-    SERP_NEWS_URL: z.string(),
-    REDIS_URL: z.url(),
-    PORT: z.coerce.number().default(SERVICE_PORTS.location),
-  }),
-  bff: z.object({
-    PORT: z.coerce.number().default(SERVICE_PORTS.bff),
-  }),
-  comments: z.object({
-    DATABASE_URL: z.url(),
+  location: baseEnvSchema
+    .omit({
+      DATABASE_URL: true,
+    })
+    .extend({
+      LOCATION_API_KEY: z.string(),
+      LOCATION_URL: z.string(),
+      WEATHER_API_KEY: z.string(),
+      WEATHER_URL: z.string(),
+      SERP_API_KEY: z.string(),
+      SERP_NEWS_URL: z.string(),
+      REDIS_URL: z.url(),
+      PORT: z.coerce.number().default(SERVICE_PORTS.location),
+      // API URLs
+      INTL_API_URL: z.url(),
+      // Note: DATABASE_URL is inherited from baseEnvSchema but not used in Docker Compose
+    }),
+  bff: baseEnvSchema
+    .omit({
+      DATABASE_URL: true,
+    })
+    .extend({
+      PORT: z.coerce.number().default(SERVICE_PORTS.bff),
+      // API URLs - BFF needs access to all services
+      AUTH_API_URL: z.url(),
+      ORG_API_URL: z.url(),
+      INTL_API_URL: z.url(),
+      GENAI_API_URL: z.url(),
+      PROJECTS_API_URL: z.url(),
+      TASKS_API_URL: z.url(),
+      COMMENTS_API_URL: z.url(),
+      USERS_API_URL: z.url(),
+      FILES_API_URL: z.url(),
+      EMAIL_API_URL: z.url(),
+      LOCATION_API_URL: z.url(),
+      RXDB_SYNC_API_URL: z.url(),
+      PERMISSIONS_API_URL: z.url(),
+      // Note: DATABASE_URL is inherited from baseEnvSchema but not used in Docker Compose
+    }),
+  comments: baseEnvSchema.extend({
     PORT: z.coerce.number().default(SERVICE_PORTS.comments),
+    // API URLs
+    AUTH_API_URL: z.url(),
+    ORG_API_URL: z.url(),
+    INTL_API_URL: z.url(),
+    // Note: DATABASE_URL is inherited from baseEnvSchema
   }),
-  intl: z.object({
-    DATABASE_URL: z.url(),
+  intl: baseEnvSchema.extend({
     PORT: z.coerce.number().default(SERVICE_PORTS.intl),
+    // API URLs
+    AUTH_API_URL: z.url(),
+    // Note: DATABASE_URL is inherited from baseEnvSchema
   }),
-  org: z.object({
-    DATABASE_URL: z.url(),
+  org: baseEnvSchema.extend({
     PORT: z.coerce.number().default(SERVICE_PORTS.org),
+    // API URLs
+    AUTH_API_URL: z.url(),
+    USERS_API_URL: z.url(),
+    INTL_API_URL: z.url(),
+    // Note: DATABASE_URL is inherited from baseEnvSchema
   }),
-  permissions: z.object({
-    DATABASE_URL: z.url(),
+  permissions: baseEnvSchema.extend({
     PORT: z.coerce.number().default(SERVICE_PORTS.permissions),
+    // API URLs
+    AUTH_API_URL: z.url(),
+    USERS_API_URL: z.url(),
+    INTL_API_URL: z.url(),
+    // Note: DATABASE_URL is inherited from baseEnvSchema
   }),
-  projects: z.object({
-    DATABASE_URL: z.url(),
+  projects: baseEnvSchema.extend({
     PORT: z.coerce.number().default(SERVICE_PORTS.projects),
+    // API URLs
+    AUTH_API_URL: z.url(),
+    ORG_API_URL: z.url(),
+    INTL_API_URL: z.url(),
+    // Note: DATABASE_URL is inherited from baseEnvSchema
   }),
-  tasks: z.object({
-    DATABASE_URL: z.url(),
+  tasks: baseEnvSchema.extend({
     PORT: z.coerce.number().default(SERVICE_PORTS.tasks),
     REDIS_URL: z.url(),
+    // API URLs
+    AUTH_API_URL: z.url(),
+    ORG_API_URL: z.url(),
+    INTL_API_URL: z.url(),
+    // Note: DATABASE_URL is inherited from baseEnvSchema
   }),
-  users: z.object({
-    DATABASE_URL: z.url(),
+  users: baseEnvSchema.extend({
     PORT: z.coerce.number().default(SERVICE_PORTS.users),
+    // Note: DATABASE_URL is inherited from baseEnvSchema
+    // API URLs
+    AUTH_API_URL: z.url(),
+    FILES_API_URL: z.url(),
+    ORG_API_URL: z.url(),
+    INTL_API_URL: z.url(),
   }),
-  rxdb: z.object({
-    DATABASE_URL: z.url(),
+  rxdb: baseEnvSchema.extend({
     PORT: z.coerce.number().default(SERVICE_PORTS.rxdb),
+    // API URLs
+    AUTH_API_URL: z.url(),
+    INTL_API_URL: z.url(),
   }),
 }
 
@@ -178,8 +227,32 @@ export function createEnvConfig<T extends ServiceName>(
   // Get the directory of the current module
   const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
-  // Find the backend root directory (4 levels up from utils/src/env-config)
-  const backendRoot = path.resolve(__dirname, "../../../..")
+  // Find the backend root directory more reliably
+  // Start from the current directory and look for the backend root
+  let backendRoot = __dirname
+  let attempts = 0
+  const maxAttempts = 10
+
+  while (attempts < maxAttempts) {
+    // Check if we're in the backend root by looking for characteristic files/directories
+    if (
+      fs.existsSync(path.join(backendRoot, "docker-compose.yml")) ||
+      fs.existsSync(path.join(backendRoot, "api")) ||
+      fs.existsSync(path.join(backendRoot, "shared"))
+    ) {
+      break
+    }
+
+    const parent = path.dirname(backendRoot)
+    if (parent === backendRoot) {
+      // We've reached the filesystem root, fall back to a reasonable default
+      backendRoot = process.cwd()
+      break
+    }
+
+    backendRoot = parent
+    attempts++
+  }
 
   // Set up priorities for different env files (higher number = higher priority)
   const priorities: Record<string, number> = {}
@@ -196,20 +269,26 @@ export function createEnvConfig<T extends ServiceName>(
     priorities[path.join(serviceDir, `.env.${nodeEnv}`)] = 40
   }
 
-  // Load all env files using dotenv-mono with priorities
-  // dotenv-mono automatically handles variable expansion
-  try {
-    load({
-      path: backendRoot,
-      priorities,
-      expand: true, // Enable variable expansion
-      override: true, // Allow overriding existing env vars
-    })
-  } catch (_error) {
-    // Continue even if some env files don't exist
-    console.debug(
-      "Some env files may not exist, continuing with available files"
-    )
+  // Load all env files using dotenv with priorities
+  // We'll load them in priority order (lowest to highest) so higher priority files override lower ones
+  const sortedFiles = Object.entries(priorities)
+    .sort(([, a], [, b]) => a - b)
+    .map(([filePath]) => filePath)
+
+  for (const filePath of sortedFiles) {
+    if (fs.existsSync(filePath)) {
+      try {
+        config({
+          path: filePath,
+          override: true, // Allow overriding existing env vars
+        })
+      } catch (_error) {
+        // Continue even if some env files don't exist
+        console.debug(
+          "Some env files may not exist, continuing with available files"
+        )
+      }
+    }
   }
 
   let schema: z.ZodObject<any> = baseEnvSchema as z.ZodObject<any>
@@ -239,42 +318,71 @@ export function createEnvConfig<T extends ServiceName>(
   const domain = String(env.DOMAIN || "http://localhost")
 
   // Apply domain to API URLs if they're using the default localhost
+  // Only set defaults if the environment variable is not already provided
 
-  env.EMAIL_API_URL = buildApiUrl(SERVICE_PORTS.email, "/api/email", domain)
+  if (!env.EMAIL_API_URL) {
+    env.EMAIL_API_URL = buildApiUrl(SERVICE_PORTS.email, "/api/email", domain)
+  }
+  if (!env.AUTH_API_URL) {
+    env.AUTH_API_URL = buildApiUrl(SERVICE_PORTS.auth, "/api/auth", domain)
+  }
+  if (!env.INTL_API_URL) {
+    env.INTL_API_URL = buildApiUrl(SERVICE_PORTS.intl, "/api/intl", domain)
+  }
+  if (!env.USERS_API_URL) {
+    env.USERS_API_URL = buildApiUrl(SERVICE_PORTS.users, "/api/users", domain)
+  }
+  if (!env.LOCATION_API_URL) {
+    env.LOCATION_API_URL = buildApiUrl(
+      SERVICE_PORTS.location,
+      "/api/location",
+      domain
+    )
+  }
+  if (!env.GENAI_API_URL) {
+    env.GENAI_API_URL = buildApiUrl(SERVICE_PORTS.genai, "/api/genai", domain)
+  }
+  if (!env.FILES_API_URL) {
+    env.FILES_API_URL = buildApiUrl(SERVICE_PORTS.files, "/api/files", domain)
+  }
+  if (!env.BFF_API_URL) {
+    env.BFF_API_URL = buildApiUrl(SERVICE_PORTS.bff, "/api/bff", domain)
+  }
+  if (!env.COMMENTS_API_URL) {
+    env.COMMENTS_API_URL = buildApiUrl(
+      SERVICE_PORTS.comments,
+      "/api/comments",
+      domain
+    )
+  }
+  if (!env.ORG_API_URL) {
+    env.ORG_API_URL = buildApiUrl(SERVICE_PORTS.org, "/api/org", domain)
+  }
+  if (!env.PERMISSIONS_API_URL) {
+    env.PERMISSIONS_API_URL = buildApiUrl(
+      SERVICE_PORTS.permissions,
+      "/api/permissions",
+      domain
+    )
+  }
+  if (!env.PROJECTS_API_URL) {
+    env.PROJECTS_API_URL = buildApiUrl(
+      SERVICE_PORTS.projects,
+      "/api/projects",
+      domain
+    )
+  }
+  if (!env.TASKS_API_URL) {
+    env.TASKS_API_URL = buildApiUrl(SERVICE_PORTS.tasks, "/api/tasks", domain)
+  }
 
-  env.AUTH_API_URL = buildApiUrl(SERVICE_PORTS.auth, "/api/auth", domain)
-
-  env.INTL_API_URL = buildApiUrl(SERVICE_PORTS.intl, "/api/intl", domain)
-
-  env.USERS_API_URL = buildApiUrl(SERVICE_PORTS.users, "/api/users", domain)
-
-  env.LOCATION_API_URL = buildApiUrl(
-    SERVICE_PORTS.location,
-    "/api/location",
-    domain
-  )
-  env.GENAI_API_URL = buildApiUrl(SERVICE_PORTS.genai, "/api/genai", domain)
-  env.FILES_API_URL = buildApiUrl(SERVICE_PORTS.files, "/api/files", domain)
-  env.BFF_API_URL = buildApiUrl(SERVICE_PORTS.bff, "/api/bff", domain)
-  env.COMMENTS_API_URL = buildApiUrl(
-    SERVICE_PORTS.comments,
-    "/api/comments",
-    domain
-  )
-  env.ORG_API_URL = buildApiUrl(SERVICE_PORTS.org, "/api/org", domain)
-  env.PERMISSIONS_API_URL = buildApiUrl(
-    SERVICE_PORTS.permissions,
-    "/api/permissions",
-    domain
-  )
-  env.PROJECTS_API_URL = buildApiUrl(
-    SERVICE_PORTS.projects,
-    "/api/projects",
-    domain
-  )
-  env.TASKS_API_URL = buildApiUrl(SERVICE_PORTS.tasks, "/api/tasks", domain)
-  env.RXDB_API_URL = buildApiUrl(SERVICE_PORTS.rxdb, "/api/rxdb", domain)
-
+  if (!env.RXDB_SYNC_API_URL) {
+    env.RXDB_SYNC_API_URL = buildApiUrl(
+      SERVICE_PORTS.rxdb,
+      "/api/rxdb-sync",
+      domain
+    )
+  }
   return env
 }
 
