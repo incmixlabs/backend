@@ -10,7 +10,7 @@
   },
   "dependencies": {
     "@casl/ability": "catalog:",
-    "@hono/node-server": "catalog:",
+
     "@hono/zod-openapi": "catalog:",
     "@hono/zod-validator": "catalog:",
     "@incmix-api/utils": "workspace:^",

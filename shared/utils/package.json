@@ -55,9 +55,7 @@
       "types": "./dist/src/db-operations/index.d.ts"
     }
   },
-  "peerDependencies": {
-    "@hono/node-server": "catalog:"
-  },
+
   "dependencies": {
     "@casl/ability": "catalog:",
     "@hono/sentry": "1.2.0",
@@ -74,10 +72,10 @@
     "hono": "catalog:",
     "kysely": "catalog:",
     "pg": "catalog:",
+    "@hono/node-server": "catalog:",
     "zod": "catalog:"
   },
   "devDependencies": {
-    "@hono/node-server": "catalog:",
     "@casl/ability": "catalog:",
     "@incmix-api/config": "workspace:^",
     "@types/node": "catalog:",

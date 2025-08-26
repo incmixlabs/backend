@@ -12,7 +12,7 @@
   "dependencies": {
     "@ai-sdk/anthropic": "2.0.6",
     "@ai-sdk/google": "2.0.8",
-    "@hono/node-server": "catalog:",
+
     "@hono/zod-openapi": "catalog:",
     "@hono/zod-validator": "catalog:",
     "@incmix-api/utils": "workspace:^",

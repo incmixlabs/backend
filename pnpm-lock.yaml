@@ -130,9 +130,6 @@ importers:
 
   api/auth:
     dependencies:
-      '@hono/node-server':
-        specifier: 'catalog:'
-        version: 1.13.8(hono@4.6.16)
       '@hono/zod-openapi':
         specifier: 'catalog:'
         version: 1.1.0(hono@4.6.16)(zod@4.1.1)
@@ -243,9 +240,6 @@ importers:
 
   api/comments-api:
     dependencies:
-      '@hono/node-server':
-        specifier: 'catalog:'
-        version: 1.13.8(hono@4.6.16)
       '@hono/zod-openapi':
         specifier: 'catalog:'
         version: 1.1.0(hono@4.6.16)(zod@4.1.1)
@@ -307,9 +301,6 @@ importers:
 
   api/email:
     dependencies:
-      '@hono/node-server':
-        specifier: 'catalog:'
-        version: 1.13.8(hono@4.6.16)
       '@hono/zod-openapi':
         specifier: 'catalog:'
         version: 1.1.0(hono@4.6.16)(zod@4.1.1)
@@ -443,9 +434,6 @@ importers:
       '@aws-sdk/s3-request-presigner':
         specifier: 3.758.0
         version: 3.758.0
-      '@hono/node-server':
-        specifier: 'catalog:'
-        version: 1.13.8(hono@4.6.16)
       '@hono/zod-openapi':
         specifier: 'catalog:'
         version: 1.1.0(hono@4.6.16)(zod@4.1.1)
@@ -501,9 +489,6 @@ importers:
       '@ai-sdk/google':
         specifier: 2.0.8
         version: 2.0.8(zod@4.1.1)
-      '@hono/node-server':
-        specifier: 'catalog:'
-        version: 1.13.8(hono@4.6.16)
       '@hono/zod-openapi':
         specifier: 'catalog:'
         version: 1.1.0(hono@4.6.16)(zod@4.1.1)
@@ -571,9 +556,6 @@ importers:
 
   api/intl-api:
     dependencies:
-      '@hono/node-server':
-        specifier: 'catalog:'
-        version: 1.13.8(hono@4.6.16)
       '@hono/zod-openapi':
         specifier: 'catalog:'
         version: 1.1.0(hono@4.6.16)(zod@4.1.1)
@@ -687,9 +669,6 @@ importers:
       '@casl/ability':
         specifier: 'catalog:'
         version: 6.7.3
-      '@hono/node-server':
-        specifier: 'catalog:'
-        version: 1.13.8(hono@4.6.16)
       '@hono/zod-openapi':
         specifier: 'catalog:'
         version: 1.1.0(hono@4.6.16)(zod@4.1.1)
@@ -754,9 +733,6 @@ importers:
       '@casl/ability':
         specifier: 'catalog:'
         version: 6.7.3
-      '@hono/node-server':
-        specifier: 'catalog:'
-        version: 1.13.8(hono@4.6.16)
       '@hono/zod-openapi':
         specifier: 'catalog:'
         version: 1.1.0(hono@4.6.16)(zod@4.1.1)
@@ -818,9 +794,6 @@ importers:
 
   api/projects-api:
     dependencies:
-      '@hono/node-server':
-        specifier: 'catalog:'
-        version: 1.13.8(hono@4.6.16)
       '@hono/zod-openapi':
         specifier: 'catalog:'
         version: 1.1.0(hono@4.6.16)(zod@4.1.1)
@@ -882,9 +855,6 @@ importers:
 
   api/rxdb-api:
     dependencies:
-      '@hono/node-server':
-        specifier: 'catalog:'
-        version: 1.13.8(hono@4.6.16)
       '@hono/zod-openapi':
         specifier: 'catalog:'
         version: 1.1.0(hono@4.6.16)(zod@4.1.1)
@@ -946,9 +916,6 @@ importers:
 
   api/tasks-api:
     dependencies:
-      '@hono/node-server':
-        specifier: 'catalog:'
-        version: 1.13.8(hono@4.6.16)
       '@hono/zod-openapi':
         specifier: 'catalog:'
         version: 1.1.0(hono@4.6.16)(zod@4.1.1)
@@ -1016,9 +983,6 @@ importers:
 
   api/users-api:
     dependencies:
-      '@hono/node-server':
-        specifier: 'catalog:'
-        version: 1.13.8(hono@4.6.16)
       '@hono/zod-openapi':
         specifier: 'catalog:'
         version: 1.1.0(hono@4.6.16)(zod@4.1.1)
@@ -1095,6 +1059,9 @@ importers:
       '@casl/ability':
         specifier: 'catalog:'
         version: 6.7.3
+      '@hono/node-server':
+        specifier: 'catalog:'
+        version: 1.13.8(hono@4.6.16)
       '@hono/sentry':
         specifier: 1.2.0
         version: 1.2.0(hono@4.6.16)
@@ -1141,9 +1108,6 @@ importers:
         specifier: 'catalog:'
         version: 4.1.1
     devDependencies:
-      '@hono/node-server':
-        specifier: 'catalog:'
-        version: 1.13.8(hono@4.6.16)
       '@incmix-api/config':
         specifier: workspace:^
         version: link:../config

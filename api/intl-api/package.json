@@ -8,7 +8,7 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
-    "@hono/node-server": "catalog:",
+
     "@hono/zod-openapi": "catalog:",
     "@hono/zod-validator": "catalog:",
     "@incmix-api/utils": "workspace:^",
