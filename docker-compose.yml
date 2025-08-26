@@ -30,6 +30,8 @@ services:
       - incmix-dragonfly-data:/data
     networks:
       - incmix-network
+    ports:
+      - 6379:6379
     healthcheck:
       test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD:-redis_password}", "ping"]
       interval: 10s
