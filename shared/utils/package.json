@@ -66,13 +66,13 @@
     "@sentry/utils": "8.42.0",
     "add": "2.0.6",
     "bullmq": "catalog:",
-    "dotenv": "17.2.1",
+    "dotenv": "catalog:",
     "dotenv-expand": "catalog:",
-    "dotenv-mono": "^1.5.0",
+    "dotenv-mono": "catalog:",
     "hono": "catalog:",
     "kysely": "catalog:",
     "pg": "catalog:",
-    "redis": "5.8.2",
+    "redis": "catalog:",
     "zod": "catalog:"
   },
   "devDependencies": {

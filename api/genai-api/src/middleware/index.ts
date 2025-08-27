@@ -8,7 +8,7 @@ import {
   setupCors,
   setupSentryMiddleware,
 } from "@incmix-api/utils/middleware"
-import { env } from "hono/adapter"
+import { envVars } from "../env-vars"
 
 export const middlewares = (app: OpenAPIHono<HonoApp>) => {
   setupSentryMiddleware(app, BASE_PATH, "genai-api")
@@ -18,7 +18,11 @@ export const middlewares = (app: OpenAPIHono<HonoApp>) => {
   setupCors(app, BASE_PATH)
 
   app.use(`${BASE_PATH}/*`, async (c, next) => {
-    const db = initDb(env(c).DATABASE_URL)
+    const databaseUrl = envVars.DATABASE_URL
+    if (!databaseUrl) {
+      throw new Error("DATABASE_URL is not defined")
+    }
+    const db = initDb(databaseUrl)
     c.set("db", db)
     await next()
   })

@@ -1,9 +1,8 @@
-import * as dotenv from "dotenv"
 import tsconfigPaths from "vite-tsconfig-paths"
 import { defineConfig } from "vitest/config"
 
-// Load test environment variables from .env.test
-dotenv.config({ path: ".env.test" })
+// Don't manually load .env files here - let createEnvConfig handle it
+// This ensures proper loading order: root .env -> root .env.test -> service .env -> service .env.test
 
 export default defineConfig({
   plugins: [tsconfigPaths()],
@@ -17,7 +16,7 @@ export default defineConfig({
     dir: "./test",
     setupFiles: ["./test/setup.ts"],
     env: {
-      ...process.env,
+      NODE_ENV: "test",
     },
   },
 })
