@@ -1,5 +1,5 @@
-import { describe, expect, it, vi, beforeEach } from "vitest"
 import { OpenAPIHono } from "@hono/zod-openapi"
+import { beforeEach, describe, expect, it, vi } from "vitest"
 import type { HonoApp } from "../src/types"
 
 // Mock environment variables
@@ -41,7 +41,7 @@ const mockSetupHealthCheck = vi.fn((app, config) => {
 
   app.get("/healthcheck/ready", async (c) => {
     const checks: any = {}
-    
+
     if (config.checks) {
       for (const [name, check] of Object.entries(config.checks)) {
         try {
@@ -53,16 +53,21 @@ const mockSetupHealthCheck = vi.fn((app, config) => {
       }
     }
 
-    const hasUnhealthy = Object.values(checks).some((check: any) => check.status === "unhealthy")
+    const hasUnhealthy = Object.values(checks).some(
+      (check: any) => check.status === "unhealthy"
+    )
     const status = hasUnhealthy ? "error" : "ok"
-    
-    return c.json({
-      status,
-      service: config.serviceName,
-      version: config.version,
-      checks,
-      timestamp: new Date().toISOString(),
-    }, hasUnhealthy ? 503 : 200)
+
+    return c.json(
+      {
+        status,
+        service: config.serviceName,
+        version: config.version,
+        checks,
+        timestamp: new Date().toISOString(),
+      },
+      hasUnhealthy ? 503 : 200
+    )
   })
 })
 
@@ -76,7 +81,7 @@ describe("Healthcheck Routes", () => {
 
   beforeEach(() => {
     vi.clearAllMocks()
-    
+
     // Setup mock database
     mockDb = {
       selectFrom: vi.fn(() => ({
@@ -87,12 +92,12 @@ describe("Healthcheck Routes", () => {
         })),
       })),
     }
-    
+
     mockInitDb.mockReturnValue(mockDb)
 
     // Create a new app instance for each test
     app = new OpenAPIHono<HonoApp>()
-    
+
     // Call setupHealthCheck with the app
     mockSetupHealthCheck(app, {
       serviceName: "tasks-api",
@@ -210,7 +215,7 @@ describe("Healthcheck Routes", () => {
 
       const data = await response.json()
       expect(data.timestamp).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/)
-      
+
       const date = new Date(data.timestamp)
       expect(date.toString()).not.toBe("Invalid Date")
     })

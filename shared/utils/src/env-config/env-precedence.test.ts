@@ -1,13 +1,13 @@
-import { describe, it, expect, beforeAll, afterAll } from "vitest"
-import path from "node:path"
 import fs from "node:fs/promises"
+import path from "node:path"
 import { fileURLToPath } from "node:url"
+import { afterAll, beforeAll, describe, expect, it } from "vitest"
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const backendRoot = path.resolve(__dirname, "../../../..")
 
 describe.sequential("Environment Variable Precedence", () => {
-  const testBackups: Array<[string, string | null]> = []
+  const testBackups: [string, string | null][] = []
   const testFiles = [
     path.join(backendRoot, ".env"),
     path.join(backendRoot, ".env.test"),
@@ -18,7 +18,7 @@ describe.sequential("Environment Variable Precedence", () => {
   // Helper to backup a file if it exists
   async function backupFile(filePath: string): Promise<string | null> {
     try {
-      const content = await fs.readFile(filePath, 'utf-8')
+      const content = await fs.readFile(filePath, "utf-8")
       return content
     } catch {
       return null
@@ -73,7 +73,9 @@ describe.sequential("Environment Variable Precedence", () => {
     // Ensure service directory exists
     await fs.mkdir(path.join(backendRoot, "api/tasks-api"), { recursive: true })
     // Create test environment files
-    await fs.writeFile(path.join(backendRoot, ".env"), `
+    await fs.writeFile(
+      path.join(backendRoot, ".env"),
+      `
 # Priority 10 - Root .env
 DATABASE_URL=postgresql://root:root@localhost/root_db
 REDIS_URL=redis://localhost:6379
@@ -82,22 +84,32 @@ GOOGLE_CLIENT_SECRET=root-google-secret
 GOOGLE_REDIRECT_URL=http://localhost:3000/auth/callback
 PRIORITY_TEST=priority_10_root_env
 LEVEL_1_VAR=from_root_env
-`.trim())
-    await fs.writeFile(path.join(backendRoot, ".env.test"), `
+`.trim()
+    )
+    await fs.writeFile(
+      path.join(backendRoot, ".env.test"),
+      `
 # Priority 20 - Root .env.test
 PRIORITY_TEST=priority_20_root_env_test
 LEVEL_2_VAR=from_root_env_test
-`.trim())
-    await fs.writeFile(path.join(backendRoot, "api/tasks-api/.env"), `
+`.trim()
+    )
+    await fs.writeFile(
+      path.join(backendRoot, "api/tasks-api/.env"),
+      `
 # Priority 30 - Service .env
 PRIORITY_TEST=priority_30_service_env
 LEVEL_3_VAR=from_service_env
-`.trim())
-    await fs.writeFile(path.join(backendRoot, "api/tasks-api/.env.test"), `
+`.trim()
+    )
+    await fs.writeFile(
+      path.join(backendRoot, "api/tasks-api/.env.test"),
+      `
 # Priority 40 - Service .env.test (highest priority)
 PRIORITY_TEST=priority_40_service_env_test
 LEVEL_4_VAR=from_service_env_test
-`.trim())
+`.trim()
+    )
   })
 
   afterAll(async () => {
@@ -124,7 +136,7 @@ LEVEL_4_VAR=from_service_env_test
       "Root .env": 10,
       "Root .env.{NODE_ENV}": 20,
       "Service .env": 30,
-      "Service .env.{NODE_ENV}": 40
+      "Service .env.{NODE_ENV}": 40,
     }
 
     expect(expectedPriorities["Service .env.{NODE_ENV}"]).toBe(40) // Highest priority

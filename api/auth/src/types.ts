@@ -1,7 +1,7 @@
-import type { Session } from "@/auth/types"
-import type { Env } from "@/env-vars"
 import type { KyselyDb } from "@incmix-api/utils/db-schema"
 import type { Context as HonoContext } from "hono"
+import type { Session } from "@/auth/types"
+import type { Env } from "@/env-vars"
 
 export type Bindings = Env
 

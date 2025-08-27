@@ -1,20 +1,17 @@
-import type { Context } from "@/types"
+import { UserRoles } from "@incmix/utils/types"
+import type { NewMember, NewOrganisation } from "@incmix-api/utils/db-schema"
 import {
   NotFoundError,
   PreconditionFailedError,
 } from "@incmix-api/utils/errors"
-
 import { useTranslation } from "@incmix-api/utils/middleware"
-import { UserRoles } from "@incmix/utils/types"
-
+import { jsonArrayFrom } from "kysely/helpers/postgres"
+import type { Context } from "@/types"
 import {
   ERROR_LAST_OWNER,
   ERROR_NOT_MEMBER,
   ERROR_ORG_NOT_FOUND,
 } from "./constants"
-
-import type { NewMember, NewOrganisation } from "@incmix-api/utils/db-schema"
-import { jsonArrayFrom } from "kysely/helpers/postgres"
 
 export async function getUserByEmail(c: Context, email: string) {
   return await c

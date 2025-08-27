@@ -1,6 +1,6 @@
+import { env } from "hono/adapter"
 import { envVars } from "@/env-vars"
 import type { Context } from "@/types"
-import { env } from "hono/adapter"
 
 const COOKIE_NAME = envVars.COOKIE_NAME
 const COOKIE_PATH = "/"

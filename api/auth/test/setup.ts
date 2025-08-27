@@ -1,4 +1,3 @@
-import bcrypt from "bcrypt"
 import { afterEach, beforeAll, beforeEach, vi } from "vitest"
 import { mockDb, resetMockDb } from "./db-mock"
 
@@ -93,10 +92,10 @@ vi.mock("@incmix-api/utils", async (importOriginal) => {
     ...(actual as any),
     getDefaultLocale: vi.fn(async () => ({
       code: "en",
-      is_default: true
+      is_default: true,
     })),
     getAllMessages: vi.fn(async () => []),
-    getDefaultMessages: vi.fn(async () => [])
+    getDefaultMessages: vi.fn(async () => []),
   }
 })
 

@@ -7,7 +7,16 @@
     "defaultBranch": "main"
   },
   "files": {
-    "ignore": [
+    "ignoreUnknown": false,
+    "includes": [
+      "**/*.ts",
+      "**/*.tsx",
+      "**/*.js",
+      "**/*.jsx",
+      "**/*.mjs",
+      "**/*.cjs"
+    ],
+    "experimentalScannerIgnores": [
       "node_modules",
       "dist",
       ".wrangler",
@@ -62,15 +71,7 @@
         "useAwait": "warn",
         "noExplicitAny": "off"
       }
-    },
-    "include": [
-      "**/*.ts",
-      "**/*.tsx",
-      "**/*.js",
-      "**/*.jsx",
-      "**/*.mjs",
-      "**/*.cjs"
-    ]
+    }
   },
   "javascript": {
     "formatter": {
@@ -84,9 +85,9 @@
       "quoteStyle": "double",
       "attributePosition": "auto",
       "lineEnding": "lf"
+    },
+    "assist": {
+      "enabled": true
     }
-  },
-  "organizeImports": {
-    "enabled": true
   }
 }

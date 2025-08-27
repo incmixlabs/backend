@@ -1,8 +1,8 @@
-import { envVars } from "@/env-vars"
-import type { HonoApp } from "@/types"
 import { OpenAPIHono } from "@hono/zod-openapi"
 import { setupHealthCheck } from "@incmix-api/utils"
 import { initDb } from "@incmix-api/utils/db-schema"
+import { envVars } from "@/env-vars"
+import type { HonoApp } from "@/types"
 
 const healthcheckRoutes = new OpenAPIHono<HonoApp>()
 

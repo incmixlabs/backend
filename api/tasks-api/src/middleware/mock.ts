@@ -1,14 +1,12 @@
+import type { Context, Next } from "hono"
+import { nanoid } from "nanoid"
 import { envVars } from "@/env-vars"
 import {
   generateMockTask,
   getAllMockTasksWithAssignments,
   getMockTaskWithAssignments,
-  mockLabels,
-  mockProjects,
   mockTasks,
 } from "@/lib/mock-data"
-import type { Context, Next } from "hono"
-import { nanoid } from "nanoid"
 
 export async function mockMiddleware(c: Context, next: Next) {
   // Only apply mock middleware if MOCK_ENV is true

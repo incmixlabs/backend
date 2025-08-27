@@ -1,5 +1,5 @@
-import { BASE_PATH } from "@/lib/constants"
 import { createService } from "@incmix-api/utils"
+import { BASE_PATH } from "@/lib/constants"
 import { envVars } from "./env-vars"
 import { middlewares } from "./middleware"
 import { routes } from "./routes"

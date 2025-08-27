@@ -1,5 +1,3 @@
-import { BASE_PATH } from "@/lib/constants"
-import type { HonoApp } from "@/types"
 import type { OpenAPIHono } from "@hono/zod-openapi"
 import { initDb } from "@incmix-api/utils/db-schema"
 import {
@@ -9,6 +7,8 @@ import {
   setupSentryMiddleware,
 } from "@incmix-api/utils/middleware"
 import { env } from "hono/adapter"
+import { BASE_PATH } from "@/lib/constants"
+import type { HonoApp } from "@/types"
 
 export const middlewares = (app: OpenAPIHono<HonoApp>) => {
   setupSentryMiddleware(app, BASE_PATH, "projects-api")

@@ -1,8 +1,8 @@
+import { ListObjectsV2Command } from "@aws-sdk/client-s3"
+import { createHealthCheckRoute } from "@incmix-api/utils"
 import { envVars } from "@/env-vars"
 import { S3 } from "@/lib/s3"
 import type { HonoApp } from "@/types"
-import { ListObjectsV2Command } from "@aws-sdk/client-s3"
-import { createHealthCheckRoute } from "@incmix-api/utils"
 
 const healthcheckRoutes = createHealthCheckRoute<HonoApp>({
   // Pass all environment variables to check

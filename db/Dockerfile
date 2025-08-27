@@ -21,7 +21,6 @@ RETURNS text AS \$\$
     return "Hello from Python!"
 \$\$ LANGUAGE plpython3u;
 EOF
-
 # Set up Node.js application
 WORKDIR /app
 

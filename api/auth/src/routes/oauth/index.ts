@@ -1,15 +1,3 @@
-import type { GoogleUser } from "@/types"
-
-import { ACC_DISABLED, VERIFIY_REQ } from "@/lib/constants"
-
-import { insertOAuthUser } from "@/lib/helper"
-
-import { initializeGoogleAuth } from "@/lib/oauth"
-
-import { setSessionCookie } from "@/auth/cookies"
-import { createSession } from "@/auth/session"
-import { googleCallback, googleOAuth } from "@/routes/oauth/openapi"
-import type { HonoApp } from "@/types"
 import { OpenAPIHono } from "@hono/zod-openapi"
 import { ERROR_BAD_REQUEST } from "@incmix-api/utils"
 import {
@@ -22,6 +10,13 @@ import { useTranslation } from "@incmix-api/utils/middleware"
 import { generateCodeVerifier, generateState } from "arctic"
 import { env } from "hono/adapter"
 import { getCookie } from "hono/cookie"
+import { setSessionCookie } from "@/auth/cookies"
+import { createSession } from "@/auth/session"
+import { ACC_DISABLED, VERIFIY_REQ } from "@/lib/constants"
+import { insertOAuthUser } from "@/lib/helper"
+import { initializeGoogleAuth } from "@/lib/oauth"
+import { googleCallback, googleOAuth } from "@/routes/oauth/openapi"
+import type { GoogleUser, HonoApp } from "@/types"
 
 const oAuthRoutes = new OpenAPIHono<HonoApp>({
   defaultHook: zodError,
@@ -68,7 +63,6 @@ oAuthRoutes.openapi(googleOAuth, async (c) => {
 oAuthRoutes.openapi(googleCallback, async (c) => {
   const stateCookie = getCookie(c, "state")
   const codeVerifierCookie = getCookie(c, "code_verifier")
-  // @ts-ignore - https://hono.dev/docs/api/request#valid
   const { state, code } = c.req.valid("query")
   const t = await useTranslation(c)
 

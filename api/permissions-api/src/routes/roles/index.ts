@@ -1,26 +1,26 @@
-import type { HonoApp } from "@/types"
 import { OpenAPIHono } from "@hono/zod-openapi"
+import { ERROR_UNAUTHORIZED } from "@incmix-api/utils"
 import {
+  ConflictError,
   NotFoundError,
-  UnauthorizedError,
   processError,
+  ServerError,
+  UnauthorizedError,
 } from "@incmix-api/utils/errors"
-
+import { useTranslation } from "@incmix-api/utils/middleware"
 import {
   ERROR_ROLE_ALREADY_EXISTS,
   ERROR_ROLE_NOT_FOUND,
 } from "@/lib/constants"
 import {
   deleteRoleById,
+  findRoleById,
   findRoleByName,
   insertRole,
   updateRoleById,
 } from "@/lib/db"
-import { findRoleById } from "@/lib/db"
 import { throwUnlessUserCan } from "@/lib/helper"
-import { ERROR_UNAUTHORIZED } from "@incmix-api/utils"
-import { ConflictError, ServerError } from "@incmix-api/utils/errors"
-import { useTranslation } from "@incmix-api/utils/middleware"
+import type { HonoApp } from "@/types"
 import { addNewRole, deleteRole, updateRole } from "./openapi"
 
 const rolesRoutes = new OpenAPIHono<HonoApp>()
