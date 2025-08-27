@@ -167,6 +167,8 @@ export const RefUrlSchema = z
     },
   })
 
+export type RefUrl = z.infer<typeof RefUrlSchema>
+
 // Label tag schema
 export const LabelTagSchema = z
   .object({
@@ -181,6 +183,8 @@ export const LabelTagSchema = z
       color: "#ff0000",
     },
   })
+
+export type LabelTag = z.infer<typeof LabelTagSchema>
 
 // Attachment schema
 export const AttachmentSchema = z
@@ -207,6 +211,8 @@ export const AttachmentSchema = z
       type: "application/pdf",
     },
   })
+
+export type Attachment = z.infer<typeof AttachmentSchema>
 
 // Sub-task schema
 export const SubTaskSchema = z
@@ -267,6 +273,8 @@ export const LabelSchema = z
       },
     },
   })
+
+export type Label = z.infer<typeof LabelSchema>
 
 export const TaskSchema = z
   .object({
