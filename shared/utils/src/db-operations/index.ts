@@ -1,5 +1,5 @@
 import { type Kysely, sql } from "kysely"
-import { jsonArrayFrom, jsonObjectFrom } from "kysely/helpers/postgres"
+import { jsonArrayFrom } from "kysely/helpers/postgres"
 
 export interface FindUserOptions {
   includeProfile?: boolean

@@ -1,6 +1,4 @@
-import { OpenAPIHono } from "@hono/zod-openapi"
-import { createRoute } from "@hono/zod-openapi"
-import { z } from "@hono/zod-openapi"
+import { createRoute, OpenAPIHono, z } from "@hono/zod-openapi"
 import type { Context, Env } from "hono"
 
 /**
@@ -112,7 +110,7 @@ export function createHealthCheckRoute<T extends Env>({
       }
 
       // Combine all failure reasons
-      let reason: string | undefined = undefined
+      let reason: string | undefined
 
       if (missing.length > 0) {
         reason = `Env variables missing: [${missing.join(", ")}]`

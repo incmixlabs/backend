@@ -1,3 +1,5 @@
+import { defaultHeaders } from "@test/test-utils"
+import { describe, expect, test } from "vitest"
 import app from "@/"
 import {
   BASE_PATH,
@@ -12,8 +14,6 @@ import {
   signup,
 } from "@/routes/auth/openapi"
 import { sendVerificationEmail } from "@/routes/email-verification/openapi"
-import { defaultHeaders } from "@test/test-utils"
-import { describe, expect, test } from "vitest"
 
 const jsonDefaultHeaders = {
   ...defaultHeaders,

@@ -1,6 +1,6 @@
+import type { OpenAPIHono } from "@hono/zod-openapi"
 import { BASE_PATH } from "@/lib/constants"
 import type { HonoApp } from "@/types"
-import type { OpenAPIHono } from "@hono/zod-openapi"
 import healthcheckRoutes from "./healthcheck"
 import newsRoutes from "./news"
 import rateLimitRoutes from "./rate-limits"

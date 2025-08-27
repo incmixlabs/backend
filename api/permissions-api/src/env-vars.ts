@@ -1,6 +1,6 @@
 import {
-  type PermissionsEnv,
   createEnvConfig,
+  type PermissionsEnv,
 } from "@incmix-api/utils/env-config"
 
 // Use the new env-config system with dotenv-mono

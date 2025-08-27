@@ -1,4 +1,3 @@
-import type { Checklist } from "@incmix-api/utils/zod-schema"
 import type {
   Attachment,
   ChecklistItem,
@@ -6,6 +5,7 @@ import type {
   LabelType,
   RefUrl,
 } from "@incmix/utils/types"
+import type { Checklist } from "@incmix-api/utils/zod-schema"
 import type {
   ColumnType,
   Insertable,

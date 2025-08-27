@@ -1,6 +1,6 @@
-import type { Bindings, Context } from "@/types"
 import { Google } from "arctic"
 import { env } from "hono/adapter"
+import type { Context } from "@/types"
 
 type GoogleAuthOptions = {
   isTauri?: boolean

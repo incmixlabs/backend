@@ -1,8 +1,6 @@
 import { ServerError } from "@incmix-api/utils/errors"
-import type { Context } from "hono"
+import type { Context, Env as HonoEnv } from "hono"
 import type { IntlMessage, Locale } from "../types"
-
-import type { Env as HonoEnv } from "hono"
 
 type Env = {
   Bindings: { INTL_API_URL: string; COOKIE_NAME: string }

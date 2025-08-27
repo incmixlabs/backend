@@ -1,22 +1,14 @@
-import type { HonoApp } from "@/types"
 import { OpenAPIHono } from "@hono/zod-openapi"
 import { zValidator } from "@hono/zod-validator"
 import { ERROR_UNAUTHORIZED } from "@incmix-api/utils"
-import type { Project } from "@incmix-api/utils/db-schema"
-import {
-  BadRequestError,
-  ServerError,
-  UnauthorizedError,
-  zodError,
-} from "@incmix-api/utils/errors"
+import { ServerError, zodError } from "@incmix-api/utils/errors"
 import { useTranslation } from "@incmix-api/utils/middleware"
-import { jsonArrayFrom } from "kysely/helpers/postgres"
+import type { HonoApp } from "@/types"
 import { getUserProjectIds } from "../lib/db"
 import {
   ProjectSchemaWithTimeStamps,
   type ProjectWithTimeStamps,
   PullProjectsSchema,
-  PushProjectsSchema,
 } from "./types"
 
 const projectsRoutes = new OpenAPIHono<HonoApp>({
@@ -52,7 +44,7 @@ projectsRoutes.post(
           {
             documents: [],
             checkpoint: {
-              updatedAt: new Date().getTime(),
+              updatedAt: Date.now(),
             },
           },
           200
@@ -132,7 +124,7 @@ projectsRoutes.post(
         {
           documents: results.data,
           checkpoint: {
-            updatedAt: new Date().getTime(),
+            updatedAt: Date.now(),
           },
         },
         200

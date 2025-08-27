@@ -1,12 +1,12 @@
-import { NotFoundError } from "@incmix-api/utils/errors"
-import { setupCors } from "@incmix-api/utils/middleware"
-
 import { serve } from "@hono/node-server"
 import { API } from "@incmix/utils/env"
+import { NotFoundError } from "@incmix-api/utils/errors"
+import { setupCors } from "@incmix-api/utils/middleware"
 import { Hono } from "hono"
 import { env } from "hono/adapter"
 import { envVars } from "./env-vars"
 import type { HonoApp } from "./types"
+
 type Env = typeof envVars
 const app = new Hono<HonoApp>()
 

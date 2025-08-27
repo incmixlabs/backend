@@ -1,14 +1,11 @@
-import { authMiddleware } from "@/auth/middleware"
-import { BASE_PATH } from "@/lib/constants"
-import type { HonoApp } from "@/types"
 import type { OpenAPIHono } from "@hono/zod-openapi"
-import { initDb } from "@incmix-api/utils/db-schema"
 import {
   createI18nMiddleware,
   setupCors,
   setupSentryMiddleware,
 } from "@incmix-api/utils/middleware"
-import { env } from "hono/adapter"
+import { BASE_PATH } from "@/lib/constants"
+import type { HonoApp } from "@/types"
 /*
 export const middlewares = (app: OpenAPIHono<HonoApp>) => {
   setupCors(app, BASE_PATH)
@@ -25,7 +22,7 @@ export const middlewares = (app: OpenAPIHono<HonoApp>) => {
 
 export const middlewares = (app: OpenAPIHono<HonoApp>) => {
   setupCors(app, BASE_PATH)
-  app.use(`${BASE_PATH}/*`, (c, next) => {
+  app.use(`${BASE_PATH}/*`, (_c, next) => {
     // db attach (singleton as above)
     return next()
   })

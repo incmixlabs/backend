@@ -1,13 +1,11 @@
 import type { Dirent } from "node:fs"
 import * as fs from "node:fs/promises"
+import { describe, expect, it, vi } from "vitest"
 import {
   formatAndWriteWithPrettier,
   listDirectories,
   listFiles,
 } from "@/lib/filesystem"
-import * as pkgTypes from "pkg-types"
-import prettier from "prettier"
-import { beforeEach, describe, expect, it, vi } from "vitest"
 
 // Mock external dependencies
 vi.mock("node:fs/promises")

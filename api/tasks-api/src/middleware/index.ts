@@ -1,6 +1,3 @@
-import { envVars } from "@/env-vars"
-import { BASE_PATH } from "@/lib/constants"
-import type { HonoApp } from "@/types"
 import type { OpenAPIHono } from "@hono/zod-openapi"
 import { initDb } from "@incmix-api/utils/db-schema"
 import {
@@ -10,6 +7,9 @@ import {
   setupSentryMiddleware,
 } from "@incmix-api/utils/middleware"
 import { env } from "hono/adapter"
+import { envVars } from "@/env-vars"
+import { BASE_PATH } from "@/lib/constants"
+import type { HonoApp } from "@/types"
 import { mockMiddleware } from "./mock"
 
 export const middlewares = (app: OpenAPIHono<HonoApp>) => {

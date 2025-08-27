@@ -1,7 +1,6 @@
-import type { Context } from "@/types"
 import type { Task } from "@incmix-api/utils/zod-schema"
-
 import { jsonArrayFrom, jsonObjectFrom } from "kysely/helpers/postgres"
+import type { Context } from "@/types"
 
 export function getProjectById(c: Context, projectId: string) {
   return c

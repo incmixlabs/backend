@@ -1,3 +1,14 @@
+import { OpenAPIHono } from "@hono/zod-openapi"
+import { actions, subjects } from "@incmix/utils/types"
+import { ERROR_BAD_REQUEST, ERROR_UNAUTHORIZED } from "@incmix-api/utils"
+import {
+  processError,
+  ServerError,
+  UnauthorizedError,
+  UnprocessableEntityError,
+  zodError,
+} from "@incmix-api/utils/errors"
+import { useTranslation } from "@incmix-api/utils/middleware"
 import {
   deletePermission,
   findAllRoles,
@@ -5,21 +16,9 @@ import {
   insertPermission,
   updatePermission,
 } from "@/lib/db"
-import type { HonoApp } from "@/types"
-import { OpenAPIHono } from "@hono/zod-openapi"
-import { ERROR_BAD_REQUEST, ERROR_UNAUTHORIZED } from "@incmix-api/utils"
-import {
-  ServerError,
-  UnauthorizedError,
-  UnprocessableEntityError,
-  processError,
-  zodError,
-} from "@incmix-api/utils/errors"
-import { useTranslation } from "@incmix-api/utils/middleware"
-import { actions, subjects } from "@incmix/utils/types"
-import { getRolesPermissions, updatePermissions } from "./openapi"
-
 import { throwUnlessUserCan } from "@/lib/helper"
+import type { HonoApp } from "@/types"
+import { getRolesPermissions, updatePermissions } from "./openapi"
 
 const permissionRoutes = new OpenAPIHono<HonoApp>({
   defaultHook: zodError,

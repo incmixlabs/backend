@@ -1,20 +1,21 @@
-import { ERROR_TEMPLATE_ALREADY_EXISTS } from "@/lib/constants"
-import { generateTemplate } from "@/lib/services"
-import type { HonoApp } from "@/types"
 import { OpenAPIHono } from "@hono/zod-openapi"
 import { ERROR_UNAUTHORIZED } from "@incmix-api/utils"
 import {
   ConflictError,
-  UnauthorizedError,
   processError,
+  UnauthorizedError,
   zodError,
 } from "@incmix-api/utils/errors"
 import { useTranslation } from "@incmix-api/utils/middleware"
+import { ERROR_TEMPLATE_ALREADY_EXISTS } from "@/lib/constants"
+import { generateTemplate } from "@/lib/services"
+import type { HonoApp } from "@/types"
 import {
   generateStoryTemplate,
   getStoryTemplates,
   insertStoryTemplate,
 } from "./openapi"
+
 const templateRoutes = new OpenAPIHono<HonoApp>({
   defaultHook: zodError,
 })

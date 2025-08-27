@@ -1,5 +1,3 @@
-import { BASE_PATH } from "@/lib/constants"
-import type { HonoApp } from "@/types"
 import type { OpenAPIHono } from "@hono/zod-openapi"
 import { initDb } from "@incmix-api/utils/db-schema"
 import {
@@ -10,6 +8,8 @@ import {
 } from "@incmix-api/utils/middleware"
 import { env } from "hono/adapter"
 import { compress } from "hono/compress"
+import { BASE_PATH } from "@/lib/constants"
+import type { HonoApp } from "@/types"
 
 export const middlewares = (app: OpenAPIHono<HonoApp>) => {
   app.use("*", compress({ encoding: "gzip" }))

@@ -1,10 +1,10 @@
-import { BASE_PATH } from "@/lib/constants"
-import { createI18nMiddleware } from "@/middleware/i18n"
-import type { HonoApp } from "@/types"
 import type { OpenAPIHono } from "@hono/zod-openapi"
 import { initDb } from "@incmix-api/utils/db-schema"
 import { setupCors, setupSentryMiddleware } from "@incmix-api/utils/middleware"
 import { env } from "hono/adapter"
+import { BASE_PATH } from "@/lib/constants"
+import { createI18nMiddleware } from "@/middleware/i18n"
+import type { HonoApp } from "@/types"
 
 export const middlewares = (app: OpenAPIHono<HonoApp>) => {
   let db: ReturnType<typeof initDb> | undefined

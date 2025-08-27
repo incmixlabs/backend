@@ -1,7 +1,4 @@
-import type { Context } from "@/types"
-
 import type { Action, Subject } from "@incmix/utils/types"
-
 import type {
   KyselyDb,
   NewPermission,
@@ -9,6 +6,7 @@ import type {
   UpdatedPermission,
   UpdatedRole,
 } from "@incmix-api/utils/db-schema"
+import type { Context } from "@/types"
 
 export function findAllRoles(c: Context, orgId?: string) {
   let query = c.get("db").selectFrom("roles").selectAll()
