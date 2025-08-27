@@ -7,6 +7,19 @@ import { setupCors, setupSentryMiddleware } from "@incmix-api/utils/middleware"
 import { env } from "hono/adapter"
 
 export const middlewares = (app: OpenAPIHono<HonoApp>) => {
+  let db: ReturnType<typeof initDb> | undefined
+  app.use(`${BASE_PATH}/*`, (c, next) => {
+    if (!db) {
+      const url = env(c).DATABASE_URL
+      if (!url) {
+        // Prefer a typed custom error if you have one
+        throw new Error("DATABASE_URL is not set")
+      }
+      db = initDb(url)
+    }
+    c.set("db", db)
+    return next()
+  })
   app.use(`${BASE_PATH}/*`, (c, next) => {
     c.set("db", initDb(env(c).DATABASE_URL))
     return next()

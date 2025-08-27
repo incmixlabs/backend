@@ -9,7 +9,7 @@ import {
   setupSentryMiddleware,
 } from "@incmix-api/utils/middleware"
 import { env } from "hono/adapter"
-
+/*
 export const middlewares = (app: OpenAPIHono<HonoApp>) => {
   setupCors(app, BASE_PATH)
   setupSentryMiddleware(app, BASE_PATH, "auth")
@@ -21,4 +21,14 @@ export const middlewares = (app: OpenAPIHono<HonoApp>) => {
 
   // Use custom authentication middleware
   app.use(`${BASE_PATH}/*`, authMiddleware)
+}*/
+
+export const middlewares = (app: OpenAPIHono<HonoApp>) => {
+  setupCors(app, BASE_PATH)
+  app.use(`${BASE_PATH}/*`, (c, next) => {
+    // db attach (singleton as above)
+    return next()
+  })
+  setupSentryMiddleware(app, BASE_PATH, "intl-api")
+  app.use(`${BASE_PATH}/*`, createI18nMiddleware())
 }
