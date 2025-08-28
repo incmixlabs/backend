@@ -1,11 +1,6 @@
-import type { Checklist } from "@incmix-api/utils/zod-schema"
-import type {
-  Attachment,
-  ChecklistItem,
-  LabelTag,
-  LabelType,
-  RefUrl,
-} from "@incmix/utils/types"
+import type { Checklist, ChecklistItem } from "@incmix-api/utils/zod-schema"
+import type {TaskData, MARKDOWN, DEFAULT_LABELS, ID, CHECKLIST, REF_URL, DATE, ATTACHMENT} from "@incmix/utils/schema"
+
 import type {
   ColumnType,
   Insertable,
@@ -13,48 +8,45 @@ import type {
   Selectable,
   Updateable,
 } from "kysely"
+type HasSameKeysAs<
+  T, U extends {
+    [P in keyof T | keyof U]: P extends keyof T ? any : never
+  }> = U;
 
-type TasksTable = {
-  id: string
-  projectId: string
+type LabelType = string
+
+type TasksTable = HasSameKeysAs<TaskData, {
+  id: ID
+  projectId: ID
   name: string
-  statusId: string
-  priorityId: string
-  taskOrder: number
-  startDate: ColumnType<Date, string, string> | null
-  endDate: ColumnType<Date, string, string> | null
-  description: string
-  acceptanceCriteria: JSONColumnType<Checklist[]>
-  checklist: JSONColumnType<Checklist[]>
+  status: string
+  priority: string
+  order: number
+  startDate: DATE | null
+  endDate: DATE | null
+  description: MARKDOWN
+  acceptanceCriteria: JSONColumnType<CHECKLIST[]>
+  checkList: JSONColumnType<CHECKLIST[]>
+  comments: JSONColumnType<string[]>
   completed: boolean
-  refUrls: JSONColumnType<RefUrl[]>
-  labelsTags: JSONColumnType<LabelTag[]>
-  attachments: JSONColumnType<Attachment[]>
-  parentTaskId: string | null
-  createdAt: ColumnType<Date, string, never>
-  updatedAt: ColumnType<Date, string, string>
-  createdBy: ColumnType<string, string, never>
-  updatedBy: ColumnType<string, string, string>
-}
+  links: JSONColumnType<REF_URL[]>
+  tags: JSONColumnType<string[]>
+  attachments: JSONColumnType<ATTACHMENT[]>
+  parentTaskId: ID | null
+  subTasks: JSONColumnType<ID[]>
+  assignedTo: JSONColumnType<ID[]>
+  watching: JSONColumnType<ID[]>
+  createdAt: ColumnType<DATE>
+  updatedAt: ColumnType<DATE, never>
+  createdBy: ColumnType<ID>
+  updatedBy: ColumnType<ID, never>
+}>
 
 type TaskAssignmentsTable = {
   taskId: string
   userId: string
 }
 
-type LabelsTable = {
-  id: string
-  projectId: string
-  type: LabelType
-  name: string
-  color: string
-  order: number
-  description: string
-  createdAt: ColumnType<Date, string, never>
-  updatedAt: ColumnType<Date, string, string>
-  createdBy: string
-  updatedBy: string
-}
 
 export const projectStatus = ["all", "started", "on-hold", "completed"] as const
 
@@ -71,17 +63,16 @@ type ProjectsTable = {
   description: string | null
   company: string | null
   logo: string | null
-  checklist: JSONColumnType<Checklist[]>
-  acceptanceCriteria: JSONColumnType<ChecklistItem[]>
-  createdAt: ColumnType<Date, string, never>
-  updatedAt: ColumnType<Date, string, string>
-  createdBy: ColumnType<string, string, never>
-  updatedBy: ColumnType<string, string, string>
+  checklist: JSONColumnType<CHECKLIST[]>
+  acceptanceCriteria: JSONColumnType<CHECKLIST[]>
+  createdAt: ColumnType<DATE, never>
+  updatedAt: ColumnType<DATE, never>
+  createdBy: ID
+  updatedBy: ID
 }
-
 type ProjectMembersTable = {
-  projectId: string
-  userId: string
+  projectId: ID
+  userId: ID
   role: string
   roleId: number
   isOwner: boolean
