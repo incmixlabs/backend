@@ -84,7 +84,7 @@ app.get("/api/healthcheck", async (c) => {
 })
 app.get("/api/rate-limits", async (c) => {
   const location = await fetch(
-    `${envVars.LOCATION_API_URL}${API.LOCATION}/rate-limits`,
+    `${envVars.LOCATION_API_URL}${API.location}/rate-limits`,
     {
       method: "get",
     }

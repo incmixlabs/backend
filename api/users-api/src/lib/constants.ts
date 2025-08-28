@@ -1,6 +1,6 @@
 import { API } from "@incmix/utils/env"
 
-export const BASE_PATH = API.USERS
+export const BASE_PATH = API.users
 
 export const ERROR_USER_NOT_FOUND = {
   namespace: "errors",

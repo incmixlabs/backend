@@ -1,6 +1,6 @@
 import { API } from "@incmix/utils/env"
 
-export const BASE_PATH = API.FILES
+export const BASE_PATH = API.files
 
 export const ERROR_FILENAME_REQ = { namespace: "errors", key: "filename_req" }
 export const ERROR_UPLOAD_FAIL = { namespace: "errors", key: "upload_fail" }

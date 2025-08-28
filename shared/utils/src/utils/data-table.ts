@@ -32,12 +32,16 @@ export function parseQueryParams<Column extends string>(
     } else if (key === "pageSize") {
       res.pagination.pageSize = Number.parseInt(value)
     } else if (key === "sort") {
-      const sort = sortParser<Sort<Column>[]>(value, new Set(columns))
-      if (sort) res.sort = sort
+      const sort = sortParser<Sort<Column>>(value, {
+        validKeys: new Set(columns),
+      })
+      if (sort.data) res.sort = sort.data
     } else if (key === "filters") {
-      const filters = filterParser<Filter<Column>[]>(value, new Set(columns))
-      if (filters) {
-        res.filters = filters
+      const filters = filterParser<Filter<Column>>(value, {
+        validKeys: new Set(columns),
+      })
+      if (filters.data) {
+        res.filters = filters.data
       }
     } else if (key === "joinOperator") {
       res.joinOperator = value as JoinOperator

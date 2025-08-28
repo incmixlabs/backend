@@ -43,8 +43,8 @@ import {
   setupCodegenQueue,
   setupUserStoryQueue,
 } from "@incmix-api/utils/queue"
-import { env } from "hono/adapter"
 import { nanoid } from "nanoid"
+import { envVars } from "../../env-vars"
 import type { JobSchema } from "./types"
 const tasksRoutes = new OpenAPIHono<HonoApp>({
   defaultHook: zodError,
@@ -596,7 +596,7 @@ tasksRoutes.openapi(bulkAiGenTask, async (c) => {
     }
 
     if (type === "user-story") {
-      const queue = setupUserStoryQueue(env(c))
+      const queue = setupUserStoryQueue(envVars)
 
       try {
         for (const task of tasks) {
@@ -615,7 +615,7 @@ tasksRoutes.openapi(bulkAiGenTask, async (c) => {
         await queue.close()
       }
     } else if (type === "codegen") {
-      const queue = setupCodegenQueue(env(c))
+      const queue = setupCodegenQueue(envVars)
 
       try {
         for (const task of tasks) {
@@ -661,8 +661,8 @@ tasksRoutes.openapi(getJobStatus, async (c) => {
 
     // Get the job status from the BullMQ queue
     // Since this is for AI generation jobs, we'll check the queue status
-    const userStoryQueue = setupUserStoryQueue(env(c))
-    const codegenQueue = setupCodegenQueue(env(c))
+    const userStoryQueue = setupUserStoryQueue(envVars)
+    const codegenQueue = setupCodegenQueue(envVars)
     try {
       const jobs = (await userStoryQueue.getJobs()).filter(
         (job) => job.data.createdBy === user.id

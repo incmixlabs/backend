@@ -1,5 +1,4 @@
-import type { Checklist, ChecklistItem } from "@incmix-api/utils/zod-schema"
-import type {TaskData, MARKDOWN, DEFAULT_LABELS, ID, CHECKLIST, REF_URL, DATE, ATTACHMENT} from "@incmix/utils/schema"
+import type { CHECKLIST, DATE, ID, TaskData } from "@incmix/utils/schema"
 
 import type {
   ColumnType,
@@ -8,46 +7,26 @@ import type {
   Selectable,
   Updateable,
 } from "kysely"
-type HasSameKeysAs<
-  T, U extends {
-    [P in keyof T | keyof U]: P extends keyof T ? any : never
-  }> = U;
 
-type LabelType = string
-
-type TasksTable = HasSameKeysAs<TaskData, {
-  id: ID
-  projectId: ID
-  name: string
-  status: string
-  priority: string
-  order: number
-  startDate: DATE | null
-  endDate: DATE | null
-  description: MARKDOWN
-  acceptanceCriteria: JSONColumnType<CHECKLIST[]>
-  checkList: JSONColumnType<CHECKLIST[]>
-  comments: JSONColumnType<string[]>
-  completed: boolean
-  links: JSONColumnType<REF_URL[]>
-  tags: JSONColumnType<string[]>
-  attachments: JSONColumnType<ATTACHMENT[]>
-  parentTaskId: ID | null
-  subTasks: JSONColumnType<ID[]>
-  assignedTo: JSONColumnType<ID[]>
-  watching: JSONColumnType<ID[]>
-  createdAt: ColumnType<DATE>
-  updatedAt: ColumnType<DATE, never>
-  createdBy: ColumnType<ID>
-  updatedBy: ColumnType<ID, never>
-}>
-
+type TasksTable = TaskData
 type TaskAssignmentsTable = {
   taskId: string
   userId: string
 }
-
-
+type LabelType = "priority" | "status" | "custom"
+type LabelsTable = {
+  id: string
+  projectId: string
+  type: LabelType
+  name: string
+  color: string
+  order: number
+  description: string
+  createdAt: ColumnType<Date, string, never>
+  updatedAt: ColumnType<Date, string, string>
+  createdBy: string
+  updatedBy: string
+}
 export const projectStatus = ["all", "started", "on-hold", "completed"] as const
 
 export type ProjectStatus = (typeof projectStatus)[number]

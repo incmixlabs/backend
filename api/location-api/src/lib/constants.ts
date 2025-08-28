@@ -1,3 +1,3 @@
 import { API } from "@incmix/utils/env"
 
-export const BASE_PATH = API.LOCATION
+export const BASE_PATH = API.location

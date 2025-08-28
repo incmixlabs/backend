@@ -1,6 +1,6 @@
 import { API } from "@incmix/utils/env"
 
-export const BASE_PATH = API.PERMISSIONS
+export const BASE_PATH = API.permissions
 
 export const ERROR_PERMISSION_EXIST = {
   namespace: "errors",
