@@ -36,6 +36,14 @@ export const listFeatureFlags = createRoute({
       },
       description: "Error response when not authenticated",
     },
+    422: {
+      content: {
+        "application/json": {
+          schema: MessageSchema,
+        },
+      },
+      description: "Validation error",
+    },
     500: {
       content: {
         "application/json": {
@@ -81,6 +89,14 @@ export const getFeatureFlagById = createRoute({
         },
       },
       description: "Error response when not authenticated",
+    },
+    422: {
+      content: {
+        "application/json": {
+          schema: MessageSchema,
+        },
+      },
+      description: "Validation error",
     },
     500: {
       content: {
@@ -141,6 +157,15 @@ export const createFeatureFlag = createRoute({
         },
       },
       description: "Conflict - feature flag with same name already exists",
+    },
+
+    422: {
+      content: {
+        "application/json": {
+          schema: MessageSchema,
+        },
+      },
+      description: "Validation error",
     },
     500: {
       content: {
@@ -211,6 +236,14 @@ export const updateFeatureFlag = createRoute({
       },
       description: "Conflict - feature flag with same name already exists",
     },
+    422: {
+      content: {
+        "application/json": {
+          schema: MessageSchema,
+        },
+      },
+      description: "Validation error",
+    },
     500: {
       content: {
         "application/json": {
@@ -256,6 +289,14 @@ export const deleteFeatureFlag = createRoute({
         },
       },
       description: "Feature flag not found",
+    },
+    422: {
+      content: {
+        "application/json": {
+          schema: MessageSchema,
+        },
+      },
+      description: "Validation error",
     },
     500: {
       content: {

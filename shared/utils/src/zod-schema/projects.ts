@@ -93,14 +93,7 @@ export const ProjectMemberSchema = z
 
 export type ProjectMember = z.infer<typeof ProjectMemberSchema>
 
-export const ChecklistSchema = z.object({
-  id: z.string().openapi({ example: "2hek2bkjh" }),
-  text: z.string().openapi({ example: "Checklist item" }),
-  checked: z.boolean().openapi({ example: false }),
-  order: z.number().int().nonnegative().openapi({ example: 1 }),
-})
-
-export type Checklist = z.infer<typeof ChecklistSchema>
+export type Checklist = z.infer<typeof ChecklistItemSchema>
 
 export const ProjectSchema = z.object({
   id: z.string().max(30).openapi({ example: "2hek2bkjh" }),
@@ -115,7 +108,7 @@ export const ProjectSchema = z.object({
   timeLeft: z.string().openapi({ example: "2 weeks" }),
   members: z.array(ProjectMemberSchema),
   orgId: z.string().openapi({ example: "org123" }),
-  checklist: z.array(ChecklistSchema).default([]),
+  checklist: z.array(ChecklistItemSchema).default([]),
   acceptanceCriteria: z.array(ChecklistItemSchema).default([]),
   status: z.enum(projectStatus).openapi({ example: "started" }),
   startDate: z
