@@ -14,9 +14,9 @@ import { mockMiddleware } from "./mock"
 export const middlewares = (app: OpenAPIHono<HonoApp>) => {
   setupSentryMiddleware(app, BASE_PATH, "tasks-api")
 
-  // Add mock middleware before auth if MOCK_ENV is true
-  if (envVars.MOCK_ENV) {
-    console.log("🎭 MOCK_ENV", envVars.MOCK_ENV)
+  // Add mock middleware before auth if MOCK_DATA is true
+  if (envVars.MOCK_DATA) {
+    console.log("🎭 MOCK_DATA", envVars.MOCK_DATA)
     console.log(
       "🎭 MOCK MODE ENABLED - Using mock data instead of real database"
     )

@@ -9,4 +9,4 @@ import { type GenAIEnv, createEnvConfig } from "@incmix-api/utils/env-config"
 export const envVars = createEnvConfig("genai") as GenAIEnv
 export type Env = GenAIEnv
 
-export { GenAIEnv }
+export type { GenAIEnv }

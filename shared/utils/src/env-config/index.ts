@@ -1,8 +1,8 @@
 import fs from "node:fs"
 import path from "node:path"
 import { fileURLToPath } from "node:url"
-import { load } from "dotenv-mono"
 import { config as dotenvConfig } from "dotenv"
+import { load } from "dotenv-mono"
 import { z } from "zod"
 
 // Default ports for each service
@@ -10,60 +10,60 @@ import { z } from "zod"
 export const services = {
   auth: {
     port: 8787,
-    dir: "auth"
+    dir: "auth",
   },
   email: {
     port: 8989,
-    dir: "email"
+    dir: "email",
   },
   genai: {
     port: 8383,
-    dir: "genai-api"
+    dir: "genai-api",
   },
   files: {
     port: 8282,
-    dir: "files-api"
+    dir: "files-api",
   },
   location: {
     port: 9494,
-    dir: "location-api"
+    dir: "location-api",
   },
   bff: {
     port: 8080,
-    dir: "bff-web"
+    dir: "bff-web",
   },
   comments: {
     port: 8585,
-    dir: "comments-api"
+    dir: "comments-api",
   },
   intl: {
     port: 9090,
-    dir: "intl-api"
+    dir: "intl-api",
   },
   org: {
     port: 9292,
-    dir: "org-api"
+    dir: "org-api",
   },
   permissions: {
     port: 9393,
-    dir: "permissions-api"
+    dir: "permissions-api",
   },
   projects: {
     port: 8484,
-    dir: "projects-api"
+    dir: "projects-api",
   },
   tasks: {
     port: 8888,
-    dir: "tasks-api"
+    dir: "tasks-api",
   },
   users: {
     port: 9191,
-    dir: "users-api"
+    dir: "users-api",
   },
   rxdb: {
     port: 8686,
-    dir: "rxdb-api"
-  }
+    dir: "rxdb-api",
+  },
 }
 
 // Helper function to build API URLs with DOMAIN
@@ -86,7 +86,7 @@ const baseEnvSchema = z.object({
   FRONTEND_URL: z.string().url(),
   DOMAIN: z.string().default("http://localhost"),
   COOKIE_NAME: z.string().default("incmix_session"),
-  MOCK_ENV: z.coerce.boolean().default(false),
+  MOCK_DATA: z.coerce.boolean().default(false),
 })
 
 // Service-specific schema extensions
@@ -108,7 +108,7 @@ const serviceSchemas = {
     RESEND_WEBHOOK_SECRET: z.string().optional(),
     PORT: z.coerce.number().default(services.email.port),
     // API URLs
-    INTL_API_URL: z.string().url().optional()
+    INTL_API_URL: z.string().url().optional(),
     // Note: DATABASE_URL is inherited from baseEnvSchema
   }),
   genai: baseEnvSchema.extend({
@@ -138,39 +138,37 @@ const serviceSchemas = {
     INTL_API_URL: z.string().url().optional(),
     // Note: DATABASE_URL is inherited from baseEnvSchema
   }),
-  location: baseEnvSchema
-    .extend({
-      LOCATION_API_KEY: z.string(),
-      LOCATION_URL: z.string(),
-      WEATHER_API_KEY: z.string(),
-      WEATHER_URL: z.string(),
-      SERP_API_KEY: z.string(),
-      SERP_NEWS_URL: z.string(),
-      REDIS_URL: z.string().url(),
-      PORT: z.coerce.number().default(services.location.port),
-      // API URLs
-      INTL_API_URL: z.string().url().optional(),
-      // Note: DATABASE_URL is inherited from baseEnvSchema but not used in Docker Compose
-    }),
-  bff: baseEnvSchema
-    .extend({
-      PORT: z.coerce.number().default(services.bff.port),
-      // API URLs - BFF needs access to all services
-      AUTH_API_URL: z.string().url().optional(),
-      ORG_API_URL: z.string().url().optional(),
-      INTL_API_URL: z.string().url().optional(),
-      GENAI_API_URL: z.string().url().optional(),
-      PROJECTS_API_URL: z.string().url().optional(),
-      TASKS_API_URL: z.string().url().optional(),
-      COMMENTS_API_URL: z.string().url().optional(),
-      USERS_API_URL: z.string().url().optional(),
-      FILES_API_URL: z.string().url().optional(),
-      EMAIL_API_URL: z.string().url().optional(),
-      LOCATION_API_URL: z.string().url().optional(),
-      RXDB_SYNC_API_URL: z.string().url().optional(),
-      PERMISSIONS_API_URL: z.string().url().optional(),
-      // Note: DATABASE_URL is inherited from baseEnvSchema but not used in Docker Compose
-    }),
+  location: baseEnvSchema.extend({
+    LOCATION_API_KEY: z.string(),
+    LOCATION_URL: z.string(),
+    WEATHER_API_KEY: z.string(),
+    WEATHER_URL: z.string(),
+    SERP_API_KEY: z.string(),
+    SERP_NEWS_URL: z.string(),
+    REDIS_URL: z.string().url(),
+    PORT: z.coerce.number().default(services.location.port),
+    // API URLs
+    INTL_API_URL: z.string().url().optional(),
+    // Note: DATABASE_URL is inherited from baseEnvSchema but not used in Docker Compose
+  }),
+  bff: baseEnvSchema.extend({
+    PORT: z.coerce.number().default(services.bff.port),
+    // API URLs - BFF needs access to all services
+    AUTH_API_URL: z.string().url().optional(),
+    ORG_API_URL: z.string().url().optional(),
+    INTL_API_URL: z.string().url().optional(),
+    GENAI_API_URL: z.string().url().optional(),
+    PROJECTS_API_URL: z.string().url().optional(),
+    TASKS_API_URL: z.string().url().optional(),
+    COMMENTS_API_URL: z.string().url().optional(),
+    USERS_API_URL: z.string().url().optional(),
+    FILES_API_URL: z.string().url().optional(),
+    EMAIL_API_URL: z.string().url().optional(),
+    LOCATION_API_URL: z.string().url().optional(),
+    RXDB_SYNC_API_URL: z.string().url().optional(),
+    PERMISSIONS_API_URL: z.string().url().optional(),
+    // Note: DATABASE_URL is inherited from baseEnvSchema but not used in Docker Compose
+  }),
   comments: baseEnvSchema.extend({
     PORT: z.coerce.number().default(services.comments.port),
     // API URLs
@@ -241,7 +239,6 @@ export function createEnvConfig<T extends ServiceName>(
   serviceName?: T,
   customSchema?: z.ZodObject<any>
 ) {
-
   // Load environment variables using dotenv-mono
   // This will merge root .env with service-specific .env and NODE_ENV specific files
   const nodeEnv = process.env.NODE_ENV || "development"
@@ -253,7 +250,7 @@ export function createEnvConfig<T extends ServiceName>(
   // When compiled: dist/src/env-config -> needs 5 levels up
   // When source: src/env-config -> needs 4 levels up
   // Check if we're running from dist or src
-  const isCompiled = __dirname.includes('/dist/')
+  const isCompiled = __dirname.includes("/dist/")
   const levelsUp = isCompiled ? "../../../../.." : "../../../.."
   const backendRoot = path.resolve(__dirname, levelsUp)
 
@@ -274,37 +271,42 @@ export function createEnvConfig<T extends ServiceName>(
 
   // Load all env files using dotenv with priorities
   // We'll load them in priority order (lowest to highest) so higher priority files override lower ones
- // Load all env files in priority order using regular dotenv
+  // Load all env files in priority order using regular dotenv
   // Load files from lowest to highest priority so higher priority overrides
   const sortedPaths = Object.entries(priorities)
     .sort(([, a], [, b]) => a - b)
     .map(([filePath]) => filePath)
-  
+
   if (process.env.DEBUG_ENV_LOADING) {
     console.log("[DEBUG] Loading env files in order:")
-    sortedPaths.forEach(p => console.log(`  - ${p}`))
+    sortedPaths.forEach((p) => console.log(`  - ${p}`))
   }
-  
+
   // Load each file in order
   for (const envPath of sortedPaths) {
     if (fs.existsSync(envPath)) {
-      const result = dotenvConfig({ 
+      const result = dotenvConfig({
         path: envPath,
-        override: true // Allow overriding existing vars
+        override: true, // Allow overriding existing vars
       })
       if (process.env.DEBUG_ENV_LOADING) {
-        console.log(`[DEBUG] Loaded ${envPath}: ${result.error ? 'Failed' : 'Success'}`)
+        console.log(
+          `[DEBUG] Loaded ${envPath}: ${result.error ? "Failed" : "Success"}`
+        )
       }
     } else if (process.env.DEBUG_ENV_LOADING) {
       console.log(`[DEBUG] File not found: ${envPath}`)
     }
   }
-  
+
   if (process.env.DEBUG_ENV_LOADING) {
     console.log("[DEBUG] After loading all files:")
     console.log("  DATABASE_URL:", process.env.DATABASE_URL ? "✓" : "✗")
     console.log("  SENTRY_DSN:", process.env.SENTRY_DSN ? "✓" : "✗")
-    console.log("  GOOGLE_REDIRECT_URL:", process.env.GOOGLE_REDIRECT_URL ? "✓" : "✗")
+    console.log(
+      "  GOOGLE_REDIRECT_URL:",
+      process.env.GOOGLE_REDIRECT_URL ? "✓" : "✗"
+    )
   }
   let schema: z.ZodObject<any> = baseEnvSchema as z.ZodObject<any>
 
@@ -390,4 +392,3 @@ export type UsersEnv = BaseEnv & z.infer<typeof serviceSchemas.users>
 export type RxdbEnv = BaseEnv & z.infer<typeof serviceSchemas.rxdb>
 
 // Export SERVICE_PORTS for external use
-

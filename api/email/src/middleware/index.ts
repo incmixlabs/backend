@@ -9,7 +9,6 @@ import {
 } from "@incmix-api/utils/middleware"
 import { envVars } from "../env-vars"
 
-
 export const middlewares = (app: OpenAPIHono<HonoApp>) => {
   setupCors(app, BASE_PATH)
   setupSentryMiddleware(app, BASE_PATH, "email-api")

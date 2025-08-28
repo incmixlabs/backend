@@ -8,8 +8,8 @@ import {
   setupCors,
   setupSentryMiddleware,
 } from "@incmix-api/utils/middleware"
-import { envVars } from "../env-vars"
 import { compress } from "hono/compress"
+import { envVars } from "../env-vars"
 
 export const middlewares = (app: OpenAPIHono<HonoApp>) => {
   app.use("*", compress({ encoding: "gzip" }))
