@@ -20,6 +20,7 @@ const SERVICE_PORTS = {
   tasks: 8888,
   users: 9191,
   rxdb: 8686,
+  featureFlags: 9797,
 } as const
 const dirs: { [K in keyof typeof SERVICE_PORTS]: string } = {
   auth: "auth",
@@ -36,6 +37,7 @@ const dirs: { [K in keyof typeof SERVICE_PORTS]: string } = {
   tasks: "tasks-api",
   users: "users-api",
   rxdb: "rxdb-api",
+  featureFlags: "feature-flags-api",
 }
 // Helper function to build API URLs with DOMAIN
 function buildApiUrl(port: number, path: string, domain?: string): string {
@@ -147,6 +149,7 @@ const serviceSchemas = {
       LOCATION_API_URL: z.url(),
       RXDB_SYNC_API_URL: z.url(),
       PERMISSIONS_API_URL: z.url(),
+      FEATURE_FLAGS_API_URL: z.url(),
       // Note: DATABASE_URL is inherited from baseEnvSchema but not used in Docker Compose
     }),
   comments: baseEnvSchema.extend({
@@ -207,6 +210,12 @@ const serviceSchemas = {
   }),
   rxdb: baseEnvSchema.extend({
     PORT: z.coerce.number().default(SERVICE_PORTS.rxdb),
+    // API URLs
+    AUTH_API_URL: z.url(),
+    INTL_API_URL: z.url(),
+  }),
+  featureFlags: baseEnvSchema.extend({
+    PORT: z.coerce.number().default(SERVICE_PORTS.featureFlags),
     // API URLs
     AUTH_API_URL: z.url(),
     INTL_API_URL: z.url(),
@@ -382,6 +391,13 @@ export function createEnvConfig<T extends ServiceName>(
       domain
     )
   }
+  if (!env.FEATURE_FLAGS_API_URL) {
+    env.FEATURE_FLAGS_API_URL = buildApiUrl(
+      SERVICE_PORTS.featureFlags,
+      "/api/feature-flags",
+      domain
+    )
+  }
   return env
 }
 
@@ -401,6 +417,8 @@ export type ProjectsEnv = BaseEnv & z.infer<typeof serviceSchemas.projects>
 export type TasksEnv = BaseEnv & z.infer<typeof serviceSchemas.tasks>
 export type UsersEnv = BaseEnv & z.infer<typeof serviceSchemas.users>
 export type RxdbEnv = BaseEnv & z.infer<typeof serviceSchemas.rxdb>
+export type FeatureFlagsEnv = BaseEnv &
+  z.infer<typeof serviceSchemas.featureFlags>
 
 // Export SERVICE_PORTS for external use
 export { SERVICE_PORTS }
