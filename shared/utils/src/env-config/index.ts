@@ -1,12 +1,10 @@
-import fs from "node:fs"
+import { existsSync } from "node:fs"
 import path from "node:path"
 import { fileURLToPath } from "node:url"
 import { config as dotenvConfig } from "dotenv"
-import { load } from "dotenv-mono"
 import { z } from "zod"
 
 // Default ports for each service
-
 export const services = {
   auth: {
     port: 8787,
@@ -151,8 +149,11 @@ const serviceSchemas = {
     INTL_API_URL: z.string().url().optional(),
     // Note: DATABASE_URL is inherited from baseEnvSchema but not used in Docker Compose
   }),
-  bff: baseEnvSchema.extend({
+  bff: baseEnvSchema.omit({ DATABASE_URL: true, SENTRY_DSN: true }).extend({
     PORT: z.coerce.number().default(services.bff.port),
+    // Override base schema fields to make them optional for BFF
+    DATABASE_URL: z.string().url().optional(),
+    SENTRY_DSN: z.string().url().optional(),
     // API URLs - BFF needs access to all services
     AUTH_API_URL: z.string().url().optional(),
     ORG_API_URL: z.string().url().optional(),
@@ -234,7 +235,6 @@ const serviceSchemas = {
 }
 
 export type ServiceName = keyof typeof serviceSchemas
-
 export function createEnvConfig<T extends ServiceName>(
   serviceName?: T,
   customSchema?: z.ZodObject<any>
@@ -254,49 +254,63 @@ export function createEnvConfig<T extends ServiceName>(
   const levelsUp = isCompiled ? "../../../../.." : "../../../.."
   const backendRoot = path.resolve(__dirname, levelsUp)
 
-  // Set up priorities for different env files (higher number = higher priority)
-  const priorities: Record<string, number> = {}
+  // Get the monorepo root (parent of backend)
+  const monorepoRoot = path.resolve(backendRoot, "..")
 
-  // Base priority: root .env files
-  priorities[path.join(backendRoot, ".env")] = 10
-  priorities[path.join(backendRoot, `.env.${nodeEnv}`)] = 20
+  // Load environment variables in order of priority (lowest to highest)
+  // This ensures that higher priority files override lower priority ones
+
+  const envFiles: Array<{ path: string; priority: number }> = []
+
+  // Base priority: monorepo root .env files (lowest priority)
+  const monorepoEnv = path.join(monorepoRoot, ".env")
+  const monorepoEnvWithMode = path.join(monorepoRoot, `.env.${nodeEnv}`)
+  if (existsSync(monorepoEnv)) {
+    envFiles.push({ path: monorepoEnv, priority: 5 })
+  }
+  if (existsSync(monorepoEnvWithMode)) {
+    envFiles.push({ path: monorepoEnvWithMode, priority: 15 })
+  }
+
+  // Backend root .env files (medium priority)
+  const backendEnv = path.join(backendRoot, ".env")
+  const backendEnvWithMode = path.join(backendRoot, `.env.${nodeEnv}`)
+  if (existsSync(backendEnv)) {
+    envFiles.push({ path: backendEnv, priority: 10 })
+  }
+  if (existsSync(backendEnvWithMode)) {
+    envFiles.push({ path: backendEnvWithMode, priority: 20 })
+  }
 
   // Service-specific env files get higher priority
   if (serviceName) {
     const dir = services[serviceName].dir
     const serviceDir = path.join(backendRoot, "api", `${dir}`)
-    priorities[path.join(serviceDir, ".env")] = 30
-    priorities[path.join(serviceDir, `.env.${nodeEnv}`)] = 40
+    const serviceEnv = path.join(serviceDir, ".env")
+    const serviceEnvWithMode = path.join(serviceDir, `.env.${nodeEnv}`)
+    if (existsSync(serviceEnv)) {
+      envFiles.push({ path: serviceEnv, priority: 30 })
+    }
+    if (existsSync(serviceEnvWithMode)) {
+      envFiles.push({ path: serviceEnvWithMode, priority: 40 })
+    }
   }
 
-  // Load all env files using dotenv with priorities
-  // We'll load them in priority order (lowest to highest) so higher priority files override lower ones
-  // Load all env files in priority order using regular dotenv
-  // Load files from lowest to highest priority so higher priority overrides
-  const sortedPaths = Object.entries(priorities)
-    .sort(([, a], [, b]) => a - b)
-    .map(([filePath]) => filePath)
+  // Sort by priority (ascending) and load each file
+  envFiles.sort((a, b) => a.priority - b.priority)
 
   if (process.env.DEBUG_ENV_LOADING) {
-    console.log("[DEBUG] Loading env files in order:")
-    sortedPaths.forEach((p) => console.log(`  - ${p}`))
+    console.log("[DEBUG] Loading env files:")
+    console.log("  Backend root:", backendRoot)
+    console.log(
+      "  Files to load:",
+      envFiles.map((f) => f.path)
+    )
   }
 
-  // Load each file in order
-  for (const envPath of sortedPaths) {
-    if (fs.existsSync(envPath)) {
-      const result = dotenvConfig({
-        path: envPath,
-        override: true, // Allow overriding existing vars
-      })
-      if (process.env.DEBUG_ENV_LOADING) {
-        console.log(
-          `[DEBUG] Loaded ${envPath}: ${result.error ? "Failed" : "Success"}`
-        )
-      }
-    } else if (process.env.DEBUG_ENV_LOADING) {
-      console.log(`[DEBUG] File not found: ${envPath}`)
-    }
+  // Load each file with override enabled
+  for (const file of envFiles) {
+    dotenvConfig({ path: file.path, override: true })
   }
 
   if (process.env.DEBUG_ENV_LOADING) {
@@ -308,6 +322,7 @@ export function createEnvConfig<T extends ServiceName>(
       process.env.GOOGLE_REDIRECT_URL ? "✓" : "✗"
     )
   }
+  // Start with base schema
   let schema: z.ZodObject<any> = baseEnvSchema as z.ZodObject<any>
 
   // Add service-specific schema if provided

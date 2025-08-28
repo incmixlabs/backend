@@ -9,13 +9,22 @@ import {
 } from "@incmix-api/utils/middleware"
 import { envVars } from "../env-vars"
 
+// Create singleton DB instance at module level
+const db = (() => {
+  const url = envVars.DATABASE_URL
+  if (!url) {
+    throw new Error("DATABASE_URL is not defined for email-api")
+  }
+  return initDb(url)
+})()
+
 export const middlewares = (app: OpenAPIHono<HonoApp>) => {
   setupCors(app, BASE_PATH)
   setupSentryMiddleware(app, BASE_PATH, "email-api")
   app.use(`${BASE_PATH}/*`, createI18nMiddleware())
 
-  app.use(`${BASE_PATH}/*`, (c, next) => {
-    c.set("db", initDb(envVars.DATABASE_URL))
-    return next()
+  app.use(`${BASE_PATH}/*`, async (c, next) => {
+    c.set("db", db)
+    await next()
   })
 }
