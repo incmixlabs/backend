@@ -20,9 +20,8 @@ const service = createService<HonoApp["Bindings"]>({
       return c.json({ time: Date.now() })
     })
     app.get("/api/timestamp-nano", (c) => {
-      const [seconds, nanoseconds] = process.hrtime()
-      const currentTimeInNanoseconds = seconds * 1e9 + nanoseconds
-      return c.json({ time: currentTimeInNanoseconds })
+      const ns = process.hrtime.bigint() // monotonic
+      return c.json({ time: ns.toString(), monotonic: true })
     })
     app.get("/api/healthcheck", async (c) => {
       const apis = Object.entries(API)
