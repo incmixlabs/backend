@@ -6,53 +6,55 @@
   "scripts": {
     "dev": "tsc && (concurrently \"tsc -w\" \"tsc-alias -w\")",
     "build": "tsc && tsc-alias",
-    "clean": "rm -rf dist"
+    "clean": "rm -rf dist",
+    "test": "vitest",
+    "test:run": "vitest run"
   },
   "exports": {
     ".": "./dist/src/utils/index.js",
     "./middleware": {
-      "default": "./dist/src/middleware/index.js",
-      "types": "./dist/src/middleware/index.d.ts"
+      "types": "./dist/src/middleware/index.d.ts",
+      "default": "./dist/src/middleware/index.js"
     },
     "./errors": {
-      "default": "./dist/src/errors/index.js",
-      "types": "./dist/src/errors/index.d.ts"
+      "types": "./dist/src/errors/index.d.ts",
+      "default": "./dist/src/errors/index.js"
     },
     "./kv-store": {
-      "default": "./dist/src/kv-store/index.js",
-      "types": "./dist/src/kv-store/index.d.ts"
+      "types": "./dist/src/kv-store/index.d.ts",
+      "default": "./dist/src/kv-store/index.js"
     },
     "./types": {
-      "default": "./dist/src/types.js",
-      "types": "./dist/src/types.d.ts"
+      "types": "./dist/src/types.d.ts",
+      "default": "./dist/src/types.js"
     },
     "./db-schema": {
-      "default": "./dist/src/db-schema/index.js",
-      "types": "./dist/src/db-schema/index.d.ts"
+      "types": "./dist/src/db-schema/index.d.ts",
+      "default": "./dist/src/db-schema/index.js"
     },
     "./zod-schema": {
-      "default": "./dist/src/zod-schema/index.js",
-      "types": "./dist/src/zod-schema/index.d.ts"
+      "types": "./dist/src/zod-schema/index.d.ts",
+      "default": "./dist/src/zod-schema/index.js"
     },
     "./authorization": {
-      "default": "./dist/src/authorization/index.js",
-      "types": "./dist/src/authorization/index.d.ts"
+      "types": "./dist/src/authorization/index.d.ts",
+      "default": "./dist/src/authorization/index.js"
     },
     "./queue": {
-      "default": "./dist/src/bullmq/index.js",
-      "types": "./dist/src/bullmq/index.d.ts"
+      "types": "./dist/src/bullmq/index.d.ts",
+      "default": "./dist/src/bullmq/index.js"
     },
     "./env-config": {
-      "default": "./dist/src/env-config/index.js",
-      "types": "./dist/src/env-config/index.d.ts"
+      "types": "./dist/src/env-config/index.d.ts",
+      "default": "./dist/src/env-config/index.js"
     },
     "./service-bootstrap": {
-      "default": "./dist/src/service-bootstrap/index.js",
-      "types": "./dist/src/service-bootstrap/index.d.ts"
+      "types": "./dist/src/service-bootstrap/index.d.ts",
+      "default": "./dist/src/service-bootstrap/index.js"
     },
     "./db-operations": {
-      "default": "./dist/src/db-operations/index.js",
-      "types": "./dist/src/db-operations/index.d.ts"
+      "types": "./dist/src/db-operations/index.d.ts",
+      "default": "./dist/src/db-operations/index.js"
     }
   },
   "dependencies": {

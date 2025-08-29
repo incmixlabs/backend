@@ -8,23 +8,23 @@ import { z } from "zod"
 export const services = {
   auth: {
     port: 8787,
-    dir: "auth",
+    dir: "auth"
   },
   email: {
     port: 8989,
-    dir: "email",
+    dir: "email"
   },
   genai: {
     port: 8383,
-    dir: "genai-api",
+    dir: "genai-api"
   },
   files: {
     port: 8282,
-    dir: "files-api",
+    dir: "files-api"
   },
   location: {
     port: 9494,
-    dir: "location-api",
+    dir: "location-api"
   },
   bff: {
     port: 8080,
@@ -58,9 +58,10 @@ export const services = {
     port: 9191,
     dir: "users-api",
   },
-  rxdb: {
+  "rxdb": {
     port: 8686,
     dir: "rxdb-api",
+    endpoint: "rxdb-sync"
   },
 }
 
@@ -351,44 +352,34 @@ export function createEnvConfig<T extends ServiceName>(
   const env = result.data
   const domain = String(env.DOMAIN || "http://localhost")
 
-  // Apply domain to API URLs if they're using the default localhost
+  // Apply domain to API URLs only if they are defined in the schema
   // Only set defaults if the environment variable is not already provided
+  const schemaShape = schema.shape
 
-  env.EMAIL_API_URL = buildApiUrl(services.email.port, "/api/email", domain)
-  env.AUTH_API_URL = buildApiUrl(services.auth.port, "/api/auth", domain)
-  env.INTL_API_URL = buildApiUrl(services.intl.port, "/api/intl", domain)
-  env.USERS_API_URL = buildApiUrl(services.users.port, "/api/users", domain)
-  env.LOCATION_API_URL = buildApiUrl(
-    services.location.port,
-    "/api/location",
-    domain
-  )
-  env.GENAI_API_URL = buildApiUrl(services.genai.port, "/api/genai", domain)
-  env.FILES_API_URL = buildApiUrl(services.files.port, "/api/files", domain)
-  env.BFF_API_URL = buildApiUrl(services.bff.port, "/api/bff", domain)
-  env.COMMENTS_API_URL = buildApiUrl(
-    services.comments.port,
-    "/api/comments",
-    domain
-  )
-  env.ORG_API_URL = buildApiUrl(services.org.port, "/api/org", domain)
-  env.PERMISSIONS_API_URL = buildApiUrl(
-    services.permissions.port,
-    "/api/permissions",
-    domain
-  )
-  env.PROJECTS_API_URL = buildApiUrl(
-    services.projects.port,
-    "/api/projects",
-    domain
-  )
-  env.TASKS_API_URL = buildApiUrl(services.tasks.port, "/api/tasks", domain)
-  env.RXDB_SYNC_API_URL = buildApiUrl(
-    services.rxdb.port,
-    "/api/rxdb-sync",
-    domain
-  )
-  env.GOOGLE_REDIRECT_URL = `${env.FRONTEND_URL}/auth/google/callback`
+  // Helper to check if a field exists in the schema and set its value
+  const setApiUrlIfInSchema = (fieldName: string, port: number, path: string) => {
+    if (fieldName in schemaShape && !env[fieldName]) {
+      env[fieldName] = buildApiUrl(port, path, domain)
+    }
+  }
+
+  // Iterate over services to set API URLs if they're in the schema
+  for (const [serviceName, serviceConfig] of Object.entries(services)) {
+    // Convert service name to API URL field name (e.g., "auth" -> "AUTH_API_URL")
+    const endpoint = (serviceConfig as any)?.endpoint || serviceName
+    const apiUrlFieldName =  `${endpoint.toUpperCase()}_API_URL`
+    // Special case for rxdb which uses RXDB_SYNC_API_URL
+    const fieldName = serviceName === "rxdb" ? "RXDB_SYNC_API_URL" : apiUrlFieldName
+    // Special case for rxdb path
+    const apiPath = serviceName === "rxdb" ? "/api/rxdb-sync" : "/api/" + serviceName
+
+    setApiUrlIfInSchema(fieldName, serviceConfig.port, apiPath)
+  }
+
+  // Special case for GOOGLE_REDIRECT_URL - only set if in schema
+  if ("GOOGLE_REDIRECT_URL" in schemaShape && !env.GOOGLE_REDIRECT_URL) {
+    env.GOOGLE_REDIRECT_URL = `${env.FRONTEND_URL}/auth/google/callback`
+  }
   return env
 }
 
