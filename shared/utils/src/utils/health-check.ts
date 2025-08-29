@@ -14,6 +14,35 @@ export const HealthCheckSchema = z
   .openapi("Healthcheck")
 
 /**
+ * Create a health check function for the /reference endpoint
+ */
+export function createReferenceEndpointCheck(basePath: string) {
+  return async (): Promise<boolean> => {
+    try {
+      // Get the current server's URL
+      const serverUrl =
+        process.env.NODE_ENV === "production"
+          ? `http://localhost:${process.env.PORT || 3000}`
+          : `http://localhost:${process.env.PORT || 3000}`
+
+      const referenceUrl = `${serverUrl}${basePath}/reference`
+      const response = await fetch(referenceUrl, {
+        method: "GET",
+        timeout: 5000,
+      })
+
+      return response.ok
+    } catch (error) {
+      console.error(
+        `Reference endpoint check failed for ${basePath}/reference:`,
+        error
+      )
+      return false
+    }
+  }
+}
+
+/**
  * Type for the health check configuration
  */
 export type HealthCheckConfig<T extends Env> = {
@@ -42,6 +71,11 @@ export type HealthCheckConfig<T extends Env> = {
    * Whether to require authentication for the health check endpoint
    */
   requireAuth?: boolean
+
+  /**
+   * Base path of the current service (for checking /reference endpoint)
+   */
+  basePath?: string
 }
 
 /**
@@ -49,11 +83,23 @@ export type HealthCheckConfig<T extends Env> = {
  */
 export function createHealthCheckRoute<T extends Env>({
   envVars,
-  checks,
+  checks = [],
   tags = ["Health Check"],
   requireAuth = false,
+  basePath,
 }: HealthCheckConfig<T>) {
   const security = requireAuth ? [{ cookieAuth: [] }] : undefined
+
+  // Add reference endpoint check if basePath is provided
+  const allChecks = [...checks]
+  if (basePath) {
+    allChecks.push({
+      name: "Reference Endpoint",
+      check: async () => {
+        return await createReferenceEndpointCheck(basePath)()
+      },
+    })
+  }
 
   // Create the OpenAPI route schema
   const healthCheckRoute = createRoute({
@@ -94,8 +140,8 @@ export function createHealthCheckRoute<T extends Env>({
       }
 
       // Run additional health checks
-      if (checks) {
-        for (const { name, check } of checks) {
+      if (allChecks.length > 0) {
+        for (const { name, check } of allChecks) {
           try {
             const isHealthy = await check(c)
             if (!isHealthy) {

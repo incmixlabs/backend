@@ -8,23 +8,23 @@ import { z } from "zod"
 export const services = {
   auth: {
     port: 8787,
-    dir: "auth"
+    dir: "auth",
   },
   email: {
     port: 8989,
-    dir: "email"
+    dir: "email",
   },
   genai: {
     port: 8383,
-    dir: "genai-api"
+    dir: "genai-api",
   },
   files: {
     port: 8282,
-    dir: "files-api"
+    dir: "files-api",
   },
   location: {
     port: 9494,
-    dir: "location-api"
+    dir: "location-api",
   },
   bff: {
     port: 8080,
@@ -58,10 +58,10 @@ export const services = {
     port: 9191,
     dir: "users-api",
   },
-  "rxdb": {
+  rxdb: {
     port: 8686,
     dir: "rxdb-api",
-    endpoint: "rxdb-sync"
+    endpoint: "rxdb-sync",
   },
 }
 
@@ -86,6 +86,7 @@ const baseEnvSchema = z.object({
   DOMAIN: z.string().default("http://localhost"),
   COOKIE_NAME: z.string().default("incmix_session"),
   MOCK_DATA: z.coerce.boolean().default(false),
+  INTL_API_URL: z.string().url().optional(),
 })
 
 // Service-specific schema extensions
@@ -357,7 +358,11 @@ export function createEnvConfig<T extends ServiceName>(
   const schemaShape = schema.shape
 
   // Helper to check if a field exists in the schema and set its value
-  const setApiUrlIfInSchema = (fieldName: string, port: number, path: string) => {
+  const setApiUrlIfInSchema = (
+    fieldName: string,
+    port: number,
+    path: string
+  ) => {
     if (fieldName in schemaShape && !env[fieldName]) {
       env[fieldName] = buildApiUrl(port, path, domain)
     }
@@ -367,11 +372,9 @@ export function createEnvConfig<T extends ServiceName>(
   for (const [serviceName, serviceConfig] of Object.entries(services)) {
     // Convert service name to API URL field name (e.g., "auth" -> "AUTH_API_URL")
     const endpoint = (serviceConfig as any)?.endpoint || serviceName
-    const apiUrlFieldName =  `${endpoint.toUpperCase()}_API_URL`
-    // Special case for rxdb which uses RXDB_SYNC_API_URL
-    const fieldName = serviceName === "rxdb" ? "RXDB_SYNC_API_URL" : apiUrlFieldName
-    // Special case for rxdb path
-    const apiPath = serviceName === "rxdb" ? "/api/rxdb-sync" : "/api/" + serviceName
+    const apiUrlFieldName = `${endpoint.toUpperCase()}_API_URL`
+    const fieldName = apiUrlFieldName.replaceAll("-", "_")
+    const apiPath = `/api/${endpoint}`
 
     setApiUrlIfInSchema(fieldName, serviceConfig.port, apiPath)
   }

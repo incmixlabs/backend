@@ -1,5 +1,5 @@
 import { envVars } from "@/env-vars"
-
+import { BASE_PATH } from "@/lib/constants"
 import type { HonoApp } from "@/types"
 import { createHealthCheckRoute } from "@incmix-api/utils"
 
@@ -17,6 +17,8 @@ const healthcheckRoutes = createHealthCheckRoute<HonoApp>({
     USERS_API_URL: envVars.USERS_API_URL,
     DATABASE_URL: envVars.DATABASE_URL,
   },
+
+  basePath: BASE_PATH,
 
   // Add service-specific checks
   checks: [
