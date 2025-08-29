@@ -7,18 +7,21 @@ import { createI18nMiddleware } from "./i18n"
 import { setupRedisMiddleware } from "./redis"
 import { setupSentryMiddleware } from "./sentry"
 
+import type { OpenAPIHono } from "@hono/zod-openapi"
+import type { MiddlewareHandler } from "hono"
+
 export interface MiddlewareConfig {
   basePath: string
   serviceName: string
   databaseUrl?: string
-  customAuthMiddleware?: any
-  mockMiddleware?: any
+  customAuthMiddleware?: MiddlewareHandler
+  mockMiddleware?: MiddlewareHandler
   mockData?: boolean
   corsFirst?: boolean
   skipAuth?: boolean
   useRedis?: boolean
   useCompression?: boolean
-  customI18nMiddleware?: any
+  customI18nMiddleware?: () => MiddlewareHandler
 }
 
 export function setupApiMiddleware<T extends { Bindings: any; Variables: any }>(
