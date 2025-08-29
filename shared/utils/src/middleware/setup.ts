@@ -1,6 +1,7 @@
 import type { OpenAPIHono } from "@hono/zod-openapi"
 import { initDb } from "@incmix-api/utils/db-schema"
 import type { Context } from "hono"
+import type { MiddlewareHandler } from "hono"
 import { compress } from "hono/compress"
 import { envVars } from "../env-config"
 import { createAuthMiddleware } from "./auth"
@@ -8,7 +9,6 @@ import { setupCors } from "./cors"
 import { createI18nMiddleware } from "./i18n"
 import { setupRedisMiddleware } from "./redis"
 import { setupSentryMiddleware } from "./sentry"
-import type { MiddlewareHandler } from "hono"
 
 export interface MiddlewareConfig {
   basePath: string
@@ -25,8 +25,14 @@ export interface MiddlewareConfig {
 }
 
 export function createReferenceEndpointCheck(basePath: string) {
-  const normalize = (p: string) =>
-    p.startsWith("/") ? p.replace(/\/+$/, "") : `/${p.replace(/\/+$/, "")}`
+  const normalize = (p: string) => {
+    // Remove trailing slashes without using regex to avoid ReDoS vulnerability
+    let normalizedPath = p.startsWith("/") ? p : `/${p}`
+    while (normalizedPath.length > 1 && normalizedPath.endsWith("/")) {
+      normalizedPath = normalizedPath.slice(0, -1)
+    }
+    return normalizedPath
+  }
   return async (c: Context): Promise<boolean> => {
     const origin = new URL(c.req.url).origin
     const referenceUrl = `${origin}${normalize(basePath)}/reference`
