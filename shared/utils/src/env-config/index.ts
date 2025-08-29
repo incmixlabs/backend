@@ -250,10 +250,12 @@ export function createEnvConfig<T extends ServiceName>(
   // When compiled: dist/src/env-config -> needs 5 levels up
   // When source: src/env-config -> needs 4 levels up
   // Check if we're running from dist or src
-  const isCompiled = __dirname.includes("/dist/")
-  const levelsUp = isCompiled ? "../../../../.." : "../../../.."
+  const parts = path.normalize(__dirname).split(path.sep)
+  const isCompiled = parts.includes("dist")
+  const levelsUp = isCompiled
+    ? path.join("..", "..", "..", "..", "..")
+    : path.join("..", "..", "..", "..")
   const backendRoot = path.resolve(__dirname, levelsUp)
-
   // Get the monorepo root (parent of backend)
   const monorepoRoot = path.resolve(backendRoot, "..")
 
