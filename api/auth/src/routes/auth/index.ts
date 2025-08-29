@@ -158,7 +158,9 @@ authRoutes.openapi(signup, async (c) => {
       email,
       "email_verification"
     )
-    await sendVerificationEmail(c, email, verificationCode, userId)
+    if (!envVars.MOCK_DATA) {
+      await sendVerificationEmail(c, email, verificationCode, userId)
+    }
 
     return c.json(
       {

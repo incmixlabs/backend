@@ -386,6 +386,7 @@ export function createEnvConfig<T extends ServiceName>(
     "/api/rxdb-sync",
     domain
   )
+  env.GOOGLE_REDIRECT_URL = `${env.FRONTEND_URL}/auth/google/callback`
   return env
 }
 
