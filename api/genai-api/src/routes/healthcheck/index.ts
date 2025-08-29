@@ -13,6 +13,8 @@ const healthcheckRoutes = createHealthCheckRoute<HonoApp>({
     DATABASE_URL: envVars.DATABASE_URL,
   },
 
+  basePath: BASE_PATH,
+
   // Add service-specific checks
   checks: [
     {

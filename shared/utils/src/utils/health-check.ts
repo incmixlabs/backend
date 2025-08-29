@@ -26,10 +26,16 @@ export function createReferenceEndpointCheck(basePath: string) {
           : `http://localhost:${process.env.PORT || 3000}`
 
       const referenceUrl = `${serverUrl}${basePath}/reference`
-      const response = await fetch(referenceUrl, {
-        method: "GET",
-        timeout: 5000,
+
+      // Create a timeout promise
+      const timeoutPromise = new Promise<never>((_, reject) => {
+        setTimeout(() => reject(new Error("Request timeout")), 5000)
       })
+
+      const response = await Promise.race([
+        fetch(referenceUrl, { method: "GET" }),
+        timeoutPromise,
+      ])
 
       return response.ok
     } catch (error) {
