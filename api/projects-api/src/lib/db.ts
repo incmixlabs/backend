@@ -147,6 +147,8 @@ export async function getProjectById(
 
   return {
     ...project,
+    checklist: project.checklist.map(item => ({...item, text: item.name})),
+    acceptanceCriteria: project.acceptanceCriteria.map(item => ({...item, text: item.name})),
     members: project.members.flatMap((member) => {
       if (!member) return []
 
@@ -175,8 +177,8 @@ export async function getProjectById(
           project.checklist.length
         : 0,
     timeLeft: "0d 0h 0m",
-    createdAt: project.createdAt.toISOString(),
-    updatedAt: project.updatedAt.toISOString(),
+    createdAt: new Date(project.createdAt).toISOString(),
+    updatedAt: new Date(project.updatedAt).toISOString(),
     startDate: project.startDate?.toISOString(),
     endDate: project.endDate?.toISOString(),
   }
@@ -233,14 +235,16 @@ export async function getUserProjects(
 
   return projects.map((project) => ({
     ...project,
+    checklist: project.checklist.map(item => ({...item, text: item.name})),
+    acceptanceCriteria: project.acceptanceCriteria.map(item => ({...item, text: item.name})),
     progress:
       project.checklist.length > 0
         ? (100 * project.checklist.filter((c) => c.checked).length) /
           project.checklist.length
         : 0,
     timeLeft: "0d 0h 0m",
-    createdAt: project.createdAt.toISOString(),
-    updatedAt: project.updatedAt.toISOString(),
+    createdAt: new Date(project.createdAt).toISOString(),
+    updatedAt: new Date(project.updatedAt).toISOString(),
     startDate: project.startDate?.toISOString(),
   }))
 }

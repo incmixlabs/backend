@@ -112,30 +112,30 @@ tasksRoutes.post("/pull", zValidator("query", PullTasksSchema), async (c) => {
           ({
             id: task.id,
             name: task.name,
-            description: task.description,
-            completed: task.completed,
-            projectId: task.projectId,
-            statusId: task.statusId,
-            priorityId: task.priorityId,
-            taskOrder: task.taskOrder,
+            description: task.description || '',
+            completed: task.completed || false,
+            projectId: task.projectId || '',
+            statusId: task.status,
+            priorityId: task.priority,
+            taskOrder: task.order,
             startDate: task.startDate
               ? new Date(task.startDate).getTime()
               : null,
             endDate: task.endDate ? new Date(task.endDate).getTime() : null,
-            acceptanceCriteria: task.acceptanceCriteria,
-            labelsTags: task.labelsTags,
-            refUrls: task.refUrls,
-            attachments: task.attachments,
-            checklist: task.checklist,
-            parentTaskId: task.parentTaskId,
+            acceptanceCriteria: task.acceptanceCriteria?.map(item => ({...item, text: item.name})) || [],
+            labelsTags: task.tags?.map(tag => ({value: tag, label: tag, color: '#000'})) || [],
+            refUrls: task.links || [],
+            attachments: task.attachments?.map(att => ({...att, size: att.size?.toString() || '0'})) || [],
+            checklist: task.checkList?.map(item => ({...item, text: item.name})) || [],
+            parentTaskId: task.parentTaskId || null,
             createdAt: new Date(task.createdAt).getTime(),
             updatedAt: new Date(task.updatedAt).getTime(),
             isSubtask: task.parentTaskId !== null,
-            assignedTo: task.assignedTo.map((a) => ({
+            assignedTo: task.assignedTo?.map((a) => ({
               id: a.id,
-              name: a.name,
-              image: a.image ?? undefined,
-            })),
+              name: a.name || '',
+              image: a.src ?? undefined,
+            })) || [],
             createdBy: {
               id: task.createdBy,
               name: task.createdByName,
@@ -232,16 +232,16 @@ tasksRoutes.post("/push", zValidator("json", PushTasksSchema), async (c) => {
           "tasks.projectId",
           "tasks.updatedAt",
           "tasks.updatedBy",
-          "tasks.statusId",
-          "tasks.priorityId",
-          "tasks.taskOrder",
+          "tasks.status",
+          "tasks.priority",
+          "tasks.order",
           "tasks.startDate",
           "tasks.endDate",
           "tasks.acceptanceCriteria",
-          "tasks.labelsTags",
-          "tasks.refUrls",
+          "tasks.tags",
+          "tasks.links",
           "tasks.attachments",
-          "tasks.checklist",
+          "tasks.checkList",
           jsonArrayFrom(
             eb
               .selectFrom("taskAssignments")
@@ -260,7 +260,7 @@ tasksRoutes.post("/push", zValidator("json", PushTasksSchema), async (c) => {
       // Check if the user has permission to modify this task
       if (
         realMasterState &&
-        (realMasterState?.assignedTo.some((a) => a.id !== user.id) ||
+        (realMasterState?.assignedTo?.some((a) => a.id !== user.id) ||
           realMasterState.createdBy !== user.id)
       ) {
         conflicts.push({
@@ -275,8 +275,8 @@ tasksRoutes.post("/push", zValidator("json", PushTasksSchema), async (c) => {
         (realMasterState && !changeRow.assumedMasterState) ||
         (realMasterState &&
           changeRow.assumedMasterState &&
-          realMasterState.updatedAt >
-            new Date(changeRow.assumedMasterState.updatedAt))
+          new Date(realMasterState.updatedAt).getTime() >
+            changeRow.assumedMasterState.updatedAt)
       ) {
         // We have a conflict - return the current server state
         conflicts.push(realMasterState)
@@ -291,22 +291,18 @@ tasksRoutes.post("/push", zValidator("json", PushTasksSchema), async (c) => {
                 name: newDoc.name,
                 description: newDoc.description,
                 completed: newDoc.completed,
-                taskOrder: newDoc.taskOrder,
+                order: newDoc.taskOrder,
                 projectId: newDoc.projectId,
-                statusId: newDoc.statusId,
-                priorityId: newDoc.priorityId,
-                startDate: newDoc.startDate
-                  ? new Date(newDoc.startDate).toISOString()
-                  : null,
-                endDate: newDoc.endDate
-                  ? new Date(newDoc.endDate).toISOString()
-                  : null,
-                acceptanceCriteria: JSON.stringify(newDoc.acceptanceCriteria),
-                labelsTags: JSON.stringify(newDoc.labelsTags),
-                refUrls: JSON.stringify(newDoc.refUrls),
-                attachments: JSON.stringify(newDoc.attachments),
-                checklist: JSON.stringify(newDoc.checklist),
-                updatedAt: new Date(newDoc.updatedAt).toISOString(),
+                status: newDoc.statusId,
+                priority: newDoc.priorityId,
+                startDate: newDoc.startDate || undefined,
+                endDate: newDoc.endDate || undefined,
+                acceptanceCriteria: newDoc.acceptanceCriteria?.map(item => ({...item, name: item.text})),
+                tags: newDoc.labelsTags?.map(tag => tag.value),
+                links: newDoc.refUrls,
+                attachments: newDoc.attachments?.map(att => ({...att, size: parseInt(att.size) || 0})),
+                checkList: newDoc.checklist?.map(item => ({...item, name: item.text})),
+                updatedAt: newDoc.updatedAt,
                 updatedBy: user.id,
               })
               .where("id", "=", newDoc.id)
@@ -317,7 +313,7 @@ tasksRoutes.post("/push", zValidator("json", PushTasksSchema), async (c) => {
               event.documents.push(updatedTask as unknown as Task)
               event.checkpoint = {
                 id: updatedTask.id,
-                updatedAt: updatedTask.updatedAt,
+                updatedAt: new Date(updatedTask.updatedAt),
               }
             }
           } else {
@@ -381,29 +377,25 @@ tasksRoutes.post("/push", zValidator("json", PushTasksSchema), async (c) => {
               .get("db")
               .insertInto("tasks")
               .values({
-                acceptanceCriteria: JSON.stringify(newDoc.acceptanceCriteria),
-                attachments: JSON.stringify(newDoc.attachments),
-                checklist: JSON.stringify(newDoc.checklist),
+                acceptanceCriteria: newDoc.acceptanceCriteria?.map(item => ({...item, name: item.text})),
+                attachments: newDoc.attachments?.map(att => ({...att, size: parseInt(att.size) || 0})),
+                checkList: newDoc.checklist?.map(item => ({...item, name: item.text})),
                 completed: newDoc.completed,
-                createdAt: new Date(newDoc.createdAt).toISOString(),
+                createdAt: newDoc.createdAt,
                 createdBy: user.id,
                 description: newDoc.description,
-                endDate: newDoc.endDate
-                  ? new Date(newDoc.endDate).toISOString()
-                  : null,
+                endDate: newDoc.endDate || undefined,
                 id: newDoc.id,
-                labelsTags: JSON.stringify(newDoc.labelsTags),
+                tags: newDoc.labelsTags?.map(tag => tag.value),
                 name: newDoc.name,
-                parentTaskId: null,
-                priorityId: newDoc.priorityId,
+                parentTaskId: undefined,
+                priority: newDoc.priorityId,
                 projectId: newDoc.projectId,
-                refUrls: JSON.stringify(newDoc.refUrls),
-                startDate: newDoc.startDate
-                  ? new Date(newDoc.startDate).toISOString()
-                  : null,
-                statusId: newDoc.statusId,
-                taskOrder: newDoc.taskOrder,
-                updatedAt: new Date(newDoc.updatedAt).toISOString(),
+                links: newDoc.refUrls,
+                startDate: newDoc.startDate || undefined,
+                status: newDoc.statusId,
+                order: newDoc.taskOrder,
+                updatedAt: newDoc.updatedAt,
                 updatedBy: user.id,
               })
               .returningAll()

@@ -207,8 +207,6 @@ projectRoutes.openapi(createProject, async (c) => {
             orgId,
             createdBy: user.id,
             updatedBy: user.id,
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
             logo: logoUrl,
             acceptanceCriteria: JSON.stringify(validatedAcceptanceCriteria),
             checklist: JSON.stringify(validatedChecklist),
@@ -455,7 +453,6 @@ projectRoutes.openapi(updateProject, async (c) => {
         budget,
         company,
         updatedBy: user.id,
-        updatedAt: new Date().toISOString(),
       })
       .where("id", "=", existingProject.id)
       .returningAll()
