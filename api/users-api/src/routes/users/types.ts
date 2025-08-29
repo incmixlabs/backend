@@ -1,5 +1,5 @@
 import { z } from "@hono/zod-openapi"
-
+export { UploadFileSchema } from "@incmix-api/utils/zod-schema"
 export const OnboardingSchema = z
   .object({
     email: z.string().email().openapi({ example: "john.doe@example.com" }),
@@ -89,12 +89,6 @@ export const FullNameSchema = z
     fullName: z.string().min(1).openapi({ example: "John Doe" }),
   })
   .openapi("Full Name")
-
-export const UploadFileSchema = z
-  .object({
-    file: z.instanceof(File).openapi({}),
-  })
-  .openapi("Upload File")
 
 export const UserProfileSchema = z
   .object({

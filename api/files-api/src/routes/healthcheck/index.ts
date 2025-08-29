@@ -1,4 +1,5 @@
 import { envVars } from "@/env-vars"
+import { BASE_PATH } from "@/lib/constants"
 import { S3 } from "@/lib/s3"
 import type { HonoApp } from "@/types"
 import { ListObjectsV2Command } from "@aws-sdk/client-s3"
@@ -17,6 +18,8 @@ const healthcheckRoutes = createHealthCheckRoute<HonoApp>({
     AWS_REGION: envVars.AWS_REGION,
     AWS_ENDPOINT_URL_S3: envVars.AWS_ENDPOINT_URL_S3,
   },
+
+  basePath: BASE_PATH,
 
   // Add service-specific checks
   checks: [

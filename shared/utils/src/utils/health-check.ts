@@ -2,7 +2,7 @@ import { OpenAPIHono } from "@hono/zod-openapi"
 import { createRoute } from "@hono/zod-openapi"
 import { z } from "@hono/zod-openapi"
 import type { Context, Env } from "hono"
-
+import { envVars } from "../env-config"
 /**
  * Schema for the health check response
  */
@@ -12,6 +12,35 @@ export const HealthCheckSchema = z
     reason: z.string().optional().openapi({ example: "Service unavailable" }),
   })
   .openapi("Healthcheck")
+
+/**
+ * Create a health check function for the /reference endpoint
+ */
+export function createReferenceEndpointCheck(basePath: string) {
+  const normalize = (p: string) =>
+    p.startsWith("/") ? p.replace(/\/$/, "") : `/${p.replace(/\/$/, "")}`
+  return async (c: Context): Promise<boolean> => {
+    const origin = new URL(c.req.url).origin
+    const referenceUrl = `${origin}${normalize(basePath)}/reference`
+    const controller = new AbortController()
+    const timer = setTimeout(() => controller.abort(), envVars.TIMEOUT_MS)
+    try {
+      const response = await fetch(referenceUrl, {
+        method: "GET",
+        signal: controller.signal,
+      })
+      return response.ok
+    } catch (error) {
+      console.error(
+        `Reference endpoint check failed for ${basePath}/reference:`,
+        error
+      )
+      return false
+    } finally {
+      clearTimeout(timer)
+    }
+  }
+}
 
 /**
  * Type for the health check configuration
@@ -42,6 +71,11 @@ export type HealthCheckConfig<T extends Env> = {
    * Whether to require authentication for the health check endpoint
    */
   requireAuth?: boolean
+
+  /**
+   * Base path of the current service (for checking /reference endpoint)
+   */
+  basePath?: string
 }
 
 /**
@@ -49,11 +83,21 @@ export type HealthCheckConfig<T extends Env> = {
  */
 export function createHealthCheckRoute<T extends Env>({
   envVars,
-  checks,
+  checks = [],
   tags = ["Health Check"],
   requireAuth = false,
+  basePath,
 }: HealthCheckConfig<T>) {
   const security = requireAuth ? [{ cookieAuth: [] }] : undefined
+
+  // Add reference endpoint check if basePath is provided
+  const allChecks = [...checks]
+  if (basePath) {
+    allChecks.push({
+      name: "Reference Endpoint",
+      check: async (c) => createReferenceEndpointCheck(basePath)(c),
+    })
+  }
 
   // Create the OpenAPI route schema
   const healthCheckRoute = createRoute({
@@ -94,8 +138,8 @@ export function createHealthCheckRoute<T extends Env>({
       }
 
       // Run additional health checks
-      if (checks) {
-        for (const { name, check } of checks) {
+      if (allChecks.length > 0) {
+        for (const { name, check } of allChecks) {
           try {
             const isHealthy = await check(c)
             if (!isHealthy) {

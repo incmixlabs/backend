@@ -1,5 +1,5 @@
 import { envVars } from "@/env-vars"
-import { healthCheck } from "@/routes/healthcheck/openapi"
+import { BASE_PATH } from "@/lib/constants"
 import type { HonoApp } from "@/types"
 import { createHealthCheckRoute } from "@incmix-api/utils"
 
@@ -12,6 +12,8 @@ const healthcheckRoutes = createHealthCheckRoute<HonoApp>({
     WEATHER_API_KEY: envVars.WEATHER_API_KEY,
     WEATHER_URL: envVars.WEATHER_URL,
   },
+
+  basePath: BASE_PATH,
 
   checks: [
     {
