@@ -812,6 +812,9 @@ importers:
       '@incmix/utils':
         specifier: 'catalog:'
         version: 0.36.3(@types/luxon@3.6.0)(luxon@3.4.2)
+      bullmq:
+        specifier: 'catalog:'
+        version: 5.56.10
       hono:
         specifier: 'catalog:'
         version: 4.6.16
@@ -6628,7 +6631,7 @@ snapshots:
       ioredis: 5.7.0
       msgpackr: 1.11.5
       node-abort-controller: 3.1.1
-      semver: 7.7.1
+      semver: 7.7.2
       tslib: 2.8.1
       uuid: 9.0.1
     transitivePeerDependencies:

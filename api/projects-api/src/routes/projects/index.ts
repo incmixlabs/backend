@@ -50,6 +50,7 @@ import {
   createProject,
   deleteProject,
   getProjectMembers as getProjectMembersRoute,
+  getProjectReference,
   listProjects,
   removeProjectChecklist,
   removeProjectMembers,
@@ -706,6 +707,30 @@ projectRoutes.openapi(getProjectMembersRoute, async (c) => {
     return await processError<typeof getProjectMembersRoute>(c, error, [
       "{{ default }}",
       "get-project-members",
+    ])
+  }
+})
+
+projectRoutes.openapi(getProjectReference, async (c) => {
+  try {
+    const user = c.get("user")
+    const t = await useTranslation(c)
+    if (!user) {
+      const msg = await t.text(ERROR_UNAUTHORIZED)
+      throw new UnauthorizedError(msg)
+    }
+
+    const referenceData = {
+      statuses: ["planning", "in_progress", "completed", "on_hold", "cancelled"],
+      roles: ["project_manager", "developer", "designer", "tester", "viewer"],
+      priorities: ["low", "medium", "high", "critical"],
+    }
+
+    return c.json(referenceData, 200)
+  } catch (error) {
+    return await processError<typeof getProjectReference>(c, error, [
+      "{{ default }}",
+      "get-project-reference",
     ])
   }
 })
