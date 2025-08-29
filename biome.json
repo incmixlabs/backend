@@ -7,6 +7,7 @@
     "defaultBranch": "main"
   },
   "files": {
+    "ignoreUnknown": true,
     "ignore": [
       "node_modules",
       "dist",
@@ -85,8 +86,5 @@
       "attributePosition": "auto",
       "lineEnding": "lf"
     }
-  },
-  "organizeImports": {
-    "enabled": true
   }
 }

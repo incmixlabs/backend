@@ -9,15 +9,17 @@ import {
   setupCors,
   setupSentryMiddleware,
 } from "@incmix-api/utils/middleware"
-import { env } from "hono/adapter"
 import { mockMiddleware } from "./mock"
+
+// Initialize database connection once at module scope
+const db = envVars.DATABASE_URL ? initDb(envVars.DATABASE_URL) : undefined
 
 export const middlewares = (app: OpenAPIHono<HonoApp>) => {
   setupSentryMiddleware(app, BASE_PATH, "tasks-api")
 
-  // Add mock middleware before auth if MOCK_ENV is true
-  if (envVars.MOCK_ENV) {
-    console.log("🎭 MOCK_ENV", envVars.MOCK_ENV)
+  // Add mock middleware before auth if MOCK_DATA is true
+  if (envVars.MOCK_DATA) {
+    console.log("🎭 MOCK_DATA", envVars.MOCK_DATA)
     console.log(
       "🎭 MOCK MODE ENABLED - Using mock data instead of real database"
     )
@@ -29,7 +31,10 @@ export const middlewares = (app: OpenAPIHono<HonoApp>) => {
   setupCors(app, BASE_PATH)
 
   app.use(`${BASE_PATH}/*`, async (c, next) => {
-    const db = initDb(env(c).DATABASE_URL)
+    if (!db) {
+      console.error("DATABASE_URL is not configured for tasks-api")
+      return c.text("Server misconfigured: missing DATABASE_URL", 500)
+    }
     c.set("db", db)
     await next()
   })

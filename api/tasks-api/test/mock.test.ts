@@ -9,7 +9,7 @@ import {
 // Mock the environment variable
 vi.mock("../src/env-vars", () => ({
   envVars: {
-    MOCK_ENV: true,
+    MOCK_DATA: true,
     NODE_ENV: "test",
     PORT: 8888,
     DATABASE_URL: "postgresql://test",

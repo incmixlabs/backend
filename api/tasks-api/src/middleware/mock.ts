@@ -11,8 +11,8 @@ import type { Context, Next } from "hono"
 import { nanoid } from "nanoid"
 
 export async function mockMiddleware(c: Context, next: Next) {
-  // Only apply mock middleware if MOCK_ENV is true
-  if (!envVars.MOCK_ENV) {
+  // Only apply mock middleware if MOCK_DATA is true
+  if (!envVars.MOCK_DATA) {
     return next()
   }
 

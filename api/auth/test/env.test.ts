@@ -1,5 +1,5 @@
 import { describe, expect, test, vi, beforeEach, afterEach } from "vitest"
-import { initDb } from "@incmix-api/utils/db-schema"
+import { envVars } from "../src/env-vars"
 
 describe("Environment Configuration Tests", () => {
   const originalEnv = process.env
@@ -16,6 +16,25 @@ describe("Environment Configuration Tests", () => {
 
   test("should validate environment variables in test mode", () => {
     process.env.NODE_ENV = "test"
+
+    // Mock the env-vars module to simulate production config
+    vi.doMock("@/env-vars", () => ({
+      env: {
+        ...envVars,
+        NODE_ENV: "production",
+        JWT_SECRET: process.env.JWT_SECRET,
+        DATABASE_URL: process.env.DATABASE_URL,
+        GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID,
+        GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET,
+        FRONTEND_URL: process.env.FRONTEND_URL,
+        GOOGLE_REDIRECT_URL: process.env.GOOGLE_REDIRECT_URL,
+        COOKIE_NAME: process.env.COOKIE_NAME,
+        DOMAIN: process.env.DOMAIN,
+        EMAIL_API_URL: process.env.EMAIL_API_URL,
+        INTL_API_URL: process.env.INTL_API_URL,
+        USERS_API_URL: process.env.USERS_API_URL,
+      }
+    }))
     expect(process.env.NODE_ENV).toBe("test")
     expect(process.env.JWT_SECRET).toBeDefined()
     expect(process.env.DATABASE_URL).toBeDefined()
@@ -25,10 +44,11 @@ describe("Environment Configuration Tests", () => {
 
   test("should handle production environment", async () => {
     process.env.NODE_ENV = "production"
-    
+
     // Mock the env-vars module to simulate production config
     vi.doMock("@/env-vars", () => ({
       env: {
+        ...envVars,
         NODE_ENV: "production",
         JWT_SECRET: process.env.JWT_SECRET,
         DATABASE_URL: process.env.DATABASE_URL,
@@ -50,10 +70,11 @@ describe("Environment Configuration Tests", () => {
 
   test("should handle development environment", async () => {
     process.env.NODE_ENV = "development"
-    
+
     // Mock the env-vars module to simulate development config
     vi.doMock("@/env-vars", () => ({
       env: {
+        ...envVars,
         NODE_ENV: "development",
         JWT_SECRET: process.env.JWT_SECRET || "dev-jwt-secret",
         DATABASE_URL: process.env.DATABASE_URL || "postgresql://localhost/dev",
@@ -76,10 +97,11 @@ describe("Environment Configuration Tests", () => {
 
   test("should handle staging environment", async () => {
     process.env.NODE_ENV = "staging"
-    
+
     // Mock the env-vars module to simulate staging config
     vi.doMock("@/env-vars", () => ({
       env: {
+        ...envVars,
         NODE_ENV: "staging",
         JWT_SECRET: process.env.JWT_SECRET || "staging-jwt-secret",
         DATABASE_URL: process.env.DATABASE_URL || "postgresql://staging/db",
@@ -105,14 +127,15 @@ describe("Environment Configuration Tests", () => {
 
     for (const envName of environments) {
       process.env.NODE_ENV = envName
-      
+
       vi.doMock("@/env-vars", () => ({
         env: {
+          ...envVars,
           NODE_ENV: envName,
           JWT_SECRET: `${envName}-jwt-secret`,
           DATABASE_URL: `postgresql://${envName}/db`,
           COOKIE_NAME: `${envName}_session`,
-          DOMAIN: envName === "production" ? "example.com" : 
+          DOMAIN: envName === "production" ? "example.com" :
                   envName === "staging" ? "staging.example.com" : "localhost",
           FRONTEND_URL: envName === "production" ? "https://example.com" :
                        envName === "staging" ? "https://staging.example.com" :
@@ -144,9 +167,10 @@ describe("Environment Configuration Tests", () => {
 
   test("should enforce secure settings in production", async () => {
     process.env.NODE_ENV = "production"
-    
+
     vi.doMock("@/env-vars", () => ({
       env: {
+        ...envVars,
         NODE_ENV: "production",
         JWT_SECRET: "production-secret-key-very-long-and-secure",
         DATABASE_URL: "postgresql://produser:prodpass@prodhost:5432/proddb",
@@ -163,24 +187,25 @@ describe("Environment Configuration Tests", () => {
     }))
 
     const { env } = await import("@/env-vars")
-    
+
     // Production should use HTTPS URLs
     expect(env.FRONTEND_URL).toMatch(/^https:\/\//)
     expect(env.GOOGLE_REDIRECT_URL).toMatch(/^https:\/\//)
     expect(env.EMAIL_API_URL).toMatch(/^https:\/\//)
-    
+
     // Production should have a proper domain
     expect(env.DOMAIN).not.toBe("localhost")
-    
+
     // JWT secret should be sufficiently long
     expect(env.JWT_SECRET.length).toBeGreaterThan(20)
   })
 
   test("should allow relaxed settings in development", async () => {
     process.env.NODE_ENV = "development"
-    
+
     vi.doMock("@/env-vars", () => ({
       env: {
+        ...envVars,
         NODE_ENV: "development",
         JWT_SECRET: "dev-secret",
         DATABASE_URL: "postgresql://localhost:5432/devdb",
@@ -197,11 +222,11 @@ describe("Environment Configuration Tests", () => {
     }))
 
     const { env } = await import("@/env-vars")
-    
+
     // Development can use HTTP
     expect(env.FRONTEND_URL).toMatch(/^http:\/\/localhost/)
     expect(env.GOOGLE_REDIRECT_URL).toMatch(/^http:\/\/localhost/)
-    
+
     // Development can use localhost
     expect(env.DOMAIN).toBe("localhost")
   })
@@ -210,7 +235,7 @@ describe("Environment Configuration Tests", () => {
     // Base environment variables that should be in process.env
     const baseRequiredVars = [
       "JWT_SECRET",
-      "DATABASE_URL", 
+      "DATABASE_URL",
       "GOOGLE_CLIENT_ID",
       "GOOGLE_CLIENT_SECRET",
       "FRONTEND_URL",
@@ -231,9 +256,10 @@ describe("Environment Configuration Tests", () => {
   test("should handle custom NODE_ENV values", async () => {
     const customEnv = "custom-env"
     process.env.NODE_ENV = customEnv
-    
+
     vi.doMock("@/env-vars", () => ({
       env: {
+        ...envVars,
         NODE_ENV: customEnv,
         JWT_SECRET: process.env.JWT_SECRET || "custom-jwt-secret",
         DATABASE_URL: process.env.DATABASE_URL || "postgresql://custom/db",

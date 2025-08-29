@@ -8,8 +8,8 @@ import {
   setupCors,
   setupSentryMiddleware,
 } from "@incmix-api/utils/middleware"
-import { env } from "hono/adapter"
 import { compress } from "hono/compress"
+import { envVars } from "../env-vars"
 
 export const middlewares = (app: OpenAPIHono<HonoApp>) => {
   app.use("*", compress({ encoding: "gzip" }))
@@ -20,7 +20,7 @@ export const middlewares = (app: OpenAPIHono<HonoApp>) => {
   setupCors(app, BASE_PATH)
 
   app.use(`${BASE_PATH}/*`, async (c, next) => {
-    const db = initDb(env(c).DATABASE_URL)
+    const db = initDb(envVars.DATABASE_URL)
     c.set("db", db)
     await next()
   })
