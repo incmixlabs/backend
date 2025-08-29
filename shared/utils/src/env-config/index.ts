@@ -87,6 +87,7 @@ const baseEnvSchema = z.object({
   COOKIE_NAME: z.string().default("incmix_session"),
   MOCK_DATA: z.coerce.boolean().default(false),
   INTL_API_URL: z.string().url().optional(),
+  TIMEOUT_MS: z.coerce.number().default(5000),
 })
 
 // Service-specific schema extensions
@@ -402,5 +403,5 @@ export type ProjectsEnv = BaseEnv & z.infer<typeof serviceSchemas.projects>
 export type TasksEnv = BaseEnv & z.infer<typeof serviceSchemas.tasks>
 export type UsersEnv = BaseEnv & z.infer<typeof serviceSchemas.users>
 export type RxdbEnv = BaseEnv & z.infer<typeof serviceSchemas.rxdb>
-
+export const envVars = createEnvConfig() as BaseEnv
 // Export SERVICE_PORTS for external use

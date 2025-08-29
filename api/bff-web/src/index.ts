@@ -8,7 +8,7 @@ import { envVars } from "./env-vars"
 import type { HonoApp } from "./types"
 type Env = typeof envVars
 
-const service = createService<HonoApp["Bindings"], HonoApp["Variables"]>({
+const service = createService<HonoApp["Bindings"]>({
   name: "bff-web",
   port: envVars.PORT,
   basePath: "/api",
@@ -37,7 +37,7 @@ const service = createService<HonoApp["Bindings"], HonoApp["Variables"]>({
               headers: {
                 Cookie: cookies ?? "",
               },
-              signal: AbortSignal.timeout(5000), // 5 second timeout
+              signal: AbortSignal.timeout(envVars.TIMEOUT_MS), // 5 second timeout
             })
 
             if (!response.ok) {

@@ -2,7 +2,7 @@ import { OpenAPIHono } from "@hono/zod-openapi"
 import { createRoute } from "@hono/zod-openapi"
 import { z } from "@hono/zod-openapi"
 import type { Context, Env } from "hono"
-
+import { envVars } from "../env-config"
 /**
  * Schema for the health check response
  */
@@ -17,26 +17,18 @@ export const HealthCheckSchema = z
  * Create a health check function for the /reference endpoint
  */
 export function createReferenceEndpointCheck(basePath: string) {
-  return async (): Promise<boolean> => {
+  const normalize = (p: string) =>
+    p.startsWith("/") ? p.replace(/\/$/, "") : `/${p.replace(/\/$/, "")}`
+  return async (c: Context): Promise<boolean> => {
+    const origin = new URL(c.req.url).origin
+    const referenceUrl = `${origin}${normalize(basePath)}/reference`
+    const controller = new AbortController()
+    const timer = setTimeout(() => controller.abort(), envVars.TIMEOUT_MS)
     try {
-      // Get the current server's URL
-      const serverUrl =
-        process.env.NODE_ENV === "production"
-          ? `http://localhost:${process.env.PORT || 3000}`
-          : `http://localhost:${process.env.PORT || 3000}`
-
-      const referenceUrl = `${serverUrl}${basePath}/reference`
-
-      // Create a timeout promise
-      const timeoutPromise = new Promise<never>((_, reject) => {
-        setTimeout(() => reject(new Error("Request timeout")), 5000)
+      const response = await fetch(referenceUrl, {
+        method: "GET",
+        signal: controller.signal,
       })
-
-      const response = await Promise.race([
-        fetch(referenceUrl, { method: "GET" }),
-        timeoutPromise,
-      ])
-
       return response.ok
     } catch (error) {
       console.error(
@@ -44,6 +36,8 @@ export function createReferenceEndpointCheck(basePath: string) {
         error
       )
       return false
+    } finally {
+      clearTimeout(timer)
     }
   }
 }
@@ -101,9 +95,7 @@ export function createHealthCheckRoute<T extends Env>({
   if (basePath) {
     allChecks.push({
       name: "Reference Endpoint",
-      check: async () => {
-        return await createReferenceEndpointCheck(basePath)()
-      },
+      check: async (c) => createReferenceEndpointCheck(basePath)(c),
     })
   }
 

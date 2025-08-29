@@ -1,13 +1,13 @@
 import type { OpenAPIHono } from "@hono/zod-openapi"
 import { initDb } from "@incmix-api/utils/db-schema"
+import type { Context } from "hono"
 import { compress } from "hono/compress"
+import { envVars } from "../env-config"
 import { createAuthMiddleware } from "./auth"
 import { setupCors } from "./cors"
 import { createI18nMiddleware } from "./i18n"
 import { setupRedisMiddleware } from "./redis"
 import { setupSentryMiddleware } from "./sentry"
-
-import type { OpenAPIHono } from "@hono/zod-openapi"
 import type { MiddlewareHandler } from "hono"
 
 export interface MiddlewareConfig {
@@ -24,6 +24,32 @@ export interface MiddlewareConfig {
   customI18nMiddleware?: () => MiddlewareHandler
 }
 
+export function createReferenceEndpointCheck(basePath: string) {
+  const normalize = (p: string) =>
+    p.startsWith("/") ? p.replace(/\/+$/, "") : `/${p.replace(/\/+$/, "")}`
+  return async (c: Context): Promise<boolean> => {
+    const origin = new URL(c.req.url).origin
+    const referenceUrl = `${origin}${normalize(basePath)}/reference`
+    const controller = new AbortController()
+    const timer = setTimeout(() => controller.abort(), envVars.TIMEOUT_MS)
+    try {
+      const response = await fetch(referenceUrl, {
+        method: "GET",
+        signal: controller.signal,
+      })
+      return response.ok
+    } catch (error) {
+      console.error(
+        `Reference endpoint check failed for ${basePath}/reference:`,
+        error
+      )
+      return false
+    } finally {
+      clearTimeout(timer)
+    }
+  }
+}
+
 export function setupApiMiddleware<T extends { Bindings: any; Variables: any }>(
   app: OpenAPIHono<T>,
   config: MiddlewareConfig
@@ -35,7 +61,7 @@ export function setupApiMiddleware<T extends { Bindings: any; Variables: any }>(
     customAuthMiddleware,
     mockMiddleware,
     mockData,
-    corsFirst = false,
+    corsFirst = true,
     skipAuth = false,
     useRedis = false,
     useCompression = false,
@@ -50,8 +76,8 @@ export function setupApiMiddleware<T extends { Bindings: any; Variables: any }>(
   // Setup Sentry middleware first for error tracking
   setupSentryMiddleware(app, basePath, serviceName)
 
-  // Setup CORS based on preference
-  if (corsFirst) {
+  // Setup CORS based on preference, or always if mock middleware is enabled
+  if (corsFirst || (mockData && mockMiddleware)) {
     setupCors(app, basePath)
   }
 
@@ -95,8 +121,8 @@ export function setupApiMiddleware<T extends { Bindings: any; Variables: any }>(
     }
   }
 
-  // Setup CORS after auth if not done before
-  if (!corsFirst) {
+  // Setup CORS after auth if not done before (and mock middleware isn't short-circuiting)
+  if (!corsFirst && !(mockData && mockMiddleware)) {
     setupCors(app, basePath)
   }
 
