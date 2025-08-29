@@ -90,7 +90,7 @@ const baseEnvSchema = z.object({
 // Service-specific schema extensions
 const serviceSchemas = {
   auth: baseEnvSchema.extend({
-    GOOGLE_REDIRECT_URL: z.string().url(),
+    GOOGLE_REDIRECT_URL: z.string().url().optional(),
     GOOGLE_CLIENT_ID: z.string(),
     GOOGLE_CLIENT_SECRET: z.string(),
     PORT: z.coerce.number().default(services.auth.port),
