@@ -9,5 +9,6 @@ export const middlewares = (app: OpenAPIHono<HonoApp>) => {
     basePath: BASE_PATH,
     serviceName: "genai-api",
     databaseUrl: envVars.DATABASE_URL,
+    corsFirst: true,
   })
 }
