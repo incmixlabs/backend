@@ -1,20 +1,30 @@
 export * from "./casl"
-import type { OpenAPIHono } from "@hono/zod-openapi"
-import type { Env } from "hono"
+import type { FastifyInstance, FastifyRequest } from "fastify"
+import fp from "fastify-plugin"
 import { PermissionService } from "./casl"
 
-export function setupRbac<T extends Env>(
-  app: OpenAPIHono<T>,
-  basePath: string,
+declare module "fastify" {
+  interface FastifyRequest {
+    rbac: PermissionService
+  }
+}
+
+export async function setupRbac(
+  app: FastifyInstance,
+  _basePath: string,
   rbac?: PermissionService
 ) {
-  app.use(`${basePath}/*`, (c, next) => {
-    if (!rbac) {
-      c.set("rbac", new PermissionService(c))
-      return next()
-    }
+  await app.register(
+    fp(async (fastify) => {
+      fastify.decorateRequest("rbac", null)
 
-    c.set("rbac", rbac)
-    return next()
-  })
+      fastify.addHook("onRequest", async (request: FastifyRequest, _reply) => {
+        if (!rbac) {
+          request.rbac = new PermissionService(request)
+        } else {
+          request.rbac = rbac
+        }
+      })
+    })
+  )
 }

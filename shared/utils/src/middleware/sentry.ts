@@ -1,36 +1,36 @@
-import { getSentry, sentry as sentryMiddleware } from "@hono/sentry"
-import type { OpenAPIHono } from "@hono/zod-openapi"
-// import {
-//   generateSentryTraceHeader,
-//   propagationContextFromHeaders,
-// } from "@sentry/utils"
-import type { Context, Env } from "hono"
+import type { FastifyInstance, FastifyRequest } from "fastify"
+import fp from "fastify-plugin"
 
-export function setupSentryMiddleware<T extends Env>(
-  app: OpenAPIHono<T>,
-  basePath: string,
-  _service?: string
+export async function setupSentryMiddleware(
+  app: FastifyInstance,
+  _basePath: string,
+  service?: string
 ) {
-  app.use(`${basePath}/*`, sentryMiddleware({ tracesSampleRate: 1.0 }))
-  // app.use(`${basePath}/*`, async (c, next) => {
-  // const sentry = getSentry(c)
+  // TODO: Implement Sentry for Fastify
+  // For now, just log that Sentry is not yet configured
+  await app.register(
+    fp(async (fastify) => {
+      fastify.addHook("onRequest", async (request, _reply) => {
+        // Placeholder for Sentry integration
+        // Will need to use @sentry/node directly or find a Fastify plugin
+        if (service) {
+          request.log.info({ service }, "Service request")
+        }
+      })
 
-  // if (service) sentry.setTag("service", service)
-  // const trace = c.req.header("sentry-trace")
-  // const baggage = c.req.header("baggage")
-  // const propContext = propagationContextFromHeaders(trace, baggage)
-  // sentry.setPropagationContext(propContext)
-
-  //   await next()
-  // })
+      fastify.addHook("onError", async (request, _reply, error) => {
+        // Log errors that would be sent to Sentry
+        request.log.error({ error, service }, "Request error")
+      })
+    })
+  )
 }
 
 export function logSentryError(
-  c: Context,
+  request: FastifyRequest,
   error: unknown,
   sentryFingerPrint?: string[]
 ) {
-  const sentry = getSentry(c)
-  if (sentryFingerPrint?.length) sentry.setFingerprint(sentryFingerPrint)
-  sentry.captureException(error)
+  // TODO: Implement Sentry error logging for Fastify
+  request.log.error({ error, sentryFingerPrint }, "Sentry error")
 }

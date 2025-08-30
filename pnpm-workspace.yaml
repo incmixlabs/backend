@@ -5,6 +5,14 @@ packages:
 
 catalog:
   '@casl/ability': 6.7.3
+  '@fastify/compress': 8.0.1
+  '@fastify/cookie': 10.0.1
+  '@fastify/cors': 10.0.1
+  '@fastify/helmet': 12.0.1
+  '@fastify/sensible': 6.0.1
+  '@fastify/swagger': 9.5.1
+  '@fastify/swagger-ui': 5.2.0
+  'fastify-type-provider-zod': 5.0.3
   '@hono/node-server': 1.13.8
   '@hono/zod-openapi': 1.1.0
   '@hono/zod-validator': 0.7.2
@@ -19,6 +27,8 @@ catalog:
   dotenv: 16.5.0
   dotenv-expand: 12.0.2
   dotenv-mono: 1.5.0
+  fastify: 5.2.0
+  fastify-plugin: 5.0.1
   hono: 4.6.16
   kysely: 0.27.5
   kysely-ctl: 0.12.1

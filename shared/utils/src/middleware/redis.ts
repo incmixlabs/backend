@@ -1,17 +1,12 @@
-import type { OpenAPIHono } from "@hono/zod-openapi"
-import type { Env as HonoEnv } from "hono"
-import { env } from "hono/adapter"
+import type { FastifyInstance, FastifyRequest } from "fastify"
+import fp from "fastify-plugin"
 import { type RedisClientType, createClient } from "redis"
 
-declare module "hono" {
-  interface ContextVariableMap {
+declare module "fastify" {
+  interface FastifyRequest {
     redis: RedisClientType
   }
 }
-
-type Env = {
-  Bindings: { REDIS_URL: string }
-} & HonoEnv
 
 // Singleton Redis client instance
 let redisClient: RedisClientType | null = null
@@ -143,49 +138,60 @@ async function checkRedisHealth(): Promise<boolean> {
  * Setup Redis middleware with singleton client
  * Uses a shared Redis connection instead of creating per-request clients
  */
-export function setupRedisMiddleware<T extends Env>(
-  app: OpenAPIHono<T>,
-  basePath: string
+export async function setupRedisMiddleware(
+  app: FastifyInstance,
+  _basePath: string
 ) {
-  app.use(`${basePath}/*`, async (c, next) => {
-    try {
-      const redisUrl = env(c).REDIS_URL
+  await app.register(
+    fp(async (fastify) => {
+      fastify.decorateRequest("redis", null)
 
-      // Get the singleton Redis client
-      const redis = await getRedisClient(redisUrl)
+      fastify.addHook("onRequest", async (request, _reply) => {
+        try {
+          const redisUrl = process.env.REDIS_URL
 
-      // Verify client health before proceeding
-      if (!(await checkRedisHealth())) {
-        console.warn(
-          "Redis client unhealthy, attempting to recreate connection"
-        )
-        // Gracefully shutdown existing client before recreating
-        if (redisClient) {
-          try {
-            await redisClient.quit()
-            console.log("Existing Redis client shutdown successfully")
-          } catch (error) {
-            console.warn("Error shutting down existing Redis client:", error)
-            // Continue with recreation even if shutdown fails
-          } finally {
-            redisClient = null
+          if (!redisUrl) {
+            console.warn("REDIS_URL not configured")
+            return
           }
+
+          // Get the singleton Redis client
+          const redis = await getRedisClient(redisUrl)
+
+          // Verify client health before proceeding
+          if (!(await checkRedisHealth())) {
+            console.warn(
+              "Redis client unhealthy, attempting to recreate connection"
+            )
+            // Gracefully shutdown existing client before recreating
+            if (redisClient) {
+              try {
+                await redisClient.quit()
+                console.log("Existing Redis client shutdown successfully")
+              } catch (error) {
+                console.warn(
+                  "Error shutting down existing Redis client:",
+                  error
+                )
+                // Continue with recreation even if shutdown fails
+              } finally {
+                redisClient = null
+              }
+            }
+
+            // Create new healthy connection after old client is closed
+            const healthyRedis = await getRedisClient(redisUrl)
+            request.redis = healthyRedis
+          } else {
+            request.redis = redis
+          }
+        } catch (error) {
+          console.error("Failed to setup Redis middleware:", error)
+          // Continue without Redis - the application can handle missing Redis gracefully
         }
-
-        // Create new healthy connection after old client is closed
-        const healthyRedis = await getRedisClient(redisUrl)
-        c.set("redis", healthyRedis)
-      } else {
-        c.set("redis", redis)
-      }
-
-      return next()
-    } catch (error) {
-      console.error("Failed to setup Redis middleware:", error)
-      // Continue without Redis - the application can handle missing Redis gracefully
-      return next()
-    }
-  })
+      })
+    })
+  )
 }
 
 /**

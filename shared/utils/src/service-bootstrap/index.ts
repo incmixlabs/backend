@@ -1,9 +1,14 @@
 import { setupKvStore } from "@/middleware"
-import { serve } from "@hono/node-server"
-import { OpenAPIHono } from "@hono/zod-openapi"
+import fastifyCookie from "@fastify/cookie"
+import fastifyCors from "@fastify/cors"
+import fastifyHelmet from "@fastify/helmet"
+import fastifySensible from "@fastify/sensible"
 import { setupRbac } from "@incmix-api/utils/authorization"
-import type { Context } from "hono"
-import { logger } from "hono/logger"
+import Fastify, {
+  type FastifyInstance,
+  type FastifyServerOptions,
+} from "fastify"
+import type { ZodTypeProvider } from "fastify-type-provider-zod"
 import { KVStore } from "../kv-store"
 import { shutdownRedis } from "../middleware/redis"
 import { setupOpenApi } from "./open-api"
@@ -16,47 +21,49 @@ export interface ServiceConfig<
   version?: string
   port: number
   basePath: string
-  setupMiddleware?: (
-    app: OpenAPIHono<{ Bindings: TBindings; Variables: TVariables }>
-  ) => void
-  setupRoutes?: (
-    app: OpenAPIHono<{ Bindings: TBindings; Variables: TVariables }>
-  ) => void
+  setupMiddleware?: (app: FastifyInstance) => Promise<void> | void
+  setupRoutes?: (app: FastifyInstance) => Promise<void> | void
   needRBAC?: boolean
   onBeforeStart?: () => Promise<void>
   bindings?: TBindings
   variables?: TVariables
+  fastifyOptions?: FastifyServerOptions
 }
 
-export function createService<
+export async function createService<
   TBindings extends object = Record<string, unknown>,
   TVariables extends object = Record<string, unknown>,
 >(config: ServiceConfig<TBindings, TVariables>) {
-  const app = new OpenAPIHono<{
-    Bindings: TBindings
-    Variables: TVariables
-  }>()
+  const app = Fastify({
+    logger: true,
+    ...config.fastifyOptions,
+  }).withTypeProvider<ZodTypeProvider>()
 
   // Initialize KVStore
   const kvStore = new KVStore({ name: config.name })
-  setupKvStore(app, config.basePath, kvStore)
-  // Setup logger
-  app.use(logger())
+  await setupKvStore(app, config.basePath, kvStore)
+
+  // Register core plugins
+  await app.register(fastifyCookie)
+  await app.register(fastifyCors)
+  await app.register(fastifyHelmet)
+  await app.register(fastifySensible)
 
   // Setup middleware if provided
   if (config.setupMiddleware) {
-    config.setupMiddleware(app)
+    await config.setupMiddleware(app)
   }
 
   // Setup RBAC if provided
   if (config.needRBAC) {
-    setupRbac(app, config.basePath)
+    await setupRbac(app, config.basePath)
   }
 
-  setupOpenApi(app, config.basePath, config.name)
+  await setupOpenApi(app, config.basePath, config.name)
+
   // Setup routes if provided
   if (config.setupRoutes) {
-    config.setupRoutes(app)
+    await config.setupRoutes(app)
   }
 
   // Start server
@@ -65,18 +72,22 @@ export function createService<
       await config.onBeforeStart()
     }
 
-    serve({
-      fetch: app.fetch,
-      port: config.port,
-    })
-
-    console.log(`${config.name} running on port ${config.port}`)
+    try {
+      await app.listen({ port: config.port, host: "0.0.0.0" })
+      console.log(`${config.name} running on port ${config.port}`)
+    } catch (err) {
+      app.log.error(err)
+      process.exit(1)
+    }
 
     // Setup graceful shutdown
     const gracefulShutdown = async (signal: string) => {
       console.log(`\nReceived ${signal}. Starting graceful shutdown...`)
 
       try {
+        await app.close()
+        console.log("Server closed")
+
         // Shutdown Redis client
         await shutdownRedis()
         console.log("Redis client shutdown completed")
@@ -101,18 +112,6 @@ export function createService<
   }
 }
 
-export type ServiceApp<
-  TBindings extends object = Record<string, unknown>,
-  TVariables extends object = Record<string, unknown>,
-> = OpenAPIHono<{
-  Bindings: TBindings
-  Variables: TVariables
-}>
+export type ServiceApp = FastifyInstance
 
-export type ServiceContext<
-  TBindings extends object = Record<string, unknown>,
-  TVariables extends object = Record<string, unknown>,
-> = Context<{
-  Bindings: TBindings
-  Variables: TVariables
-}>
+export type ServiceContext = FastifyInstance

@@ -1,7 +1,7 @@
 import type { Session } from "@/auth/types"
 import type { Env } from "@/env-vars"
 import type { KyselyDb } from "@incmix-api/utils/db-schema"
-import type { Context as HonoContext } from "hono"
+import type { FastifyReply, FastifyRequest } from "fastify"
 
 export type Bindings = Env
 
@@ -28,5 +28,5 @@ export type GoogleUser = {
   email_verified: boolean
 }
 
-export type HonoApp = { Bindings: Bindings; Variables: Variables }
-export type Context = HonoContext<HonoApp>
+export type AppRequest = FastifyRequest
+export type AppReply = FastifyReply

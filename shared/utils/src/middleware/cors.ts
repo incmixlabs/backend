@@ -1,6 +1,5 @@
-import type { OpenAPIHono } from "@hono/zod-openapi"
-import type { Env } from "hono"
-import { cors } from "hono/cors"
+import fastifyCors from "@fastify/cors"
+import type { FastifyInstance } from "fastify"
 
 const allowedOrigins = [
   "http://localhost:1420",
@@ -13,41 +12,42 @@ const allowedOrigins = [
 const frontendDomain = "turbo-mix.pages.dev"
 const storybookDomain = "turbo-mix-ui.pages.dev"
 
-export function setupCors<T extends Env>(
-  app: OpenAPIHono<T>,
-  basePath: string
-) {
-  app.use(
-    `${basePath}/*`,
-    cors({
-      origin: (origin) => {
-        const DOMAIN = process.env.DOMAIN
-        if (!DOMAIN) {
-          return null
-        }
-        if (DOMAIN === "localhost") {
-          return origin
-        }
-        if (
-          allowedOrigins.includes(origin) ||
-          origin.endsWith(DOMAIN) ||
-          origin.endsWith(frontendDomain) ||
-          origin.endsWith(storybookDomain)
-        )
-          return origin
-
-        return null
-      },
-      allowMethods: ["POST", "GET", "OPTIONS", "DELETE", "PUT", "PATCH"],
-      credentials: true,
-      allowHeaders: [
-        "content-type",
-        "accept-language",
-        "sentry-trace",
-        "baggage",
-        "x-client-type",
-      ],
-      exposeHeaders: ["set-cookie", "content-language"],
-    })
-  )
+export async function setupCors(app: FastifyInstance, _basePath: string) {
+  await app.register(fastifyCors, {
+    origin: (origin, callback) => {
+      const DOMAIN = process.env.DOMAIN
+      if (!DOMAIN) {
+        callback(null, false)
+        return
+      }
+      if (DOMAIN === "localhost") {
+        callback(null, true)
+        return
+      }
+      if (!origin) {
+        callback(null, false)
+        return
+      }
+      if (
+        allowedOrigins.includes(origin) ||
+        origin.endsWith(DOMAIN) ||
+        origin.endsWith(frontendDomain) ||
+        origin.endsWith(storybookDomain)
+      ) {
+        callback(null, true)
+      } else {
+        callback(null, false)
+      }
+    },
+    methods: ["POST", "GET", "OPTIONS", "DELETE", "PUT", "PATCH"],
+    credentials: true,
+    allowedHeaders: [
+      "content-type",
+      "accept-language",
+      "sentry-trace",
+      "baggage",
+      "x-client-type",
+    ],
+    exposedHeaders: ["set-cookie", "content-language"],
+  })
 }

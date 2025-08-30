@@ -12,13 +12,7 @@ import type {
   SubjectTuple,
   AuthUser as User,
 } from "@incmix/utils/types"
-import type { Context } from "hono"
-
-declare module "hono" {
-  interface ContextVariableMap {
-    rbac: PermissionService
-  }
-}
+import type { FastifyRequest } from "fastify"
 
 export type MemberPermissions = {
   orgPermissions: {
@@ -42,13 +36,13 @@ export class PermissionService {
   private user: User
   private memberPermissions: Promise<MemberPermissions>
 
-  constructor(context: Context) {
-    const user = context.get("user")
+  constructor(request: FastifyRequest) {
+    const user = request.user
 
     if (!user) {
       throw new UnauthorizedError()
     }
-    this.db = context.get("db")
+    this.db = request.db
     this.user = user
     this.memberPermissions = this.getUserPermissionsFromDb()
   }
