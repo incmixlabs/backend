@@ -158,8 +158,7 @@ authRoutes.openapi(signup, async (c) => {
         "email_verification"
       )
       await sendVerificationEmail(c, email, verificationCode, userId)
-    }
-    else {
+    } else {
       user.emailVerifiedAt = new Date()
     }
     console.log("User signed up:", user)

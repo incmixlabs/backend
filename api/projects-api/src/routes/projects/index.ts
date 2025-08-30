@@ -721,7 +721,13 @@ projectRoutes.openapi(getProjectReference, async (c) => {
     }
 
     const referenceData = {
-      statuses: ["planning", "in_progress", "completed", "on_hold", "cancelled"],
+      statuses: [
+        "planning",
+        "in_progress",
+        "completed",
+        "on_hold",
+        "cancelled",
+      ],
       roles: ["project_manager", "developer", "designer", "tester", "viewer"],
       priorities: ["low", "medium", "high", "critical"],
     }
