@@ -1,5 +1,4 @@
 import { setupKvStore } from "@/middleware"
-import { serve } from "@hono/node-server"
 import { OpenAPIHono } from "@hono/zod-openapi"
 import { setupRbac } from "@incmix-api/utils/authorization"
 import type { Context } from "hono"
@@ -65,12 +64,12 @@ export function createService<
       await config.onBeforeStart()
     }
 
-    serve({
+    Bun.serve({
       fetch: app.fetch,
       port: config.port,
     })
 
-    console.log(`${config.name} running on port ${config.port}`)
+    console.log(`${config.name} running on port ${config.port} with Bun`)
 
     // Setup graceful shutdown
     const gracefulShutdown = async (signal: string) => {

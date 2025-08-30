@@ -2,8 +2,8 @@
   "name": "@incmix-api/users-api",
   "type": "module",
   "scripts": {
-    "dev": "tsx watch src/index.ts",
-    "start": "node ./dist/index.js",
+    "dev": "bun --watch src/index.ts",
+    "start": "bun dist/index.js",
     "build": "tsc && tsc-alias",
     "test": "vitest --run",
     "clean": "rm -rf dist"

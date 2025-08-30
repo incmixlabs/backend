@@ -47,5 +47,9 @@
   "trustedDependencies": [
     "@biomejs/biome",
     "core-js-pure"
-  ]
+  ],
+  "dependencies": {
+    "@hono/sentry": "1.2.0",
+    "@scalar/hono-api-reference": "0.5.163"
+  }
 }

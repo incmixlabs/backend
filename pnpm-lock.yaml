@@ -105,6 +105,13 @@ overrides:
 importers:
 
   .:
+    dependencies:
+      '@hono/sentry':
+        specifier: 1.2.0
+        version: 1.2.0(hono@4.6.16)
+      '@scalar/hono-api-reference':
+        specifier: 0.5.163
+        version: 0.5.163(hono@4.6.16)
     devDependencies:
       '@biomejs/biome':
         specifier: 1.9.4
@@ -1120,6 +1127,9 @@ importers:
       '@incmix-api/config':
         specifier: workspace:^
         version: link:../config
+      '@types/bun':
+        specifier: ^1.2.21
+        version: 1.2.21(@types/react@19.0.12)
       '@types/node':
         specifier: 'catalog:'
         version: 22.10.1
@@ -2495,6 +2505,9 @@ packages:
   '@tybys/wasm-util@0.8.3':
     resolution: {integrity: sha512-Z96T/L6dUFFxgFJ+pQtkPpne9q7i6kIPYCFnQBHSgSPV9idTsKfIhCss0h5iM9irweZCatkrdeP8yi5uM1eX6Q==}
 
+  '@types/bun@1.2.21':
+    resolution: {integrity: sha512-NiDnvEqmbfQ6dmZ3EeUO577s4P5bf4HCTXtI6trMc6f6RzirY5IrF3aIookuSpyslFzrnvv2lmEWv5HyC1X79A==}
+
   '@types/conventional-commits-parser@5.0.1':
     resolution: {integrity: sha512-7uz5EHdzz2TqoMfV7ee61Egf5y6NkcO4FB/1iCCQnbeiI1F3xzv3vK5dBCXUCLQgGYS+mUeigK1iKQzvED+QnQ==}
 
@@ -2713,6 +2726,11 @@ packages:
 
   bullmq@5.56.10:
     resolution: {integrity: sha512-rhmVJo7yAZLKb05TRT9MNMvRqnCUBNW915D8Wn4O/MvjvNMbzDvNjvSaPZzdxxXlRH4GjbtIh0Waeff2LKF+Lg==}
+
+  bun-types@1.2.21:
+    resolution: {integrity: sha512-sa2Tj77Ijc/NTLS0/Odjq/qngmEPZfbfnOERi0KRUYhT9R8M4VBioWVmMWE5GrYbKMc+5lVybXygLdibHaqVqw==}
+    peerDependencies:
+      '@types/react': ^19
 
   c12@2.0.4:
     resolution: {integrity: sha512-3DbbhnFt0fKJHxU4tEUPmD1ahWE4PWPMomqfYsTJdrhpmEnRKJi3qSC4rO5U6E6zN1+pjBY7+z8fUmNRMaVKLw==}
@@ -6382,6 +6400,12 @@ snapshots:
       tslib: 2.8.1
     optional: true
 
+  '@types/bun@1.2.21(@types/react@19.0.12)':
+    dependencies:
+      bun-types: 1.2.21(@types/react@19.0.12)
+    transitivePeerDependencies:
+      - '@types/react'
+
   '@types/conventional-commits-parser@5.0.1':
     dependencies:
       '@types/node': 24.3.0
@@ -6633,6 +6657,11 @@ snapshots:
       uuid: 9.0.1
     transitivePeerDependencies:
       - supports-color
+
+  bun-types@1.2.21(@types/react@19.0.12):
+    dependencies:
+      '@types/node': 24.3.0
+      '@types/react': 19.0.12
 
   c12@2.0.4:
     dependencies:

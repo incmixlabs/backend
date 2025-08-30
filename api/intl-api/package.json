@@ -2,8 +2,8 @@
   "name": "@incmix-api/intl",
   "type": "module",
   "scripts": {
-    "dev": "tsx watch src/index.ts",
-    "start": "node ./dist/index.js",
+    "dev": "bun --watch src/index.ts",
+    "start": "bun dist/index.js",
     "build": "tsc && tsc-alias",
     "clean": "rm -rf dist"
   },

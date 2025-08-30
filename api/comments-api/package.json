@@ -2,9 +2,9 @@
   "name": "@incmix-api/comments-api",
   "type": "module",
   "scripts": {
-    "dev": "tsx watch src/index.ts",
+    "dev": "bun --watch src/index.ts",
     "build": "tsc && tsc-alias",
-    "start": "node ./dist/index.js",
+    "start": "bun dist/index.js",
     "test": "vitest --run",
     "test:e2e": "playwright test",
     "clean": "rm -rf dist"
