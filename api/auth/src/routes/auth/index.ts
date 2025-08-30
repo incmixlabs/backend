@@ -141,7 +141,7 @@ authRoutes.openapi(signup, async (c) => {
         {
           id: userId,
           email,
-          emailVerifiedAt: envVars.MOCK_DATA ? Date.now().toString() : null,
+          emailVerifiedAt: envVars.MOCK_DATA ? new Date().toISOString() : null,
           isSuperAdmin: false,
         },
         fullName,
