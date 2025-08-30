@@ -124,6 +124,14 @@ vi.mock("hono/adapter", () => ({
   })),
 }))
 
+// Mock Bun global for test environment
+global.Bun = {
+  serve: vi.fn((options: any) => {
+    console.log(`Mock Bun.serve called with port: ${options.port}`)
+    return { port: options.port }
+  })
+} as any
+
 beforeAll(() => {
   // Replace global fetch with our mock
   global.fetch = mockFetch as any
