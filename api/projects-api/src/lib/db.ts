@@ -358,9 +358,9 @@ export async function getTasks(c: Context, userId: string): Promise<Task[]> {
   return tasks.flatMap((task) => {
     const createdBy = task.createdBy
     const updatedBy = task.updatedBy
-    const assignedTo = task.assignedTo
+    const assignedTo = task.assignedTo ?? []
 
-    if (createdBy && updatedBy && assignedTo)
+    if (createdBy && updatedBy)
       return {
         ...task,
         createdBy: {
