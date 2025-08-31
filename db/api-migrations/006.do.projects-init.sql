@@ -37,13 +37,15 @@ create table project_members (
   user_id text references users(id) on delete cascade,
   is_owner boolean default false,
   role text,
-  role_id INTEGER REFERENCES roles(id) ON DELETE CASCADE,
+  role_id INTEGER REFERENCES roles(id) ON DELETE RESTRICT,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   created_by text references users(id) on delete cascade,
   updated_by text references users(id) on delete cascade,
   primary key (project_id, user_id)
 );
+
+CREATE INDEX idx_project_members_role_id ON project_members(role_id);
 
 -- Create labels table (replaces columns table)
 CREATE TABLE labels (
