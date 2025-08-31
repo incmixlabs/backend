@@ -42,7 +42,6 @@ export const routes = (app: OpenAPIHono<HonoApp>) => {
         </style>
       </head>
       <body>
-        <div id="api-reference"></div>
         <script>
           // Clean hash from URL without affecting navigation
           if (window.location.hash) {
@@ -50,7 +49,11 @@ export const routes = (app: OpenAPIHono<HonoApp>) => {
           }
         </script>
         <script id="api-reference" data-url="${BASE_PATH}/tasks/openapi.json"></script>
-        <script src="https://cdn.jsdelivr.net/npm/@scalar/api-reference@latest"></script>
+        <script
+          src="https://cdn.jsdelivr.net/npm/@scalar/api-reference@X.Y.Z"
+          integrity="sha384-⟨hash⟩"
+          crossorigin="anonymous">
+        </script>
       </body>
       </html>
     `
