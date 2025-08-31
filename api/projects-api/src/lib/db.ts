@@ -1,5 +1,5 @@
 import type { Context } from "@/types"
-import type { Project } from "@incmix-api/utils/zod-schema"
+import type { Project, Task } from "@incmix-api/utils/zod-schema"
 
 import { jsonArrayFrom, jsonObjectFrom } from "kysely/helpers/postgres"
 
@@ -280,4 +280,173 @@ export async function getProjectMembers(c: Context, projectId: string) {
     email: member.email,
     avatar: member.avatar,
   }))
+}
+
+export async function isProjectMember(
+  c: Context,
+  projectId: string,
+  userId: string
+) {
+  const member = await c
+    .get("db")
+    .selectFrom("projectMembers")
+    .selectAll()
+    .where((eb) =>
+      eb.and([eb("projectId", "=", projectId), eb("userId", "=", userId)])
+    )
+    .executeTakeFirst()
+
+  return !!member
+}
+
+export async function getTaskById(c: Context, taskId: string) {
+  const task = await buildTaskQuery(c)
+    .where("tasks.id", "=", taskId)
+    .executeTakeFirst()
+
+  if (!task) return null
+
+  const _createdBy = task.createdBy
+  const _updatedBy = task.updatedBy
+  const _assignedTo = task.assignedTo
+
+  const createdBy = task.createdBy
+  const updatedBy = task.updatedBy
+  const assignedTo = task.assignedTo ?? []
+
+  if (createdBy && updatedBy)
+    return {
+      ...task,
+      createdBy: {
+        id: createdBy.id,
+        name: createdBy.name,
+        image: createdBy.image ?? undefined,
+      },
+      updatedBy: {
+        id: updatedBy.id,
+        name: updatedBy.name,
+        image: updatedBy.image ?? undefined,
+      },
+      assignedTo: assignedTo.map((a) => ({
+        id: a.id,
+        name: a.name,
+        image: a.image ?? undefined,
+      })),
+      createdAt: task.createdAt.getTime(),
+      updatedAt: task.updatedAt.getTime(),
+      startDate: task.startDate?.getTime(),
+      endDate: task.endDate?.getTime(),
+      isSubtask: task.parentTaskId !== null,
+      comments: [],
+    }
+
+  return null
+}
+
+export async function getTasks(c: Context, userId: string): Promise<Task[]> {
+  const tasksQuery = buildTaskQuery(c)
+
+  const _tasks = await buildTaskQuery(c)
+    .where((eb) =>
+      eb.exists(
+        eb
+          .selectFrom("taskAssignments")
+          .select("taskAssignments.taskId")
+          .whereRef("taskAssignments.taskId", "=", "tasks.id")
+          .where("taskAssignments.userId", "=", userId)
+      )
+    )
+    .execute()
+  const tasks = await tasksQuery.execute()
+
+  return tasks.flatMap((task) => {
+    const createdBy = task.createdBy
+    const updatedBy = task.updatedBy
+    const assignedTo = task.assignedTo ?? []
+
+    if (createdBy && updatedBy)
+      return {
+        ...task,
+        createdBy: {
+          id: createdBy.id,
+          name: createdBy.name,
+          image: createdBy.image ?? undefined,
+        },
+        updatedBy: {
+          id: updatedBy.id,
+          name: updatedBy.name,
+          image: updatedBy.image ?? undefined,
+        },
+        assignedTo: assignedTo.map((a) => ({
+          id: a.id,
+          name: a.name,
+          image: a.image ?? undefined,
+        })),
+        createdAt: task.createdAt.getTime(),
+        updatedAt: task.updatedAt.getTime(),
+        startDate: task.startDate?.getTime(),
+        endDate: task.endDate?.getTime(),
+        isSubtask: task.parentTaskId !== null,
+        comments: [],
+      }
+
+    return []
+  })
+}
+
+function buildTaskQuery(c: Context) {
+  return c
+    .get("db")
+    .selectFrom("tasks")
+    .select((eb) => [
+      "tasks.id",
+      "tasks.name",
+      "tasks.description",
+      "tasks.taskOrder",
+      "tasks.createdAt",
+      "tasks.updatedAt",
+      "tasks.projectId",
+      "tasks.statusId",
+      "tasks.priorityId",
+      "tasks.startDate",
+      "tasks.endDate",
+      "tasks.acceptanceCriteria",
+      "tasks.checklist",
+      "tasks.refUrls",
+      "tasks.labelsTags",
+      "tasks.attachments",
+      "tasks.parentTaskId",
+      "tasks.completed",
+      jsonArrayFrom(
+        eb
+          .selectFrom("tasks as st")
+          .select([
+            "st.id",
+            "st.taskOrder",
+            "st.name",
+            "st.description",
+            "st.completed",
+          ])
+          .whereRef("tasks.id", "=", "tasks.parentTaskId")
+      ).as("subTasks"),
+      jsonArrayFrom(
+        eb
+          .selectFrom("taskAssignments")
+          .innerJoin("userProfiles as up", "taskAssignments.userId", "up.id")
+          .select(["up.id", "up.fullName as name", "up.avatar as image"])
+          .whereRef("taskAssignments.taskId", "=", "tasks.id")
+      ).as("assignedTo"),
+      jsonObjectFrom(
+        eb
+          .selectFrom("userProfiles as up2")
+          .select(["up2.id", "up2.fullName as name", "up2.avatar as image"])
+          .whereRef("up2.id", "=", "tasks.createdBy")
+      ).as("createdBy"),
+      jsonObjectFrom(
+        eb
+          .selectFrom("userProfiles as up3")
+          .select(["up3.id", "up3.fullName as name", "up3.avatar as image"])
+          .whereRef("up3.id", "=", "tasks.updatedBy")
+      ).as("updatedBy"),
+    ])
 }

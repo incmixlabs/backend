@@ -542,3 +542,42 @@ export const getProjectMembers = createRoute({
     },
   },
 })
+
+export const getProjectReference = createRoute({
+  path: "/reference",
+  method: "get",
+  summary: "Get Project Reference Data",
+  tags: ["Projects"],
+  description: "Get reference data for projects (statuses, roles, priorities)",
+  security: [{ cookieAuth: [] }],
+  responses: {
+    200: {
+      content: {
+        "application/json": {
+          schema: z.object({
+            statuses: z.array(z.string()),
+            roles: z.array(z.string()),
+            priorities: z.array(z.string()),
+          }),
+        },
+      },
+      description: "Returns project reference data",
+    },
+    401: {
+      content: {
+        "application/json": {
+          schema: ResponseSchema,
+        },
+      },
+      description: "Error response when not authenticated",
+    },
+    500: {
+      content: {
+        "application/json": {
+          schema: ResponseSchema,
+        },
+      },
+      description: "Internal Server Error",
+    },
+  },
+})

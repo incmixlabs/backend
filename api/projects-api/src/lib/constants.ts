@@ -111,3 +111,43 @@ export const ERROR_INVALID_FILE_TYPE = {
   namespace: "errors",
   key: "invalid_file_type",
 }
+
+export const ERROR_TASK_INSERT_FAIL = {
+  namespace: "errors",
+  key: "task_insert_fail",
+}
+
+export const ERROR_TASK_UPDATE_FAIL = {
+  namespace: "errors",
+  key: "task_update_fail",
+}
+
+export const ERROR_TASK_DELETE_FAIL = {
+  namespace: "errors",
+  key: "task_delete_fail",
+}
+
+export const ERROR_TASK_NOT_FOUND = {
+  namespace: "errors",
+  key: "task_not_found",
+}
+
+export const ERROR_USER_STORY_GENERATION_FAILED = {
+  namespace: "errors",
+  key: "user_story_generation_failed",
+}
+
+export const ERROR_TEMPLATE_ALREADY_EXISTS = {
+  namespace: "errors",
+  key: "template_already_exists",
+}
+
+export const ERROR_TEMPLATE_NOT_FOUND = {
+  namespace: "errors",
+  key: "template_not_found",
+}
+
+export const ERROR_INVALID_JOB_TYPE = {
+  namespace: "errors",
+  key: "invalid_job_type",
+}
