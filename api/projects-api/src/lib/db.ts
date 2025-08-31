@@ -342,16 +342,17 @@ export async function getTaskById(c: Context, taskId: string) {
 export async function getTasks(c: Context, userId: string): Promise<Task[]> {
   const tasksQuery = buildTaskQuery(c)
 
-  tasksQuery.where((eb) =>
-    eb.exists(
-      eb
-        .selectFrom("taskAssignments")
-        .select("taskAssignments.taskId")
-        .whereRef("taskAssignments.taskId", "=", "tasks.id")
-        .where("taskAssignments.userId", "=", userId)
+  const tasks = await buildTaskQuery(c)
+    .where((eb) =>
+      eb.exists(
+        eb
+          .selectFrom("taskAssignments")
+          .select("taskAssignments.taskId")
+          .whereRef("taskAssignments.taskId", "=", "tasks.id")
+          .where("taskAssignments.userId", "=", userId)
+      )
     )
-  )
-
+    .execute()
   const tasks = await tasksQuery.execute()
 
   return tasks.flatMap((task) => {
