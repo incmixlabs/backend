@@ -300,11 +300,9 @@ export async function isProjectMember(
 }
 
 export async function getTaskById(c: Context, taskId: string) {
-  const tasksQuery = buildTaskQuery(c)
-
-  tasksQuery.where("tasks.id", "=", taskId)
-
-  const task = await tasksQuery.executeTakeFirst()
+  const task = await buildTaskQuery(c)
+    .where("tasks.id", "=", taskId)
+    .executeTakeFirst()
 
   if (!task) return null
 
