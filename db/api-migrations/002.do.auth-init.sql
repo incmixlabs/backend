@@ -1,8 +1,5 @@
 BEGIN;
 
--- Create user type enum
-CREATE TYPE user_type_enum AS ENUM ('super_admin', 'member', 'user');
-
 -- Create verification code type enum
 CREATE TYPE verification_code_type_enum AS ENUM ('email_verification', 'reset_password');
 
@@ -14,7 +11,7 @@ CREATE TABLE users (
   email_verified_at TIMESTAMPTZ,
   last_logged_in TIMESTAMPTZ DEFAULT NOW (),
   is_active BOOLEAN DEFAULT TRUE,
-  user_type user_type_enum NOT NULL DEFAULT 'user',
+  is_super_admin BOOLEAN NOT NULL DEFAULT false,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );

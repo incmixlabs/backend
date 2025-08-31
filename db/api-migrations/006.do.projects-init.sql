@@ -36,6 +36,7 @@ create table project_members (
   user_id text references users(id) on delete cascade,
   is_owner boolean default false,
   role text,
+  role_id INTEGER REFERENCES roles(id) ON DELETE CASCADE,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   created_by text references users(id) on delete cascade,

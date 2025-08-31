@@ -1,5 +1,9 @@
 BEGIN;
 
+-- Create enum types
+CREATE TYPE role_scope AS ENUM ('organization', 'project', 'both');
+CREATE TYPE permission_action AS ENUM ('create', 'read', 'update', 'delete', 'manage');
+
 -- Create organisations table
 CREATE TABLE organisations (
   id TEXT PRIMARY KEY NOT NULL,
@@ -9,11 +13,24 @@ CREATE TABLE organisations (
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
--- Create roles table (without the check constraint that was later dropped)
+-- Create roles table with extended RBAC structure
 CREATE TABLE roles (
   id SERIAL PRIMARY KEY,
-  name TEXT NOT NULL UNIQUE
+  name TEXT NOT NULL,
+  description TEXT,
+  organization_id TEXT,
+  is_system_role BOOLEAN NOT NULL DEFAULT false,
+  scope role_scope NOT NULL DEFAULT 'organization',
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  CONSTRAINT roles_name_organization_id_key UNIQUE (name, organization_id),
+  CONSTRAINT fk_roles_organization_id FOREIGN KEY (organization_id) REFERENCES organisations(id) ON DELETE CASCADE
 );
+
+-- Create indexes for roles
+CREATE INDEX idx_roles_organization_id ON roles(organization_id);
+CREATE INDEX idx_roles_is_system_role ON roles(is_system_role);
+CREATE INDEX idx_roles_scope ON roles(scope);
 
 -- Create members table
 CREATE TABLE members (
@@ -28,23 +45,36 @@ CREATE TABLE members (
 
 -- Create indexes for members
 CREATE INDEX idx_members_org_id ON members(org_id);
-
 CREATE INDEX idx_members_role_id ON members(role_id);
 
--- Create permissions table
+-- Create permissions table with new structure
 CREATE TABLE permissions (
   id SERIAL PRIMARY KEY,
-  role_id INTEGER NOT NULL,
-  subject TEXT NOT NULL,
-  action TEXT NOT NULL,
-  conditions JSONB,
-  FOREIGN KEY (role_id) REFERENCES roles(id) ON DELETE CASCADE
+  name TEXT NOT NULL,
+  description TEXT,
+  resource_type TEXT NOT NULL,
+  action permission_action NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
 -- Create indexes for permissions
-CREATE INDEX idx_permissions_role_id ON permissions(role_id);
+CREATE INDEX idx_permissions_resource_type ON permissions(resource_type);
+CREATE INDEX idx_permissions_action ON permissions(action);
+CREATE INDEX idx_permissions_resource_type_action ON permissions(resource_type, action);
 
-CREATE INDEX idx_permissions_subject_action ON permissions(subject, action);
+-- Create role_permissions junction table
+CREATE TABLE role_permissions (
+  role_id INTEGER REFERENCES roles(id) ON DELETE CASCADE,
+  permission_id INTEGER REFERENCES permissions(id) ON DELETE CASCADE,
+  conditions JSONB,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  PRIMARY KEY (role_id, permission_id)
+);
+
+-- Create indexes for role_permissions
+CREATE INDEX idx_role_permissions_role_id ON role_permissions(role_id);
+CREATE INDEX idx_role_permissions_permission_id ON role_permissions(permission_id);
 
 -- Insert default roles
 INSERT INTO
