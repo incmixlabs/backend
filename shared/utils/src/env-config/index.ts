@@ -88,6 +88,7 @@ const baseEnvSchema = z.object({
   MOCK_DATA: z.coerce.boolean().default(false),
   INTL_API_URL: z.string().url().optional(),
   TIMEOUT_MS: z.coerce.number().default(5000),
+  AUTH_API_URL: z.string().url().optional(),
 })
 
 // Service-specific schema extensions
