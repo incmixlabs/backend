@@ -306,9 +306,9 @@ export async function getTaskById(c: Context, taskId: string) {
 
   if (!task) return null
 
-  const createdBy = task.createdBy
-  const updatedBy = task.updatedBy
-  const assignedTo = task.assignedTo
+  const _createdBy = task.createdBy
+  const _updatedBy = task.updatedBy
+  const _assignedTo = task.assignedTo
 
   const createdBy = task.createdBy
   const updatedBy = task.updatedBy
@@ -346,7 +346,7 @@ export async function getTaskById(c: Context, taskId: string) {
 export async function getTasks(c: Context, userId: string): Promise<Task[]> {
   const tasksQuery = buildTaskQuery(c)
 
-  const tasks = await buildTaskQuery(c)
+  const _tasks = await buildTaskQuery(c)
     .where((eb) =>
       eb.exists(
         eb
