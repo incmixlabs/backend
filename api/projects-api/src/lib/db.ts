@@ -310,7 +310,11 @@ export async function getTaskById(c: Context, taskId: string) {
   const updatedBy = task.updatedBy
   const assignedTo = task.assignedTo
 
-  if (createdBy && updatedBy && assignedTo)
+  const createdBy = task.createdBy
+  const updatedBy = task.updatedBy
+  const assignedTo = task.assignedTo ?? []
+
+  if (createdBy && updatedBy)
     return {
       ...task,
       createdBy: {
