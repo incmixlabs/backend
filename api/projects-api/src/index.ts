@@ -19,6 +19,11 @@ const service = createService<HonoApp["Bindings"], HonoApp["Variables"]>({
 
 const { app, startServer } = service
 
+// Mount tasks routes AFTER OpenAPI setup to exclude them from main documentation
+// Tasks have their own dedicated API documentation at /api/projects/tasks/reference
+import tasksRoutes from "./routes/tasks"
+app.route(`${BASE_PATH}/tasks`, tasksRoutes)
+
 startServer()
 
 export default app
