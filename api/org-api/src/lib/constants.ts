@@ -45,3 +45,28 @@ export const ERROR_ROLE_NOT_FOUND = {
   namespace: "errors",
   key: "role_not_found",
 }
+
+export const ERROR_PERMISSION_EXIST = {
+  namespace: "errors",
+  key: "permission_exist",
+}
+export const ERROR_PERMISSION_NOT_FOUND = {
+  namespace: "errors",
+  key: "permission_not_found",
+}
+export const ERROR_PERMISSION_CREATE_FAIL = {
+  namespace: "errors",
+  key: "permission_create_fail",
+}
+export const ERROR_PERMISSION_UPDATE_FAIL = {
+  namespace: "errors",
+  key: "permission_update_fail",
+}
+export const ERROR_PERMISSION_DELETE_FAIL = {
+  namespace: "errors",
+  key: "permission_delete_fail",
+}
+export const PERMISSION_DELETE_SUCCESS = {
+  namespace: "auth",
+  key: "permission_delete_success",
+}

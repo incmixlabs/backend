@@ -72,9 +72,7 @@ describe("Environment Config", () => {
       expect(env.COMMENTS_API_URL).toBe("http://localhost:8585/api/comments")
       expect(env.INTL_API_URL).toBe("http://localhost:9090/api/intl")
       expect(env.ORG_API_URL).toBe("http://localhost:9292/api/org")
-      expect(env.PERMISSIONS_API_URL).toBe("http://localhost:9393/api/permissions")
       expect(env.PROJECTS_API_URL).toBe("http://localhost:8484/api/projects")
-      expect(env.TASKS_API_URL).toBe("http://localhost:8888/api/tasks")
       expect(env.USERS_API_URL).toBe("http://localhost:9191/api/users")
       expect(env.RXDB_SYNC_API_URL).toBe("http://localhost:8686/api/rxdb-sync")
     })
@@ -152,17 +150,6 @@ describe("Environment Config", () => {
       }
     })
 
-    it("should only set API URLs for fields in the merged schema", async () => {
-      const customSchema = z.object({
-        TASKS_API_URL: z.string().url().optional(),
-      })
-      
-      const { createEnvConfig } = await import("./index")
-      const env = createEnvConfig("email", customSchema)
-      
-      // Email service normally doesn't have TASKS_API_URL, but custom schema adds it
-      expect(env.TASKS_API_URL).toBe("http://localhost:8888/api/tasks")
-    })
   })
 
   describe("Service iteration logic", () => {
@@ -172,8 +159,8 @@ describe("Environment Config", () => {
       const serviceNames = Object.keys(services)
       const expectedServices = [
         "auth", "email", "genai", "files", "location", 
-        "bff", "comments", "intl", "org", "permissions", 
-        "projects", "tasks", "users", "rxdb"
+        "bff", "comments", "intl", "org", 
+        "projects", "users", "rxdb"
       ]
       
       expect(serviceNames.sort()).toEqual(expectedServices.sort())
@@ -190,9 +177,7 @@ describe("Environment Config", () => {
         comments: "COMMENTS_API_URL",
         intl: "INTL_API_URL",
         org: "ORG_API_URL",
-        permissions: "PERMISSIONS_API_URL",
         projects: "PROJECTS_API_URL",
-        tasks: "TASKS_API_URL",
         users: "USERS_API_URL",
         rxdb: "RXDB_SYNC_API_URL", // Special case
       }
@@ -218,7 +203,6 @@ describe("Environment Config", () => {
         org: "/api/org",
         permissions: "/api/permissions",
         projects: "/api/projects",
-        tasks: "/api/tasks",
         users: "/api/users",
         rxdb: "/api/rxdb-sync", // Special case
       }
@@ -277,15 +261,5 @@ describe("Environment Config", () => {
       expect(env.PORT).toBe(8282)
     })
 
-    it("should include required fields for tasks service", async () => {
-      process.env.REDIS_URL = "redis://localhost:6379"
-      
-      const { createEnvConfig } = await import("./index")
-      const env = createEnvConfig("tasks")
-      
-      // Check that REDIS_URL is present (value may vary based on environment)
-      expect(env.REDIS_URL).toBeDefined()
-      expect(env.PORT).toBe(8888)
-    })
   })
 })
