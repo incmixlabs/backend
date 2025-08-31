@@ -18,7 +18,7 @@ export const listTasks = createRoute({
   method: "get",
   path: "/",
   summary: "List Tasks",
-  tags: ["Tasks"],
+  tags: [],
   security: [{ cookieAuth: [] }],
   responses: {
     200: {
@@ -52,7 +52,7 @@ export const taskById = createRoute({
   method: "get",
   path: "/{taskId}",
   summary: "Get Task",
-  tags: ["Tasks"],
+  tags: [],
   description: "Get Task by Id",
   request: {
     params: TaskIdSchema,
@@ -98,7 +98,7 @@ export const createTask = createRoute({
   method: "post",
   path: "",
   summary: "Create Task",
-  tags: ["Tasks"],
+  tags: [],
   security: [{ cookieAuth: [] }],
   request: {
     body: {
@@ -149,7 +149,7 @@ export const updateTask = createRoute({
   method: "put",
   path: "/{taskId}",
   summary: "Update Task",
-  tags: ["Tasks"],
+  tags: [],
   security: [{ cookieAuth: [] }],
   request: {
     params: TaskIdSchema,
@@ -209,7 +209,7 @@ export const deleteTask = createRoute({
   method: "delete",
   path: "/{taskId}",
   summary: "Delete Task",
-  tags: ["Tasks"],
+  tags: [],
   security: [{ cookieAuth: [] }],
   request: {
     params: TaskIdSchema,
@@ -254,7 +254,7 @@ export const addTaskChecklist = createRoute({
   path: "/{taskId}/checklists",
   method: "post",
   summary: "Add Task Checklist",
-  tags: ["Tasks"],
+  tags: [],
   description: "Add a new checklist item to a task",
   security: [{ cookieAuth: [] }],
   request: {
@@ -307,7 +307,7 @@ export const updateTaskChecklist = createRoute({
   path: "/{taskId}/checklists/{checklistId}",
   method: "put",
   summary: "Update Task Checklist",
-  tags: ["Tasks"],
+  tags: [],
   description: "Update an existing checklist item in a task",
   security: [{ cookieAuth: [] }],
   request: {
@@ -360,7 +360,7 @@ export const removeTaskChecklist = createRoute({
   method: "delete",
   path: "/{taskId}/checklists",
   summary: "Remove Task Checklist",
-  tags: ["Tasks"],
+  tags: [],
   security: [{ cookieAuth: [] }],
   request: {
     params: TaskIdSchema,
@@ -420,7 +420,7 @@ export const bulkAiGenTask = createRoute({
   method: "post",
   path: "/bulk-ai-gen",
   summary: "Bulk AI Gen Task",
-  tags: ["Tasks"],
+  tags: [],
   security: [{ cookieAuth: [] }],
   request: {
     body: {
@@ -480,7 +480,7 @@ export const getJobStatus = createRoute({
   method: "get",
   path: "/jobs/status",
   summary: "Get User's Aggregated AI Job Statuses",
-  tags: ["Tasks"],
+  tags: [],
   description:
     "Get an aggregated list of the authenticated user's AI jobs from both user-story and codegen queues. Returns arrays of job objects with status, jobId, jobTitle, and taskId, filtered by the requesting user.",
 
