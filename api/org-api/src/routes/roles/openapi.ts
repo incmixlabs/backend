@@ -156,3 +156,69 @@ export const deleteRole = createRoute({
     },
   },
 })
+
+export const updateMemberRole = createRoute({
+  method: "put",
+  path: "/member/{handle}",
+  summary: "Update Member Role",
+  tags: ["Permissions"],
+  security: [{ cookieAuth: [] }],
+  request: {
+    params: z.object({
+      handle: z.string().openapi({
+        example: "test-organisation",
+        description: "Organisation handle",
+      }),
+    }),
+    body: {
+      content: {
+        "application/json": {
+          schema: z.object({
+            userId: z.string().openapi({
+              example: "93jpbulpkkavxnz",
+              description: "User ID",
+            }),
+            role: z.string().openapi({
+              example: "Owner",
+              description: "New role for the user",
+            }),
+          }),
+        },
+      },
+    },
+  },
+  responses: {
+    200: {
+      content: {
+        "application/json": {
+          schema: MessageResponseSchema,
+        },
+      },
+      description: "Member role updated successfully",
+    },
+    401: {
+      content: {
+        "application/json": {
+          schema: MessageResponseSchema,
+        },
+      },
+      description: "Authentication Error",
+    },
+    403: {
+      content: {
+        "application/json": {
+          schema: MessageResponseSchema,
+        },
+      },
+      description: "Forbidden - Insufficient permissions",
+    },
+    500: {
+      content: {
+        "application/json": {
+          schema: MessageResponseSchema,
+        },
+      },
+      description: "Internal Server Error",
+    },
+  },
+})
