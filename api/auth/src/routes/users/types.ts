@@ -28,11 +28,7 @@ export const OnboardingSchema = z
   .openapi("OnboardingSchema")
 
 export const OnboardingResponseSchema = z.object({
-  email: z
-    .string()
-    .email()
-    .nullable()
-    .openapi({ example: "john.doe@example.com" }),
+  email: z.email().nullable().openapi({ example: "john.doe@example.com" }),
   companyName: z
     .string()
     .min(1)
@@ -99,16 +95,16 @@ export const FullNameSchema = z
   .object({
     fullName: z.string().min(1).openapi({ example: "John Doe" }),
   })
-  .openapi("Full Name")
+  .openapi("FullName")
 
 export const UserProfileSchema = z
   .object({
     id: z.string(),
     name: z.string(),
-    email: z.string(),
-    profileImage: z.string().nullable().default(null),
-    avatar: z.string().nullable().default(null),
-    localeId: z.number(),
+    email: z.email(),
+    profileImage: z.url().nullable().default(null),
+    avatar: z.url().nullable().default(null),
+    localeId: z.number().int(),
   })
   .openapi("UserProfile")
 
@@ -136,6 +132,6 @@ export const UserProfilePaginatedSchema = z
 
 export const OptionalPresignedUrlSchema = z
   .object({
-    url: z.string().nullable(),
+    url: z.url().nullable(),
   })
   .openapi("OptionalPresignedUrl")
