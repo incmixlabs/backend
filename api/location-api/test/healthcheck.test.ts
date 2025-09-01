@@ -23,7 +23,7 @@ const mockSetupHealthCheck = vi.fn((app, config) => {
     })
   })
 
-  app.get("/healthcheck/ready", async (c) => {
+  app.get("/healthcheck/ready", (c) => {
     return c.json({
       status: "ok",
       service: config.serviceName,

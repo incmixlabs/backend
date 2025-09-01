@@ -1,8 +1,8 @@
+import type { OpenAPIHono } from "@hono/zod-openapi"
 import { BASE_PATH } from "@/lib/constants"
 import genaiRoutes from "@/routes/genai"
 import healthcheckRoutes from "@/routes/healthcheck"
 import type { HonoApp } from "@/types"
-import type { OpenAPIHono } from "@hono/zod-openapi"
 import templateRoutes from "./templates"
 
 export const routes = (app: OpenAPIHono<HonoApp>) => {

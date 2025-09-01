@@ -1,6 +1,6 @@
+import { getConnInfo } from "@hono/node-server/conninfo"
 import { envVars } from "@/env-vars"
 import type { Address, Context } from "@/types"
-import { getConnInfo } from "@hono/node-server/conninfo"
 
 type Location = {
   location: { latitude: string; longitude: string }

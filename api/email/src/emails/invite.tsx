@@ -66,7 +66,7 @@ export const InviteEmail = ({
             </Section>
             <Heading className="mx-0 my-[30px] p-0 text-center font-normal text-[24px] text-black">
               <div
-                // biome-ignore lint/security/noDangerouslySetInnerHtml: <explanation>
+                // biome-ignore lint/security/noDangerouslySetInnerHtml: HTML content from i18n translations
                 dangerouslySetInnerHTML={{
                   __html:
                     type === "system"

@@ -1,9 +1,9 @@
-import type { MessageResponse } from "@/routes/types"
-import type { Context } from "@/types"
+import type { UserProfile } from "@incmix/utils/types"
 import { generateSentryHeaders } from "@incmix-api/utils"
 import { BadRequestError, ServerError } from "@incmix-api/utils/errors"
-import type { UserProfile } from "@incmix/utils/types"
 import { env } from "hono/adapter"
+import type { MessageResponse } from "@/routes/types"
+import type { Context } from "@/types"
 
 export async function getUserProfile(c: Context, id: string, cookie: string) {
   const res = await fetch(`${env(c).USERS_API_URL}?id=${id}`, {

@@ -14,7 +14,7 @@ vi.mock("@/auth/utils", () => ({
   generateSessionId: vi.fn(() => `session-${Date.now()}`),
   generateRandomId: vi.fn(() => `id-${Date.now()}`),
   hashPassword: vi.fn(async (password: string) => `hashed_${password}`),
-  verifyPassword: vi.fn(async (hash: string, password: string) => {
+  verifyPassword: vi.fn((hash: string, password: string) => {
     return (
       hash === `hashed_${password}` ||
       (password === "user1" && hash === "hashed_user1")
@@ -25,18 +25,16 @@ vi.mock("@/auth/utils", () => ({
 // Mock bcrypt for password operations
 vi.mock("bcrypt", () => ({
   default: {
-    hash: vi.fn().mockImplementation(async (password: string) => {
+    hash: vi.fn().mockImplementation((password: string) => {
       return `hashed_${password}`
     }),
-    compare: vi
-      .fn()
-      .mockImplementation(async (password: string, hash: string) => {
-        // Simple mock comparison - in real tests you'd want proper bcrypt
-        return (
-          hash === `hashed_${password}` ||
-          (password === "user1" && hash.includes("user1"))
-        )
-      }),
+    compare: vi.fn().mockImplementation((password: string, hash: string) => {
+      // Simple mock comparison - in real tests you'd want proper bcrypt
+      return (
+        hash === `hashed_${password}` ||
+        (password === "user1" && hash.includes("user1"))
+      )
+    }),
   },
 }))
 
@@ -128,7 +126,7 @@ beforeAll(() => {
   global.fetch = mockFetch as any
 
   // Set up default mock implementation
-  mockFetch.mockImplementation(async (url: string, options?: RequestInit) => {
+  mockFetch.mockImplementation((url: string, options?: RequestInit) => {
     // Mock INTL service responses (localhost:9090/api/intl)
     if (url.includes("localhost:9090/api/intl/locales/default")) {
       return {

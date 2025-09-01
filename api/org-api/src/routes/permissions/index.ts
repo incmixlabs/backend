@@ -1,11 +1,25 @@
+import { OpenAPIHono } from "@hono/zod-openapi"
+import type { UserRole } from "@incmix/utils/types"
+import { actions, subjects, UserRoles } from "@incmix/utils/types"
+import { ERROR_BAD_REQUEST, ERROR_UNAUTHORIZED } from "@incmix-api/utils"
+import {
+  NotFoundError,
+  processError,
+  ServerError,
+  UnauthorizedError,
+  UnprocessableEntityError,
+  zodError,
+} from "@incmix-api/utils/errors"
+import { useTranslation } from "@incmix-api/utils/middleware"
+import { apiReference } from "@scalar/hono-api-reference"
 import { ERROR_MEMBER_UPDATE_FAIL, ERROR_NO_ROLES } from "@/lib/constants"
 import {
   deletePermission,
   deleteRoleById,
   ensureAtLeastOneOwner,
   findAllRoles,
-  findOrgMemberById,
   findOrganisationByHandle,
+  findOrgMemberById,
   findPermissionBySubjectAndAction,
   findRoleByName,
   insertPermission,
@@ -20,20 +34,6 @@ import {
   updateRole,
 } from "@/routes/roles/openapi"
 import type { HonoApp } from "@/types"
-import { OpenAPIHono } from "@hono/zod-openapi"
-import { ERROR_BAD_REQUEST, ERROR_UNAUTHORIZED } from "@incmix-api/utils"
-import {
-  NotFoundError,
-  ServerError,
-  UnauthorizedError,
-  UnprocessableEntityError,
-  processError,
-  zodError,
-} from "@incmix-api/utils/errors"
-import { useTranslation } from "@incmix-api/utils/middleware"
-import type { UserRole } from "@incmix/utils/types"
-import { UserRoles, actions, subjects } from "@incmix/utils/types"
-import { apiReference } from "@scalar/hono-api-reference"
 import { getRolesPermissions, updatePermissions } from "./openapi"
 
 const permissionRoutes = new OpenAPIHono<HonoApp>({
