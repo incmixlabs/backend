@@ -85,7 +85,7 @@ const baseEnvSchema = z.object({
   MOCK_DATA: z.coerce.boolean().default(false),
   INTL_API_URL: z.url().optional(),
   TIMEOUT_MS: z.coerce.number().default(5000),
-  AUTH_API_URL: z.url().optional()
+  AUTH_API_URL: z.url().optional(),
 })
 
 // Service-specific schema extensions
@@ -112,7 +112,7 @@ const serviceSchemas = {
     GOOGLE_AI_API_KEY: z.string().optional(),
     PORT: z.coerce.number().default(services.genai.port),
     REDIS_URL: z.url(),
-    ORG_API_URL: z.url().optional()
+    ORG_API_URL: z.url().optional(),
   }),
   files: baseEnvSchema.extend({
     STORAGE_TYPE: z.enum(["local", "s3"]).default("s3"),
@@ -160,7 +160,7 @@ const serviceSchemas = {
   projects: baseEnvSchema.extend({
     PORT: z.coerce.number().default(services.projects.port),
     ORG_API_URL: z.url().optional(),
-    REDIS_URL: z.url().optional()
+    REDIS_URL: z.url().optional(),
   }),
   rxdb: baseEnvSchema.extend({
     PORT: z.coerce.number().default(services.rxdb.port),
