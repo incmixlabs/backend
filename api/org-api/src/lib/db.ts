@@ -334,13 +334,23 @@ export async function deleteRoleById(c: Context, id: number) {
     .get("db")
     .transaction()
     .execute(async (tx) => {
-      await tx
-        .deleteFrom("rolePermissions")
+      const inUse = await tx
+        .selectFrom("members")
+        .select("userId")
         .where("roleId", "=", id)
-        .executeTakeFirstOrThrow()
+        .limit(1)
+        .executeTakeFirst()
+      if (inUse) {
+        throw new PreconditionFailedError("role_in_use")
+      }
+      if (inUse) {
+        throw new PreconditionFailedError("role_in_use")
+      }
+      await tx.deleteFrom("rolePermissions").where("roleId", "=", id).execute()
       return await tx
         .deleteFrom("roles")
         .where("id", "=", id)
+        .returningAll()
         .executeTakeFirstOrThrow()
     })
 }

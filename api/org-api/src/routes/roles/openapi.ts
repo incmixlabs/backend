@@ -212,6 +212,14 @@ export const updateMemberRole = createRoute({
       },
       description: "Forbidden - Insufficient permissions",
     },
+    404: {
+      content: {
+        "application/json": {
+          schema: MessageResponseSchema,
+        },
+      },
+      description: "Organisation or member not found",
+    },
     500: {
       content: {
         "application/json": {

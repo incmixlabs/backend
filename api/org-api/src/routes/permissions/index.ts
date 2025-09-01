@@ -204,7 +204,8 @@ permissionRoutes.openapi(updatePermissions, async (c) => {
         for (const update of updates) {
           const { subject, action, roleId, allowed } = update
 
-          const permission = await findPermissionBySubjectAndAction(
+          // Check existing role-permission join
+          const joined = await findPermissionBySubjectAndAction(
             c,
             subject,
             action,
@@ -212,45 +213,46 @@ permissionRoutes.openapi(updatePermissions, async (c) => {
             tx
           )
 
-          if (!permission && allowed) {
-            const newPermission = await insertPermission(
-              c,
-              {
-                resourceType: subject,
-                action,
-                conditions: null,
-                createdAt: new Date().toISOString(),
-                updatedAt: new Date().toISOString(),
-                name: `${subject} ${action}`,
-              },
-              tx
-            )
+          if (allowed) {
+            // Get or create permission by (subject, action)
+            const existingPerm = await tx
+              .selectFrom("permissions")
+              .selectAll()
+              .where("resourceType", "=", subject)
+              .where("action", "=", action)
+              .executeTakeFirst()
 
-            if (!newPermission) {
-              // const msg = await t.text(ERROR_PERMISSION_INSERT_FAIL)
-              throw new ServerError("Failed to update permissions")
+            const perm =
+              existingPerm ??
+              (await insertPermission(
+                c,
+                {
+                  resourceType: subject,
+                  action,
+                  conditions: null,
+                  createdAt: new Date().toISOString(),
+                  updatedAt: new Date().toISOString(),
+                  name: `${subject} ${action}`,
+                },
+                tx
+              ))
+
+            if (!perm?.id) {
+              throw new ServerError("Failed to create permission")
             }
-          }
 
-          if (permission && !allowed) {
-            const deleted = await deletePermission(c, permission.id, roleId, tx)
+            // Ensure rolePermissions link exists
+            if (!joined) {
+              await tx
+                .insertInto("rolePermissions")
+                .values({ roleId, permissionId: perm.id })
+                .executeTakeFirst()
+            }
+          } else if (joined) {
+            // Remove role-permission link
+            const deleted = await deletePermission(c, joined.id, roleId, tx)
             if (!deleted) {
-              throw new ServerError("Failed to Update permission")
-            }
-          }
-
-          if (permission && allowed) {
-            const updated = await updatePermission(
-              c,
-              {
-                ...permission,
-                conditions: null,
-              },
-              permission.id,
-              tx
-            )
-            if (!updated) {
-              throw new ServerError("Failed to update permission")
+              throw new ServerError("Failed to delete permission mapping")
             }
           }
         }
@@ -404,8 +406,6 @@ permissionRoutes.openapi(updateMemberRole, async (c) => {
       const msg = await t.text(ERROR_MEMBER_UPDATE_FAIL)
       throw new ServerError(msg)
     }
-
-    const _members = await findOrgMembers(c, org.id)
 
     return c.json({ message: "Member role updated successfully" }, 200)
   } catch (error) {
