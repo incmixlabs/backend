@@ -59,6 +59,8 @@ export const OnboardingResponseSchema = z.object({
     .openapi({ example: ["Referral Source 1", "Referral Source 2"] }),
 })
 
+export type OnboardingResponse = z.infer<typeof OnboardingResponseSchema>
+
 export const MessageResponseSchema = z
   .object({
     message: z.string().openapi({

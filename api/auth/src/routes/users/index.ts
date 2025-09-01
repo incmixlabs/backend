@@ -45,6 +45,7 @@ import {
   updateUser,
   userOnboarding,
 } from "./openapi"
+import type { OnboardingResponse } from "./types"
 
 const usersRoutes = new OpenAPIHono<HonoApp>({
   defaultHook: zodError,
@@ -132,13 +133,19 @@ usersRoutes.openapi(userOnboarding, async (c) => {
       throw new ServerError("Failed to create Profile")
     }
 
-    return c.json(
-      {
-        ...updatedProfile,
-        name: updatedProfile.fullName,
-      },
-      200
-    )
+    const response: OnboardingResponse = {
+      email: updatedProfile.email,
+      companyName: updatedProfile.companyName,
+      companySize: updatedProfile.companySize,
+      teamSize: updatedProfile.teamSize,
+      purpose: updatedProfile.purpose,
+      role: updatedProfile.role,
+      manageFirst: updatedProfile.manageFirst,
+      focusFirst: updatedProfile.focusFirst,
+      referralSources: updatedProfile.referralSources,
+    }
+
+    return c.json(response, 200)
   } catch (error) {
     console.error("Full error:", error)
     return await processError<typeof userOnboarding>(c, error, [
@@ -228,8 +235,10 @@ usersRoutes.openapi(getAllUsers, async (c) => {
 
     const total = await query
       .select(({ fn }) => fn.count<number>("id").as("count"))
-      .groupBy("id")
       .executeTakeFirst()
+
+    // Parse the count as a number to ensure proper type
+    const totalCount = Number(total?.count ?? 0)
 
     if (pagination) {
       query = query.limit(pagination.pageSize)
@@ -240,9 +249,7 @@ usersRoutes.openapi(getAllUsers, async (c) => {
 
     const profiles = await query.execute()
 
-    const totalPages = Math.ceil(
-      (total?.count ?? 1) / (pagination?.pageSize ?? 10)
-    )
+    const totalPages = Math.ceil(totalCount / (pagination?.pageSize ?? 10))
 
     const hasNextPage = totalPages > (pagination?.page ?? 1)
     const hasPrevPage = (pagination?.page ?? 1) > 1
@@ -258,7 +265,7 @@ usersRoutes.openapi(getAllUsers, async (c) => {
         pagination: {
           page: pagination?.page ?? 1,
           limit: pagination?.pageSize ?? 10,
-          total: total?.count ?? 0,
+          total: totalCount,
           totalPages,
           hasNextPage,
           hasPrevPage,

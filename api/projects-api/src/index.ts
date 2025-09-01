@@ -1,8 +1,5 @@
 import { BASE_PATH } from "@/lib/constants"
 import { middlewares } from "@/middleware"
-import healthcheckRoutes from "@/routes/healthcheck"
-import projectRoutes from "@/routes/projects"
-import tasksRoutes from "@/routes/tasks"
 import type { HonoApp } from "@/types"
 import { createService } from "@incmix-api/utils"
 import { envVars } from "./env-vars"
