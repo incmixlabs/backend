@@ -334,35 +334,10 @@ permissionRoutes.openapi(deleteRole, async (c) => {
   }
 })
 
-permissionRoutes.openapi(updateMemberRole, async (c) => {
-  try {
-    const user = c.get("user")
-    const t = await useTranslation(c)
-    if (!user) {
-      const msg = await t.text(ERROR_UNAUTHORIZED)
-      throw new UnauthorizedError(msg)
-    }
-
-    const { handle } = c.req.valid("param")
-    const { role: newRole, userId } = c.req.valid("json")
-
-    const org = await findOrganisationByHandle(c, handle)
-
-    await throwUnlessUserCan(c, "update", "Member", org.id)
-
-    const member = await findOrgMemberById(c, userId, org.id)
-
-    if (
-      member.role === UserRoles.ROLE_OWNER &&
-      newRole !== UserRoles.ROLE_OWNER
-    ) {
-      await ensureAtLeastOneOwner(c, org.id, [userId], "update")
-    }
-
     const dbRole = await findRoleByName(c, newRole as UserRole)
     if (!dbRole) {
       const msg = await t.text(ERROR_NO_ROLES)
-      throw new ServerError(msg)
+      throw new NotFoundError(msg)
     }
 
     const updated = await c
@@ -380,16 +355,10 @@ permissionRoutes.openapi(updateMemberRole, async (c) => {
       throw new ServerError(msg)
     }
 
-    const _members = await findOrgMembers(c, org.id)
+    // Optionally return updated members if the client needs it:
+    // const members = await findOrgMembers(c, org.id)
 
     return c.json({ message: "Member role updated successfully" }, 200)
-  } catch (error) {
-    return await processError<typeof updateMemberRole>(c, error, [
-      "{{ default }}",
-      "update-member-role",
-    ])
-  }
-})
 
 const permissionsReferenceRoutes = new OpenAPIHono<HonoApp>()
 
