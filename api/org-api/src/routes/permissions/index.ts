@@ -250,7 +250,7 @@ permissionRoutes.openapi(updatePermissions, async (c) => {
             }
           } else if (joined) {
             // Remove role-permission link
-            const deleted = await deletePermission(c, joined.id, roleId, tx)
+            const deleted = await deletePermission(c, joined.permissionId, roleId, tx)
             if (!deleted) {
               throw new ServerError("Failed to delete permission mapping")
             }
@@ -347,8 +347,7 @@ permissionRoutes.openapi(deleteRole, async (c) => {
     await throwUnlessUserCan(c, "delete", "Role", orgId)
 
     const result = await deleteRoleById(c, id)
-    // @ts-expect-error
-    if (Number(result.numDeletedRows) === 0) {
+    if (!result) {
       throw new NotFoundError("Role not found")
     }
 
