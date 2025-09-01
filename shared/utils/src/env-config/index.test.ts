@@ -30,12 +30,11 @@ describe("Environment Config", () => {
 
       // Auth service schema includes these API URLs
       expect(env.EMAIL_API_URL).toBeDefined()
-      expect(env.USERS_API_URL).toBeDefined()
+
       expect(env.INTL_API_URL).toBeDefined()
 
       // These should be set based on buildApiUrl
       expect(env.EMAIL_API_URL).toBe("http://localhost:8989/api/email")
-      expect(env.USERS_API_URL).toBe("http://localhost:9191/api/users")
       expect(env.INTL_API_URL).toBe("http://localhost:9090/api/intl")
 
       // Auth service schema doesn't include these, so they shouldn't be set
@@ -46,14 +45,12 @@ describe("Environment Config", () => {
 
     it("should not override API URLs if they are already provided", async () => {
       process.env.EMAIL_API_URL = "https://custom.email.api/v1"
-      process.env.USERS_API_URL = "https://custom.users.api/v1"
 
       const { createEnvConfig } = await import("./index")
       const env = createEnvConfig("auth")
 
       // Should use the provided values, not generate new ones
       expect(env.EMAIL_API_URL).toBe("https://custom.email.api/v1")
-      expect(env.USERS_API_URL).toBe("https://custom.users.api/v1")
 
       // Should still generate for non-provided URLs
       expect(env.INTL_API_URL).toBe("http://localhost:9090/api/intl")
@@ -73,7 +70,6 @@ describe("Environment Config", () => {
       expect(env.INTL_API_URL).toBe("http://localhost:9090/api/intl")
       expect(env.ORG_API_URL).toBe("http://localhost:9292/api/org")
       expect(env.PROJECTS_API_URL).toBe("http://localhost:8484/api/projects")
-      expect(env.USERS_API_URL).toBe("http://localhost:9191/api/users")
       expect(env.RXDB_SYNC_API_URL).toBe("http://localhost:8686/api/rxdb-sync")
     })
 
@@ -93,12 +89,10 @@ describe("Environment Config", () => {
 
       // Verify these are set (values may vary based on environment)
       expect(env.EMAIL_API_URL).toBeDefined()
-      expect(env.USERS_API_URL).toBeDefined()
       expect(env.INTL_API_URL).toBeDefined()
 
       // Verify they contain expected patterns
       expect(env.EMAIL_API_URL).toContain("/api/email")
-      expect(env.USERS_API_URL).toContain("/api/users")
       expect(env.INTL_API_URL).toContain("/api/intl")
     })
 
@@ -181,7 +175,6 @@ describe("Environment Config", () => {
         "permissions",
         "projects",
         "tasks",
-        "users",
         "rxdb",
       ]
 
@@ -200,7 +193,6 @@ describe("Environment Config", () => {
         intl: "INTL_API_URL",
         org: "ORG_API_URL",
         projects: "PROJECTS_API_URL",
-        users: "USERS_API_URL",
         rxdb: "RXDB_SYNC_API_URL", // Special case
       }
 
@@ -229,7 +221,6 @@ describe("Environment Config", () => {
         permissions: "/api/permissions",
         projects: "/api/projects",
         tasks: "/api/tasks",
-        users: "/api/users",
         rxdb: "/api/rxdb-sync", // Special case
       }
 
@@ -254,8 +245,6 @@ describe("Environment Config", () => {
       expect(env.AUTH_API_URL).toBe("https://auth.production.com/api")
       expect(env.EMAIL_API_URL).toBe("https://email.production.com/api")
 
-      // Should generate others
-      expect(env.USERS_API_URL).toBe("http://localhost:9191/api/users")
     })
   })
 
@@ -290,7 +279,7 @@ describe("Environment Config", () => {
       process.env.REDIS_URL = "redis://localhost:6379"
 
       const { createEnvConfig } = await import("./index")
-      const env = createEnvConfig("tasks")
+      const env = createEnvConfig("projects")
 
       // Check that REDIS_URL is present (value may vary based on environment)
       expect(env.REDIS_URL).toBeDefined()

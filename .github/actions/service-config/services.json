@@ -19,12 +19,6 @@
       "image_name": "projects-api"
     },
     {
-      "name": "tasks-api",
-      "dockerfile": "api/tasks-api/Dockerfile",
-      "context": ".",
-      "image_name": "tasks-api"
-    },
-    {
       "name": "comments-api",
       "dockerfile": "api/comments-api/Dockerfile",
       "context": ".",
@@ -59,12 +53,6 @@
       "dockerfile": "api/org-api/Dockerfile",
       "context": ".",
       "image_name": "org-api"
-    },
-    {
-      "name": "permissions-api",
-      "dockerfile": "api/permissions-api/Dockerfile",
-      "context": ".",
-      "image_name": "permissions-api"
     },
     {
       "name": "rxdb-api",

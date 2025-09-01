@@ -10,7 +10,8 @@ export function initializeGoogleAuth(
   c: Context,
   options: GoogleAuthOptions = {}
 ) {
-  const baseUrl = env(c).GOOGLE_REDIRECT_URL
+  const baseUrl =
+    env(c).GOOGLE_REDIRECT_URL || `${env(c).FRONTEND_URL}/auth/google`
   const redirectUrl = options.isTauri
     ? `${baseUrl}/tauri-callback`
     : `${baseUrl}/callback`
