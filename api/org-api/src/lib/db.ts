@@ -1,19 +1,5 @@
-import type { Context } from "@/types"
-import {
-  NotFoundError,
-  PreconditionFailedError,
-} from "@incmix-api/utils/errors"
-
-import { useTranslation } from "@incmix-api/utils/middleware"
-import { UserRoles } from "@incmix/utils/types"
 import type { Action, Subject } from "@incmix/utils/types"
-
-import {
-  ERROR_LAST_OWNER,
-  ERROR_NOT_MEMBER,
-  ERROR_ORG_NOT_FOUND,
-} from "./constants"
-
+import { UserRoles } from "@incmix/utils/types"
 import type {
   KyselyDb,
   NewMember,
@@ -23,7 +9,18 @@ import type {
   UpdatedPermission,
   UpdatedRole,
 } from "@incmix-api/utils/db-schema"
+import {
+  NotFoundError,
+  PreconditionFailedError,
+} from "@incmix-api/utils/errors"
+import { useTranslation } from "@incmix-api/utils/middleware"
 import { jsonArrayFrom } from "kysely/helpers/postgres"
+import type { Context } from "@/types"
+import {
+  ERROR_LAST_OWNER,
+  ERROR_NOT_MEMBER,
+  ERROR_ORG_NOT_FOUND,
+} from "./constants"
 
 export async function getUserByEmail(c: Context, email: string) {
   return await c

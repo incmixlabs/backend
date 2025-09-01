@@ -1,8 +1,7 @@
-import { envVars } from "@/env-vars"
-import { getAddressFromLocation, getLocationFromIp } from "@/lib/helper"
-import type { Address, HonoApp } from "@/types"
 import { OpenAPIHono } from "@hono/zod-openapi"
 import { env } from "hono/adapter"
+import { getAddressFromLocation, getLocationFromIp } from "@/lib/helper"
+import type { Address, HonoApp } from "@/types"
 import { getWeatherForecast } from "./openapi"
 import {
   type WeatherApiResponse,

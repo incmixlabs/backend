@@ -1,36 +1,31 @@
+import { OpenAPIHono } from "@hono/zod-openapi"
+import type { UserRole } from "@incmix/utils/types"
+import { actions, subjects, UserRoles } from "@incmix/utils/types"
+import { ERROR_BAD_REQUEST, ERROR_UNAUTHORIZED } from "@incmix-api/utils"
+import {
+  NotFoundError,
+  processError,
+  ServerError,
+  UnauthorizedError,
+  UnprocessableEntityError,
+  zodError,
+} from "@incmix-api/utils/errors"
+import { useTranslation } from "@incmix-api/utils/middleware"
+import { apiReference } from "@scalar/hono-api-reference"
 import { ERROR_MEMBER_UPDATE_FAIL, ERROR_NO_ROLES } from "@/lib/constants"
 import {
   deletePermission,
   deleteRoleById,
   ensureAtLeastOneOwner,
   findAllRoles,
-  findOrgMemberById,
-  findOrgMembers,
   findOrganisationByHandle,
+  findOrgMemberById,
   findPermissionBySubjectAndAction,
   findRoleByName,
   insertPermission,
   insertRole,
-  updatePermission,
   updateRoleById,
 } from "@/lib/db"
-import type { HonoApp } from "@/types"
-import { OpenAPIHono } from "@hono/zod-openapi"
-import { ERROR_BAD_REQUEST, ERROR_UNAUTHORIZED } from "@incmix-api/utils"
-import {
-  NotFoundError,
-  ServerError,
-  UnauthorizedError,
-  UnprocessableEntityError,
-  processError,
-  zodError,
-} from "@incmix-api/utils/errors"
-import { useTranslation } from "@incmix-api/utils/middleware"
-import { UserRoles } from "@incmix/utils/types"
-import type { UserRole } from "@incmix/utils/types"
-import { actions, subjects } from "@incmix/utils/types"
-import { getRolesPermissions, updatePermissions } from "./openapi"
-
 import { throwUnlessUserCan } from "@/lib/helper"
 import {
   addNewRole,
@@ -38,7 +33,8 @@ import {
   updateMemberRole,
   updateRole,
 } from "@/routes/roles/openapi"
-import { apiReference } from "@scalar/hono-api-reference"
+import type { HonoApp } from "@/types"
+import { getRolesPermissions, updatePermissions } from "./openapi"
 
 const permissionRoutes = new OpenAPIHono<HonoApp>({
   defaultHook: zodError,
@@ -351,7 +347,7 @@ permissionRoutes.openapi(deleteRole, async (c) => {
     await throwUnlessUserCan(c, "delete", "Role", orgId)
 
     const result = await deleteRoleById(c, id)
-    // @ts-ignore
+    // @ts-expect-error
     if (Number(result.numDeletedRows) === 0) {
       throw new NotFoundError("Role not found")
     }

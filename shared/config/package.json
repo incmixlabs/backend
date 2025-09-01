@@ -2,7 +2,9 @@
   "name": "@incmix-api/config",
   "version": "0.0.0",
   "license": "MIT",
-  "files": ["hono.json"],
+  "files": [
+    "hono.json"
+  ],
   "main": "env-vars.ts",
   "devDependencies": {
     "typescript": "catalog:",

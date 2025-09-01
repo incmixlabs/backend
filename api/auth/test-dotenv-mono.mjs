@@ -1,6 +1,6 @@
+import path from "node:path"
+import { fileURLToPath } from "node:url"
 import { load } from "dotenv-mono"
-import path from "path"
-import { fileURLToPath } from "url"
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 console.log("Current __dirname:", __dirname)
@@ -10,7 +10,7 @@ const backendRoot = path.resolve(__dirname, "../..")
 console.log("Backend root:", backendRoot)
 
 const nodeEnv = "test"
-const serviceName = "auth"
+const _serviceName = "auth"
 const dir = "auth"
 
 // Set up priorities (same as in createEnvConfig)
@@ -40,9 +40,15 @@ try {
   console.log("- DATABASE_URL:", process.env.DATABASE_URL ? "✓" : "✗")
   console.log("- SENTRY_DSN:", process.env.SENTRY_DSN ? "✓" : "✗")
   console.log("- FRONTEND_URL:", process.env.FRONTEND_URL ? "✓" : "✗")
-  console.log("- GOOGLE_REDIRECT_URL:", process.env.GOOGLE_REDIRECT_URL ? "✓" : "✗")
+  console.log(
+    "- GOOGLE_REDIRECT_URL:",
+    process.env.GOOGLE_REDIRECT_URL ? "✓" : "✗"
+  )
   console.log("- GOOGLE_CLIENT_ID:", process.env.GOOGLE_CLIENT_ID ? "✓" : "✗")
-  console.log("- GOOGLE_CLIENT_SECRET:", process.env.GOOGLE_CLIENT_SECRET ? "✓" : "✗")
+  console.log(
+    "- GOOGLE_CLIENT_SECRET:",
+    process.env.GOOGLE_CLIENT_SECRET ? "✓" : "✗"
+  )
 } catch (error) {
   console.error("dotenv-mono load failed:", error)
 }

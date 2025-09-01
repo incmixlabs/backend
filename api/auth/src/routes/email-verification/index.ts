@@ -1,3 +1,11 @@
+import { OpenAPIHono } from "@hono/zod-openapi"
+import {
+  NotFoundError,
+  processError,
+  UnauthorizedError,
+  zodError,
+} from "@incmix-api/utils/errors"
+import { useTranslation } from "@incmix-api/utils/middleware"
 import { setSessionCookie } from "@/auth/cookies"
 import { createSession, invalidateAllSessions } from "@/auth/session"
 import {
@@ -13,20 +21,11 @@ import {
   sendVerificationEmail,
   verifyVerificationCode,
 } from "@/lib/helper"
-
 import {
   sendVerificationEmail as sendVerificationEmailRoute,
   verifyEmail,
 } from "@/routes/email-verification/openapi"
 import type { HonoApp } from "@/types"
-import { OpenAPIHono } from "@hono/zod-openapi"
-import {
-  NotFoundError,
-  UnauthorizedError,
-  processError,
-  zodError,
-} from "@incmix-api/utils/errors"
-import { useTranslation } from "@incmix-api/utils/middleware"
 
 const emailVerificationRoutes = new OpenAPIHono<HonoApp>({
   defaultHook: zodError,

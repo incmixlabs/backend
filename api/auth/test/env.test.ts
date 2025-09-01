@@ -1,4 +1,4 @@
-import { describe, expect, test, vi, beforeEach, afterEach } from "vitest"
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest"
 import { envVars } from "../src/env-vars"
 
 describe("Environment Configuration Tests", () => {
@@ -33,7 +33,7 @@ describe("Environment Configuration Tests", () => {
         EMAIL_API_URL: process.env.EMAIL_API_URL,
         INTL_API_URL: process.env.INTL_API_URL,
         USERS_API_URL: process.env.USERS_API_URL,
-      }
+      },
     }))
     expect(process.env.NODE_ENV).toBe("test")
     expect(process.env.JWT_SECRET).toBeDefined()
@@ -61,7 +61,7 @@ describe("Environment Configuration Tests", () => {
         EMAIL_API_URL: process.env.EMAIL_API_URL,
         INTL_API_URL: process.env.INTL_API_URL,
         USERS_API_URL: process.env.USERS_API_URL,
-      }
+      },
     }))
 
     const { env } = await import("@/env-vars")
@@ -79,15 +79,21 @@ describe("Environment Configuration Tests", () => {
         JWT_SECRET: process.env.JWT_SECRET || "dev-jwt-secret",
         DATABASE_URL: process.env.DATABASE_URL || "postgresql://localhost/dev",
         GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID || "dev-google-client",
-        GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET || "dev-google-secret",
+        GOOGLE_CLIENT_SECRET:
+          process.env.GOOGLE_CLIENT_SECRET || "dev-google-secret",
         FRONTEND_URL: process.env.FRONTEND_URL || "http://localhost:3000",
-        GOOGLE_REDIRECT_URL: process.env.GOOGLE_REDIRECT_URL || "http://localhost:3000/auth/callback",
+        GOOGLE_REDIRECT_URL:
+          process.env.GOOGLE_REDIRECT_URL ||
+          "http://localhost:3000/auth/callback",
         COOKIE_NAME: process.env.COOKIE_NAME || "dev_session",
         DOMAIN: process.env.DOMAIN || "localhost",
-        EMAIL_API_URL: process.env.EMAIL_API_URL || "http://localhost:8787/api/email",
-        INTL_API_URL: process.env.INTL_API_URL || "http://localhost:8787/api/intl",
-        USERS_API_URL: process.env.USERS_API_URL || "http://localhost:8787/api/users",
-      }
+        EMAIL_API_URL:
+          process.env.EMAIL_API_URL || "http://localhost:8787/api/email",
+        INTL_API_URL:
+          process.env.INTL_API_URL || "http://localhost:8787/api/intl",
+        USERS_API_URL:
+          process.env.USERS_API_URL || "http://localhost:8787/api/users",
+      },
     }))
 
     const { env } = await import("@/env-vars")
@@ -105,16 +111,23 @@ describe("Environment Configuration Tests", () => {
         NODE_ENV: "staging",
         JWT_SECRET: process.env.JWT_SECRET || "staging-jwt-secret",
         DATABASE_URL: process.env.DATABASE_URL || "postgresql://staging/db",
-        GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID || "staging-google-client",
-        GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET || "staging-google-secret",
+        GOOGLE_CLIENT_ID:
+          process.env.GOOGLE_CLIENT_ID || "staging-google-client",
+        GOOGLE_CLIENT_SECRET:
+          process.env.GOOGLE_CLIENT_SECRET || "staging-google-secret",
         FRONTEND_URL: process.env.FRONTEND_URL || "https://staging.example.com",
-        GOOGLE_REDIRECT_URL: process.env.GOOGLE_REDIRECT_URL || "https://staging.example.com/auth/callback",
+        GOOGLE_REDIRECT_URL:
+          process.env.GOOGLE_REDIRECT_URL ||
+          "https://staging.example.com/auth/callback",
         COOKIE_NAME: process.env.COOKIE_NAME || "staging_session",
         DOMAIN: process.env.DOMAIN || "staging.example.com",
-        EMAIL_API_URL: process.env.EMAIL_API_URL || "https://staging-api.example.com/email",
-        INTL_API_URL: process.env.INTL_API_URL || "https://staging-api.example.com/intl",
-        USERS_API_URL: process.env.USERS_API_URL || "https://staging-api.example.com/users",
-      }
+        EMAIL_API_URL:
+          process.env.EMAIL_API_URL || "https://staging-api.example.com/email",
+        INTL_API_URL:
+          process.env.INTL_API_URL || "https://staging-api.example.com/intl",
+        USERS_API_URL:
+          process.env.USERS_API_URL || "https://staging-api.example.com/users",
+      },
     }))
 
     const { env } = await import("@/env-vars")
@@ -135,12 +148,19 @@ describe("Environment Configuration Tests", () => {
           JWT_SECRET: `${envName}-jwt-secret`,
           DATABASE_URL: `postgresql://${envName}/db`,
           COOKIE_NAME: `${envName}_session`,
-          DOMAIN: envName === "production" ? "example.com" :
-                  envName === "staging" ? "staging.example.com" : "localhost",
-          FRONTEND_URL: envName === "production" ? "https://example.com" :
-                       envName === "staging" ? "https://staging.example.com" :
-                       "http://localhost:3000",
-        }
+          DOMAIN:
+            envName === "production"
+              ? "example.com"
+              : envName === "staging"
+                ? "staging.example.com"
+                : "localhost",
+          FRONTEND_URL:
+            envName === "production"
+              ? "https://example.com"
+              : envName === "staging"
+                ? "https://staging.example.com"
+                : "http://localhost:3000",
+        },
       }))
 
       const { env } = await import("@/env-vars")
@@ -183,7 +203,7 @@ describe("Environment Configuration Tests", () => {
         EMAIL_API_URL: "https://api.example.com/email",
         INTL_API_URL: "https://api.example.com/intl",
         USERS_API_URL: "https://api.example.com/users",
-      }
+      },
     }))
 
     const { env } = await import("@/env-vars")
@@ -218,7 +238,7 @@ describe("Environment Configuration Tests", () => {
         EMAIL_API_URL: "http://localhost:8787/api/email",
         INTL_API_URL: "http://localhost:8787/api/intl",
         USERS_API_URL: "http://localhost:8787/api/users",
-      }
+      },
     }))
 
     const { env } = await import("@/env-vars")
@@ -241,7 +261,7 @@ describe("Environment Configuration Tests", () => {
       "FRONTEND_URL",
       "GOOGLE_REDIRECT_URL",
       "COOKIE_NAME",
-      "DOMAIN"
+      "DOMAIN",
     ]
 
     for (const varName of baseRequiredVars) {
@@ -250,7 +270,10 @@ describe("Environment Configuration Tests", () => {
 
     // For computed URLs, we just check that the base components are available
     // The actual URL computation is tested through the working API tests
-    expect(process.env.DOMAIN, "DOMAIN should be defined for URL computation").toBeDefined()
+    expect(
+      process.env.DOMAIN,
+      "DOMAIN should be defined for URL computation"
+    ).toBeDefined()
   })
 
   test("should handle custom NODE_ENV values", async () => {
@@ -263,16 +286,23 @@ describe("Environment Configuration Tests", () => {
         NODE_ENV: customEnv,
         JWT_SECRET: process.env.JWT_SECRET || "custom-jwt-secret",
         DATABASE_URL: process.env.DATABASE_URL || "postgresql://custom/db",
-        GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID || "custom-google-client",
-        GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET || "custom-google-secret",
+        GOOGLE_CLIENT_ID:
+          process.env.GOOGLE_CLIENT_ID || "custom-google-client",
+        GOOGLE_CLIENT_SECRET:
+          process.env.GOOGLE_CLIENT_SECRET || "custom-google-secret",
         FRONTEND_URL: process.env.FRONTEND_URL || "http://localhost:3000",
-        GOOGLE_REDIRECT_URL: process.env.GOOGLE_REDIRECT_URL || "http://localhost:3000/auth/callback",
+        GOOGLE_REDIRECT_URL:
+          process.env.GOOGLE_REDIRECT_URL ||
+          "http://localhost:3000/auth/callback",
         COOKIE_NAME: process.env.COOKIE_NAME || "custom_session",
         DOMAIN: process.env.DOMAIN || "localhost",
-        EMAIL_API_URL: process.env.EMAIL_API_URL || "http://localhost:8787/api/email",
-        INTL_API_URL: process.env.INTL_API_URL || "http://localhost:8787/api/intl",
-        USERS_API_URL: process.env.USERS_API_URL || "http://localhost:8787/api/users",
-      }
+        EMAIL_API_URL:
+          process.env.EMAIL_API_URL || "http://localhost:8787/api/email",
+        INTL_API_URL:
+          process.env.INTL_API_URL || "http://localhost:8787/api/intl",
+        USERS_API_URL:
+          process.env.USERS_API_URL || "http://localhost:8787/api/users",
+      },
     }))
 
     const { env } = await import("@/env-vars")

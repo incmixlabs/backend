@@ -1,12 +1,8 @@
-import { findUserById } from "@/lib/db"
-
-import { invalidateAllSessions } from "@/auth/session"
-import type { HonoApp } from "@/types"
 import { OpenAPIHono } from "@hono/zod-openapi"
 import {
+  createKyselyFilter,
   ERROR_CASL_FORBIDDEN,
   ERROR_UNAUTHORIZED,
-  createKyselyFilter,
   parseQueryParams,
 } from "@incmix-api/utils"
 import {
@@ -16,17 +12,19 @@ import {
 } from "@incmix-api/utils/db-schema"
 import {
   ForbiddenError,
+  processError,
   ServerError,
   UnauthorizedError,
-  processError,
   zodError,
 } from "@incmix-api/utils/errors"
 import { useTranslation } from "@incmix-api/utils/middleware"
-import { UserRoles } from "@incmix/utils/types"
 import type { ExpressionWrapper, OrderByExpression, SqlBool } from "kysely"
-
+import { invalidateAllSessions } from "@/auth/session"
 import { hashPassword } from "@/auth/utils"
+import { findUserById } from "@/lib/db"
+import type { HonoApp } from "@/types"
 import { getAllUsers, setEnabled, setPassword, setVerified } from "./openapi"
+
 const userRoutes = new OpenAPIHono<HonoApp>({
   defaultHook: zodError,
 })

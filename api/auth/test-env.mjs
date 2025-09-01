@@ -1,6 +1,6 @@
+import path from "node:path"
 import { createEnvConfig } from "@incmix-api/utils/env-config"
 import { config } from "dotenv"
-import path from "path"
 
 console.log("Current working directory:", process.cwd())
 console.log("NODE_ENV:", process.env.NODE_ENV)
@@ -16,7 +16,10 @@ if (result.error) {
   console.error("Error loading root .env:", result.error)
 } else {
   console.log("Successfully loaded root .env")
-  console.log("DATABASE_URL from root:", process.env.DATABASE_URL ? "✓ Set" : "✗ Missing")
+  console.log(
+    "DATABASE_URL from root:",
+    process.env.DATABASE_URL ? "✓ Set" : "✗ Missing"
+  )
 }
 
 console.log("Attempting to load env config for auth service...")

@@ -1,4 +1,4 @@
-import { type AuthEnv, createEnvConfig } from "@incmix-api/utils/env-config"
+import { createEnvConfig } from "@incmix-api/utils/env-config"
 import { ServerError } from "@incmix-api/utils/errors"
 import type { Context } from "hono"
 import type { IntlMessage, Locale } from "../types"
