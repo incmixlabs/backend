@@ -334,13 +334,28 @@ export async function deleteRoleById(c: Context, id: number) {
     .get("db")
     .transaction()
     .execute(async (tx) => {
+      // Block deletion if role is still assigned to members
+      const inUse = await tx
+        .selectFrom("members")
+        .select("userId")
+        .where("roleId", "=", id)
+        .limit(1)
+        .executeTakeFirst()
+      if (inUse) {
+        throw new PreconditionFailedError("role_in_use")
+      }
+
+      // Remove any existing permissions without error if none exist
       await tx
         .deleteFrom("rolePermissions")
         .where("roleId", "=", id)
-        .executeTakeFirstOrThrow()
+        .execute()
+
+      // Delete the role and return its data (requires RETURNING support)
       return await tx
         .deleteFrom("roles")
         .where("id", "=", id)
+        .returningAll()
         .executeTakeFirstOrThrow()
     })
 }
