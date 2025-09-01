@@ -1,8 +1,6 @@
 import { API } from "@incmix/utils/env"
 
 export const BASE_PATH = API.ORG
-export const PERMISSIONS_BASE_PATH = API.PERMISSIONS
-
 export const ERROR_ORG_EXIST = { namespace: "errors", key: "org_exist" }
 export const ERROR_ORG_NOT_FOUND = {
   namespace: "errors",
