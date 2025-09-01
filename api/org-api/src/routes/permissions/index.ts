@@ -250,7 +250,12 @@ permissionRoutes.openapi(updatePermissions, async (c) => {
             }
           } else if (joined) {
             // Remove role-permission link
-            const deleted = await deletePermission(c, joined.permissionId, roleId, tx)
+            const deleted = await deletePermission(
+              c,
+              joined.permissionId,
+              roleId,
+              tx
+            )
             if (!deleted) {
               throw new ServerError("Failed to delete permission mapping")
             }
