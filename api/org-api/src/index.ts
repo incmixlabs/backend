@@ -1,7 +1,7 @@
 import { BASE_PATH, PERMISSIONS_BASE_PATH } from "@/lib/constants"
 import { middlewares } from "@/middleware"
 import { routes } from "@/routes"
-import permissionsReferenceRoutes from "@/routes/permissions-reference"
+import { permissionsReferenceRoutes } from "@/routes/permissions"
 import type { HonoApp } from "@/types"
 import { createService } from "@incmix-api/utils"
 import { PermissionService } from "@incmix-api/utils/authorization"
@@ -30,10 +30,13 @@ const service = createService<HonoApp["Bindings"], HonoApp["Variables"]>({
   needRBAC: false, // Disable default RBAC since we're doing it manually
   setupRoutes: (app) => {
     routes(app)
-    
+
     // Mount permissions reference routes AFTER main routes and OpenAPI setup
     // Use mount() instead of route() to truly isolate from main OpenAPI spec
-    app.mount(`${BASE_PATH}/permissions/reference`, permissionsReferenceRoutes.fetch)
+    app.mount(
+      `${BASE_PATH}/permissions/reference`,
+      permissionsReferenceRoutes.fetch
+    )
   },
 })
 

@@ -1,14 +1,18 @@
 import {
   deletePermission,
+  deleteRoleById,
   findAllRoles,
   findPermissionBySubjectAndAction,
   insertPermission,
+  insertRole,
   updatePermission,
+  updateRoleById,
 } from "@/lib/db"
 import type { HonoApp } from "@/types"
 import { OpenAPIHono } from "@hono/zod-openapi"
 import { ERROR_BAD_REQUEST, ERROR_UNAUTHORIZED } from "@incmix-api/utils"
 import {
+  NotFoundError,
   ServerError,
   UnauthorizedError,
   UnprocessableEntityError,
@@ -250,13 +254,169 @@ permissionRoutes.openapi(updatePermissions, async (c) => {
 
 // Add roles routes for OpenAPI docs only (placeholder implementations)
 permissionRoutes.openapi(addNewRole, async (c) => {
-  return c.json({ message: "Not implemented" }, 501 as any)
+  try {
+    const user = c.get("user")
+    const t = await useTranslation(c)
+    if (!user) {
+      const msg = await t.text(ERROR_UNAUTHORIZED)
+      throw new UnauthorizedError(msg)
+    }
+
+    const { orgId } = c.req.valid("query")
+    await throwUnlessUserCan(c, "create", "Role", orgId)
+
+    const { name, description, scope } = c.req.valid("json")
+
+    const newRole = await insertRole(c, {
+      name,
+      description,
+      scope,
+      organizationId: orgId,
+      isSystemRole: false,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    })
+
+    if (!newRole) {
+      throw new ServerError("Failed to create role")
+    }
+
+    return c.json({ message: "Role created successfully" }, 201)
+  } catch (error) {
+    return await processError<typeof addNewRole>(c, error, [
+      "{{ default }}",
+      "add-new-role",
+    ])
+  }
 })
 permissionRoutes.openapi(updateRole, async (c) => {
-  return c.json({ message: "Not implemented" }, 501 as any)
+  try {
+    const user = c.get("user")
+    const t = await useTranslation(c)
+    if (!user) {
+      const msg = await t.text(ERROR_UNAUTHORIZED)
+      throw new UnauthorizedError(msg)
+    }
+
+    const { orgId } = c.req.valid("query")
+    const { id } = c.req.valid("param")
+    await throwUnlessUserCan(c, "update", "Role", orgId)
+
+    const updateData = c.req.valid("json")
+
+    const result = await updateRoleById(c, updateData, id)
+
+    if (Number(result.numUpdatedRows) === 0) {
+      throw new NotFoundError("Role not found")
+    }
+
+    return c.json({ message: "Role updated successfully" }, 200)
+  } catch (error) {
+    return await processError<typeof updateRole>(c, error, [
+      "{{ default }}",
+      "update-role",
+    ])
+  }
 })
 permissionRoutes.openapi(deleteRole, async (c) => {
-  return c.json({ message: "Not implemented" }, 501 as any)
+  try {
+    const user = c.get("user")
+    const t = await useTranslation(c)
+    if (!user) {
+      const msg = await t.text(ERROR_UNAUTHORIZED)
+      throw new UnauthorizedError(msg)
+    }
+
+    const { orgId } = c.req.valid("query")
+    const { id } = c.req.valid("param")
+    await throwUnlessUserCan(c, "delete", "Role", orgId)
+
+    const result = await deleteRoleById(c, id)
+
+    if (Number(result.numDeletedRows) === 0) {
+      throw new NotFoundError("Role not found")
+    }
+
+    return c.json({ message: "Role deleted successfully" }, 200)
+  } catch (error) {
+    return await processError<typeof deleteRole>(c, error, [
+      "{{ default }}",
+      "delete-role",
+    ])
+  }
 })
 
+const permissionsReferenceRoutes = new OpenAPIHono<HonoApp>()
+
+// Setup OpenAPI documentation for permissions (must be before parameterized routes)
+permissionsReferenceRoutes.doc("/openapi.json", {
+  openapi: "3.0.0",
+  info: {
+    version: "1.0.0",
+    title: "Permissions API",
+    description:
+      "API for managing roles and permissions within organizations. Auth via cookieAuth (session).",
+  },
+  tags: [
+    {
+      name: "Permissions",
+      description: "Role and permission management operations",
+    },
+  ],
+})
+
+permissionsReferenceRoutes.get(
+  "/",
+  apiReference({
+    spec: {
+      url: "/api/org/permissions/reference/openapi.json",
+    },
+  })
+)
+
+// Note: /openapi.json is automatically created by permissionsReferenceRoutes.doc() above
+
+permissionsReferenceRoutes.openAPIRegistry.registerComponent(
+  "securitySchemes",
+  "cookieAuth",
+  {
+    type: "apiKey",
+    in: "cookie",
+    name: "session",
+  }
+)
+
+// Add the permissions and roles routes for OpenAPI docs only - these reference the same handlers as above
+permissionsReferenceRoutes.openapi(getRolesPermissions, (c) => {
+  return c.json(
+    { message: "Use /api/org/permissions endpoint for actual implementation" },
+    501 as any
+  )
+})
+permissionsReferenceRoutes.openapi(updatePermissions, (c) => {
+  return c.json(
+    { message: "Use /api/org/permissions endpoint for actual implementation" },
+    501 as any
+  )
+})
+permissionsReferenceRoutes.openapi(addNewRole, (c) => {
+  return c.json(
+    { message: "Use /api/org/permissions endpoint for actual implementation" },
+    501 as any
+  )
+})
+permissionsReferenceRoutes.openapi(updateRole, (c) => {
+  return c.json(
+    { message: "Use /api/org/permissions endpoint for actual implementation" },
+    501 as any
+  )
+})
+permissionsReferenceRoutes.openapi(deleteRole, (c) => {
+  return c.json(
+    { message: "Use /api/org/permissions endpoint for actual implementation" },
+    501 as any
+  )
+})
+
+export { permissionsReferenceRoutes }
 export default permissionRoutes
