@@ -1,9 +1,3 @@
-import { createRoute } from "@hono/zod-openapi"
-import {
-  AuthUserSchema,
-  AuthUserSessionSchema,
-  UserProfileSchema,
-} from "@incmix/utils/types"
 import {
   AuthSchema,
   EmailSchema,
@@ -12,6 +6,12 @@ import {
   SignupSchema,
 } from "@/routes/auth/types"
 import { MessageResponseSchema } from "@/routes/types"
+import { createRoute } from "@hono/zod-openapi"
+import {
+  AuthUserSchema,
+  AuthUserSessionSchema,
+  UserProfileSchema,
+} from "@incmix/utils/types"
 
 export const getCurrentUser = createRoute({
   method: "get",

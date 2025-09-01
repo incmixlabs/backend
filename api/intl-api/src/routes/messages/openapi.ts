@@ -1,11 +1,11 @@
-import { createRoute, z } from "@hono/zod-openapi"
-import { createAuthMiddleware } from "@incmix-api/utils/middleware"
 import {
   MessageSchema,
   NamespaceSchema,
   PaginatedMessageSchema,
 } from "@/routes/messages/types"
 import { MessageResponseSchema } from "@/routes/types"
+import { createRoute, z } from "@hono/zod-openapi"
+import { createAuthMiddleware } from "@incmix-api/utils/middleware"
 
 export const getDefaultMessages = createRoute({
   method: "get",

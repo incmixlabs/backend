@@ -1,5 +1,5 @@
-import { config } from "@incmix/utils/env"
 import { contents } from "@/emails/contents"
+import { config } from "@incmix/utils/env"
 import {
   Body,
   Button,

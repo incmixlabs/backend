@@ -1,5 +1,3 @@
-import { createService } from "@incmix-api/utils"
-import { PermissionService } from "@incmix-api/utils/authorization"
 import { BASE_PATH } from "@/lib/constants"
 import { middlewares } from "@/middleware"
 import { routes } from "@/routes"
@@ -7,6 +5,8 @@ import permissionRoutes, {
   permissionsReferenceRoutes,
 } from "@/routes/permissions"
 import type { HonoApp } from "@/types"
+import { createService } from "@incmix-api/utils"
+import { PermissionService } from "@incmix-api/utils/authorization"
 
 import { envVars } from "./env-vars"
 

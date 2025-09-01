@@ -1,11 +1,11 @@
+import { generateRandomId } from "@/auth/utils"
+import type { Context } from "@/types"
 import { generateSentryHeaders } from "@incmix-api/utils"
 import type { KyselyDb, Provider, TokenType } from "@incmix-api/utils/db-schema"
 import { ServerError } from "@incmix-api/utils/errors"
 import { env } from "hono/adapter"
-import { createDate, isWithinExpirationDate, TimeSpan } from "oslo"
+import { TimeSpan, createDate, isWithinExpirationDate } from "oslo"
 import { alphabet, generateRandomString } from "oslo/crypto"
-import { generateRandomId } from "@/auth/utils"
-import type { Context } from "@/types"
 import { insertUser } from "./db"
 
 export async function verifyVerificationCode(

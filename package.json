@@ -34,7 +34,7 @@
   },
   "packageManager": "pnpm@10.13.1",
   "devDependencies": {
-    "@biomejs/biome": "2.2.2",
+    "@biomejs/biome": "1.9.4",
     "@commitlint/cli": "19.8.1",
     "@commitlint/config-conventional": "19.8.1",
     "@faker-js/faker": "10.0.0",

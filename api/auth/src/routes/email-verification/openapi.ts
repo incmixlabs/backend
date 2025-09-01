@@ -1,6 +1,6 @@
-import { createRoute } from "@hono/zod-openapi"
 import { EmailVerificationSchema } from "@/routes/email-verification/types"
 import { EmailSchema, MessageResponseSchema } from "@/routes/types"
+import { createRoute } from "@hono/zod-openapi"
 
 export const verifyEmail = createRoute({
   method: "post",

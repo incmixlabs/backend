@@ -1,10 +1,10 @@
+import { envVars } from "@/env-vars"
+import { sendEmail } from "@/lib/helper"
+import type { HonoApp } from "@/types"
 import { OpenAPIHono, type RouteConfigToTypedResponse } from "@hono/zod-openapi"
 import type { Status } from "@incmix-api/utils/db-schema"
 import { processError, zodError } from "@incmix-api/utils/errors"
 import type { ContentfulStatusCode } from "hono/utils/http-status"
-import { envVars } from "@/env-vars"
-import { sendEmail } from "@/lib/helper"
-import type { HonoApp } from "@/types"
 import { sendMail } from "./openapi"
 
 const emailRoutes = new OpenAPIHono<HonoApp>({

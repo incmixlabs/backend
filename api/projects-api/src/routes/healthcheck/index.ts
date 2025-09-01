@@ -1,7 +1,7 @@
-import { createHealthCheckRoute } from "@incmix-api/utils"
 import { envVars } from "@/env-vars"
 import { BASE_PATH } from "@/lib/constants"
 import type { HonoApp } from "@/types"
+import { createHealthCheckRoute } from "@incmix-api/utils"
 
 const healthcheckRoutes = createHealthCheckRoute<HonoApp>({
   // Pass all environment variables to check

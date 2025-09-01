@@ -1,8 +1,8 @@
+import { getLocationFromIp } from "@/lib/helper"
+import type { HonoApp } from "@/types"
 import { OpenAPIHono } from "@hono/zod-openapi"
 import { zodError } from "@incmix-api/utils/errors"
 import { env } from "hono/adapter"
-import { getLocationFromIp } from "@/lib/helper"
-import type { HonoApp } from "@/types"
 import { getNews, getNewsTopics } from "./openapi"
 import type { NewsApiResponse, NewsResponse, TopicApiResponse } from "./types"
 
