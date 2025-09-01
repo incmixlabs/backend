@@ -30,12 +30,18 @@ const service = createService<HonoApp["Bindings"], HonoApp["Variables"]>({
     // Custom RBAC setup that excludes reference endpoints
     app.use(`${BASE_PATH}/*`, (c, next) => {
       const path = c.req.path
-      // Skip RBAC for reference/documentation endpoints
-      if (path.includes("/reference") || path.includes("/openapi.json")) {
+      // Skip RBAC for docs and health endpoints
+      if (
+        path.includes("/reference") ||
+        path.includes("/openapi.json") ||
+        path.includes("/healthcheck")
+      ) {
         return next()
       }
-      // Apply RBAC to all other routes
-      c.set("rbac", new PermissionService(c))
+      const user = c.get("user")
+      if (user) {
+        c.set("rbac", new PermissionService(c))
+      }
       return next()
     })
   },
