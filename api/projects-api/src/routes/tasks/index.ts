@@ -53,7 +53,7 @@ const tasksRoutes = new OpenAPIHono<HonoApp>({
 
 // Setup OpenAPI documentation for tasks (must be before parameterized routes)
 // These endpoints should be publicly accessible for documentation
-tasksRoutes.doc("/openapi.json", {
+tasksRoutes.doc("/openapi.json", (c) => ({
   openapi: "3.0.0",
   info: {
     version: "1.0.0",
@@ -67,7 +67,23 @@ tasksRoutes.doc("/openapi.json", {
       description: "Task management operations",
     },
   ],
-})
+  servers: [
+    {
+      url: "/api/projects/tasks",
+      description: "Tasks API server",
+    },
+  ],
+  paths: {},
+  components: {
+    securitySchemes: {
+      cookieAuth: {
+        type: "apiKey",
+        in: "cookie",
+        name: "session",
+      },
+    },
+  },
+}))
 
 tasksRoutes.get(
   "/reference",
@@ -77,14 +93,6 @@ tasksRoutes.get(
     },
   })
 )
-
-// Note: /openapi.json is automatically created by tasksRoutes.doc() above
-
-tasksRoutes.openAPIRegistry.registerComponent("securitySchemes", "cookieAuth", {
-  type: "apiKey",
-  in: "cookie",
-  name: "session",
-})
 
 tasksRoutes.openapi(listTasks, async (c) => {
   try {

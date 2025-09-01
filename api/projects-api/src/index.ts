@@ -21,8 +21,8 @@ const service = createService<HonoApp["Bindings"], HonoApp["Variables"]>({
     app.route(`${BASE_PATH}/healthcheck`, healthcheckRoutes)
     app.route(BASE_PATH, projectRoutes)
 
-    // Mount tasks routes separately - they won't appear in main OpenAPI
-    app.mount(`${BASE_PATH}/tasks`, tasksRoutes.fetch)
+    // Mount tasks routes with proper OpenAPI support
+    app.route(`${BASE_PATH}/tasks`, tasksRoutes)
 
     // Override the OpenAPI to add description with link to Tasks API
     app.doc(`${BASE_PATH}/openapi.json`, (_c) => {
