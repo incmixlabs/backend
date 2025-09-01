@@ -72,9 +72,7 @@ describe("Environment Config", () => {
       expect(env.COMMENTS_API_URL).toBe("http://localhost:8585/api/comments")
       expect(env.INTL_API_URL).toBe("http://localhost:9090/api/intl")
       expect(env.ORG_API_URL).toBe("http://localhost:9292/api/org")
-      expect(env.PERMISSIONS_API_URL).toBe("http://localhost:9393/api/permissions")
       expect(env.PROJECTS_API_URL).toBe("http://localhost:8484/api/projects")
-      expect(env.TASKS_API_URL).toBe("http://localhost:8888/api/tasks")
       expect(env.USERS_API_URL).toBe("http://localhost:9191/api/users")
       expect(env.RXDB_SYNC_API_URL).toBe("http://localhost:8686/api/rxdb-sync")
     })
@@ -190,9 +188,7 @@ describe("Environment Config", () => {
         comments: "COMMENTS_API_URL",
         intl: "INTL_API_URL",
         org: "ORG_API_URL",
-        permissions: "PERMISSIONS_API_URL",
         projects: "PROJECTS_API_URL",
-        tasks: "TASKS_API_URL",
         users: "USERS_API_URL",
         rxdb: "RXDB_SYNC_API_URL", // Special case
       }
