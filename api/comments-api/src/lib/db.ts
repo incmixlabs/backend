@@ -1,6 +1,6 @@
+import type { Context } from "@/types"
 import type { Comment } from "@incmix-api/utils/zod-schema"
 import { jsonObjectFrom } from "kysely/helpers/postgres"
-import type { Context } from "@/types"
 
 export function getProjectById(c: Context, projectId: string) {
   return c

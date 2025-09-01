@@ -1,9 +1,9 @@
-import type { KyselyDb, NewUser } from "@incmix-api/utils/db-schema"
-import { NotFoundError, ServerError } from "@incmix-api/utils/errors"
-import { useTranslation } from "@incmix-api/utils/middleware"
 import { hashPassword } from "@/auth/utils"
 import { ERROR_USER_NOT_FOUND } from "@/lib/constants"
 import type { Context } from "@/types"
+import type { KyselyDb, NewUser } from "@incmix-api/utils/db-schema"
+import { NotFoundError, ServerError } from "@incmix-api/utils/errors"
+import { useTranslation } from "@incmix-api/utils/middleware"
 
 export async function findUserByEmail(c: Context, email: string) {
   const user = await c

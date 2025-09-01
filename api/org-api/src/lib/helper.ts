@@ -1,6 +1,6 @@
-import type { Action, SubjectTuple } from "@incmix/utils/types"
-import { UnauthorizedError } from "@incmix-api/utils/errors"
 import type { Context } from "@/types"
+import { UnauthorizedError } from "@incmix-api/utils/errors"
+import type { Action, SubjectTuple } from "@incmix/utils/types"
 
 export async function throwUnlessUserCan(
   c: Context,

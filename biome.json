@@ -8,7 +8,7 @@
   },
   "files": {
     "ignoreUnknown": true,
-    "experimentalScannerIgnores": [
+    "ignore": [
       "node_modules",
       "dist",
       ".wrangler",
@@ -64,7 +64,7 @@
         "noExplicitAny": "off"
       }
     },
-    "includes": [
+    "include": [
       "**/*.ts",
       "**/*.tsx",
       "**/*.js",

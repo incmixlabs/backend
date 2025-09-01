@@ -1,7 +1,7 @@
-import { createRoute, z } from "@hono/zod-openapi"
-import { createAuthMiddleware } from "@incmix-api/utils/middleware"
 import { LocaleSchema } from "@/routes/locales/types"
 import { MessageResponseSchema } from "@/routes/types"
+import { createRoute, z } from "@hono/zod-openapi"
+import { createAuthMiddleware } from "@incmix-api/utils/middleware"
 
 export const addLocale = createRoute({
   method: "post",

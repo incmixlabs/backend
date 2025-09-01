@@ -1,4 +1,4 @@
-import { createEnvConfig, type UsersEnv } from "@incmix-api/utils/env-config"
+import { type UsersEnv, createEnvConfig } from "@incmix-api/utils/env-config"
 
 // Use the new env-config system with dotenv-mono
 // This will automatically merge:
