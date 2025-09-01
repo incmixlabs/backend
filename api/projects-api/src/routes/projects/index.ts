@@ -39,7 +39,6 @@ import type { Checklist } from "@incmix-api/utils/zod-schema"
 import {
   ChecklistItemSchema,
   ChecklistSchema,
-  ProjectSchema,
 } from "@incmix-api/utils/zod-schema"
 import { env } from "hono/adapter"
 import { sql } from "kysely"

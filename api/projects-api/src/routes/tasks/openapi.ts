@@ -96,7 +96,7 @@ export const taskById = createRoute({
 
 export const createTask = createRoute({
   method: "post",
-  path: "",
+  path: "/",
   summary: "Create Task",
   tags: ["Tasks"],
   security: [{ cookieAuth: [] }],

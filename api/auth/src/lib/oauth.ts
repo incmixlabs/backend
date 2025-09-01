@@ -1,4 +1,4 @@
-import type { Bindings, Context } from "@/types"
+import type { Context } from "@/types"
 import { Google } from "arctic"
 import { env } from "hono/adapter"
 

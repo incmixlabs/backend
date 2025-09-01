@@ -171,7 +171,6 @@ const serviceSchemas = {
     EMAIL_API_URL: z.string().url().optional(),
     LOCATION_API_URL: z.string().url().optional(),
     RXDB_SYNC_API_URL: z.string().url().optional(),
-    PERMISSIONS_API_URL: z.string().url().optional(),
     // Note: DATABASE_URL is inherited from baseEnvSchema but not used in Docker Compose
   }),
   comments: baseEnvSchema.extend({

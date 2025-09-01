@@ -8,7 +8,6 @@ import { UnauthorizedError } from "@incmix-api/utils/errors"
 import type {
   AppAbility,
   Permission,
-  Subject,
   SubjectTuple,
   AuthUser as User,
 } from "@incmix/utils/types"

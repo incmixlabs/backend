@@ -10,11 +10,11 @@
   },
   "dependencies": {
     "@casl/ability": "catalog:",
-
     "@hono/zod-openapi": "catalog:",
     "@hono/zod-validator": "catalog:",
     "@incmix-api/utils": "workspace:^",
     "@incmix/utils": "catalog:",
+    "@scalar/hono-api-reference": "catalog:",
     "hono": "catalog:",
     "kysely": "catalog:",
     "kysely-ctl": "catalog:",

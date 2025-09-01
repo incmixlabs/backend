@@ -28,9 +28,9 @@ export function parseQueryParams<Column extends string>(
 
   for (const [key, value] of Object.entries(query)) {
     if (key === "page") {
-      res.pagination.page = Number.parseInt(value)
+      res.pagination.page = Number.parseInt(value, 10)
     } else if (key === "pageSize") {
-      res.pagination.pageSize = Number.parseInt(value)
+      res.pagination.pageSize = Number.parseInt(value, 10)
     } else if (key === "sort") {
       const sort = sortParser<Sort<Column>[]>(value, new Set(columns))
       if (sort) res.sort = sort

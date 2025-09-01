@@ -1,5 +1,4 @@
-import { createRoute } from "@hono/zod-openapi"
-import { z } from "@hono/zod-openapi"
+import { createRoute, z } from "@hono/zod-openapi"
 import { ProjectSchema } from "@incmix-api/utils/zod-schema"
 import { ResponseSchema } from "../types"
 import {

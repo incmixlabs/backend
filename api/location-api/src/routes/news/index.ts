@@ -1,5 +1,4 @@
 import { getLocationFromIp } from "@/lib/helper"
-
 import type { HonoApp } from "@/types"
 import { OpenAPIHono } from "@hono/zod-openapi"
 import { zodError } from "@incmix-api/utils/errors"

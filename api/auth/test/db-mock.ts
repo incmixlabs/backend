@@ -39,7 +39,7 @@ export const mockDb = {
     }
     return this
   }),
-  executeTakeFirst: vi.fn().mockImplementation(async function (this: any) {
+  executeTakeFirst: vi.fn().mockImplementation(function (this: any) {
     // Handle session queries
     if (queryContext.table === "sessions") {
       // If searching for session by id
@@ -82,7 +82,7 @@ export const mockDb = {
   insertInto: vi.fn().mockImplementation((table: string) => ({
     values: vi.fn().mockImplementation((data: any) => ({
       returningAll: vi.fn().mockImplementation(() => ({
-        executeTakeFirst: vi.fn().mockImplementation(async () => {
+        executeTakeFirst: vi.fn().mockImplementation(() => {
           if (table === "users") {
             // Check if user already exists
             if (users.has(data.email)) {
@@ -115,7 +115,7 @@ export const mockDb = {
           return data
         }),
       })),
-      execute: vi.fn().mockImplementation(async () => {
+      execute: vi.fn().mockImplementation(() => {
         // Handle sessions without returningAll
         if (table === "sessions") {
           const session = {
@@ -135,7 +135,7 @@ export const mockDb = {
     where: vi
       .fn()
       .mockImplementation((field: string | any, op?: string, value?: any) => ({
-        execute: vi.fn().mockImplementation(async () => {
+        execute: vi.fn().mockImplementation(() => {
           const targetValue = value !== undefined ? value : op
 
           if (table === "users" && (field === "id" || field === "users.id")) {
@@ -170,7 +170,7 @@ export const mockDb = {
           }
         }),
         returningAll: vi.fn().mockImplementation(() => ({
-          executeTakeFirst: vi.fn().mockImplementation(async () => {
+          executeTakeFirst: vi.fn().mockImplementation(() => {
             const targetValue = value !== undefined ? value : op
             let deletedItem = null
 
@@ -200,7 +200,7 @@ export const mockDb = {
         .fn()
         .mockImplementation(
           (field: string | any, op?: string, value?: any) => ({
-            execute: vi.fn().mockImplementation(async () => {
+            execute: vi.fn().mockImplementation(() => {
               const targetValue = value !== undefined ? value : op
 
               if (

@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, afterEach, vi } from "vitest"
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { z } from "zod"
 
 describe("Environment Config", () => {
@@ -27,17 +27,17 @@ describe("Environment Config", () => {
     it("should only set API URLs that are defined in the schema", async () => {
       const { createEnvConfig } = await import("./index")
       const env = createEnvConfig("auth")
-      
+
       // Auth service schema includes these API URLs
       expect(env.EMAIL_API_URL).toBeDefined()
       expect(env.USERS_API_URL).toBeDefined()
       expect(env.INTL_API_URL).toBeDefined()
-      
+
       // These should be set based on buildApiUrl
       expect(env.EMAIL_API_URL).toBe("http://localhost:8989/api/email")
       expect(env.USERS_API_URL).toBe("http://localhost:9191/api/users")
       expect(env.INTL_API_URL).toBe("http://localhost:9090/api/intl")
-      
+
       // Auth service schema doesn't include these, so they shouldn't be set
       expect(env.GENAI_API_URL).toBeUndefined()
       expect(env.FILES_API_URL).toBeUndefined()
@@ -47,14 +47,14 @@ describe("Environment Config", () => {
     it("should not override API URLs if they are already provided", async () => {
       process.env.EMAIL_API_URL = "https://custom.email.api/v1"
       process.env.USERS_API_URL = "https://custom.users.api/v1"
-      
+
       const { createEnvConfig } = await import("./index")
       const env = createEnvConfig("auth")
-      
+
       // Should use the provided values, not generate new ones
       expect(env.EMAIL_API_URL).toBe("https://custom.email.api/v1")
       expect(env.USERS_API_URL).toBe("https://custom.users.api/v1")
-      
+
       // Should still generate for non-provided URLs
       expect(env.INTL_API_URL).toBe("http://localhost:9090/api/intl")
     })
@@ -62,7 +62,7 @@ describe("Environment Config", () => {
     it("should handle all services correctly in iteration", async () => {
       const { createEnvConfig } = await import("./index")
       const env = createEnvConfig("bff")
-      
+
       // BFF has access to all service URLs
       expect(env.AUTH_API_URL).toBe("http://localhost:8787/api/auth")
       expect(env.EMAIL_API_URL).toBe("http://localhost:8989/api/email")
@@ -72,9 +72,7 @@ describe("Environment Config", () => {
       expect(env.COMMENTS_API_URL).toBe("http://localhost:8585/api/comments")
       expect(env.INTL_API_URL).toBe("http://localhost:9090/api/intl")
       expect(env.ORG_API_URL).toBe("http://localhost:9292/api/org")
-      expect(env.PERMISSIONS_API_URL).toBe("http://localhost:9393/api/permissions")
       expect(env.PROJECTS_API_URL).toBe("http://localhost:8484/api/projects")
-      expect(env.TASKS_API_URL).toBe("http://localhost:8888/api/tasks")
       expect(env.USERS_API_URL).toBe("http://localhost:9191/api/users")
       expect(env.RXDB_SYNC_API_URL).toBe("http://localhost:8686/api/rxdb-sync")
     })
@@ -82,7 +80,7 @@ describe("Environment Config", () => {
     it("should handle rxdb special case correctly", async () => {
       const { createEnvConfig } = await import("./index")
       const env = createEnvConfig("rxdb")
-      
+
       // rxdb uses RXDB_SYNC_API_URL instead of RXDB_API_URL
       expect(env.RXDB_SYNC_API_URL).toBeUndefined() // rxdb doesn't reference itself
       expect(env.AUTH_API_URL).toBe("http://localhost:8787/api/auth")
@@ -92,12 +90,12 @@ describe("Environment Config", () => {
     it("should use API URLs when they are in the schema", async () => {
       const { createEnvConfig } = await import("./index")
       const env = createEnvConfig("auth")
-      
+
       // Verify these are set (values may vary based on environment)
       expect(env.EMAIL_API_URL).toBeDefined()
       expect(env.USERS_API_URL).toBeDefined()
       expect(env.INTL_API_URL).toBeDefined()
-      
+
       // Verify they contain expected patterns
       expect(env.EMAIL_API_URL).toContain("/api/email")
       expect(env.USERS_API_URL).toContain("/api/users")
@@ -107,7 +105,7 @@ describe("Environment Config", () => {
     it("should handle GOOGLE_REDIRECT_URL correctly", async () => {
       const { createEnvConfig } = await import("./index")
       const env = createEnvConfig("auth")
-      
+
       // Should be set and contain expected path
       expect(env.GOOGLE_REDIRECT_URL).toBeDefined()
       expect(env.GOOGLE_REDIRECT_URL).toContain("/auth/google/callback")
@@ -116,7 +114,7 @@ describe("Environment Config", () => {
     it("should set GOOGLE_REDIRECT_URL based on FRONTEND_URL", async () => {
       const { createEnvConfig } = await import("./index")
       const env = createEnvConfig("auth")
-      
+
       // GOOGLE_REDIRECT_URL should be set and contain the expected path
       expect(env.GOOGLE_REDIRECT_URL).toBeDefined()
       expect(env.GOOGLE_REDIRECT_URL).toContain("/auth/google/callback")
@@ -125,7 +123,7 @@ describe("Environment Config", () => {
     it("should not set GOOGLE_REDIRECT_URL for services that don't need it", async () => {
       const { createEnvConfig } = await import("./index")
       const env = createEnvConfig("email")
-      
+
       // Email service doesn't have GOOGLE_REDIRECT_URL in its schema
       expect(env.GOOGLE_REDIRECT_URL).toBeUndefined()
     })
@@ -137,14 +135,14 @@ describe("Environment Config", () => {
         CUSTOM_API_URL: z.string().url().optional(),
         CUSTOM_PORT: z.coerce.number().default(9999),
       })
-      
+
       const { createEnvConfig } = await import("./index")
       const env = createEnvConfig("auth", customSchema)
-      
+
       // Should have both service and custom fields
       expect(env.EMAIL_API_URL).toBeDefined()
       expect(env.CUSTOM_PORT).toBe(9999)
-      
+
       // Custom API URL should be set if in schema
       if (!env.CUSTOM_API_URL) {
         // Only check if not already set by environment
@@ -156,10 +154,10 @@ describe("Environment Config", () => {
       const customSchema = z.object({
         TASKS_API_URL: z.string().url().optional(),
       })
-      
+
       const { createEnvConfig } = await import("./index")
       const env = createEnvConfig("email", customSchema)
-      
+
       // Email service normally doesn't have TASKS_API_URL, but custom schema adds it
       expect(env.TASKS_API_URL).toBe("http://localhost:8888/api/tasks")
     })
@@ -171,11 +169,22 @@ describe("Environment Config", () => {
       const { services } = await import("./index")
       const serviceNames = Object.keys(services)
       const expectedServices = [
-        "auth", "email", "genai", "files", "location", 
-        "bff", "comments", "intl", "org", "permissions", 
-        "projects", "tasks", "users", "rxdb"
+        "auth",
+        "email",
+        "genai",
+        "files",
+        "location",
+        "bff",
+        "comments",
+        "intl",
+        "org",
+        "permissions",
+        "projects",
+        "tasks",
+        "users",
+        "rxdb",
       ]
-      
+
       expect(serviceNames.sort()).toEqual(expectedServices.sort())
     })
 
@@ -190,17 +199,18 @@ describe("Environment Config", () => {
         comments: "COMMENTS_API_URL",
         intl: "INTL_API_URL",
         org: "ORG_API_URL",
-        permissions: "PERMISSIONS_API_URL",
         projects: "PROJECTS_API_URL",
-        tasks: "TASKS_API_URL",
         users: "USERS_API_URL",
         rxdb: "RXDB_SYNC_API_URL", // Special case
       }
-      
-      for (const [serviceName, expectedFieldName] of Object.entries(urlMappings)) {
-        const fieldName = serviceName === "rxdb" 
-          ? "RXDB_SYNC_API_URL" 
-          : `${serviceName.toUpperCase()}_API_URL`
+
+      for (const [serviceName, expectedFieldName] of Object.entries(
+        urlMappings
+      )) {
+        const fieldName =
+          serviceName === "rxdb"
+            ? "RXDB_SYNC_API_URL"
+            : `${serviceName.toUpperCase()}_API_URL`
         expect(fieldName).toBe(expectedFieldName)
       }
     })
@@ -222,11 +232,10 @@ describe("Environment Config", () => {
         users: "/api/users",
         rxdb: "/api/rxdb-sync", // Special case
       }
-      
+
       for (const [serviceName, expectedPath] of Object.entries(pathMappings)) {
-        const apiPath = serviceName === "rxdb" 
-          ? "/api/rxdb-sync" 
-          : `/api/${serviceName}`
+        const apiPath =
+          serviceName === "rxdb" ? "/api/rxdb-sync" : `/api/${serviceName}`
         expect(apiPath).toBe(expectedPath)
       }
     })
@@ -237,14 +246,14 @@ describe("Environment Config", () => {
       // Set some API URLs explicitly
       process.env.AUTH_API_URL = "https://auth.production.com/api"
       process.env.EMAIL_API_URL = "https://email.production.com/api"
-      
+
       const { createEnvConfig } = await import("./index")
       const env = createEnvConfig("bff")
-      
+
       // Should keep the explicitly set values
       expect(env.AUTH_API_URL).toBe("https://auth.production.com/api")
       expect(env.EMAIL_API_URL).toBe("https://email.production.com/api")
-      
+
       // Should generate others
       expect(env.USERS_API_URL).toBe("http://localhost:9191/api/users")
     })
@@ -253,10 +262,10 @@ describe("Environment Config", () => {
   describe("Required fields for services", () => {
     it("should include required fields for genai service", async () => {
       process.env.REDIS_URL = "redis://localhost:6379"
-      
+
       const { createEnvConfig } = await import("./index")
       const env = createEnvConfig("genai")
-      
+
       // Check that REDIS_URL is present (value may vary based on environment)
       expect(env.REDIS_URL).toBeDefined()
       expect(env.PORT).toBe(8383)
@@ -267,10 +276,10 @@ describe("Environment Config", () => {
       process.env.AWS_ACCESS_KEY_ID = "test-key"
       process.env.AWS_SECRET_ACCESS_KEY = "test-secret"
       process.env.AWS_ENDPOINT_URL_S3 = "https://s3.amazonaws.com"
-      
+
       const { createEnvConfig } = await import("./index")
       const env = createEnvConfig("files")
-      
+
       expect(env.STORAGE_TYPE).toBe("s3")
       // AWS_REGION is present (value may be different in test environment)
       expect(env.AWS_REGION).toBeDefined()
@@ -279,10 +288,10 @@ describe("Environment Config", () => {
 
     it("should include required fields for tasks service", async () => {
       process.env.REDIS_URL = "redis://localhost:6379"
-      
+
       const { createEnvConfig } = await import("./index")
       const env = createEnvConfig("tasks")
-      
+
       // Check that REDIS_URL is present (value may vary based on environment)
       expect(env.REDIS_URL).toBeDefined()
       expect(env.PORT).toBe(8888)

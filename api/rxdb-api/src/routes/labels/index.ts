@@ -48,7 +48,7 @@ labelsRoutes.post("/pull", zValidator("query", PullLabelsSchema), async (c) => {
         {
           documents: [],
           checkpoint: {
-            updatedAt: new Date().getTime(),
+            updatedAt: Date.now(),
           },
         },
         200
@@ -126,7 +126,7 @@ labelsRoutes.post("/pull", zValidator("query", PullLabelsSchema), async (c) => {
       {
         documents: results.data,
         checkpoint: {
-          updatedAt: new Date().getTime(),
+          updatedAt: Date.now(),
         },
       },
       200

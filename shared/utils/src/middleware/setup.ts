@@ -1,7 +1,6 @@
 import type { OpenAPIHono } from "@hono/zod-openapi"
 import { initDb } from "@incmix-api/utils/db-schema"
-import type { Context } from "hono"
-import type { MiddlewareHandler } from "hono"
+import type { Context, MiddlewareHandler } from "hono"
 import { compress } from "hono/compress"
 import { envVars } from "../env-config"
 import { createAuthMiddleware } from "./auth"

@@ -1,5 +1,5 @@
-import { describe, expect, it, vi, beforeEach } from "vitest"
 import { OpenAPIHono } from "@hono/zod-openapi"
+import { beforeEach, describe, expect, it, vi } from "vitest"
 import type { HonoApp } from "../src/types"
 
 // Mock the setupHealthCheck function
@@ -23,7 +23,7 @@ const mockSetupHealthCheck = vi.fn((app, config) => {
     })
   })
 
-  app.get("/healthcheck/ready", async (c) => {
+  app.get("/healthcheck/ready", (c) => {
     return c.json({
       status: "ok",
       service: config.serviceName,
@@ -45,7 +45,7 @@ describe("Healthcheck Routes", () => {
 
     // Create a new app instance for each test
     app = new OpenAPIHono<HonoApp>()
-    
+
     // Call setupHealthCheck with the app
     mockSetupHealthCheck(app, {
       serviceName: "files-api",
@@ -114,7 +114,7 @@ describe("Healthcheck Routes", () => {
 
       const data = await response.json()
       expect(data.timestamp).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/)
-      
+
       const date = new Date(data.timestamp)
       expect(date.toString()).not.toBe("Invalid Date")
     })

@@ -49,7 +49,7 @@ tasksRoutes.post("/pull", zValidator("query", PullTasksSchema), async (c) => {
         {
           documents: [],
           checkpoint: {
-            updatedAt: new Date().getTime(),
+            updatedAt: Date.now(),
           },
         },
         200
@@ -160,7 +160,7 @@ tasksRoutes.post("/pull", zValidator("query", PullTasksSchema), async (c) => {
       {
         documents: parsedTasks,
         checkpoint: {
-          updatedAt: new Date().getTime(),
+          updatedAt: Date.now(),
         },
       },
       200

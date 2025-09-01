@@ -337,15 +337,12 @@ services:
       INTL_API_URL: ${INTL_API_URL:-http://intl-api:9090/api/intl}
       GENAI_API_URL: ${GENAI_API_URL:-http://genai-api:8383/api/genai}
       PROJECTS_API_URL: ${PROJECTS_API_URL:-http://projects-api:8484/api/projects}
-      TASKS_API_URL: ${TASKS_API_URL:-http://tasks-api:8888/api/tasks}
       COMMENTS_API_URL: ${COMMENTS_API_URL:-http://comments-api:8585/api/comments}
       USERS_API_URL: ${USERS_API_URL:-http://users-api:9191/api/users}
       FILES_API_URL: ${FILES_API_URL:-http://files-api:8282/api/files}
       EMAIL_API_URL: ${EMAIL_API_URL:-http://email-api:8989/api/email}
       LOCATION_API_URL: ${LOCATION_API_URL:-http://location-api:9494/api/location}
       RXDB_SYNC_API_URL: ${RXDB_SYNC_API_URL:-http://rxdb-api:8686/api/rxdb-sync}
-      PERMISSIONS_API_URL: ${PERMISSIONS_API_URL:-http://permissions-api:9393/api/permissions}
-    ports:
       - 8081:8080  # Only public access point
     networks:
       - incmix-network

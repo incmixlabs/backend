@@ -87,7 +87,6 @@ authRoutes.openapi(getUser, async (c) => {
     if (!user) {
       throw new UnauthorizedError()
     }
-    // @ts-ignore
     const { id, email } = c.req.valid("query")
     const searchedUser = await c
       .get("db")
@@ -118,7 +117,6 @@ authRoutes.openapi(getUser, async (c) => {
 })
 
 authRoutes.openapi(signup, async (c) => {
-  // @ts-ignore - https://hono.dev/docs/api/request#valid
   const { fullName, email, password } = c.req.valid("json")
   try {
     const existing = await c
@@ -183,7 +181,6 @@ authRoutes.openapi(signup, async (c) => {
 authRoutes.openapi(login, async (c) => {
   try {
     const t = await useTranslation(c)
-    // @ts-ignore - https://hono.dev/docs/api/request#valid
     const { email, password } = c.req.valid("json")
 
     const user = await findUserByEmail(c, email)

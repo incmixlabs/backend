@@ -1,4 +1,3 @@
-import { envVars } from "@/env-vars"
 import type { HonoApp } from "@/types"
 import { OpenAPIHono } from "@hono/zod-openapi"
 import { getLimts } from "./openapi"

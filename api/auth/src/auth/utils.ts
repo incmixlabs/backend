@@ -1,5 +1,4 @@
-import { randomBytes } from "node:crypto"
-import { scrypt as _scrypt, timingSafeEqual } from "node:crypto"
+import { scrypt as _scrypt, randomBytes, timingSafeEqual } from "node:crypto"
 import { promisify } from "node:util"
 
 // Base32 encoding alphabet (RFC 4648)

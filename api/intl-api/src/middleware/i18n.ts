@@ -5,7 +5,6 @@ import {
 } from "@/lib/helper"
 import { DEFAULT_LOCALE, DEFAULT_MESSAGES } from "@incmix-api/utils"
 import type { IntlMessage, Locale } from "@incmix-api/utils/types"
-
 import { getHeaderLocale } from "@intlify/utils"
 import type { Context, MiddlewareHandler } from "hono"
 

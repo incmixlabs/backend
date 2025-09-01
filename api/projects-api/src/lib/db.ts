@@ -1,6 +1,5 @@
 import type { Context } from "@/types"
 import type { Project, Task } from "@incmix-api/utils/zod-schema"
-
 import { jsonArrayFrom, jsonObjectFrom } from "kysely/helpers/postgres"
 
 export async function findRoleByName(c: Context, name: string, orgId: string) {

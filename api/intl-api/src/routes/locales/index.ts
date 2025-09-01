@@ -1,6 +1,3 @@
-import type { HonoApp } from "@/types"
-import { OpenAPIHono } from "@hono/zod-openapi"
-
 import {
   addLocale,
   deleteLocale,
@@ -9,6 +6,8 @@ import {
   getLocale,
   updateLocale,
 } from "@/routes/locales/openapi"
+import type { HonoApp } from "@/types"
+import { OpenAPIHono } from "@hono/zod-openapi"
 import type { KyselyDb } from "@incmix-api/utils/db-schema"
 import {
   ConflictError,

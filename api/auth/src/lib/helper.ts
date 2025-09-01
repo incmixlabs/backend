@@ -1,8 +1,7 @@
-import type { Context } from "@/types"
-import type { KyselyDb, Provider, TokenType } from "@incmix-api/utils/db-schema"
-
 import { generateRandomId } from "@/auth/utils"
+import type { Context } from "@/types"
 import { generateSentryHeaders } from "@incmix-api/utils"
+import type { KyselyDb, Provider, TokenType } from "@incmix-api/utils/db-schema"
 import { ServerError } from "@incmix-api/utils/errors"
 import { env } from "hono/adapter"
 import { TimeSpan, createDate, isWithinExpirationDate } from "oslo"
@@ -98,7 +97,7 @@ export async function insertOAuthUser(
   }
 
   const userId = generateRandomId(15)
-  const { profile, ...newUser } = await insertUser(
+  const newUser = await insertUser(
     c,
     {
       id: userId,

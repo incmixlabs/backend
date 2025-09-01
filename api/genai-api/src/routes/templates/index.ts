@@ -15,6 +15,7 @@ import {
   getStoryTemplates,
   insertStoryTemplate,
 } from "./openapi"
+
 const templateRoutes = new OpenAPIHono<HonoApp>({
   defaultHook: zodError,
 })

@@ -77,7 +77,7 @@ export class KVStore {
   isExpired(key: string) {
     const item = this.items.get(key)
     if (!item) throw new Error(`Key: '${key}' is not defined`)
-    const now = new Date().getTime()
+    const now = Date.now()
     return now >= item.expiresAt.getTime()
   }
 }
