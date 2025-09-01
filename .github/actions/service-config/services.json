@@ -7,12 +7,6 @@
       "image_name": "auth-service"
     },
     {
-      "name": "users-api",
-      "dockerfile": "api/users-api/Dockerfile",
-      "context": ".",
-      "image_name": "users-api"
-    },
-    {
       "name": "projects-api",
       "dockerfile": "api/projects-api/Dockerfile",
       "context": ".",
