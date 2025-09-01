@@ -1,8 +1,13 @@
 import {
   deletePermission,
   deleteRoleById,
+  ensureAtLeastOneOwner,
   findAllRoles,
+  findOrgMemberById,
+  findOrgMembers,
+  findOrganisationByHandle,
   findPermissionBySubjectAndAction,
+  findRoleByName,
   insertPermission,
   insertRole,
   updatePermission,
@@ -11,6 +16,7 @@ import {
 import type { HonoApp } from "@/types"
 import { OpenAPIHono } from "@hono/zod-openapi"
 import { ERROR_BAD_REQUEST, ERROR_UNAUTHORIZED } from "@incmix-api/utils"
+import { ERROR_MEMBER_UPDATE_FAIL, ERROR_NO_ROLES } from "@/lib/constants"
 import {
   NotFoundError,
   ServerError,
@@ -20,11 +26,14 @@ import {
   zodError,
 } from "@incmix-api/utils/errors"
 import { useTranslation } from "@incmix-api/utils/middleware"
+import { UserRoles } from "@incmix/utils/types"
+import type { UserRole } from "@incmix/utils/types"
 import { actions, subjects } from "@incmix/utils/types"
 import { getRolesPermissions, updatePermissions } from "./openapi"
 
 import { throwUnlessUserCan } from "@/lib/helper"
 import { addNewRole, deleteRole, updateRole } from "@/routes/roles/openapi"
+import { updateMemberRole } from "@/routes/organisations/openapi"
 import { apiReference } from "@scalar/hono-api-reference"
 
 const permissionRoutes = new OpenAPIHono<HonoApp>({
@@ -346,6 +355,71 @@ permissionRoutes.openapi(deleteRole, async (c) => {
   }
 })
 
+permissionRoutes.openapi(updateMemberRole, async (c) => {
+  try {
+    const user = c.get("user")
+    const t = await useTranslation(c)
+    if (!user) {
+      const msg = await t.text(ERROR_UNAUTHORIZED)
+      throw new UnauthorizedError(msg)
+    }
+
+    const { handle } = c.req.valid("param")
+    const { role: newRole, userId } = c.req.valid("json")
+
+    const org = await findOrganisationByHandle(c, handle)
+
+    await throwUnlessUserCan(c, "update", "Member", org.id)
+
+    const member = await findOrgMemberById(c, userId, org.id)
+
+    if (
+      member.role === UserRoles.ROLE_OWNER &&
+      newRole !== UserRoles.ROLE_OWNER
+    ) {
+      await ensureAtLeastOneOwner(c, org.id, [userId], "update")
+    }
+
+    const dbRole = await findRoleByName(c, newRole as UserRole)
+    if (!dbRole) {
+      const msg = await t.text(ERROR_NO_ROLES)
+      throw new ServerError(msg)
+    }
+
+    const updated = await c
+      .get("db")
+      .updateTable("members")
+      .set({ roleId: dbRole.id })
+      .where((eb) =>
+        eb.and([eb("orgId", "=", org.id), eb("userId", "=", userId)])
+      )
+      .returningAll()
+      .executeTakeFirst()
+    
+    if (!updated) {
+      const msg = await t.text(ERROR_MEMBER_UPDATE_FAIL)
+      throw new ServerError(msg)
+    }
+    
+    const members = await findOrgMembers(c, org.id)
+
+    return c.json(
+      {
+        id: org.id,
+        name: org.name,
+        handle: org.handle,
+        members: members.map((m) => ({ userId: m.userId, role: m.role })),
+      },
+      200
+    )
+  } catch (error) {
+    return await processError<typeof updateMemberRole>(c, error, [
+      "{{ default }}",
+      "update-member-role",
+    ])
+  }
+})
+
 const permissionsReferenceRoutes = new OpenAPIHono<HonoApp>()
 
 // Setup OpenAPI documentation for permissions (must be before parameterized routes)
@@ -412,6 +486,12 @@ permissionsReferenceRoutes.openapi(updateRole, (c) => {
   )
 })
 permissionsReferenceRoutes.openapi(deleteRole, (c) => {
+  return c.json(
+    { message: "Use /api/org/permissions endpoint for actual implementation" },
+    501 as any
+  )
+})
+permissionsReferenceRoutes.openapi(updateMemberRole, (c) => {
   return c.json(
     { message: "Use /api/org/permissions endpoint for actual implementation" },
     501 as any
