@@ -20,10 +20,48 @@ import { actions, subjects } from "@incmix/utils/types"
 import { getRolesPermissions, updatePermissions } from "./openapi"
 
 import { throwUnlessUserCan } from "@/lib/helper"
+import { addNewRole, deleteRole, updateRole } from "@/routes/roles/openapi"
+import { apiReference } from "@scalar/hono-api-reference"
 
 const permissionRoutes = new OpenAPIHono<HonoApp>({
   defaultHook: zodError,
 })
+
+// Setup OpenAPI documentation
+permissionRoutes.doc("/openapi.json", {
+  openapi: "3.0.0",
+  info: {
+    version: "1.0.0",
+    title: "Permissions API",
+    description:
+      "API for managing roles and permissions within organizations. Auth via cookieAuth (session).",
+  },
+  tags: [
+    {
+      name: "Permissions",
+      description: "Role and permission management operations",
+    },
+  ],
+})
+
+permissionRoutes.get(
+  "/reference",
+  apiReference({
+    spec: {
+      url: "/api/org/permissions/openapi.json",
+    },
+  })
+)
+
+permissionRoutes.openAPIRegistry.registerComponent(
+  "securitySchemes",
+  "cookieAuth",
+  {
+    type: "apiKey",
+    in: "cookie",
+    name: "session",
+  }
+)
 
 permissionRoutes.openapi(getRolesPermissions, async (c) => {
   try {
@@ -208,6 +246,17 @@ permissionRoutes.openapi(updatePermissions, async (c) => {
       "update-permission",
     ])
   }
+})
+
+// Add roles routes for OpenAPI docs only (placeholder implementations)
+permissionRoutes.openapi(addNewRole, async (c) => {
+  return c.json({ message: "Not implemented" }, 501 as any)
+})
+permissionRoutes.openapi(updateRole, async (c) => {
+  return c.json({ message: "Not implemented" }, 501 as any)
+})
+permissionRoutes.openapi(deleteRole, async (c) => {
+  return c.json({ message: "Not implemented" }, 501 as any)
 })
 
 export default permissionRoutes
