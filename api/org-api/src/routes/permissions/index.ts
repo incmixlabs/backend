@@ -245,10 +245,10 @@ permissionRoutes.openapi(updatePermissions, async (c) => {
             if (!joined) {
               await tx
                 .insertInto("rolePermissions")
-                .values({ 
-                  roleId, 
+                .values({
+                  roleId,
                   permissionId: perm.id,
-                  createdAt: new Date().toISOString()
+                  createdAt: new Date().toISOString(),
                 })
                 .executeTakeFirst()
             }

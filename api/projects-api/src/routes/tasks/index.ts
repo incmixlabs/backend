@@ -53,7 +53,7 @@ const tasksRoutes = new OpenAPIHono<HonoApp>({
 
 // Setup OpenAPI documentation for tasks (must be before parameterized routes)
 // These endpoints should be publicly accessible for documentation
-tasksRoutes.doc("/openapi.json", (c) => ({
+tasksRoutes.doc("/openapi.json", (_c) => ({
   openapi: "3.0.0",
   info: {
     version: "1.0.0",

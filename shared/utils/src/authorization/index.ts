@@ -12,22 +12,22 @@ export function setupRbac<T extends Env>(
     // Skip RBAC for documentation routes
     const path = c.req.path
     const publicPaths = [
-      '/openapi.json',
-      '/reference',
-      '/tasks/openapi.json',
-      '/tasks/reference'
+      "/openapi.json",
+      "/reference",
+      "/tasks/openapi.json",
+      "/tasks/reference",
     ]
-    
-    const isPublicPath = publicPaths.some(publicPath => 
+
+    const isPublicPath = publicPaths.some((publicPath) =>
       path.endsWith(publicPath)
     )
-    
+
     if (isPublicPath) {
       // Set a dummy RBAC that won't be used
       c.set("rbac", {} as PermissionService)
       return next()
     }
-    
+
     if (!rbac) {
       c.set("rbac", new PermissionService(c))
       return next()
