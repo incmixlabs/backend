@@ -245,7 +245,11 @@ permissionRoutes.openapi(updatePermissions, async (c) => {
             if (!joined) {
               await tx
                 .insertInto("rolePermissions")
-                .values({ roleId, permissionId: perm.id })
+                .values({ 
+                  roleId, 
+                  permissionId: perm.id,
+                  createdAt: new Date().toISOString()
+                })
                 .executeTakeFirst()
             }
           } else if (joined) {
@@ -347,7 +351,7 @@ permissionRoutes.openapi(deleteRole, async (c) => {
     await throwUnlessUserCan(c, "delete", "Role", orgId)
 
     const result = await deleteRoleById(c, id)
-
+    // @ts-ignore
     if (Number(result.numDeletedRows) === 0) {
       throw new NotFoundError("Role not found")
     }
