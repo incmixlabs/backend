@@ -6,7 +6,6 @@ import projectRoutes from "@/routes/projects"
 import tasksRoutes from "@/routes/tasks"
 import type { HonoApp } from "@/types"
 import { createService } from "@incmix-api/utils"
-import { apiReference } from "@scalar/hono-api-reference"
 import { envVars } from "./env-vars"
 
 const service = createService<HonoApp["Bindings"], HonoApp["Variables"]>({

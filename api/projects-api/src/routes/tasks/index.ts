@@ -58,6 +58,7 @@ tasksRoutes.doc("/openapi.json", {
   info: {
     version: "1.0.0",
     title: "Tasks API",
+    description: "Endpoints for task management. Auth via cookieAuth (session).",
   },
   tags: [
     {

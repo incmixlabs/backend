@@ -13,7 +13,7 @@ export function setupOpenApi<T extends Env>(
     info: {
       version: "1.0.0",
       title: title ?? "Open Api Docs",
-      description: description,
+       ...(description ? { description } : {}),
     },
   })
 
