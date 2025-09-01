@@ -14,7 +14,7 @@
     "@hono/zod-validator": "catalog:",
     "@incmix-api/utils": "workspace:^",
     "@incmix/utils": "catalog:",
-    "@scalar/hono-api-reference": "0.5.163",
+    "@scalar/hono-api-reference": "catalog:",
     "hono": "catalog:",
     "kysely": "catalog:",
     "kysely-ctl": "catalog:",
