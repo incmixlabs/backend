@@ -220,5 +220,13 @@ export const updateMemberRole = createRoute({
       },
       description: "Internal Server Error",
     },
+    404: {
+      content: {
+        "application/json": {
+          schema: MessageResponseSchema,
+        },
+      },
+      description: "Organisation or member not found",
+    },
   },
 })
