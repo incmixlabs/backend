@@ -1,29 +1,49 @@
 import { BASE_PATH } from "@/lib/constants"
 
 import { middlewares } from "@/middleware"
-import { routes } from "@/routes"
+import healthcheckRoutes from "@/routes/healthcheck"
+import projectRoutes from "@/routes/projects"
+import tasksRoutes from "@/routes/tasks"
 import type { HonoApp } from "@/types"
 import { createService } from "@incmix-api/utils"
+import { apiReference } from "@scalar/hono-api-reference"
 import { envVars } from "./env-vars"
 
 const service = createService<HonoApp["Bindings"], HonoApp["Variables"]>({
-  name: "projects-api",
+  name: "Projects API",
   port: envVars.PORT,
   basePath: BASE_PATH,
   setupMiddleware: (app) => {
     middlewares(app)
   },
   needRBAC: true,
-  setupRoutes: (app) => routes(app),
+  setupRoutes: (app) => {
+    // Register only projects and healthcheck routes for main API
+    app.route(`${BASE_PATH}/healthcheck`, healthcheckRoutes)
+    app.route(BASE_PATH, projectRoutes)
+
+    // Mount tasks routes separately - they won't appear in main OpenAPI
+    app.mount(`${BASE_PATH}/tasks`, tasksRoutes.fetch)
+
+    // Override the OpenAPI to add description with link to Tasks API
+    app.doc(`${BASE_PATH}/openapi.json`, (_c) => {
+      return {
+        openapi: "3.0.0",
+        info: {
+          version: "1.0.0",
+          title: "Projects API",
+          description: `Projects API documentation.
+
+**📋 Tasks API:** Tasks have been moved to a separate API for better organization.  
+**Access Tasks API at:** [/api/projects/tasks/reference](/api/projects/tasks/reference)`,
+        },
+      }
+    })
+  },
 })
 
-const { app, startServer } = service
-
-// Mount tasks routes AFTER OpenAPI setup to exclude them from main documentation
-// Tasks have their own dedicated API documentation at /api/projects/tasks/reference
-import tasksRoutes from "./routes/tasks"
-app.route(`${BASE_PATH}/tasks`, tasksRoutes)
+const { startServer } = service
 
 startServer()
 
-export default app
+export default service.app

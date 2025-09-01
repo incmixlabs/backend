@@ -71,7 +71,7 @@ tasksRoutes.get(
   "/reference",
   apiReference({
     spec: {
-      url: "./openapi.json",
+      url: "/api/projects/tasks/openapi.json",
     },
   })
 )
