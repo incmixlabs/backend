@@ -1,7 +1,11 @@
 import { hashPassword } from "@/auth/utils"
 import { ERROR_USER_NOT_FOUND } from "@/lib/constants"
 import type { Context } from "@/types"
-import type { KyselyDb, NewUser } from "@incmix-api/utils/db-schema"
+import type {
+  KyselyDb,
+  NewUser,
+  NewUserProfile,
+} from "@incmix-api/utils/db-schema"
 import { NotFoundError, ServerError } from "@incmix-api/utils/errors"
 import { useTranslation } from "@incmix-api/utils/middleware"
 
@@ -26,8 +30,20 @@ export async function findUserById(c: Context, id: string) {
   const user = await c
     .get("db")
     .selectFrom("users")
-    .selectAll()
-    .where("id", "=", id)
+    .innerJoin("userProfiles", "users.id", "userProfiles.id")
+    .select([
+      "users.id",
+      "users.email",
+      "users.isSuperAdmin",
+      "users.emailVerifiedAt",
+      "userProfiles.fullName",
+      "userProfiles.avatar",
+      "userProfiles.profileImage",
+      "userProfiles.localeId",
+      "userProfiles.onboardingCompleted",
+      "users.hashedPassword",
+    ])
+    .where("users.id", "=", id)
     .executeTakeFirst()
   const t = await useTranslation(c)
   if (!user) {
@@ -36,6 +52,21 @@ export async function findUserById(c: Context, id: string) {
   }
 
   return user
+}
+
+async function createUserProfile(
+  c: Context,
+  newUserProfile: NewUserProfile,
+  dbInstance?: KyselyDb
+) {
+  const db = dbInstance ?? c.get("db")
+  const userProfile = await db
+    .insertInto("userProfiles")
+    .values(newUserProfile)
+    .returningAll()
+    .executeTakeFirst()
+
+  return userProfile
 }
 
 export async function insertUser(
@@ -63,17 +94,17 @@ export async function insertUser(
     .executeTakeFirst()
   if (!user) throw new ServerError()
 
-  const profile = await db
-    .insertInto("userProfiles")
-    .values({
+  const profile = await createUserProfile(
+    c,
+    {
       id: newUser.id,
       fullName,
       email: newUser.email,
       localeId: locale?.id,
       onboardingCompleted: false,
-    })
-    .returningAll()
-    .executeTakeFirst()
+    },
+    db
+  )
 
   return { ...user, profile }
 }
@@ -81,11 +112,15 @@ export async function insertUser(
 export async function deleteUserById(c: Context, id: string) {
   const deletedUser = await c
     .get("db")
-    .deleteFrom("users")
-    .where("id", "=", id)
-    .returningAll()
-    .executeTakeFirst()
-
+    .transaction()
+    .execute(async (tx) => {
+      await tx.deleteFrom("userProfiles").where("id", "=", id).execute()
+      return await tx
+        .deleteFrom("users")
+        .where("id", "=", id)
+        .returningAll()
+        .executeTakeFirst()
+    })
   if (!deletedUser) throw new ServerError()
 
   return deletedUser

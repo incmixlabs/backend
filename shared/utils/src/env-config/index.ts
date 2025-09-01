@@ -42,10 +42,7 @@ export const services = {
     port: 9292,
     dir: "org-api",
   },
-  permissions: {
-    port: 9393,
-    dir: "permissions-api",
-  },
+
   projects: {
     port: 8484,
     dir: "projects-api",
@@ -54,9 +51,9 @@ export const services = {
     port: 8888,
     dir: "tasks-api",
   },
-  users: {
+  permissions: {
     port: 9191,
-    dir: "users-api",
+    dir: "permissions-api",
   },
   rxdb: {
     port: 8686,
@@ -80,38 +77,33 @@ const baseEnvSchema = z.object({
   NODE_ENV: z
     .enum(["development", "production", "test"])
     .default("development"),
-  DATABASE_URL: z.string().url(),
-  SENTRY_DSN: z.string().url(),
-  FRONTEND_URL: z.string().url(),
+  DATABASE_URL: z.url(),
+  SENTRY_DSN: z.url().optional(),
+  FRONTEND_URL: z.url(),
   DOMAIN: z.string().default("http://localhost"),
   COOKIE_NAME: z.string().default("incmix_session"),
   MOCK_DATA: z.coerce.boolean().default(false),
-  INTL_API_URL: z.string().url().optional(),
+  INTL_API_URL: z.url().optional(),
   TIMEOUT_MS: z.coerce.number().default(5000),
-  AUTH_API_URL: z.string().url().optional(),
+  AUTH_API_URL: z.url().optional(),
 })
 
 // Service-specific schema extensions
 const serviceSchemas = {
   auth: baseEnvSchema.extend({
-    GOOGLE_REDIRECT_URL: z.string().url().optional(),
+    GOOGLE_REDIRECT_URL: z.url().optional(),
     GOOGLE_CLIENT_ID: z.string(),
     GOOGLE_CLIENT_SECRET: z.string(),
     PORT: z.coerce.number().default(services.auth.port),
     // API URLs
-    EMAIL_API_URL: z.string().url().optional(),
-    USERS_API_URL: z.string().url().optional(),
-    INTL_API_URL: z.string().url().optional(),
-    // Note: DATABASE_URL is inherited from baseEnvSchema
+    EMAIL_API_URL: z.url().optional(),
+    FILES_API_URL: z.url().optional(),
   }),
   email: baseEnvSchema.extend({
     EMAIL_FROM: z.string().email(),
     RESEND_API_KEY: z.string(),
     RESEND_WEBHOOK_SECRET: z.string().optional(),
     PORT: z.coerce.number().default(services.email.port),
-    // API URLs
-    INTL_API_URL: z.string().url().optional(),
-    // Note: DATABASE_URL is inherited from baseEnvSchema
   }),
   genai: baseEnvSchema.extend({
     FIGMA_ACCESS_TOKEN: z.string().optional(),
@@ -119,12 +111,8 @@ const serviceSchemas = {
     ANTHROPIC_API_KEY: z.string().optional(),
     GOOGLE_AI_API_KEY: z.string().optional(),
     PORT: z.coerce.number().default(services.genai.port),
-    REDIS_URL: z.string().url(),
-    // API URLs
-    AUTH_API_URL: z.string().url().optional(),
-    ORG_API_URL: z.string().url().optional(),
-    INTL_API_URL: z.string().url().optional(),
-    // Note: DATABASE_URL is inherited from baseEnvSchema
+    REDIS_URL: z.url(),
+    ORG_API_URL: z.url().optional(),
   }),
   files: baseEnvSchema.extend({
     STORAGE_TYPE: z.enum(["local", "s3"]).default("s3"),
@@ -135,10 +123,6 @@ const serviceSchemas = {
     BUCKET_NAME: z.string().optional(),
     AWS_ENDPOINT_URL_S3: z.string(),
     PORT: z.coerce.number().default(services.files.port),
-    // API URLs
-    AUTH_API_URL: z.string().url().optional(),
-    INTL_API_URL: z.string().url().optional(),
-    // Note: DATABASE_URL is inherited from baseEnvSchema
   }),
   location: baseEnvSchema.extend({
     LOCATION_API_KEY: z.string(),
@@ -147,93 +131,39 @@ const serviceSchemas = {
     WEATHER_URL: z.string(),
     SERP_API_KEY: z.string(),
     SERP_NEWS_URL: z.string(),
-    REDIS_URL: z.string().url(),
+    REDIS_URL: z.url(),
     PORT: z.coerce.number().default(services.location.port),
-    // API URLs
-    INTL_API_URL: z.string().url().optional(),
-    // Note: DATABASE_URL is inherited from baseEnvSchema but not used in Docker Compose
   }),
   bff: baseEnvSchema.omit({ DATABASE_URL: true, SENTRY_DSN: true }).extend({
     PORT: z.coerce.number().default(services.bff.port),
-    // Override base schema fields to make them optional for BFF
-    DATABASE_URL: z.string().url().optional(),
-    SENTRY_DSN: z.string().url().optional(),
-    // API URLs - BFF needs access to all services
-    AUTH_API_URL: z.string().url().optional(),
-    ORG_API_URL: z.string().url().optional(),
-    INTL_API_URL: z.string().url().optional(),
-    GENAI_API_URL: z.string().url().optional(),
-    PROJECTS_API_URL: z.string().url().optional(),
-    TASKS_API_URL: z.string().url().optional(),
-    COMMENTS_API_URL: z.string().url().optional(),
-    USERS_API_URL: z.string().url().optional(),
-    FILES_API_URL: z.string().url().optional(),
-    EMAIL_API_URL: z.string().url().optional(),
-    LOCATION_API_URL: z.string().url().optional(),
-    RXDB_SYNC_API_URL: z.string().url().optional(),
-    // Note: DATABASE_URL is inherited from baseEnvSchema but not used in Docker Compose
+    ORG_API_URL: z.url().optional(),
+    GENAI_API_URL: z.url().optional(),
+    PROJECTS_API_URL: z.url().optional(),
+    COMMENTS_API_URL: z.url().optional(),
+    FILES_API_URL: z.url().optional(),
+    EMAIL_API_URL: z.url().optional(),
+    LOCATION_API_URL: z.url().optional(),
+    RXDB_SYNC_API_URL: z.url().optional(),
   }),
   comments: baseEnvSchema.extend({
     PORT: z.coerce.number().default(services.comments.port),
-    // API URLs
-    AUTH_API_URL: z.string().url().optional(),
-    ORG_API_URL: z.string().url().optional(),
-    INTL_API_URL: z.string().url().optional(),
-    // Note: DATABASE_URL is inherited from baseEnvSchema
+    ORG_API_URL: z.url().optional(),
   }),
   intl: baseEnvSchema.extend({
     PORT: z.coerce.number().default(services.intl.port),
-    // API URLs
-    AUTH_API_URL: z.string().url().optional(),
-    // Note: DATABASE_URL is inherited from baseEnvSchema
+    AUTH_API_URL: z.url().optional(),
   }),
   org: baseEnvSchema.extend({
     PORT: z.coerce.number().default(services.org.port),
-    // API URLs
-    AUTH_API_URL: z.string().url().optional(),
-    USERS_API_URL: z.string().url().optional(),
-    INTL_API_URL: z.string().url().optional(),
-    // Note: DATABASE_URL is inherited from baseEnvSchema
   }),
-  permissions: baseEnvSchema.extend({
-    PORT: z.coerce.number().default(services.permissions.port),
-    // API URLs
-    AUTH_API_URL: z.string().url().optional(),
-    USERS_API_URL: z.string().url().optional(),
-    INTL_API_URL: z.string().url().optional(),
-    // Note: DATABASE_URL is inherited from baseEnvSchema
-  }),
+
   projects: baseEnvSchema.extend({
     PORT: z.coerce.number().default(services.projects.port),
-    // API URLs
-    AUTH_API_URL: z.string().url().optional(),
-    ORG_API_URL: z.string().url().optional(),
-    INTL_API_URL: z.string().url().optional(),
-    // Note: DATABASE_URL is inherited from baseEnvSchema
-  }),
-  tasks: baseEnvSchema.extend({
-    PORT: z.coerce.number().default(services.tasks.port),
-    REDIS_URL: z.string().url(),
-    // API URLs
-    AUTH_API_URL: z.string().url().optional(),
-    ORG_API_URL: z.string().url().optional(),
-    INTL_API_URL: z.string().url().optional(),
-    // Note: DATABASE_URL is inherited from baseEnvSchema
-  }),
-  users: baseEnvSchema.extend({
-    PORT: z.coerce.number().default(services.users.port),
-    // Note: DATABASE_URL is inherited from baseEnvSchema
-    // API URLs
-    AUTH_API_URL: z.string().url().optional(),
-    FILES_API_URL: z.string().url().optional(),
-    ORG_API_URL: z.string().url().optional(),
-    INTL_API_URL: z.string().url().optional(),
+    ORG_API_URL: z.url().optional(),
+    REDIS_URL: z.url().optional(),
   }),
   rxdb: baseEnvSchema.extend({
     PORT: z.coerce.number().default(services.rxdb.port),
-    // API URLs
-    AUTH_API_URL: z.string().url().optional(),
-    INTL_API_URL: z.string().url().optional(),
   }),
 }
 
@@ -332,21 +262,21 @@ export function createEnvConfig<T extends ServiceName>(
 
   // Add service-specific schema if provided
   if (serviceName && serviceSchemas[serviceName]) {
-    schema = baseEnvSchema.merge(
-      serviceSchemas[serviceName]
+    schema = baseEnvSchema.extend(
+      serviceSchemas[serviceName].shape
     ) as z.ZodObject<any>
   }
 
   // Add custom schema if provided
   if (customSchema) {
-    schema = schema.merge(customSchema) as z.ZodObject<any>
+    schema = schema.extend(customSchema.shape) as z.ZodObject<any>
   }
 
   // Parse and validate environment variables
   const result = schema.safeParse(process.env)
 
   if (!result.success) {
-    const flat = result.error.flatten()
+    const flat = z.treeifyError(result.error)
     console.error("Environment validation failed:", flat)
     throw new Error("Environment validation failed")
   }
@@ -397,11 +327,8 @@ export type BffEnv = BaseEnv & z.infer<typeof serviceSchemas.bff>
 export type CommentsEnv = BaseEnv & z.infer<typeof serviceSchemas.comments>
 export type IntlEnv = BaseEnv & z.infer<typeof serviceSchemas.intl>
 export type OrgEnv = BaseEnv & z.infer<typeof serviceSchemas.org>
-export type PermissionsEnv = BaseEnv &
-  z.infer<typeof serviceSchemas.permissions>
+
 export type ProjectsEnv = BaseEnv & z.infer<typeof serviceSchemas.projects>
-export type TasksEnv = BaseEnv & z.infer<typeof serviceSchemas.tasks>
-export type UsersEnv = BaseEnv & z.infer<typeof serviceSchemas.users>
+
 export type RxdbEnv = BaseEnv & z.infer<typeof serviceSchemas.rxdb>
 export const envVars = createEnvConfig() as BaseEnv
-// Export SERVICE_PORTS for external use

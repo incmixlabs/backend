@@ -53,7 +53,12 @@ export function createService<
     setupRbac(app, config.basePath)
   }
 
-  setupOpenApi(app, config.basePath, config.name)
+  setupOpenApi(
+    app,
+    config.basePath,
+    config.name,
+    `This is OpenAPI Docs for ${config.name}`
+  )
   // Setup routes if provided
   if (config.setupRoutes) {
     config.setupRoutes(app)

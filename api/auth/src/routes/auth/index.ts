@@ -16,7 +16,7 @@ import {
 } from "@/lib/constants"
 import { deleteUserById, findUserByEmail, insertUser } from "@/lib/db"
 import { generateVerificationCode, sendVerificationEmail } from "@/lib/helper"
-import { deleteUserProfile } from "@/lib/services"
+
 import {
   checkEmailVerification,
   deleteUser,
@@ -91,8 +91,21 @@ authRoutes.openapi(getUser, async (c) => {
     const searchedUser = await c
       .get("db")
       .selectFrom("users")
-      .selectAll()
-      .where((eb) => eb.or([eb("id", "=", id), eb("email", "=", email)]))
+      .innerJoin("userProfiles", "users.id", "userProfiles.id")
+      .select([
+        "users.id",
+        "users.email",
+        "users.isSuperAdmin",
+        "users.emailVerifiedAt",
+        "userProfiles.fullName",
+        "userProfiles.avatar",
+        "userProfiles.profileImage",
+        "userProfiles.localeId",
+        "userProfiles.onboardingCompleted",
+      ])
+      .where((eb) =>
+        eb.or([eb("users.id", "=", id), eb("users.email", "=", email)])
+      )
       .executeTakeFirst()
 
     if (!searchedUser) {
@@ -102,6 +115,11 @@ authRoutes.openapi(getUser, async (c) => {
     return c.json(
       {
         id: searchedUser.id,
+        fullName: searchedUser.fullName,
+        avatar: searchedUser.avatar,
+        profileImage: searchedUser.profileImage,
+        localeId: searchedUser.localeId,
+        onboardingCompleted: searchedUser.onboardingCompleted,
         isSuperAdmin: searchedUser.isSuperAdmin,
         email: searchedUser.email,
         emailVerified: !!searchedUser.emailVerifiedAt,
@@ -253,7 +271,6 @@ authRoutes.openapi(deleteUser, async (c) => {
       const msg = await t.text(ERROR_UNAUTHORIZED)
       throw new UnauthorizedError(msg)
     }
-    await deleteUserProfile(c, user.id)
     const db = c.get("db")
     await invalidateAllSessions(db, user.id)
     await deleteUserById(c, user.id)

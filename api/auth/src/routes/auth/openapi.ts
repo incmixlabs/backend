@@ -86,7 +86,8 @@ export const getUser = createRoute({
   method: "get",
   path: "/users",
   security: [{ cookieAuth: [] }],
-  summary: "Get User",
+  summary: "Search User",
+  description: "Search user by ID or Email",
   tags: ["Users"],
   request: {
     query: IdOrEmailSchema,

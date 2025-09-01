@@ -1,3 +1,4 @@
+import { findUserById } from "@/lib/db"
 import { env } from "hono/adapter"
 import { getCookie } from "hono/cookie"
 import type { Context } from "../types"
@@ -24,11 +25,7 @@ export async function authMiddleware(c: Context, next: () => Promise<void>) {
   }
 
   // Fetch user by session.userId
-  const user = await db
-    .selectFrom("users")
-    .selectAll()
-    .where("id", "=", session.userId)
-    .executeTakeFirst()
+  const user = await findUserById(c, session.userId)
 
   if (!user) {
     deleteSessionCookie(c)
@@ -46,6 +43,7 @@ export async function authMiddleware(c: Context, next: () => Promise<void>) {
   }
 
   c.set("user", {
+    fullName: user.fullName,
     email: user.email,
     isSuperAdmin: user.isSuperAdmin,
     emailVerified: user.emailVerifiedAt !== null,

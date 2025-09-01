@@ -71,7 +71,7 @@ services:
       GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
       FRONTEND_URL: ${FRONTEND_URL}
       EMAIL_API_URL: ${EMAIL_API_URL:-http://email-api:8989/api/email}
-      USERS_API_URL: ${USERS_API_URL:-http://users-api:9191/api/users}
+      FILES_API_URL: ${FILES_API_URL:-http://files-api:8282/api/files}
       GOOGLE_REDIRECT_URL: ${GOOGLE_REDIRECT_URL}
       # Service URLs
       INTL_API_URL: ${INTL_API_URL:-http://intl-api:9090/api/intl}
@@ -99,26 +99,6 @@ services:
     depends_on:
       - postgres
 
-  users-api:
-    image: registry.incmix.com/users-api:latest
-    environment:
-      # Database
-      DATABASE_URL: ${DATABASE_URL}
-      # Service configuration
-      NODE_ENV: ${NODE_ENV}
-      COOKIE_NAME: ${COOKIE_NAME}
-      DOMAIN: ${DOMAIN}
-      PORT: 9191
-      # Service URLs
-      AUTH_API_URL: ${AUTH_API_URL:-http://auth-api:8787/api/auth}
-      FILES_API_URL: ${FILES_API_URL:-http://files-api:8282/api/files}
-      ORG_API_URL: ${ORG_API_URL:-http://org-api:9292/api/org}
-      INTL_API_URL: ${INTL_API_URL:-http://intl-api:9090/api/intl}
-    networks:
-      - incmix-network
-    depends_on:
-      - postgres
-
   org-api:
     image: registry.incmix.com/org-api:latest
     environment:
@@ -131,26 +111,6 @@ services:
       PORT: 9292
       # Service URLs
       AUTH_API_URL: ${AUTH_API_URL:-http://auth-api:8787/api/auth}
-      USERS_API_URL: ${USERS_API_URL:-http://users-api:9191/api/users}
-      INTL_API_URL: ${INTL_API_URL:-http://intl-api:9090/api/intl}
-    networks:
-      - incmix-network
-    depends_on:
-      - postgres
-
-  permissions-api:
-    image: registry.incmix.com/permissions-api:latest
-    environment:
-      # Database
-      DATABASE_URL: ${DATABASE_URL}
-      # Service configuration
-      NODE_ENV: ${NODE_ENV}
-      COOKIE_NAME: ${COOKIE_NAME}
-      DOMAIN: ${DOMAIN}
-      PORT: 9393
-      # Service URLs
-      AUTH_API_URL: ${AUTH_API_URL:-http://auth-api:8787/api/auth}
-      USERS_API_URL: ${USERS_API_URL:-http://users-api:9191/api/users}
       INTL_API_URL: ${INTL_API_URL:-http://intl-api:9090/api/intl}
     networks:
       - incmix-network
@@ -240,27 +200,6 @@ services:
     depends_on:
       - postgres
 
-  tasks-api:
-    image: registry.incmix.com/tasks-api:latest
-    environment:
-      # Database
-      DATABASE_URL: ${DATABASE_URL}
-      # Service configuration
-      NODE_ENV: ${NODE_ENV}
-      COOKIE_NAME: ${COOKIE_NAME}
-      DOMAIN: ${DOMAIN}
-      PORT: 8888
-      REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379
-      # Service URLs
-      AUTH_API_URL: ${AUTH_API_URL:-http://auth-api:8787/api/auth}
-      ORG_API_URL: ${ORG_API_URL:-http://org-api:9292/api/org}
-      INTL_API_URL: ${INTL_API_URL:-http://intl-api:9090/api/intl}
-    networks:
-      - incmix-network
-    depends_on:
-      - postgres
-      - redis
-
   location-api:
     image: registry.incmix.com/location-api:latest
     environment:
@@ -338,11 +277,11 @@ services:
       GENAI_API_URL: ${GENAI_API_URL:-http://genai-api:8383/api/genai}
       PROJECTS_API_URL: ${PROJECTS_API_URL:-http://projects-api:8484/api/projects}
       COMMENTS_API_URL: ${COMMENTS_API_URL:-http://comments-api:8585/api/comments}
-      USERS_API_URL: ${USERS_API_URL:-http://users-api:9191/api/users}
       FILES_API_URL: ${FILES_API_URL:-http://files-api:8282/api/files}
       EMAIL_API_URL: ${EMAIL_API_URL:-http://email-api:8989/api/email}
       LOCATION_API_URL: ${LOCATION_API_URL:-http://location-api:9494/api/location}
       RXDB_SYNC_API_URL: ${RXDB_SYNC_API_URL:-http://rxdb-api:8686/api/rxdb-sync}
+    ports:
       - 8081:8080  # Only public access point
     networks:
       - incmix-network

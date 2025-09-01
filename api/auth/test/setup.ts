@@ -7,6 +7,7 @@ const mockFetch = vi.fn()
 // Mock the database module
 vi.mock("@incmix-api/utils/db-schema", () => ({
   initDb: vi.fn(() => mockDb),
+  projectStatus: ["all", "started", "on-hold", "completed"],
 }))
 
 // Mock session utils to generate predictable IDs

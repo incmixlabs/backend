@@ -14,7 +14,6 @@ const healthcheckRoutes = createHealthCheckRoute<HonoApp>({
     GOOGLE_CLIENT_SECRET: envVars.GOOGLE_CLIENT_SECRET,
     GOOGLE_REDIRECT_URL: envVars.GOOGLE_REDIRECT_URL,
     INTL_API_URL: envVars.INTL_API_URL,
-    USERS_API_URL: envVars.USERS_API_URL,
     DATABASE_URL: envVars.DATABASE_URL,
   },
 

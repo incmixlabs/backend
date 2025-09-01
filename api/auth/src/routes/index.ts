@@ -6,7 +6,7 @@ import oAuthRoutes from "@/routes/oauth"
 import resetPasswordRoutes from "@/routes/reset-password"
 import type { HonoApp } from "@/types"
 import type { OpenAPIHono } from "@hono/zod-openapi"
-import userRoutes from "./users"
+import usersRoutes from "./users"
 
 export const routes = (app: OpenAPIHono<HonoApp>) => {
   app.route(`${BASE_PATH}`, authRoutes)
@@ -14,5 +14,5 @@ export const routes = (app: OpenAPIHono<HonoApp>) => {
   app.route(`${BASE_PATH}/reset-password`, resetPasswordRoutes)
   app.route(`${BASE_PATH}/verification-email`, emailVerificationRoutes)
   app.route(`${BASE_PATH}/google`, oAuthRoutes)
-  app.route(`${BASE_PATH}/users`, userRoutes)
+  app.route(`${BASE_PATH}/users`, usersRoutes)
 }
