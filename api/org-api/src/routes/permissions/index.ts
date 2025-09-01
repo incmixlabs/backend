@@ -179,24 +179,6 @@ permissionRoutes.openapi(getRolesPermissions, async (c) => {
   }
 })
 
-permissionRoutes.openapi(updatePermissions, async (c) => {
-  try {
-    const user = c.get("user")
-    const t = await useTranslation(c)
-    if (!user) {
-      const msg = await t.text(ERROR_UNAUTHORIZED)
-      throw new UnauthorizedError(msg)
-    }
-
-    const { orgId } = c.req.valid("param")
-    await throwUnlessUserCan(c, "update", "Role", orgId)
-
-    const { updates } = c.req.valid("json")
-
-    if (updates.length === 0) {
-      const msg = await t.text(ERROR_BAD_REQUEST)
-      throw new UnprocessableEntityError(msg)
-    }
     await c
       .get("db")
       .transaction()
@@ -204,7 +186,8 @@ permissionRoutes.openapi(updatePermissions, async (c) => {
         for (const update of updates) {
           const { subject, action, roleId, allowed } = update
 
-          const permission = await findPermissionBySubjectAndAction(
+          // Check existing role-permission join
+          const joined = await findPermissionBySubjectAndAction(
             c,
             subject,
             action,
@@ -212,58 +195,50 @@ permissionRoutes.openapi(updatePermissions, async (c) => {
             tx
           )
 
-          if (!permission && allowed) {
-            const newPermission = await insertPermission(
-              c,
-              {
-                resourceType: subject,
-                action,
-                conditions: null,
-                createdAt: new Date().toISOString(),
-                updatedAt: new Date().toISOString(),
-                name: `${subject} ${action}`,
-              },
-              tx
-            )
+          if (allowed) {
+            // Get or create the base permission record
+            const existingPerm = await tx
+              .selectFrom("permissions")
+              .selectAll()
+              .where("resourceType", "=", subject)
+              .where("action", "=", action)
+              .executeTakeFirst()
 
-            if (!newPermission) {
-              // const msg = await t.text(ERROR_PERMISSION_INSERT_FAIL)
-              throw new ServerError("Failed to update permissions")
+            const perm =
+              existingPerm ??
+              (await insertPermission(
+                c,
+                {
+                  resourceType: subject,
+                  action,
+                  conditions: null,
+                  createdAt: new Date().toISOString(),
+                  updatedAt: new Date().toISOString(),
+                  name: `${subject} ${action}`,
+                },
+                tx
+              ))
+
+            if (!perm?.id) {
+              throw new ServerError("Failed to create permission")
             }
-          }
 
-          if (permission && !allowed) {
-            const deleted = await deletePermission(c, permission.id, roleId, tx)
+            // Ensure the rolePermissions link exists
+            if (!joined) {
+              await tx
+                .insertInto("rolePermissions")
+                .values({ roleId, permissionId: perm.id })
+                .executeTakeFirst()
+            }
+          } else if (joined) {
+            // Disallow: remove only the join record
+            const deleted = await deletePermission(c, joined.id, roleId, tx)
             if (!deleted) {
-              throw new ServerError("Failed to Update permission")
-            }
-          }
-
-          if (permission && allowed) {
-            const updated = await updatePermission(
-              c,
-              {
-                ...permission,
-                conditions: null,
-              },
-              permission.id,
-              tx
-            )
-            if (!updated) {
-              throw new ServerError("Failed to update permission")
+              throw new ServerError("Failed to delete permission mapping")
             }
           }
         }
       })
-
-    return c.json({ message: "Permissions updated" }, 200)
-  } catch (error) {
-    return await processError<typeof updatePermissions>(c, error, [
-      "{{ default }}",
-      "update-permission",
-    ])
-  }
-})
 
 // Add roles routes for OpenAPI docs only (placeholder implementations)
 permissionRoutes.openapi(addNewRole, async (c) => {
