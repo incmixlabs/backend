@@ -5,13 +5,15 @@ import type { Env } from "hono"
 export function setupOpenApi<T extends Env>(
   app: OpenAPIHono<T>,
   basePath: string,
-  title?: string
+  title?: string,
+  description?: string
 ) {
   app.doc(`${basePath}/openapi.json`, {
     openapi: "3.0.0",
     info: {
       version: "1.0.0",
       title: title ?? "Open Api Docs",
+       ...(description ? { description } : {}),
     },
   })
 
