@@ -1,11 +1,23 @@
-import { BASE_PATH, PERMISSIONS_BASE_PATH } from "@/lib/constants"
+import { BASE_PATH } from "@/lib/constants"
 import { middlewares } from "@/middleware"
 import { routes } from "@/routes"
-import { permissionsReferenceRoutes } from "@/routes/permissions"
+import permissionRoutes, { permissionsReferenceRoutes } from "@/routes/permissions"
 import type { HonoApp } from "@/types"
 import { createService } from "@incmix-api/utils"
 import { PermissionService } from "@incmix-api/utils/authorization"
 
+setupRoutes: (app) => {
+  routes(app)
+
+  // Mount runtime permissions API (produces /api/org/permissions/* and /api/org/permissions/openapi.json)
+  app.route(`${BASE_PATH}/permissions`, permissionRoutes)
+
+  // Mount permissions reference routes AFTER main routes and OpenAPI setup
+  app.mount(
+    `${BASE_PATH}/permissions/reference`,
+    permissionsReferenceRoutes.fetch
+  )
+}
 import { envVars } from "./env-vars"
 
 const service = createService<HonoApp["Bindings"], HonoApp["Variables"]>({
