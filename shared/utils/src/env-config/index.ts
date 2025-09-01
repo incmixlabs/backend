@@ -83,9 +83,9 @@ const baseEnvSchema = z.object({
   DOMAIN: z.string().default("http://localhost"),
   COOKIE_NAME: z.string().default("incmix_session"),
   MOCK_DATA: z.coerce.boolean().default(false),
-  INTL_API_URL: z.url(),
+  INTL_API_URL: z.url().optional(),
   TIMEOUT_MS: z.coerce.number().default(5000),
-  AUTH_API_URL: z.url(),
+  AUTH_API_URL: z.url().optional()
 })
 
 // Service-specific schema extensions
@@ -96,8 +96,8 @@ const serviceSchemas = {
     GOOGLE_CLIENT_SECRET: z.string(),
     PORT: z.coerce.number().default(services.auth.port),
     // API URLs
-    EMAIL_API_URL: z.url(),
-    FILES_API_URL: z.url(),
+    EMAIL_API_URL: z.url().optional(),
+    FILES_API_URL: z.url().optional(),
   }),
   email: baseEnvSchema.extend({
     EMAIL_FROM: z.string().email(),
@@ -112,7 +112,7 @@ const serviceSchemas = {
     GOOGLE_AI_API_KEY: z.string().optional(),
     PORT: z.coerce.number().default(services.genai.port),
     REDIS_URL: z.url(),
-    ORG_API_URL: z.url(),
+    ORG_API_URL: z.url().optional()
   }),
   files: baseEnvSchema.extend({
     STORAGE_TYPE: z.enum(["local", "s3"]).default("s3"),
@@ -136,22 +136,22 @@ const serviceSchemas = {
   }),
   bff: baseEnvSchema.omit({ DATABASE_URL: true, SENTRY_DSN: true }).extend({
     PORT: z.coerce.number().default(services.bff.port),
-    ORG_API_URL: z.url(),
-    GENAI_API_URL: z.url(),
-    PROJECTS_API_URL: z.url(),
-    COMMENTS_API_URL: z.url(),
-    FILES_API_URL: z.url(),
-    EMAIL_API_URL: z.url(),
-    LOCATION_API_URL: z.url(),
-    RXDB_SYNC_API_URL: z.url(),
+    ORG_API_URL: z.url().optional(),
+    GENAI_API_URL: z.url().optional(),
+    PROJECTS_API_URL: z.url().optional(),
+    COMMENTS_API_URL: z.url().optional(),
+    FILES_API_URL: z.url().optional(),
+    EMAIL_API_URL: z.url().optional(),
+    LOCATION_API_URL: z.url().optional(),
+    RXDB_SYNC_API_URL: z.url().optional(),
   }),
   comments: baseEnvSchema.extend({
     PORT: z.coerce.number().default(services.comments.port),
-    ORG_API_URL: z.url(),
+    ORG_API_URL: z.url().optional(),
   }),
   intl: baseEnvSchema.extend({
     PORT: z.coerce.number().default(services.intl.port),
-    AUTH_API_URL: z.url(),
+    AUTH_API_URL: z.url().optional(),
   }),
   org: baseEnvSchema.extend({
     PORT: z.coerce.number().default(services.org.port),
@@ -159,7 +159,8 @@ const serviceSchemas = {
 
   projects: baseEnvSchema.extend({
     PORT: z.coerce.number().default(services.projects.port),
-    ORG_API_URL: z.url(),
+    ORG_API_URL: z.url().optional(),
+    REDIS_URL: z.url().optional()
   }),
   rxdb: baseEnvSchema.extend({
     PORT: z.coerce.number().default(services.rxdb.port),

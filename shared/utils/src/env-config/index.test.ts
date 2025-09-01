@@ -30,16 +30,16 @@ describe("Environment Config", () => {
 
       // Auth service schema includes these API URLs
       expect(env.EMAIL_API_URL).toBeDefined()
-
       expect(env.INTL_API_URL).toBeDefined()
+      expect(env.FILES_API_URL).toBeDefined()
 
       // These should be set based on buildApiUrl
       expect(env.EMAIL_API_URL).toBe("http://localhost:8989/api/email")
       expect(env.INTL_API_URL).toBe("http://localhost:9090/api/intl")
+      expect(env.FILES_API_URL).toBe("http://localhost:8282/api/files")
 
       // Auth service schema doesn't include these, so they shouldn't be set
       expect(env.GENAI_API_URL).toBeUndefined()
-      expect(env.FILES_API_URL).toBeUndefined()
       expect(env.PROJECTS_API_URL).toBeUndefined()
     })
 
@@ -283,7 +283,7 @@ describe("Environment Config", () => {
 
       // Check that REDIS_URL is present (value may vary based on environment)
       expect(env.REDIS_URL).toBeDefined()
-      expect(env.PORT).toBe(8888)
+      expect(env.PORT).toBe(8484)
     })
   })
 })
