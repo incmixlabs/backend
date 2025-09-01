@@ -1,3 +1,4 @@
+import { ERROR_MEMBER_UPDATE_FAIL, ERROR_NO_ROLES } from "@/lib/constants"
 import {
   deletePermission,
   deleteRoleById,
@@ -16,7 +17,6 @@ import {
 import type { HonoApp } from "@/types"
 import { OpenAPIHono } from "@hono/zod-openapi"
 import { ERROR_BAD_REQUEST, ERROR_UNAUTHORIZED } from "@incmix-api/utils"
-import { ERROR_MEMBER_UPDATE_FAIL, ERROR_NO_ROLES } from "@/lib/constants"
 import {
   NotFoundError,
   ServerError,
@@ -32,8 +32,12 @@ import { actions, subjects } from "@incmix/utils/types"
 import { getRolesPermissions, updatePermissions } from "./openapi"
 
 import { throwUnlessUserCan } from "@/lib/helper"
-import { addNewRole, deleteRole, updateRole } from "@/routes/roles/openapi"
-import { updateMemberRole } from "@/routes/organisations/openapi"
+import {
+  addNewRole,
+  deleteRole,
+  updateMemberRole,
+  updateRole,
+} from "@/routes/roles/openapi"
 import { apiReference } from "@scalar/hono-api-reference"
 
 const permissionRoutes = new OpenAPIHono<HonoApp>({
@@ -395,23 +399,15 @@ permissionRoutes.openapi(updateMemberRole, async (c) => {
       )
       .returningAll()
       .executeTakeFirst()
-    
+
     if (!updated) {
       const msg = await t.text(ERROR_MEMBER_UPDATE_FAIL)
       throw new ServerError(msg)
     }
-    
-    const members = await findOrgMembers(c, org.id)
 
-    return c.json(
-      {
-        id: org.id,
-        name: org.name,
-        handle: org.handle,
-        members: members.map((m) => ({ userId: m.userId, role: m.role })),
-      },
-      200
-    )
+    const _members = await findOrgMembers(c, org.id)
+
+    return c.json({ message: "Member role updated successfully" }, 200)
   } catch (error) {
     return await processError<typeof updateMemberRole>(c, error, [
       "{{ default }}",

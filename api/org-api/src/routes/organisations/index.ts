@@ -38,7 +38,6 @@ import {
   getOrganizationPermissions,
   getUserOrganisations,
   removeMembers,
-  updateMemberRole,
   updateOrganisation,
   validateHandle,
 } from "@/routes/organisations/openapi"
@@ -479,69 +478,6 @@ orgRoutes.openapi(removeMembers, async (c) => {
     return await processError<typeof removeMembers>(c, error, [
       "{{ default }}",
       "remove-members",
-    ])
-  }
-})
-
-orgRoutes.openapi(updateMemberRole, async (c) => {
-  try {
-    const user = c.get("user")
-    const t = await useTranslation(c)
-    if (!user) {
-      const msg = await t.text(ERROR_UNAUTHORIZED)
-      throw new UnauthorizedError(msg)
-    }
-
-    const { handle } = c.req.valid("param")
-    const { role: newRole, userId } = c.req.valid("json")
-
-    const org = await findOrganisationById(c, handle)
-
-    await throwUnlessUserCan(c, "update", "Member", org.id)
-
-    const member = await findOrgMemberById(c, userId, org.id)
-
-    if (
-      member.role === UserRoles.ROLE_OWNER &&
-      newRole !== UserRoles.ROLE_OWNER
-    ) {
-      await ensureAtLeastOneOwner(c, org.id, [userId], "update")
-    }
-
-    const dbRole = await findRoleByName(c, newRole)
-    if (!dbRole) {
-      const msg = await t.text(ERROR_NO_ROLES)
-      throw new ServerError(msg)
-    }
-
-    const updated = await c
-      .get("db")
-      .updateTable("members")
-      .set({ roleId: dbRole.id })
-      .where((eb) =>
-        eb.and([eb("orgId", "=", org.id), eb("userId", "=", userId)])
-      )
-      .returningAll()
-      .executeTakeFirst()
-    if (!updated) {
-      const msg = await t.text(ERROR_MEMBER_UPDATE_FAIL)
-      throw new ServerError(msg)
-    }
-    const members = await findOrgMembers(c, org.id)
-
-    return c.json(
-      {
-        id: org.id,
-        name: org.name,
-        handle: org.handle,
-        members: members.map((m) => ({ userId: m.userId, role: m.role })),
-      },
-      200
-    )
-  } catch (error) {
-    return await processError<typeof updateMemberRole>(c, error, [
-      "{{ default }}",
-      "update-member-role",
     ])
   }
 })
