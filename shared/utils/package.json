@@ -64,7 +64,7 @@
     "@hono/zod-openapi": "catalog:",
     "@incmix/utils": "catalog:",
     "@intlify/utils": "0.13.0",
-    "@scalar/hono-api-reference": "0.5.163",
+    "@scalar/hono-api-reference": "catalog:",
     "@sentry/utils": "8.42.0",
     "add": "2.0.6",
     "bullmq": "catalog:",

@@ -42,7 +42,7 @@ import {
   setupCodegenQueue,
   setupUserStoryQueue,
 } from "@incmix-api/utils/queue"
-import { apiReference } from "@scalar/hono-api-reference"
+
 import { env } from "hono/adapter"
 import { nanoid } from "nanoid"
 import type { JobSchema } from "./types"
@@ -50,49 +50,6 @@ import type { JobSchema } from "./types"
 const tasksRoutes = new OpenAPIHono<HonoApp>({
   defaultHook: zodError,
 })
-
-// Setup OpenAPI documentation for tasks (must be before parameterized routes)
-// These endpoints should be publicly accessible for documentation
-tasksRoutes.doc("/openapi.json", (_c) => ({
-  openapi: "3.0.0",
-  info: {
-    version: "1.0.0",
-    title: "Tasks API",
-    description:
-      "Endpoints for task management. Auth via cookieAuth (session).",
-  },
-  tags: [
-    {
-      name: "Tasks",
-      description: "Task management operations",
-    },
-  ],
-  servers: [
-    {
-      url: "/api/projects/tasks",
-      description: "Tasks API server",
-    },
-  ],
-  paths: {},
-  components: {
-    securitySchemes: {
-      cookieAuth: {
-        type: "apiKey",
-        in: "cookie",
-        name: "session",
-      },
-    },
-  },
-}))
-
-tasksRoutes.get(
-  "/reference",
-  apiReference({
-    spec: {
-      url: "/api/projects/tasks/openapi.json",
-    },
-  })
-)
 
 tasksRoutes.openapi(listTasks, async (c) => {
   try {

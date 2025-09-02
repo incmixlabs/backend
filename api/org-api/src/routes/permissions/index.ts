@@ -33,48 +33,11 @@ import {
 import { useTranslation } from "@incmix-api/utils/middleware"
 import type { UserRole } from "@incmix/utils/types"
 import { UserRoles, actions, subjects } from "@incmix/utils/types"
-import { apiReference } from "@scalar/hono-api-reference"
 import { getRolesPermissions, updatePermissions } from "./openapi"
 
 const permissionRoutes = new OpenAPIHono<HonoApp>({
   defaultHook: zodError,
 })
-
-// Setup OpenAPI documentation
-permissionRoutes.doc("/openapi.json", {
-  openapi: "3.0.0",
-  info: {
-    version: "1.0.0",
-    title: "Permissions API",
-    description:
-      "API for managing roles and permissions within organizations. Auth via cookieAuth (session).",
-  },
-  tags: [
-    {
-      name: "Permissions",
-      description: "Role and permission management operations",
-    },
-  ],
-})
-
-permissionRoutes.get(
-  "/reference",
-  apiReference({
-    spec: {
-      url: "/api/org/permissions/openapi.json",
-    },
-  })
-)
-
-permissionRoutes.openAPIRegistry.registerComponent(
-  "securitySchemes",
-  "cookieAuth",
-  {
-    type: "apiKey",
-    in: "cookie",
-    name: "session",
-  }
-)
 
 permissionRoutes.openapi(getRolesPermissions, async (c) => {
   try {
@@ -272,7 +235,6 @@ permissionRoutes.openapi(updatePermissions, async (c) => {
   }
 })
 
-// Add roles routes for OpenAPI docs only (placeholder implementations)
 permissionRoutes.openapi(addNewRole, async (c) => {
   try {
     const user = c.get("user")
@@ -420,83 +382,4 @@ permissionRoutes.openapi(updateMemberRole, async (c) => {
   }
 })
 
-const permissionsReferenceRoutes = new OpenAPIHono<HonoApp>()
-
-// Setup OpenAPI documentation for permissions (must be before parameterized routes)
-permissionsReferenceRoutes.doc("/openapi.json", {
-  openapi: "3.0.0",
-  info: {
-    version: "1.0.0",
-    title: "Permissions API",
-    description:
-      "API for managing roles and permissions within organizations. Auth via cookieAuth (session).",
-  },
-  tags: [
-    {
-      name: "Permissions",
-      description: "Role and permission management operations",
-    },
-  ],
-})
-
-permissionsReferenceRoutes.get(
-  "/",
-  apiReference({
-    spec: {
-      url: "/api/org/permissions/reference/openapi.json",
-    },
-  })
-)
-
-// Note: /openapi.json is automatically created by permissionsReferenceRoutes.doc() above
-
-permissionsReferenceRoutes.openAPIRegistry.registerComponent(
-  "securitySchemes",
-  "cookieAuth",
-  {
-    type: "apiKey",
-    in: "cookie",
-    name: "session",
-  }
-)
-
-// Add the permissions and roles routes for OpenAPI docs only - these reference the same handlers as above
-permissionsReferenceRoutes.openapi(getRolesPermissions, (c) => {
-  return c.json(
-    { message: "Use /api/org/permissions endpoint for actual implementation" },
-    501 as any
-  )
-})
-permissionsReferenceRoutes.openapi(updatePermissions, (c) => {
-  return c.json(
-    { message: "Use /api/org/permissions endpoint for actual implementation" },
-    501 as any
-  )
-})
-permissionsReferenceRoutes.openapi(addNewRole, (c) => {
-  return c.json(
-    { message: "Use /api/org/permissions endpoint for actual implementation" },
-    501 as any
-  )
-})
-permissionsReferenceRoutes.openapi(updateRole, (c) => {
-  return c.json(
-    { message: "Use /api/org/permissions endpoint for actual implementation" },
-    501 as any
-  )
-})
-permissionsReferenceRoutes.openapi(deleteRole, (c) => {
-  return c.json(
-    { message: "Use /api/org/permissions endpoint for actual implementation" },
-    501 as any
-  )
-})
-permissionsReferenceRoutes.openapi(updateMemberRole, (c) => {
-  return c.json(
-    { message: "Use /api/org/permissions endpoint for actual implementation" },
-    501 as any
-  )
-})
-
-export { permissionsReferenceRoutes }
 export default permissionRoutes
