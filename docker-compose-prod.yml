@@ -66,10 +66,16 @@ services:
       COOKIE_NAME: ${COOKIE_NAME}
       DOMAIN: ${DOMAIN}
       PORT: 8787
+      # Frontend URL
+      FRONTEND_URL: ${FRONTEND_URL}
+      # Monitoring
+      SENTRY_DSN: ${SENTRY_DSN:-https://examplePublicKey@o0.ingest.sentry.io/0}
+      # Service configuration
+      MOCK_DATA: ${MOCK_DATA:-false}
+      TIMEOUT_MS: ${TIMEOUT_MS:-5000}
       # OAuth and authentication
       GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
       GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
-      FRONTEND_URL: ${FRONTEND_URL}
       EMAIL_API_URL: ${EMAIL_API_URL:-http://email-api:8989/api/email}
       FILES_API_URL: ${FILES_API_URL:-http://files-api:8282/api/files}
       GOOGLE_REDIRECT_URL: ${GOOGLE_REDIRECT_URL}
@@ -90,6 +96,13 @@ services:
       COOKIE_NAME: ${COOKIE_NAME}
       DOMAIN: ${DOMAIN}
       PORT: 8989
+      # Frontend URL
+      FRONTEND_URL: ${FRONTEND_URL}
+      # Monitoring
+      SENTRY_DSN: ${SENTRY_DSN:-https://examplePublicKey@o0.ingest.sentry.io/0}
+      # Service configuration
+      MOCK_DATA: ${MOCK_DATA:-false}
+      TIMEOUT_MS: ${TIMEOUT_MS:-5000}
       # Email service
       RESEND_API_KEY: ${RESEND_API_KEY}
       # Service URLs
@@ -109,6 +122,13 @@ services:
       COOKIE_NAME: ${COOKIE_NAME}
       DOMAIN: ${DOMAIN}
       PORT: 9292
+      # Frontend URL
+      FRONTEND_URL: ${FRONTEND_URL}
+      # Monitoring
+      SENTRY_DSN: ${SENTRY_DSN:-https://examplePublicKey@o0.ingest.sentry.io/0}
+      # Service configuration
+      MOCK_DATA: ${MOCK_DATA:-false}
+      TIMEOUT_MS: ${TIMEOUT_MS:-5000}
       # Service URLs
       AUTH_API_URL: ${AUTH_API_URL:-http://auth-api:8787/api/auth}
       INTL_API_URL: ${INTL_API_URL:-http://intl-api:9090/api/intl}
@@ -127,6 +147,13 @@ services:
       COOKIE_NAME: ${COOKIE_NAME}
       DOMAIN: ${DOMAIN}
       PORT: 9090
+      # Frontend URL
+      FRONTEND_URL: ${FRONTEND_URL}
+      # Monitoring
+      SENTRY_DSN: ${SENTRY_DSN:-https://examplePublicKey@o0.ingest.sentry.io/0}
+      # Service configuration
+      MOCK_DATA: ${MOCK_DATA:-false}
+      TIMEOUT_MS: ${TIMEOUT_MS:-5000}
       # Service URLs
       AUTH_API_URL: ${AUTH_API_URL:-http://auth-api:8787/api/auth}
     networks:
@@ -137,11 +164,20 @@ services:
   files-api:
     image: registry.incmix.com/files-api:latest
     environment:
+      # Database
+      DATABASE_URL: ${DATABASE_URL}
       # Service configuration
       NODE_ENV: ${NODE_ENV}
       COOKIE_NAME: ${COOKIE_NAME}
       DOMAIN: ${DOMAIN}
       PORT: 8282
+      # Frontend URL
+      FRONTEND_URL: ${FRONTEND_URL}
+      # Monitoring
+      SENTRY_DSN: ${SENTRY_DSN:-https://examplePublicKey@o0.ingest.sentry.io/0}
+      # Service configuration
+      MOCK_DATA: ${MOCK_DATA:-false}
+      TIMEOUT_MS: ${TIMEOUT_MS:-5000}
       # Service URLs
       AUTH_API_URL: ${AUTH_API_URL:-http://auth-api:8787/api/auth}
       INTL_API_URL: ${INTL_API_URL:-http://intl-api:9090/api/intl}
@@ -167,6 +203,13 @@ services:
       COOKIE_NAME: ${COOKIE_NAME}
       DOMAIN: ${DOMAIN}
       PORT: 8383
+      # Frontend URL
+      FRONTEND_URL: ${FRONTEND_URL}
+      # Monitoring
+      SENTRY_DSN: ${SENTRY_DSN:-https://examplePublicKey@o0.ingest.sentry.io/0}
+      # Service configuration
+      MOCK_DATA: ${MOCK_DATA:-false}
+      TIMEOUT_MS: ${TIMEOUT_MS:-5000}
       # Service URLs
       AUTH_API_URL: ${AUTH_API_URL:-http://auth-api:8787/api/auth}
       ORG_API_URL: ${ORG_API_URL:-http://org-api:9292/api/org}
@@ -191,6 +234,13 @@ services:
       COOKIE_NAME: ${COOKIE_NAME}
       DOMAIN: ${DOMAIN}
       PORT: 8484
+      # Frontend URL
+      FRONTEND_URL: ${FRONTEND_URL}
+      # Monitoring
+      SENTRY_DSN: ${SENTRY_DSN:-https://examplePublicKey@o0.ingest.sentry.io/0}
+      # Service configuration
+      MOCK_DATA: ${MOCK_DATA:-false}
+      TIMEOUT_MS: ${TIMEOUT_MS:-5000}
       # Service URLs
       AUTH_API_URL: ${AUTH_API_URL:-http://auth-api:8787/api/auth}
       ORG_API_URL: ${ORG_API_URL:-http://org-api:9292/api/org}
@@ -203,11 +253,20 @@ services:
   location-api:
     image: registry.incmix.com/location-api:latest
     environment:
+      # Database
+      DATABASE_URL: ${DATABASE_URL}
       # Service configuration
       NODE_ENV: ${NODE_ENV}
       COOKIE_NAME: ${COOKIE_NAME}
       DOMAIN: ${DOMAIN}
       PORT: 9494
+      # Frontend URL
+      FRONTEND_URL: ${FRONTEND_URL}
+      # Monitoring
+      SENTRY_DSN: ${SENTRY_DSN:-https://examplePublicKey@o0.ingest.sentry.io/0}
+      # Service configuration
+      MOCK_DATA: ${MOCK_DATA:-false}
+      TIMEOUT_MS: ${TIMEOUT_MS:-5000}
       # Service URLs
       INTL_API_URL: ${INTL_API_URL:-http://intl-api:9090/api/intl}
       # Location and weather services
@@ -234,6 +293,13 @@ services:
       COOKIE_NAME: ${COOKIE_NAME}
       DOMAIN: ${DOMAIN}
       PORT: 8585
+      # Frontend URL
+      FRONTEND_URL: ${FRONTEND_URL}
+      # Monitoring
+      SENTRY_DSN: ${SENTRY_DSN:-https://examplePublicKey@o0.ingest.sentry.io/0}
+      # Service configuration
+      MOCK_DATA: ${MOCK_DATA:-false}
+      TIMEOUT_MS: ${TIMEOUT_MS:-5000}
       # Service URLs
       AUTH_API_URL: ${AUTH_API_URL:-http://auth-api:8787/api/auth}
       ORG_API_URL: ${ORG_API_URL:-http://org-api:9292/api/org}
@@ -253,6 +319,13 @@ services:
       COOKIE_NAME: ${COOKIE_NAME}
       DOMAIN: ${DOMAIN}
       PORT: 8686
+      # Frontend URL
+      FRONTEND_URL: ${FRONTEND_URL}
+      # Monitoring
+      SENTRY_DSN: ${SENTRY_DSN:-https://examplePublicKey@o0.ingest.sentry.io/0}
+      # Service configuration
+      MOCK_DATA: ${MOCK_DATA:-false}
+      TIMEOUT_MS: ${TIMEOUT_MS:-5000}
       # Service URLs
       AUTH_API_URL: ${AUTH_API_URL:-http://auth-api:8787/api/auth}
       INTL_API_URL: ${INTL_API_URL:-http://intl-api:9090/api/intl}
@@ -270,6 +343,14 @@ services:
       COOKIE_NAME: ${COOKIE_NAME}
       DOMAIN: ${DOMAIN}
       PORT: 8080
+      # Frontend URL
+      FRONTEND_URL: ${FRONTEND_URL}
+      # Monitoring
+      SENTRY_DSN: ${SENTRY_DSN:-https://examplePublicKey@o0.ingest.sentry.io/0}
+      # Service configuration
+      MOCK_DATA: ${MOCK_DATA:-false}
+      TIMEOUT_MS: ${TIMEOUT_MS:-5000}
+      DATABASE_URL: ${DATABASE_URL}
       # All API URLs (BFF needs access to all services)
       AUTH_API_URL: ${AUTH_API_URL:-http://auth-api:8787/api/auth}
       ORG_API_URL: ${ORG_API_URL:-http://org-api:9292/api/org}
