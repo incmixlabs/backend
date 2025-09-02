@@ -45,7 +45,7 @@ runs:
         fi
 
         # Define all available services
-        ALL_SERVICES=("auth" "users-api" "projects-api" "tasks-api" "comments-api" "files-api" "genai-api" "intl-api" "location-api" "org-api" "permissions-api" "rxdb-api" "bff-web" "email" "db")
+        ALL_SERVICES=("auth" "projects-api" "comments-api" "files-api" "genai-api" "intl-api" "location-api" "org-api" "rxdb-api" "bff-web" "email" "db")
 
         # Extract service names from changed files
         SERVICES_ARRAY=()
