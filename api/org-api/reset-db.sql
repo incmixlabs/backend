@@ -1,5 +1,5 @@
 delete from
-  organisations;
+  orgs;
 
 delete from
   members;

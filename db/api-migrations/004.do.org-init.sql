@@ -1,34 +1,33 @@
 BEGIN;
 
 -- Create enum types
-CREATE TYPE role_scope AS ENUM ('organization', 'project', 'both');
+CREATE TYPE role_scope AS ENUM ('org', 'project', 'both');
 CREATE TYPE permission_action AS ENUM ('create', 'read', 'update', 'delete', 'manage');
 
--- Create organisations table
-CREATE TABLE organisations (
+-- Create orgs table
+CREATE TABLE orgs (
   id TEXT PRIMARY KEY NOT NULL,
   name TEXT NOT NULL,
   handle TEXT NOT NULL UNIQUE,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
-
 -- Create roles table with extended RBAC structure
 CREATE TABLE roles (
   id SERIAL PRIMARY KEY,
   name TEXT NOT NULL,
-  description TEXT,
-  organization_id TEXT,
+  desc TEXT,
+  org_id TEXT,
   is_system_role BOOLEAN NOT NULL DEFAULT false,
-  scope role_scope NOT NULL DEFAULT 'organization',
+  scope role_scope NOT NULL DEFAULT 'org',
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  CONSTRAINT roles_name_organization_id_key UNIQUE (name, organization_id),
-  CONSTRAINT fk_roles_organization_id FOREIGN KEY (organization_id) REFERENCES organisations(id) ON DELETE CASCADE
+  CONSTRAINT roles_name_org_id_key UNIQUE (name, org_id),
+  CONSTRAINT fk_roles_org_id FOREIGN KEY (org_id) REFERENCES orgs(id) ON DELETE CASCADE
 );
 
 -- Create indexes for roles
-CREATE INDEX idx_roles_organization_id ON roles(organization_id);
+CREATE INDEX idx_roles_org_id ON roles(org_id);
 CREATE INDEX idx_roles_is_system_role ON roles(is_system_role);
 CREATE INDEX idx_roles_scope ON roles(scope);
 
@@ -39,7 +38,7 @@ CREATE TABLE members (
   role_id INTEGER NOT NULL,
   PRIMARY KEY (user_id, org_id),
   FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-  FOREIGN KEY (org_id) REFERENCES organisations(id) ON DELETE CASCADE,
+  FOREIGN KEY (org_id) REFERENCES orgs(id) ON DELETE CASCADE,
   FOREIGN KEY (role_id) REFERENCES roles(id) ON DELETE RESTRICT
 );
 
@@ -103,23 +102,23 @@ INSERT INTO
   permissions (id, role_id, action, subject, conditions)
 VALUES
   -- Admin permissions
-  (1, 1, 'create', 'Organisation', NULL),
-  (2, 1, 'read', 'Organisation', NULL),
-  (3, 1, 'update', 'Organisation', NULL),
-  (4, 1, 'delete', 'Organisation', NULL),
+  (1, 1, 'create', 'Org', NULL),
+  (2, 1, 'read', 'Org', NULL),
+  (3, 1, 'update', 'Org', NULL),
+  (4, 1, 'delete', 'Org', NULL),
   (5, 1, 'manage', 'Member', NULL),
   -- Owner permissions
-  (6, 2, 'create', 'Organisation', NULL),
-  (7, 2, 'read', 'Organisation', NULL),
-  (8, 2, 'update', 'Organisation', NULL),
-  (9, 2, 'delete', 'Organisation', NULL),
+  (6, 2, 'create', 'Org', NULL),
+  (7, 2, 'read', 'Org', NULL),
+  (8, 2, 'update', 'Org', NULL),
+  (9, 2, 'delete', 'Org', NULL),
   (10, 2, 'manage', 'Member', NULL),
   -- Viewer permissions
-  (11, 3, 'read', 'Organisation', NULL),
+  (11, 3, 'read', 'Org', NULL),
   -- Editor permissions
-  (12, 4, 'read', 'Organisation', NULL),
+  (12, 4, 'read', 'Org', NULL),
   -- Commenter permissions
-  (13, 5, 'read', 'Organisation', NULL);
+  (13, 5, 'read', 'Org', NULL);
 
 -- Update permissions sequence
 SELECT

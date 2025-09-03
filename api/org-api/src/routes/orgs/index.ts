@@ -11,34 +11,34 @@ import {
 } from "@/lib/constants"
 import {
   checkHandleAvailability,
-  doesOrganisationExist,
+  doesOrgExist,
   ensureAtLeastOneOwner,
   findAllRoles,
+  findOrgByHandle,
+  findOrgById,
+  findOrgByUserId,
   findOrgMembers,
-  findOrganisationByHandle,
-  findOrganisationById,
-  findOrganisationByUserId,
   findRoleByName,
   getUserByEmail,
   getUserById,
   insertMembers,
-  insertOrganisation,
+  insertOrg,
   isValidUser,
 } from "@/lib/db"
 import { throwUnlessUserCan } from "@/lib/helper"
 import {
   addMember,
-  createOrganisation,
-  deleteOrganisation,
-  getOrganisation,
-  getOrganisationById,
+  createOrg,
+  deleteOrg,
+  getOrg,
+  getOrgById,
   getOrganizationMembers,
   getOrganizationPermissions,
-  getUserOrganisations,
+  getUserOrgs,
   removeMembers,
-  updateOrganisation,
+  updateOrg,
   validateHandle,
-} from "@/routes/organisations/openapi"
+} from "@/routes/orgs/openapi"
 import type { HonoApp } from "@/types"
 import { OpenAPIHono } from "@hono/zod-openapi"
 import { ERROR_UNAUTHORIZED } from "@incmix-api/utils"
@@ -59,7 +59,7 @@ const orgRoutes = new OpenAPIHono<HonoApp>({
   defaultHook: zodError,
 })
 
-orgRoutes.openapi(getOrganisation, async (c) => {
+orgRoutes.openapi(getOrg, async (c) => {
   try {
     const user = c.get("user")
     const t = await useTranslation(c)
@@ -69,9 +69,9 @@ orgRoutes.openapi(getOrganisation, async (c) => {
     }
 
     const { handle } = c.req.valid("param")
-    const org = await findOrganisationByHandle(c, handle)
+    const org = await findOrgByHandle(c, handle)
 
-    await throwUnlessUserCan(c, "read", "Organisation", org.id)
+    await throwUnlessUserCan(c, "read", "Org" as any, org.id)
 
     return c.json(
       {
@@ -85,13 +85,13 @@ orgRoutes.openapi(getOrganisation, async (c) => {
       200
     )
   } catch (error) {
-    return await processError<typeof getOrganisation>(c, error, [
+    return await processError<typeof getOrg>(c, error, [
       "{{ default }}",
-      "get-organisation",
+      "get-org",
     ])
   }
 })
-orgRoutes.openapi(getOrganisationById, async (c) => {
+orgRoutes.openapi(getOrgById, async (c) => {
   try {
     const user = c.get("user")
     const t = await useTranslation(c)
@@ -101,9 +101,9 @@ orgRoutes.openapi(getOrganisationById, async (c) => {
     }
 
     const { id } = c.req.valid("param")
-    const org = await findOrganisationById(c, id)
+    const org = await findOrgById(c, id)
 
-    await throwUnlessUserCan(c, "read", "Organisation", org.id)
+    await throwUnlessUserCan(c, "read", "Org" as any, org.id)
 
     return c.json(
       {
@@ -115,14 +115,14 @@ orgRoutes.openapi(getOrganisationById, async (c) => {
       200
     )
   } catch (error) {
-    return await processError<typeof getOrganisation>(c, error, [
+    return await processError<typeof getOrg>(c, error, [
       "{{ default }}",
-      "get-organisation-by-id",
+      "get-org-by-id",
     ])
   }
 })
 
-orgRoutes.openapi(getUserOrganisations, async (c) => {
+orgRoutes.openapi(getUserOrgs, async (c) => {
   try {
     const user = c.get("user")
     const t = await useTranslation(c)
@@ -131,13 +131,13 @@ orgRoutes.openapi(getUserOrganisations, async (c) => {
       throw new UnauthorizedError(msg)
     }
 
-    const userOrgs = await findOrganisationByUserId(c, user.id)
+    const userOrgs = await findOrgByUserId(c, user.id)
 
     return c.json(userOrgs, 200)
   } catch (error) {
-    return await processError<typeof getUserOrganisations>(c, error, [
+    return await processError<typeof getUserOrgs>(c, error, [
       "{{ default }}",
-      "get-user-organisations",
+      "get-user-orgs",
     ])
   }
 })
@@ -168,7 +168,7 @@ orgRoutes.openapi(validateHandle, async (c) => {
   }
 })
 
-orgRoutes.openapi(createOrganisation, async (c) => {
+orgRoutes.openapi(createOrg, async (c) => {
   try {
     const user = c.get("user")
     const t = await useTranslation(c)
@@ -185,7 +185,7 @@ orgRoutes.openapi(createOrganisation, async (c) => {
       throw new ConflictError(msg)
     }
 
-    const orgExists = await doesOrganisationExist(c, name, user.id)
+    const orgExists = await doesOrgExist(c, name, user.id)
 
     if (orgExists) {
       const msg = await t.text(ERROR_ORG_EXIST)
@@ -209,7 +209,7 @@ orgRoutes.openapi(createOrganisation, async (c) => {
       throw new ServerError(msg)
     }
 
-    const newOrg = await insertOrganisation(c, {
+    const newOrg = await insertOrg(c, {
       id: orgId,
       name,
       handle,
@@ -258,9 +258,9 @@ orgRoutes.openapi(createOrganisation, async (c) => {
       201
     )
   } catch (error) {
-    return await processError<typeof createOrganisation>(c, error, [
+    return await processError<typeof createOrg>(c, error, [
       "{{ default }}",
-      "create-organisation",
+      "create-org",
     ])
   }
 })
@@ -277,7 +277,7 @@ orgRoutes.openapi(addMember, async (c) => {
     const { handle } = c.req.valid("param")
     const { role, email } = c.req.valid("json")
 
-    const org = await findOrganisationById(c, handle)
+    const org = await findOrgById(c, handle)
 
     await throwUnlessUserCan(c, "create", "Member", org.id)
 
@@ -328,7 +328,7 @@ orgRoutes.openapi(addMember, async (c) => {
   }
 })
 
-orgRoutes.openapi(updateOrganisation, async (c) => {
+orgRoutes.openapi(updateOrg, async (c) => {
   try {
     const user = c.get("user")
     const t = await useTranslation(c)
@@ -340,11 +340,11 @@ orgRoutes.openapi(updateOrganisation, async (c) => {
     const { handle } = c.req.valid("param")
 
     const { name } = c.req.valid("json")
-    const org = await findOrganisationById(c, handle)
+    const org = await findOrgById(c, handle)
 
-    await throwUnlessUserCan(c, "update", "Organisation", org.id)
+    await throwUnlessUserCan(c, "update", "Org" as any, org.id)
 
-    const orgExists = await doesOrganisationExist(c, name, user.id)
+    const orgExists = await doesOrgExist(c, name, user.id)
 
     if (orgExists) {
       const msg = await t.text(ERROR_ORG_EXIST)
@@ -353,7 +353,7 @@ orgRoutes.openapi(updateOrganisation, async (c) => {
 
     const updatedOrg = await c
       .get("db")
-      .updateTable("organisations")
+      .updateTable("orgs")
       .set({ name: name })
       .where("id", "=", org.id)
       .returningAll()
@@ -374,14 +374,14 @@ orgRoutes.openapi(updateOrganisation, async (c) => {
     }
     return c.json(responseData, 200)
   } catch (error) {
-    return await processError<typeof updateOrganisation>(c, error, [
+    return await processError<typeof updateOrg>(c, error, [
       "{{ default }}",
-      "update-organisation",
+      "update-org",
     ])
   }
 })
 
-orgRoutes.openapi(deleteOrganisation, async (c) => {
+orgRoutes.openapi(deleteOrg, async (c) => {
   try {
     const user = c.get("user")
     const t = await useTranslation(c)
@@ -392,9 +392,9 @@ orgRoutes.openapi(deleteOrganisation, async (c) => {
 
     const { handle } = c.req.valid("param")
 
-    const org = await findOrganisationByHandle(c, handle)
+    const org = await findOrgByHandle(c, handle)
 
-    await throwUnlessUserCan(c, "delete", "Organisation", org.id)
+    await throwUnlessUserCan(c, "delete", "Org" as any, org.id)
 
     const deletedMembers = await c
       .get("db")
@@ -410,7 +410,7 @@ orgRoutes.openapi(deleteOrganisation, async (c) => {
 
     const deletedOrg = await c
       .get("db")
-      .deleteFrom("organisations")
+      .deleteFrom("orgs")
       .where("id", "=", org.id)
       .returningAll()
       .executeTakeFirst()
@@ -428,9 +428,9 @@ orgRoutes.openapi(deleteOrganisation, async (c) => {
       200
     )
   } catch (error) {
-    return await processError<typeof deleteOrganisation>(c, error, [
+    return await processError<typeof deleteOrg>(c, error, [
       "{{ default }}",
-      "delete-organisation",
+      "delete-org",
     ])
   }
 })
@@ -447,7 +447,7 @@ orgRoutes.openapi(removeMembers, async (c) => {
     const { handle } = c.req.valid("param")
     const { userIds } = c.req.valid("json")
 
-    const org = await findOrganisationById(c, handle)
+    const org = await findOrgById(c, handle)
 
     await throwUnlessUserCan(c, "delete", "Member", org.id)
     await ensureAtLeastOneOwner(c, org.id, userIds, "remove")
@@ -490,7 +490,7 @@ orgRoutes.openapi(getOrganizationMembers, async (c) => {
     }
 
     const { handle } = c.req.valid("param")
-    const org = await findOrganisationByHandle(c, handle)
+    const org = await findOrgByHandle(c, handle)
 
     await throwUnlessUserCan(c, "read", "Member", org.id)
 
@@ -517,7 +517,7 @@ orgRoutes.openapi(getOrganizationMembers, async (c) => {
   } catch (error) {
     return await processError<typeof getOrganizationMembers>(c, error, [
       "{{ default }}",
-      "get-organization-members",
+      "get-org-members",
     ])
   }
 })
@@ -532,15 +532,20 @@ orgRoutes.openapi(getOrganizationPermissions, async (c) => {
     }
 
     const { handle } = c.req.valid("param")
-    const org = await findOrganisationByHandle(c, handle)
+    const org = await findOrgByHandle(c, handle)
 
     const orgPermissions = await c.get("rbac").getOrgPermissions(org.id)
 
-    return c.json(orgPermissions?.permissions ?? [], 200)
+    const permissions = (orgPermissions?.permissions ?? []).map((p: any) => ({
+      ...p,
+      subject: p.subject === "Organisation" ? "Org" : p.subject,
+    }))
+
+    return c.json(permissions, 200)
   } catch (error) {
     return await processError<typeof getOrganizationPermissions>(c, error, [
       "{{ default }}",
-      "get-organization-permissions",
+      "get-org-permissions",
     ])
   }
 })

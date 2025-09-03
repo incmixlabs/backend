@@ -10,12 +10,12 @@ import type {
 } from "kysely"
 
 // New enum types based on SQL migration
-export type RoleScope = "organization" | "project" | "both"
+export type RoleScope = "org" | "project" | "both"
 export type PermissionAction = Action
 
 export type ResourceType = Subject
 
-type OrganisationTable = {
+type OrgTable = {
   id: string
   name: string
   handle: string
@@ -34,7 +34,7 @@ type RoleTable = {
   id: Generated<number>
   name: string
   description: string | null
-  organizationId: string | null
+  orgId: string | null
   isSystemRole: boolean
   scope: ColumnType<RoleScope, string, string>
   createdAt: ColumnType<Date, string, never>
@@ -61,9 +61,9 @@ export type RolePermissionsTable = {
   createdAt: ColumnType<Date, string, never>
 }
 
-export type Organisation = Selectable<OrganisationTable>
-export type NewOrganisation = Insertable<OrganisationTable>
-export type UpdatedOrganisation = Updateable<OrganisationTable>
+export type Org = Selectable<OrgTable>
+export type NewOrg = Insertable<OrgTable>
+export type UpdatedOrg = Updateable<OrgTable>
 
 export type Member = Selectable<MemberTable>
 export type NewMember = Insertable<MemberTable>
@@ -82,7 +82,7 @@ export type NewRolePermissions = Insertable<RolePermissionsTable>
 export type UpdatedRolePermissions = Updateable<RolePermissionsTable>
 
 export type OrgTables = {
-  organisations: OrganisationTable
+  orgs: OrgTable
   members: MemberTable
   roles: RoleTable
   permissions: PermissionTable

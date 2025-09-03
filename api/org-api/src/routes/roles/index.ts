@@ -50,7 +50,7 @@ rolesRoutes.openapi(addNewRole, async (c) => {
       description,
       scope,
       isSystemRole: user.isSuperAdmin && !orgId,
-      organizationId: orgId,
+      orgId: orgId,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     })
@@ -86,11 +86,11 @@ rolesRoutes.openapi(updateRole, async (c) => {
       throw new NotFoundError(msg)
     }
 
-    if (!existingRole.organizationId) {
+    if (!existingRole.orgId) {
       throw new UnauthorizedError("Role is not editable")
     }
 
-    await throwUnlessUserCan(c, "update", "Role", existingRole.organizationId)
+    await throwUnlessUserCan(c, "update", "Role", existingRole.orgId)
 
     const updatedRole = await updateRoleById(
       c,
@@ -133,11 +133,11 @@ rolesRoutes.openapi(deleteRole, async (c) => {
       throw new NotFoundError(msg)
     }
 
-    if (!existingRole.organizationId) {
+    if (!existingRole.orgId) {
       throw new UnauthorizedError("Role is not editable")
     }
 
-    await throwUnlessUserCan(c, "delete", "Role", existingRole.organizationId)
+    await throwUnlessUserCan(c, "delete", "Role", existingRole.orgId)
 
     const deletedRole = await deleteRoleById(c, id)
 

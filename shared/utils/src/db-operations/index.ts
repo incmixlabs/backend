@@ -32,19 +32,15 @@ export class CommonDbOperations {
         jsonArrayFrom(
           eb
             .selectFrom("userOrganizations")
-            .leftJoin(
-              "organizations",
-              "userOrganizations.organizationId",
-              "organizations.id"
-            )
+            .leftJoin("orgs", "userOrganizations.orgId", "orgs.id")
             .select([
-              "organizations.id",
-              "organizations.name",
-              "organizations.slug",
+              "orgs.id",
+              "orgs.name",
+              "orgs.slug",
               "userOrganizations.role",
             ])
             .whereRef("userOrganizations.userId", "=", "users.id")
-        ).as("organizations")
+        ).as("orgs")
       )
     }
 
@@ -90,19 +86,15 @@ export class CommonDbOperations {
         jsonArrayFrom(
           eb
             .selectFrom("userOrganizations")
-            .leftJoin(
-              "organizations",
-              "userOrganizations.organizationId",
-              "organizations.id"
-            )
+            .leftJoin("orgs", "userOrganizations.orgId", "orgs.id")
             .select([
-              "organizations.id",
-              "organizations.name",
-              "organizations.slug",
+              "orgs.id",
+              "orgs.name",
+              "orgs.slug",
               "userOrganizations.role",
             ])
             .whereRef("userOrganizations.userId", "=", "users.id")
-        ).as("organizations")
+        ).as("orgs")
       )
     }
 
@@ -137,11 +129,11 @@ export class CommonDbOperations {
     return member
   }
 
-  async checkOrganizationMembership(userId: string, organizationId: string) {
+  async checkOrganizationMembership(userId: string, orgId: string) {
     const member = await this.db
       .selectFrom("userOrganizations")
       .where("userId", "=", userId)
-      .where("organizationId", "=", organizationId)
+      .where("orgId", "=", orgId)
       .select(["role", "createdAt"])
       .executeTakeFirst()
 
@@ -175,11 +167,11 @@ export class CommonDbOperations {
     return project
   }
 
-  async getOrganizationWithMembers(organizationId: string) {
-    const organization = await this.db
-      .selectFrom("organizations")
-      .where("organizations.id", "=", organizationId)
-      .selectAll("organizations")
+  async getOrganizationWithMembers(orgId: string) {
+    const org = await this.db
+      .selectFrom("orgs")
+      .where("orgs.id", "=", orgId)
+      .selectAll("orgs")
       .select((eb) =>
         jsonArrayFrom(
           eb
@@ -194,16 +186,12 @@ export class CommonDbOperations {
               "userProfiles.avatar",
               "userOrganizations.role",
             ])
-            .whereRef(
-              "userOrganizations.organizationId",
-              "=",
-              "organizations.id"
-            )
+            .whereRef("userOrganizations.orgId", "=", "orgs.id")
         ).as("members")
       )
       .executeTakeFirst()
 
-    return organization
+    return org
   }
 
   async paginatedQuery<_T>(

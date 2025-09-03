@@ -100,7 +100,7 @@ export const listProjects = createRoute({
           schema: ResponseSchema,
         },
       },
-      description: "Error response when organization does not exist",
+      description: "Error response when org does not exist",
     },
     500: {
       content: {

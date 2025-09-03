@@ -4,8 +4,8 @@ import {
   deleteRoleById,
   ensureAtLeastOneOwner,
   findAllRoles,
+  findOrgByHandle,
   findOrgMemberById,
-  findOrganisationByHandle,
   findPermissionBySubjectAndAction,
   findRoleByName,
   insertPermission,
@@ -253,7 +253,7 @@ permissionRoutes.openapi(addNewRole, async (c) => {
       name,
       description,
       scope,
-      organizationId: orgId,
+      orgId: orgId,
       isSystemRole: false,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
@@ -339,7 +339,7 @@ permissionRoutes.openapi(updateMemberRole, async (c) => {
     const { handle } = c.req.valid("param")
     const { role: newRole, userId } = c.req.valid("json")
 
-    const org = await findOrganisationByHandle(c, handle)
+    const org = await findOrgByHandle(c, handle)
 
     await throwUnlessUserCan(c, "update", "Member", org.id)
 

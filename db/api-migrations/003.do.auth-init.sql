@@ -58,8 +58,6 @@ CREATE INDEX idx_verification_codes_user_id ON verification_codes (user_id);
 
 CREATE INDEX idx_accounts_user_id ON accounts (user_id);
 
-BEGIN;
-
 -- Create userProfiles table with all columns
 CREATE TABLE "user_profiles" (
   "id" TEXT PRIMARY KEY REFERENCES "users"("id") ON DELETE CASCADE,
@@ -77,15 +75,13 @@ CREATE TABLE "user_profiles" (
   "focus_first" TEXT,
   "referral_sources" JSONB DEFAULT '[]' :: jsonb,
   "onboarding_completed" BOOLEAN DEFAULT false,
+  "bio" TEXT,
+  "location" TEXT,
+  "website" TEXT,
   "created_at" TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   "updated_at" TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
--- Create indexes for better performance
-CREATE INDEX idx_user_profiles_email ON user_profiles(email);
-
 CREATE INDEX idx_user_profiles_locale_id ON user_profiles(locale_id);
-
-COMMIT;
 
 COMMIT;

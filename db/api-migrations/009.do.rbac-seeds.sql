@@ -7,16 +7,16 @@ VALUES
   (
     1,
     'owner',
-    'Full control over the organization',
+    'Full control over the org',
     true,
-    'organization'
+    'org'
   ),
   (
     2,
     'admin',
-    'Administrative access to the organization',
+    'Administrative access to the org',
     true,
-    'organization'
+    'org'
   ),
   (
     3,
@@ -131,36 +131,36 @@ VALUES
     'read',
     NULL
   ),
-  -- Organisation permissions
+  -- Org permissions
   (
     11,
-    'Create Organisation',
-    'Ability to create new organisations',
-    'Organisation',
+    'Create Org',
+    'Ability to create new orgs',
+    'Org',
     'create',
     NULL
   ),
   (
     12,
-    'Read Organisation',
-    'Ability to view organisation information',
-    'Organisation',
+    'Read Org',
+    'Ability to view org information',
+    'Org',
     'read',
     NULL
   ),
   (
     13,
-    'Update Organisation',
-    'Ability to modify organisation information',
-    'Organisation',
+    'Update Org',
+    'Ability to modify org information',
+    'Org',
     'update',
     NULL
   ),
   (
     14,
-    'Delete Organisation',
-    'Ability to delete organisations',
-    'Organisation',
+    'Delete Org',
+    'Ability to delete orgs',
+    'Org',
     'delete',
     NULL
   ),
@@ -447,13 +447,13 @@ VALUES
   (1, 10, NULL),
   -- Owner: Read Permission
   (1, 11, NULL),
-  -- Owner: Create Organisation
+  -- Owner: Create Org
   (1, 12, NULL),
-  -- Owner: Read Organisation
+  -- Owner: Read Org
   (1, 13, NULL),
-  -- Owner: Update Organisation
+  -- Owner: Update Org
   (1, 14, NULL),
-  -- Owner: Delete Organisation
+  -- Owner: Delete Org
   (1, 16, NULL),
   -- Owner: Create Member
   (1, 17, NULL),
@@ -518,7 +518,7 @@ VALUES
   -- Owner: Update File
   (1, 54, NULL),
   -- Owner: Delete File
-  -- Admin role gets most permissions except organisation delete (IDs 1-4, 6-10, 11-13, 16-19, 21-24, 26-29, 31-34, 36-39, 41-44, 46-49, 51-54)
+  -- Admin role gets most permissions except org delete (IDs 1-4, 6-10, 11-13, 16-19, 21-24, 26-29, 31-34, 36-39, 41-44, 46-49, 51-54)
   (2, 2, NULL),
   -- Admin: Read User
   (2, 6, NULL),
@@ -532,11 +532,11 @@ VALUES
   (2, 10, NULL),
   -- Admin: Read Permission
   (2, 11, NULL),
-  -- Admin: Create Organisation
+  -- Admin: Create Org
   (2, 12, NULL),
-  -- Admin: Read Organisation
+  -- Admin: Read Org
   (2, 13, NULL),
-  -- Admin: Update Organisation
+  -- Admin: Update Org
   (2, 16, NULL),
   -- Admin: Create Member
   (2, 17, NULL),
@@ -609,7 +609,7 @@ VALUES
   (3, 10, NULL),
   -- Member: Read Permission
   (3, 12, NULL),
-  -- Member: Read Organisation
+  -- Member: Read Org
   (3, 17, NULL),
   -- Member: Read Member
   (3, 22, NULL),

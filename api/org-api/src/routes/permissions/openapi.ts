@@ -15,7 +15,7 @@ export const getRolesPermissions = createRoute({
   request: {
     query: z.object({
       orgId: z.string().optional().openapi({
-        description: "The ID of the organization",
+        description: "The ID of the org",
         example: "123",
       }),
     }),
@@ -27,7 +27,7 @@ export const getRolesPermissions = createRoute({
           schema: PermissionRolesResponseSchema,
         },
       },
-      description: "Roles and permissions for the organization",
+      description: "Roles and permissions for the org",
     },
     401: {
       content: {
@@ -69,7 +69,7 @@ export const updatePermissions = createRoute({
   request: {
     params: z.object({
       orgId: z.string().openapi({
-        description: "The ID of the organization",
+        description: "The ID of the org",
         example: "123",
       }),
     }),

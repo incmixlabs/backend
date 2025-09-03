@@ -96,8 +96,8 @@ async function setupDatabase(request: APIRequestContext) {
     "https://org-api-dev-prev.uincmix.workers.dev/api/org",
     {
       data: {
-        name: "Test Organisation",
-        handle: "test-organisation",
+        name: "Test Org",
+        handle: "test-org",
         members: [],
       },
     }
@@ -108,7 +108,7 @@ async function setupDatabase(request: APIRequestContext) {
   let org: Organization = await orgRes.json()
   if (orgRes.status() === 409) {
     const getOrgRes = await request.get(
-      "https://org-api-dev-prev.uincmix.workers.dev/api/org/handle/test-organisation"
+      "https://org-api-dev-prev.uincmix.workers.dev/api/org/handle/test-org"
     )
 
     expect(getOrgRes.status()).toBe(200)

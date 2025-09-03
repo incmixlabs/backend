@@ -15,7 +15,7 @@ create type project_status as ENUM (
 CREATE TABLE projects (
   id TEXT PRIMARY KEY,
   name TEXT,
-  org_id TEXT NOT NULL REFERENCES organisations(id),
+  org_id TEXT NOT NULL REFERENCES orgs(id),
   status project_status default 'todo' not null,
   start_date TIMESTAMPTZ,
   end_date TIMESTAMPTZ,

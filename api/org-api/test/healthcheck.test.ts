@@ -108,7 +108,7 @@ describe("Healthcheck Routes", () => {
             if (!db) {
               return false
             }
-            await db.selectFrom("organisations").selectAll().limit(1).execute()
+            await db.selectFrom("orgs").selectAll().limit(1).execute()
             return true
           } catch {
             return false
