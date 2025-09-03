@@ -45,6 +45,7 @@ const authRoutes = new OpenAPIHono<HonoApp>({
 })
 
 authRoutes.openapi(getCurrentUser, async (c) => {
+  console.log("envVars.NODE_ENV", envVars.COOKIE_NAME)
   const user = c.get("user")
   const session = c.get("session")
   if (user && session) {
@@ -156,7 +157,8 @@ authRoutes.openapi(signup, async (c) => {
         {
           id: userId,
           email,
-          emailVerifiedAt: envVars.MOCK_DATA ? new Date().toISOString() : null,
+          emailVerifiedAt:
+            envVars.NODE_ENV === "test" ? new Date().toISOString() : null,
           isSuperAdmin: false,
         },
         fullName,
@@ -165,7 +167,7 @@ authRoutes.openapi(signup, async (c) => {
       )
       return { profile, user }
     })
-    if (!envVars.MOCK_DATA) {
+    if (envVars.NODE_ENV !== "test") {
       const verificationCode = await generateVerificationCode(
         c,
         userId,
@@ -248,17 +250,24 @@ authRoutes.openapi(login, async (c) => {
 })
 
 authRoutes.openapi(logout, async (c) => {
-  const session = c.get("session")
-  const t = await useTranslation(c)
-  if (!session) {
-    const msg = await t.text(ERROR_UNAUTHORIZED)
-    throw new UnauthorizedError(msg)
+  try {
+    const session = c.get("session")
+    const t = await useTranslation(c)
+    if (!session) {
+      const msg = await t.text(ERROR_UNAUTHORIZED)
+      throw new UnauthorizedError(msg)
+    }
+    const db = c.get("db")
+    await invalidateSession(db, session.id)
+    deleteSessionCookie(c)
+    const msg = await t.text(LOGOUT_SUCC)
+    return c.json({ message: msg }, 200)
+  } catch (error) {
+    return await processError<typeof logout>(c, error, [
+      "{{ default }}",
+      "logout",
+    ])
   }
-  const db = c.get("db")
-  await invalidateSession(db, session.id)
-  deleteSessionCookie(c)
-  const msg = await t.text(LOGOUT_SUCC)
-  return c.json({ message: msg }, 200)
 })
 
 authRoutes.openapi(deleteUser, async (c) => {

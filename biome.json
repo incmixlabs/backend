@@ -18,7 +18,6 @@
       "vitest-pool-workers",
       "package.json",
       "pnpm-workspace.yaml",
-      "**/*/*test*",
       "**/*/*spec*",
       "**/*/*mock*"
     ]

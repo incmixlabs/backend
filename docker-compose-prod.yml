@@ -103,6 +103,7 @@ services:
       # Service configuration
       MOCK_DATA: ${MOCK_DATA:-false}
       TIMEOUT_MS: ${TIMEOUT_MS:-5000}
+      EMAIL_FROM: ${EMAIL_FROM}
       # Email service
       RESEND_API_KEY: ${RESEND_API_KEY}
       # Service URLs

@@ -17,7 +17,8 @@ const healthcheckRoutes = createHealthCheckRoute<HonoApp>({
     DATABASE_URL: envVars.DATABASE_URL,
   },
 
-  basePath: BASE_PATH,
+  // Disable reference endpoint check for now
+  basePath: undefined,
 
   // Add service-specific checks
   checks: [

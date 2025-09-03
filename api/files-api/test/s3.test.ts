@@ -1,7 +1,7 @@
-import { HeadBucketCommand, S3Client } from "@aws-sdk/client-s3"
-import { describe, expect, it, vi } from "vitest"
 import { envVars } from "@/env-vars"
 import { S3 } from "@/lib/s3"
+import { HeadBucketCommand, S3Client } from "@aws-sdk/client-s3"
+import { describe, expect, it, vi } from "vitest"
 
 // Mock AWS SDK
 vi.mock("@aws-sdk/client-s3")
