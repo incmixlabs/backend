@@ -28,5 +28,7 @@ jobs:
         run: pnpm build --filter=./shared/test-utils
       - name: Run tests
         run: pnpm run test:integration
+        env:
+          REDIS_URL: redis://localhost:6379
 
 
