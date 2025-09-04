@@ -23,7 +23,7 @@ export default defineConfig({
     setupFiles: ["./test/utils/setup.ts"],
     env: {
       NODE_ENV: "test",
-      DATABASE_URL: process.env.DATABASE_URL,
+      DATABASE_URL: "postgresql://postgres:password@localhost:54321/incmix",
       FRONTEND_URL: "http://localhost:1420",
     },
     testTimeout: 60000, // 60 seconds for integration tests
