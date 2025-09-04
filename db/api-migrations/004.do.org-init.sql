@@ -67,7 +67,8 @@ CREATE INDEX idx_permissions_resource_type ON permissions(resource_type);
 
 CREATE INDEX idx_permissions_action ON permissions(action);
 
-CREATE INDEX idx_permissions_resource_type_action ON permissions(resource_type, action);
+-- Create unique constraint to prevent duplicate permissions
+CREATE UNIQUE INDEX idx_permissions_resource_type_action_unique ON permissions(resource_type, action);
 
 -- Create role_permissions junction table
 CREATE TABLE role_permissions (

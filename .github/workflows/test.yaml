@@ -22,6 +22,10 @@ jobs:
           cache: 'pnpm'
       - name: Install Dependencies
         run: pnpm install
+      - name: Build utils
+        run: pnpm build --filter=./shared/utils
+      - name: Build test-utils
+        run: pnpm build --filter=./shared/test-utils
       - name: Run tests
         run: pnpm run test:integration
 
