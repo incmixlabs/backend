@@ -5,8 +5,8 @@ on:
     branches:
       - main
     paths:
-      - "backend/auth/**"
-      - "backend/org-api/**"
+      - "api/auth/**"
+      - "api/org-api/**"
       - ".github/workflows/test.yaml"
 jobs:
   unit_test:
