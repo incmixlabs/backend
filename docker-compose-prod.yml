@@ -16,6 +16,33 @@
 version: "3.8"
 name: "incmix"
 
+# Common environment variables used across multiple services
+x-common-env: &common-env
+  # Database
+  DATABASE_URL: ${DATABASE_URL}
+  # Service configuration
+  NODE_ENV: ${NODE_ENV}
+  COOKIE_NAME: ${COOKIE_NAME}
+  DOMAIN: ${DOMAIN}
+  # Frontend URL
+  FRONTEND_URL: ${FRONTEND_URL}
+  # Monitoring
+  SENTRY_DSN: ${SENTRY_DSN:-https://examplePublicKey@o0.ingest.sentry.io/0}
+  # Service configuration
+  MOCK_DATA: ${MOCK_DATA:-false}
+  TIMEOUT_MS: ${TIMEOUT_MS:-5000}
+  # Service URLs
+  AUTH_API_URL: ${AUTH_API_URL:-http://auth-api:8787/api/auth}
+  ORG_API_URL: ${ORG_API_URL:-http://org-api:9292/api/org}
+  INTL_API_URL: ${INTL_API_URL:-http://intl-api:9090/api/intl}
+  EMAIL_API_URL: ${EMAIL_API_URL:-http://email-api:8989/api/email}
+  FILES_API_URL: ${FILES_API_URL:-http://files-api:8282/api/files}
+  GENAI_API_URL: ${GENAI_API_URL:-http://genai-api:8383/api/genai}
+  PROJECTS_API_URL: ${PROJECTS_API_URL:-http://projects-api:8484/api/projects}
+  COMMENTS_API_URL: ${COMMENTS_API_URL:-http://comments-api:8585/api/comments}
+  LOCATION_API_URL: ${LOCATION_API_URL:-http://location-api:9494/api/location}
+  RXDB_SYNC_API_URL: ${RXDB_SYNC_API_URL:-http://rxdb-api:8686/api/rxdb-sync}
+
 services:
   postgres:
     image: registry.incmix.com/db:latest
@@ -46,41 +73,16 @@ services:
       timeout: 5s
       retries: 5
       start_period: 5s
-  # backend:
-  #   image: electricsql/electric
-  #   environment:
-  #     DATABASE_URL: postgresql://postgres:password@postgres:5432/incmix?sslmode=disable
-  #     ELECTRIC_INSECURE: true
-  #   ports:
-  #     - 3000:3000
-  #   depends_on:
-  #     - postgres
 
   auth-api:
     image: registry.incmix.com/auth-service:latest
     environment:
-      # Database
-      DATABASE_URL: ${DATABASE_URL}
-      # Service configuration
-      NODE_ENV: ${NODE_ENV}
-      COOKIE_NAME: ${COOKIE_NAME}
-      DOMAIN: ${DOMAIN}
+      <<: *common-env
       PORT: 8787
-      # Frontend URL
-      FRONTEND_URL: ${FRONTEND_URL}
-      # Monitoring
-      SENTRY_DSN: ${SENTRY_DSN:-https://examplePublicKey@o0.ingest.sentry.io/0}
-      # Service configuration
-      MOCK_DATA: ${MOCK_DATA:-false}
-      TIMEOUT_MS: ${TIMEOUT_MS:-5000}
       # OAuth and authentication
       GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
       GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
-      EMAIL_API_URL: ${EMAIL_API_URL:-http://email-api:8989/api/email}
-      FILES_API_URL: ${FILES_API_URL:-http://files-api:8282/api/files}
       GOOGLE_REDIRECT_URL: ${GOOGLE_REDIRECT_URL}
-      # Service URLs
-      INTL_API_URL: ${INTL_API_URL:-http://intl-api:9090/api/intl}
     networks:
       - incmix-network
     depends_on:
@@ -89,25 +91,11 @@ services:
   email-api:
     image: registry.incmix.com/email-service:latest
     environment:
-      # Database
-      DATABASE_URL: ${DATABASE_URL}
-      # Service configuration
-      NODE_ENV: ${NODE_ENV}
-      COOKIE_NAME: ${COOKIE_NAME}
-      DOMAIN: ${DOMAIN}
+      <<: *common-env
       PORT: 8989
-      # Frontend URL
-      FRONTEND_URL: ${FRONTEND_URL}
-      # Monitoring
-      SENTRY_DSN: ${SENTRY_DSN:-https://examplePublicKey@o0.ingest.sentry.io/0}
-      # Service configuration
-      MOCK_DATA: ${MOCK_DATA:-false}
-      TIMEOUT_MS: ${TIMEOUT_MS:-5000}
       EMAIL_FROM: ${EMAIL_FROM}
       # Email service
       RESEND_API_KEY: ${RESEND_API_KEY}
-      # Service URLs
-      INTL_API_URL: ${INTL_API_URL:-http://intl-api:9090/api/intl}
     networks:
       - incmix-network
     depends_on:
@@ -116,23 +104,8 @@ services:
   org-api:
     image: registry.incmix.com/org-api:latest
     environment:
-      # Database
-      DATABASE_URL: ${DATABASE_URL}
-      # Service configuration
-      NODE_ENV: ${NODE_ENV}
-      COOKIE_NAME: ${COOKIE_NAME}
-      DOMAIN: ${DOMAIN}
+      <<: *common-env
       PORT: 9292
-      # Frontend URL
-      FRONTEND_URL: ${FRONTEND_URL}
-      # Monitoring
-      SENTRY_DSN: ${SENTRY_DSN:-https://examplePublicKey@o0.ingest.sentry.io/0}
-      # Service configuration
-      MOCK_DATA: ${MOCK_DATA:-false}
-      TIMEOUT_MS: ${TIMEOUT_MS:-5000}
-      # Service URLs
-      AUTH_API_URL: ${AUTH_API_URL:-http://auth-api:8787/api/auth}
-      INTL_API_URL: ${INTL_API_URL:-http://intl-api:9090/api/intl}
     networks:
       - incmix-network
     depends_on:
@@ -141,22 +114,8 @@ services:
   intl-api:
     image: registry.incmix.com/intl-api:latest
     environment:
-      # Database
-      DATABASE_URL: ${DATABASE_URL}
-      # Service configuration
-      NODE_ENV: ${NODE_ENV}
-      COOKIE_NAME: ${COOKIE_NAME}
-      DOMAIN: ${DOMAIN}
+      <<: *common-env
       PORT: 9090
-      # Frontend URL
-      FRONTEND_URL: ${FRONTEND_URL}
-      # Monitoring
-      SENTRY_DSN: ${SENTRY_DSN:-https://examplePublicKey@o0.ingest.sentry.io/0}
-      # Service configuration
-      MOCK_DATA: ${MOCK_DATA:-false}
-      TIMEOUT_MS: ${TIMEOUT_MS:-5000}
-      # Service URLs
-      AUTH_API_URL: ${AUTH_API_URL:-http://auth-api:8787/api/auth}
     networks:
       - incmix-network
     depends_on:
@@ -165,23 +124,8 @@ services:
   files-api:
     image: registry.incmix.com/files-api:latest
     environment:
-      # Database
-      DATABASE_URL: ${DATABASE_URL}
-      # Service configuration
-      NODE_ENV: ${NODE_ENV}
-      COOKIE_NAME: ${COOKIE_NAME}
-      DOMAIN: ${DOMAIN}
+      <<: *common-env
       PORT: 8282
-      # Frontend URL
-      FRONTEND_URL: ${FRONTEND_URL}
-      # Monitoring
-      SENTRY_DSN: ${SENTRY_DSN:-https://examplePublicKey@o0.ingest.sentry.io/0}
-      # Service configuration
-      MOCK_DATA: ${MOCK_DATA:-false}
-      TIMEOUT_MS: ${TIMEOUT_MS:-5000}
-      # Service URLs
-      AUTH_API_URL: ${AUTH_API_URL:-http://auth-api:8787/api/auth}
-      INTL_API_URL: ${INTL_API_URL:-http://intl-api:9090/api/intl}
       # AWS/S3 configuration
       AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
       AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
@@ -196,25 +140,9 @@ services:
   genai-api:
     image: registry.incmix.com/genai-api:latest
     environment:
-      # Database
-      DATABASE_URL: ${DATABASE_URL}
+      <<: *common-env
       REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379
-      # Service configuration
-      NODE_ENV: ${NODE_ENV}
-      COOKIE_NAME: ${COOKIE_NAME}
-      DOMAIN: ${DOMAIN}
       PORT: 8383
-      # Frontend URL
-      FRONTEND_URL: ${FRONTEND_URL}
-      # Monitoring
-      SENTRY_DSN: ${SENTRY_DSN:-https://examplePublicKey@o0.ingest.sentry.io/0}
-      # Service configuration
-      MOCK_DATA: ${MOCK_DATA:-false}
-      TIMEOUT_MS: ${TIMEOUT_MS:-5000}
-      # Service URLs
-      AUTH_API_URL: ${AUTH_API_URL:-http://auth-api:8787/api/auth}
-      ORG_API_URL: ${ORG_API_URL:-http://org-api:9292/api/org}
-      INTL_API_URL: ${INTL_API_URL:-http://intl-api:9090/api/intl}
       # AI/ML services
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
       GOOGLE_AI_API_KEY: ${GOOGLE_AI_API_KEY}
@@ -228,24 +156,8 @@ services:
   projects-api:
     image: registry.incmix.com/projects-api:latest
     environment:
-      # Database
-      DATABASE_URL: ${DATABASE_URL}
-      # Service configuration
-      NODE_ENV: ${NODE_ENV}
-      COOKIE_NAME: ${COOKIE_NAME}
-      DOMAIN: ${DOMAIN}
+      <<: *common-env
       PORT: 8484
-      # Frontend URL
-      FRONTEND_URL: ${FRONTEND_URL}
-      # Monitoring
-      SENTRY_DSN: ${SENTRY_DSN:-https://examplePublicKey@o0.ingest.sentry.io/0}
-      # Service configuration
-      MOCK_DATA: ${MOCK_DATA:-false}
-      TIMEOUT_MS: ${TIMEOUT_MS:-5000}
-      # Service URLs
-      AUTH_API_URL: ${AUTH_API_URL:-http://auth-api:8787/api/auth}
-      ORG_API_URL: ${ORG_API_URL:-http://org-api:9292/api/org}
-      INTL_API_URL: ${INTL_API_URL:-http://intl-api:9090/api/intl}
     networks:
       - incmix-network
     depends_on:
@@ -254,22 +166,8 @@ services:
   location-api:
     image: registry.incmix.com/location-api:latest
     environment:
-      # Database
-      DATABASE_URL: ${DATABASE_URL}
-      # Service configuration
-      NODE_ENV: ${NODE_ENV}
-      COOKIE_NAME: ${COOKIE_NAME}
-      DOMAIN: ${DOMAIN}
+      <<: *common-env
       PORT: 9494
-      # Frontend URL
-      FRONTEND_URL: ${FRONTEND_URL}
-      # Monitoring
-      SENTRY_DSN: ${SENTRY_DSN:-https://examplePublicKey@o0.ingest.sentry.io/0}
-      # Service configuration
-      MOCK_DATA: ${MOCK_DATA:-false}
-      TIMEOUT_MS: ${TIMEOUT_MS:-5000}
-      # Service URLs
-      INTL_API_URL: ${INTL_API_URL:-http://intl-api:9090/api/intl}
       # Location and weather services
       WEATHER_URL: ${WEATHER_URL}
       LOCATION_URL: ${LOCATION_URL}
@@ -287,24 +185,8 @@ services:
   comments-api:
     image: registry.incmix.com/comments-api:latest
     environment:
-      # Database
-      DATABASE_URL: ${DATABASE_URL}
-      # Service configuration
-      NODE_ENV: ${NODE_ENV}
-      COOKIE_NAME: ${COOKIE_NAME}
-      DOMAIN: ${DOMAIN}
+      <<: *common-env
       PORT: 8585
-      # Frontend URL
-      FRONTEND_URL: ${FRONTEND_URL}
-      # Monitoring
-      SENTRY_DSN: ${SENTRY_DSN:-https://examplePublicKey@o0.ingest.sentry.io/0}
-      # Service configuration
-      MOCK_DATA: ${MOCK_DATA:-false}
-      TIMEOUT_MS: ${TIMEOUT_MS:-5000}
-      # Service URLs
-      AUTH_API_URL: ${AUTH_API_URL:-http://auth-api:8787/api/auth}
-      ORG_API_URL: ${ORG_API_URL:-http://org-api:9292/api/org}
-      INTL_API_URL: ${INTL_API_URL:-http://intl-api:9090/api/intl}
     networks:
       - incmix-network
     depends_on:
@@ -313,23 +195,8 @@ services:
   rxdb-api:
     image: registry.incmix.com/rxdb-api:latest
     environment:
-      # Database
-      DATABASE_URL: ${DATABASE_URL}
-      # Service configuration
-      NODE_ENV: ${NODE_ENV}
-      COOKIE_NAME: ${COOKIE_NAME}
-      DOMAIN: ${DOMAIN}
+      <<: *common-env
       PORT: 8686
-      # Frontend URL
-      FRONTEND_URL: ${FRONTEND_URL}
-      # Monitoring
-      SENTRY_DSN: ${SENTRY_DSN:-https://examplePublicKey@o0.ingest.sentry.io/0}
-      # Service configuration
-      MOCK_DATA: ${MOCK_DATA:-false}
-      TIMEOUT_MS: ${TIMEOUT_MS:-5000}
-      # Service URLs
-      AUTH_API_URL: ${AUTH_API_URL:-http://auth-api:8787/api/auth}
-      INTL_API_URL: ${INTL_API_URL:-http://intl-api:9090/api/intl}
 
     networks:
       - incmix-network
@@ -339,30 +206,8 @@ services:
   bff-web:
     image: registry.incmix.com/bff-web:latest
     environment:
-      # Service configuration
-      NODE_ENV: ${NODE_ENV}
-      COOKIE_NAME: ${COOKIE_NAME}
-      DOMAIN: ${DOMAIN}
+      <<: *common-env
       PORT: 8080
-      # Frontend URL
-      FRONTEND_URL: ${FRONTEND_URL}
-      # Monitoring
-      SENTRY_DSN: ${SENTRY_DSN:-https://examplePublicKey@o0.ingest.sentry.io/0}
-      # Service configuration
-      MOCK_DATA: ${MOCK_DATA:-false}
-      TIMEOUT_MS: ${TIMEOUT_MS:-5000}
-      DATABASE_URL: ${DATABASE_URL}
-      # All API URLs (BFF needs access to all services)
-      AUTH_API_URL: ${AUTH_API_URL:-http://auth-api:8787/api/auth}
-      ORG_API_URL: ${ORG_API_URL:-http://org-api:9292/api/org}
-      INTL_API_URL: ${INTL_API_URL:-http://intl-api:9090/api/intl}
-      GENAI_API_URL: ${GENAI_API_URL:-http://genai-api:8383/api/genai}
-      PROJECTS_API_URL: ${PROJECTS_API_URL:-http://projects-api:8484/api/projects}
-      COMMENTS_API_URL: ${COMMENTS_API_URL:-http://comments-api:8585/api/comments}
-      FILES_API_URL: ${FILES_API_URL:-http://files-api:8282/api/files}
-      EMAIL_API_URL: ${EMAIL_API_URL:-http://email-api:8989/api/email}
-      LOCATION_API_URL: ${LOCATION_API_URL:-http://location-api:9494/api/location}
-      RXDB_SYNC_API_URL: ${RXDB_SYNC_API_URL:-http://rxdb-api:8686/api/rxdb-sync}
     ports:
       - 8081:8080  # Only public access point
     networks:

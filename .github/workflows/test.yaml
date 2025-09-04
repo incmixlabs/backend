@@ -8,6 +8,11 @@ on:
       - "api/auth/**"
       - "api/org-api/**"
       - ".github/workflows/test.yaml"
+      - "shared/**"
+      - "pnpm-workspace.yaml"
+      - "pnpm-lock.yaml"
+      - "package.json"
+      - "tsconfig.json"
 jobs:
   unit_test:
     runs-on: ubuntu-latest
