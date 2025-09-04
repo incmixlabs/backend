@@ -349,8 +349,7 @@ describe("generateProjectHierarchy endpoint", () => {
         }),
       })
 
-      // Empty string might be allowed, but check the behavior
-      expect(response.status).toBeDefined()
+      expect(response.status).toBe(400)
     })
 
     it("should handle very long project descriptions", async () => {
