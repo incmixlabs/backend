@@ -7,7 +7,7 @@ import genaiRoutes from "../src/routes/genai"
 vi.mock("../src/env-vars", () => ({
   envVars: {
     ANTHROPIC_API_KEY: "test-anthropic-key",
-    GOOGLE_API_KEY: "test-google-key",
+    GOOGLE_AI_API_KEY: "test-google-key",
     OPENAI_API_KEY: "test-openai-key",
     FIGMA_ACCESS_TOKEN: "test-figma-token",
   },
