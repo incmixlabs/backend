@@ -1,7 +1,7 @@
 import { getAddressFromLocation, getLocationFromIp } from "@/lib/helper"
 import type { Address, HonoApp } from "@/types"
 import { OpenAPIHono } from "@hono/zod-openapi"
-import { env } from "hono/adapter"
+import { envVars } from "../../env-vars"
 import { getWeatherForecast } from "./openapi"
 import {
   type WeatherApiResponse,
@@ -37,9 +37,9 @@ weatherRoutes.openapi(getWeatherForecast, async (c) => {
     return c.json(data, 200)
   }
 
-  searchParams.append("apikey", env(c).WEATHER_API_KEY)
+  searchParams.append("apikey", envVars.WEATHER_API_KEY)
   const res = await fetch(
-    `${env(c).WEATHER_URL}/forecast?${searchParams.toString()}`,
+    `${envVars.WEATHER_URL}/forecast?${searchParams.toString()}`,
     {
       method: "get",
     }

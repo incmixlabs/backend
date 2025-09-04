@@ -5,8 +5,8 @@ test.setTimeout(120000)
 // Helper function to login
 async function login(request: APIRequestContext) {
   const loginRes = await request.post(
-    process.env.AUTH_API_ENDPOINT ||
-      "https://auth-api-dev-prev.uincmix.workers.dev/api/auth/login",
+    process.env.AUTH_API_URL ||
+      "https://auth-api-dev-prev.uincmix.workers.dev/api/auth",
     {
       data: {
         email: process.env.TEST_USER_EMAIL || "test.user1@example.com",

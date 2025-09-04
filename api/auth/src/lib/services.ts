@@ -1,27 +1,37 @@
 import type { MessageResponse } from "@/routes/types"
 import type { Context } from "@/types"
-import { generateSentryHeaders } from "@incmix-api/utils"
 import { BadRequestError, ServerError } from "@incmix-api/utils/errors"
 import type { UserProfile } from "@incmix/utils/types"
-import { envVars } from "../env-vars"
 
+export async function getUserProfile(c: Context, id: string, _cookie: string) {
+  // User profile is now handled directly in the auth service
+  const user = await c
+    .get("db")
+    .selectFrom("users")
+    .innerJoin("userProfiles", "users.id", "userProfiles.id")
+    .select([
+      "users.id",
+      "users.email",
+      "userProfiles.fullName as name",
+      "userProfiles.avatar",
+      "userProfiles.profileImage",
+      "userProfiles.localeId",
+    ])
+    .where("users.id", "=", id)
+    .executeTakeFirst()
 
-export async function getUserProfile(c: Context, id: string, cookie: string) {
-  const res = await fetch(`${envVars.USERS_API_URL}?id=${id}`, {
-    method: "GET",
-    headers: {
-      "content-type": "application/json",
-      cookie,
-      ...generateSentryHeaders(c),
-    },
-  })
-
-  if (!res.ok) {
-    const error = (await res.json()) as MessageResponse
-    if (res.status >= 500) throw new ServerError(error.message)
-    throw new BadRequestError(error.message)
+  if (!user) {
+    throw new BadRequestError("User not found")
   }
-  return (await res.json()) as UserProfile
+
+  return {
+    id: user.id,
+    email: user.email,
+    name: user.name,
+    avatar: user.avatar,
+    profileImage: user.profileImage,
+    localeId: user.localeId || 1,
+  } as UserProfile
 }
 export async function createUserProfile(
   c: Context,
@@ -30,42 +40,71 @@ export async function createUserProfile(
   email: string,
   localeId: number
 ) {
-  const res = await fetch(`${envVars.USERS_API_URL}`, {
-    method: "POST",
-    headers: {
-      "content-type": "application/json",
-      cookie: c.req.header("cookie") ?? "",
-      ...generateSentryHeaders(c),
-    },
-    body: JSON.stringify({
-      id,
-      email,
-      name: fullName,
-      localeId,
-    }),
-  })
+  // User profile creation is now handled directly in the auth service
+  const db = c.get("db")
 
-  if (!res.ok) {
-    const error = (await res.json()) as MessageResponse
-    if (res.status >= 500) throw new ServerError(error.message)
-    throw new BadRequestError(error.message)
+  // Check if profile already exists
+  const existingProfile = await db
+    .selectFrom("userProfiles")
+    .selectAll()
+    .where("id", "=", id)
+    .executeTakeFirst()
+
+  if (!existingProfile) {
+    // Create new profile
+    await db
+      .insertInto("userProfiles")
+      .values({
+        id,
+        email,
+        fullName: fullName || email,
+        localeId,
+        onboardingCompleted: false,
+      })
+      .execute()
   }
-  return (await res.json()) as UserProfile
+
+  const user = await db
+    .selectFrom("users")
+    .innerJoin("userProfiles", "users.id", "userProfiles.id")
+    .select([
+      "users.id",
+      "users.email",
+      "userProfiles.fullName as name",
+      "userProfiles.avatar",
+      "userProfiles.profileImage",
+      "userProfiles.localeId",
+    ])
+    .where("users.id", "=", id)
+    .executeTakeFirst()
+
+  if (!user) {
+    throw new ServerError("Failed to create user profile")
+  }
+
+  return {
+    id: user.id,
+    email: user.email,
+    name: user.name,
+    avatar: user.avatar,
+    profileImage: user.profileImage,
+    localeId: user.localeId || 1,
+  } as UserProfile
 }
 export async function deleteUserProfile(c: Context, id: string) {
-  const res = await fetch(`${envVars.USERS_API_URL}/${id}`, {
-    method: "delete",
-    headers: {
-      "content-type": "application/json",
-      cookie: c.req.header("cookie") ?? "",
-      ...generateSentryHeaders(c),
-    },
-  })
+  // User deletion is now handled directly in the auth service
+  const db = c.get("db")
 
-  if (!res.ok) {
-    const error = (await res.json()) as MessageResponse
-    if (res.status >= 500) throw new ServerError(error.message)
+  const result = await db
+    .deleteFrom("userProfiles")
+    .where("id", "=", id)
+    .executeTakeFirst()
+
+  if (result.numDeletedRows === 0n) {
     throw new BadRequestError()
   }
-  return (await res.json()) as MessageResponse
+
+  await db.deleteFrom("users").where("id", "=", id).executeTakeFirst()
+
+  return { message: "User profile deleted successfully" } as MessageResponse
 }

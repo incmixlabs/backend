@@ -36,7 +36,10 @@ export function createReferenceEndpointCheck(basePath: string) {
     const origin = new URL(c.req.url).origin
     const referenceUrl = `${origin}${normalize(basePath)}/reference`
     const controller = new AbortController()
-    const timer = setTimeout(() => controller.abort(), envVars.TIMEOUT_MS)
+    const timer = setTimeout(
+      () => controller.abort(),
+      envVars.TIMEOUT_MS as number
+    )
     try {
       const response = await fetch(referenceUrl, {
         method: "GET",

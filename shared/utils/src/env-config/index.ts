@@ -77,27 +77,28 @@ const baseEnvSchema = z.object({
   NODE_ENV: z
     .enum(["development", "production", "test"])
     .default("development"),
-  DATABASE_URL: z.url(),
-  SENTRY_DSN: z.url().optional(),
-  FRONTEND_URL: z.url(),
+  DATABASE_URL: z.string().url(),
+  SENTRY_DSN: z.string().url().optional(),
+  FRONTEND_URL: z.string().url(),
   DOMAIN: z.string().default("http://localhost"),
   COOKIE_NAME: z.string().default("incmix_session"),
   MOCK_DATA: z.coerce.boolean().default(false),
-  INTL_API_URL: z.url().optional(),
+  INTL_API_URL: z.string().url().optional(),
   TIMEOUT_MS: z.coerce.number().default(5000),
-  AUTH_API_URL: z.url().optional(),
+  AUTH_API_URL: z.string().url().optional(),
+  REDIS_URL: z.string().url(),
 })
 
 // Service-specific schema extensions
 const serviceSchemas = {
   auth: baseEnvSchema.extend({
-    GOOGLE_REDIRECT_URL: z.url().optional(),
+    GOOGLE_REDIRECT_URL: z.string().url().optional(),
     GOOGLE_CLIENT_ID: z.string(),
     GOOGLE_CLIENT_SECRET: z.string(),
     PORT: z.coerce.number().default(services.auth.port),
     // API URLs
-    EMAIL_API_URL: z.url().optional(),
-    FILES_API_URL: z.url().optional(),
+    EMAIL_API_URL: z.string().url().optional(),
+    FILES_API_URL: z.string().url().optional(),
   }),
   email: baseEnvSchema.extend({
     EMAIL_FROM: z.string().email(),
@@ -111,8 +112,8 @@ const serviceSchemas = {
     ANTHROPIC_API_KEY: z.string().optional(),
     GOOGLE_AI_API_KEY: z.string().optional(),
     PORT: z.coerce.number().default(services.genai.port),
-    REDIS_URL: z.url(),
-    ORG_API_URL: z.url().optional(),
+    REDIS_URL: z.string().url().optional(),
+    ORG_API_URL: z.string().url().optional(),
   }),
   files: baseEnvSchema.extend({
     STORAGE_TYPE: z.enum(["local", "s3"]).default("s3"),
@@ -131,27 +132,27 @@ const serviceSchemas = {
     WEATHER_URL: z.string(),
     SERP_API_KEY: z.string(),
     SERP_NEWS_URL: z.string(),
-    REDIS_URL: z.url(),
+    REDIS_URL: z.string().url().optional(),
     PORT: z.coerce.number().default(services.location.port),
   }),
   bff: baseEnvSchema.omit({ DATABASE_URL: true, SENTRY_DSN: true }).extend({
     PORT: z.coerce.number().default(services.bff.port),
-    ORG_API_URL: z.url().optional(),
-    GENAI_API_URL: z.url().optional(),
-    PROJECTS_API_URL: z.url().optional(),
-    COMMENTS_API_URL: z.url().optional(),
-    FILES_API_URL: z.url().optional(),
-    EMAIL_API_URL: z.url().optional(),
-    LOCATION_API_URL: z.url().optional(),
-    RXDB_SYNC_API_URL: z.url().optional(),
+    ORG_API_URL: z.string().url().optional(),
+    GENAI_API_URL: z.string().url().optional(),
+    PROJECTS_API_URL: z.string().url().optional(),
+    COMMENTS_API_URL: z.string().url().optional(),
+    FILES_API_URL: z.string().url().optional(),
+    EMAIL_API_URL: z.string().url().optional(),
+    LOCATION_API_URL: z.string().url().optional(),
+    RXDB_SYNC_API_URL: z.string().url().optional(),
   }),
   comments: baseEnvSchema.extend({
     PORT: z.coerce.number().default(services.comments.port),
-    ORG_API_URL: z.url().optional(),
+    ORG_API_URL: z.string().url().optional(),
   }),
   intl: baseEnvSchema.extend({
     PORT: z.coerce.number().default(services.intl.port),
-    AUTH_API_URL: z.url().optional(),
+    AUTH_API_URL: z.string().url().optional(),
   }),
   org: baseEnvSchema.extend({
     PORT: z.coerce.number().default(services.org.port),
@@ -159,8 +160,9 @@ const serviceSchemas = {
 
   projects: baseEnvSchema.extend({
     PORT: z.coerce.number().default(services.projects.port),
-    ORG_API_URL: z.url().optional(),
-    REDIS_URL: z.url().optional(),
+    ORG_API_URL: z.string().url().optional(),
+    REDIS_URL: z.string().url().optional(),
+    FILES_API_URL: z.string().url().optional(),
   }),
   rxdb: baseEnvSchema.extend({
     PORT: z.coerce.number().default(services.rxdb.port),
@@ -276,8 +278,7 @@ export function createEnvConfig<T extends ServiceName>(
   const result = schema.safeParse(process.env)
 
   if (!result.success) {
-    const flat = z.treeifyError(result.error)
-    console.error("Environment validation failed:", flat)
+    console.error("Environment validation failed:", result.error.format())
     throw new Error("Environment validation failed")
   }
   // Post-process to apply DOMAIN to API URLs if they use default values

@@ -1,13 +1,13 @@
 import { findUserById } from "@/lib/db"
-import { env } from "hono/adapter"
 import { getCookie } from "hono/cookie"
+import { envVars } from "../env-vars"
 import type { Context } from "../types"
 import { deleteSessionCookie, setSessionCookie } from "./cookies"
 import { validateSession } from "./session"
 
 export async function authMiddleware(c: Context, next: () => Promise<void>) {
   const db = c.get("db")
-  const cookieName = env(c).COOKIE_NAME
+  const cookieName = envVars.COOKIE_NAME as string
   const sessionId = getCookie(c, cookieName)
 
   if (!sessionId) {
