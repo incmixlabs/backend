@@ -64,7 +64,6 @@ genaiRoutes.openapi(generateProject, async (c) => {
     ])
   }
 })
-
 genaiRoutes.openapi(generateProjectHierarchy, async (c) => {
   try {
     const user = c.get("user")
@@ -87,13 +86,26 @@ genaiRoutes.openapi(generateProjectHierarchy, async (c) => {
     }
 
     return streamSSE(c, async (stream) => {
-      const result = aiGenerateProjectHierarchy(c, projectDescription, template, userTier)
-      for await (const chunk of result.partialObjectStream) {
-        stream.writeSSE({
-          data: JSON.stringify(chunk),
+      try {
+        const result = aiGenerateProjectHierarchy(
+          c,
+          projectDescription,
+          template,
+          userTier
+        )
+        for await (const chunk of result.partialObjectStream) {
+          await stream.writeSSE({
+            data: JSON.stringify(chunk),
+          })
+        }
+        stream.close()
+      } catch (_error) {
+        await stream.writeSSE({
+          event: "error",
+          data: JSON.stringify({ error: "Stream processing failed" }),
         })
+        stream.close()
       }
-      stream.close()
     })
   } catch (error) {
     return await processError<typeof generateProjectHierarchy>(c, error, [

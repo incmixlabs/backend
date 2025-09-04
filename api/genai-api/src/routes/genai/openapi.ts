@@ -295,7 +295,8 @@ export const generateProjectHierarchy = createRoute({
   path: "/generate-project-hierarchy",
   summary: "Generate Project Hierarchy",
   tags: ["Project"],
-  description: "Generate comprehensive project hierarchy with epics, features, and user stories from a project description",
+  description:
+    "Generate comprehensive project hierarchy with epics, features, and user stories from a project description",
   security: [{ cookieAuth: [] }],
   request: {
     body: {
@@ -315,7 +316,8 @@ export const generateProjectHierarchy = createRoute({
           }),
         },
       },
-      description: "Streams the generated project hierarchy with epics, features, and stories",
+      description:
+        "Streams the generated project hierarchy with epics, features, and stories",
     },
     400: {
       content: {
