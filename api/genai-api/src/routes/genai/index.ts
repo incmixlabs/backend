@@ -1,7 +1,17 @@
+import { OpenAPIHono } from "@hono/zod-openapi"
+import { ERROR_UNAUTHORIZED } from "@incmix-api/utils"
+import {
+  processError,
+  UnauthorizedError,
+  zodError,
+} from "@incmix-api/utils/errors"
+import { useTranslation } from "@incmix-api/utils/middleware"
+import { streamSSE } from "hono/streaming"
 import { FigmaService } from "@/lib/figma"
 import {
   generateMultipleUserStories as aiGenerateMultipleUserStories,
   generateProject as aiGenerateProject,
+  generateProjectHierarchy as aiGenerateProjectHierarchy,
   generateUserStory as aiGenerateUserStory,
   generateUserStoryFromImage,
 } from "@/lib/services"
@@ -9,20 +19,12 @@ import {
   generateCodeFromFigma,
   generateMultipleUserStories,
   generateProject,
+  generateProjectHierarchy,
   generateUserStory,
   generateUserStoryFromFigma,
   getFigmaImage,
 } from "@/routes/genai/openapi"
 import type { HonoApp } from "@/types"
-import { OpenAPIHono } from "@hono/zod-openapi"
-import { ERROR_UNAUTHORIZED } from "@incmix-api/utils"
-import {
-  UnauthorizedError,
-  processError,
-  zodError,
-} from "@incmix-api/utils/errors"
-import { useTranslation } from "@incmix-api/utils/middleware"
-import { streamSSE } from "hono/streaming"
 
 const genaiRoutes = new OpenAPIHono<HonoApp>({
   defaultHook: zodError,
@@ -62,6 +64,57 @@ genaiRoutes.openapi(generateProject, async (c) => {
     ])
   }
 })
+genaiRoutes.openapi(generateProjectHierarchy, async (c) => {
+  try {
+    const user = c.get("user")
+    const t = await useTranslation(c)
+    if (!user) {
+      const msg = await t.text(ERROR_UNAUTHORIZED)
+      throw new UnauthorizedError(msg)
+    }
+
+    const { projectDescription, userTier, templateId } = c.req.valid("json")
+
+    let template: any
+    if (templateId) {
+      template = await c
+        .get("db")
+        .selectFrom("storyTemplates")
+        .selectAll()
+        .where("id", "=", templateId)
+        .executeTakeFirst()
+    }
+
+    return streamSSE(c, async (stream) => {
+      try {
+        const result = aiGenerateProjectHierarchy(
+          c,
+          projectDescription,
+          template,
+          userTier
+        )
+        for await (const chunk of result.partialObjectStream) {
+          await stream.writeSSE({
+            data: JSON.stringify(chunk),
+          })
+        }
+        stream.close()
+      } catch (_error) {
+        await stream.writeSSE({
+          event: "error",
+          data: JSON.stringify({ error: "Stream processing failed" }),
+        })
+        stream.close()
+      }
+    })
+  } catch (error) {
+    return await processError<typeof generateProjectHierarchy>(c, error, [
+      "{{ default }}",
+      "generate-project-hierarchy",
+    ])
+  }
+})
+
 genaiRoutes.openapi(generateUserStory, async (c) => {
   try {
     const user = c.get("user")

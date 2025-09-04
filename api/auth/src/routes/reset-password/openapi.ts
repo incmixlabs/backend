@@ -1,9 +1,9 @@
+import { createRoute } from "@hono/zod-openapi"
 import {
   ForgetPassowrdSchema,
   ResetPasswordSchema,
 } from "@/routes/reset-password/types"
 import { EmailSchema, MessageResponseSchema } from "@/routes/types"
-import { createRoute } from "@hono/zod-openapi"
 
 export const resetPassword = createRoute({
   method: "post",

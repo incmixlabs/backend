@@ -1,3 +1,13 @@
+import { OpenAPIHono } from "@hono/zod-openapi"
+import type { KyselyDb } from "@incmix-api/utils/db-schema"
+import {
+  ConflictError,
+  NotFoundError,
+  processError,
+  ServerError,
+  UnauthorizedError,
+  zodError,
+} from "@incmix-api/utils/errors"
 import {
   addLocale,
   deleteLocale,
@@ -7,16 +17,6 @@ import {
   updateLocale,
 } from "@/routes/locales/openapi"
 import type { HonoApp } from "@/types"
-import { OpenAPIHono } from "@hono/zod-openapi"
-import type { KyselyDb } from "@incmix-api/utils/db-schema"
-import {
-  ConflictError,
-  NotFoundError,
-  ServerError,
-  UnauthorizedError,
-  processError,
-  zodError,
-} from "@incmix-api/utils/errors"
 
 const localeRoutes = new OpenAPIHono<HonoApp>({
   defaultHook: zodError,

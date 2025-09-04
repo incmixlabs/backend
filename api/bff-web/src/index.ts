@@ -1,8 +1,7 @@
+import { API } from "@incmix/utils/env"
 import { createService } from "@incmix-api/utils"
 import { NotFoundError } from "@incmix-api/utils/errors"
 import { setupCors } from "@incmix-api/utils/middleware"
-import { API } from "@incmix/utils/env"
-import { env } from "hono/adapter"
 import { envVars } from "./env-vars"
 import type { HonoApp } from "./types"
 

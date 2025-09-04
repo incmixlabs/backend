@@ -1,4 +1,4 @@
-import { type RxdbEnv, createEnvConfig } from "@incmix-api/utils/env-config"
+import { createEnvConfig, type RxdbEnv } from "@incmix-api/utils/env-config"
 
 // Use the new env-config system with dotenv-mono
 // This will automatically merge:

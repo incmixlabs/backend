@@ -1,10 +1,10 @@
-import { envVars } from "@/env-vars"
 import { createAnthropic } from "@ai-sdk/anthropic"
 import { createGoogleGenerativeAI } from "@ai-sdk/google"
 import type { Node, RGBA } from "@figma/rest-api-spec"
 import { ServerError } from "@incmix-api/utils/errors"
 import { streamObject } from "ai"
 import { z } from "zod"
+import { envVars } from "@/env-vars"
 import { type AIModel, MODEL_MAP } from "./constants"
 
 // Shared schema for AI model responses

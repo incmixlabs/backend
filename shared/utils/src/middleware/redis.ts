@@ -1,6 +1,6 @@
 import type { OpenAPIHono } from "@hono/zod-openapi"
 import type { Env as HonoEnv } from "hono"
-import { type RedisClientType, createClient } from "redis"
+import { createClient, type RedisClientType } from "redis"
 import { envVars } from "../env-config"
 
 declare module "hono" {

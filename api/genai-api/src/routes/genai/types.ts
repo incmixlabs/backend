@@ -202,3 +202,116 @@ export const MultipleUserStoriesResponseSchema = z
 export type MultipleUserStoriesResponse = z.infer<
   typeof MultipleUserStoriesResponseSchema
 >
+
+export const GenerateProjectHierarchySchema = z
+  .object({
+    projectDescription: z.string().min(10).max(2000).openapi({
+      example:
+        "Create an ecommerce portal that accepts international orders and payments, and enables international shipments (split shipments), tracking and returns.",
+      description:
+        "Detailed description of the project to generate epics, features, and stories for",
+    }),
+    userTier: z.enum(["free", "paid"]).default("free").openapi({
+      example: "free",
+      description:
+        "User tier determines which AI model to use (free: Gemini, paid: Claude)",
+    }),
+    templateId: z.number().optional().openapi({
+      example: 1,
+      description: "ID of the story template to use (optional)",
+    }),
+  })
+  .openapi("GenerateProjectHierarchy")
+
+export const ProjectHierarchyResponseSchema = z
+  .object({
+    project: z.object({
+      title: z.string().openapi({
+        example: "International E-Commerce Platform",
+        description: "Project title",
+      }),
+      description: z.string().openapi({
+        example: "A comprehensive e-commerce solution with global capabilities",
+        description: "Project description",
+      }),
+      epics: z
+        .array(
+          z.object({
+            id: z.string().openapi({
+              example: "epic-1",
+              description: "Epic identifier",
+            }),
+            title: z.string().openapi({
+              example: "User Management & Authentication",
+              description: "Epic title",
+            }),
+            description: z.string().openapi({
+              example:
+                "Comprehensive user account management system with secure authentication",
+              description: "Epic description",
+            }),
+            features: z
+              .array(
+                z.object({
+                  id: z.string().openapi({
+                    example: "feature-1-1",
+                    description: "Feature identifier",
+                  }),
+                  title: z.string().openapi({
+                    example: "User Registration",
+                    description: "Feature title",
+                  }),
+                  description: z.string().openapi({
+                    example: "Allow users to create new accounts",
+                    description: "Feature description",
+                  }),
+                  stories: z
+                    .array(
+                      z.object({
+                        id: z.string().openapi({
+                          example: "story-1-1-1",
+                          description: "Story identifier",
+                        }),
+                        title: z.string().openapi({
+                          example: "Email Registration",
+                          description: "Story title",
+                        }),
+                        description: z.string().openapi({
+                          example:
+                            "As a user, I want to register with my email so that I can create an account",
+                          description: "User story description",
+                        }),
+                        acceptanceCriteria: z.array(z.string()).openapi({
+                          example: [
+                            "User can enter email and password",
+                            "Email validation is performed",
+                            "Password strength requirements are enforced",
+                          ],
+                          description: "Acceptance criteria for the user story",
+                        }),
+                        estimatedPoints: z.number().optional().openapi({
+                          example: 3,
+                          description: "Story points estimate",
+                        }),
+                      })
+                    )
+                    .openapi({
+                      description: "User stories within the feature",
+                    }),
+                })
+              )
+              .openapi({
+                description: "Features within the epic",
+              }),
+          })
+        )
+        .openapi({
+          description: "List of epics in the project",
+        }),
+    }),
+  })
+  .openapi("ProjectHierarchyResponse")
+
+export type ProjectHierarchyResponse = z.infer<
+  typeof ProjectHierarchyResponseSchema
+>

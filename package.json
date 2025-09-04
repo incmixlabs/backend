@@ -8,8 +8,8 @@
     "clean": "turbo clean",
     "prebuild": "pnpm clean",
     "dev": "turbo dev --parallel --ui tui",
-    "lint": "biome check .",
-    "lint:fix": "biome check --fix --unsafe",
+    "lint": "NODE_NO_WARNINGS=1 biome check .",
+    "lint:fix": "NODE_NO_WARNINGS=1 biome check --fix --unsafe",
     "lint:packages": "pnpx sherif@latest",
     "typecheck": "turbo typecheck",
     "test": "turbo test",
@@ -26,7 +26,10 @@
     "overrides": {
       "brace-expansion@>=1.0.0 <=1.1.11": "1.1.12",
       "brace-expansion@>=2.0.0 <=2.0.1": "2.0.2",
-      "tmp@<=0.2.3": "0.2.4"
+      "tmp@<=0.2.3": "0.2.4",
+      "glob@<=7.2.3": "10.4.5",
+      "inflight@<=1.0.6": "^1.0.6",
+      "rimraf@<=3.0.2": "5.0.7"
     },
     "ignoredBuiltDependencies": [
       "@incmix/utils"
@@ -34,7 +37,7 @@
   },
   "packageManager": "pnpm@10.13.1",
   "devDependencies": {
-    "@biomejs/biome": "1.9.4",
+    "@biomejs/biome": "2.2.2",
     "@commitlint/cli": "19.8.1",
     "@commitlint/config-conventional": "19.8.1",
     "@faker-js/faker": "10.0.0",

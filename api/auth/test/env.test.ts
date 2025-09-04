@@ -21,10 +21,17 @@ describe("Environment Configuration Tests", () => {
     expect(process.env.NODE_ENV).toBe("test")
     // The envVars module loads these from the .env.test file via createEnvConfig
     // We just need to ensure they would be loaded, not that they're in process.env
-    expect(envVars.JWT_SECRET || "test-jwt-secret-for-testing-only").toBeDefined()
-    expect(envVars.DATABASE_URL || "postgresql://postgres:password@localhost:54321/incmix").toBeDefined()
+    expect(
+      envVars.JWT_SECRET || "test-jwt-secret-for-testing-only"
+    ).toBeDefined()
+    expect(
+      envVars.DATABASE_URL ||
+        "postgresql://postgres:password@localhost:54321/incmix"
+    ).toBeDefined()
     expect(envVars.GOOGLE_CLIENT_ID || "test-google-client-id").toBeDefined()
-    expect(envVars.GOOGLE_CLIENT_SECRET || "test-google-client-secret").toBeDefined()
+    expect(
+      envVars.GOOGLE_CLIENT_SECRET || "test-google-client-secret"
+    ).toBeDefined()
   })
 
   test("should handle production environment", async () => {
@@ -106,7 +113,7 @@ describe("Environment Configuration Tests", () => {
         EMAIL_API_URL:
           process.env.EMAIL_API_URL || "https://staging-api.example.com/email",
         INTL_API_URL:
-          process.env.INTL_API_URL || "https://staging-api.example.com/intl"
+          process.env.INTL_API_URL || "https://staging-api.example.com/intl",
       },
     }))
 
@@ -244,7 +251,10 @@ describe("Environment Configuration Tests", () => {
 
     for (const varName of baseRequiredVars) {
       // Check envVars instead of process.env since createEnvConfig loads them
-      expect(envVars[varName] || `mock-${varName}`, `${varName} should be defined`).toBeDefined()
+      expect(
+        envVars[varName] || `mock-${varName}`,
+        `${varName} should be defined`
+      ).toBeDefined()
     }
 
     // For computed URLs, we just check that the base components are available
@@ -278,7 +288,7 @@ describe("Environment Configuration Tests", () => {
         EMAIL_API_URL:
           process.env.EMAIL_API_URL || "http://localhost:8787/api/email",
         INTL_API_URL:
-          process.env.INTL_API_URL || "http://localhost:8787/api/intl"
+          process.env.INTL_API_URL || "http://localhost:8787/api/intl",
       },
     }))
 
