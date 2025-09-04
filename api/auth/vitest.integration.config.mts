@@ -23,6 +23,8 @@ export default defineConfig({
     setupFiles: ["./test/utils/setup.ts"],
     env: {
       NODE_ENV: "test",
+      DATABASE_URL: process.env.DATABASE_URL,
+      FRONTEND_URL: "http://localhost:1420",
     },
     testTimeout: 60000, // 60 seconds for integration tests
     hookTimeout: 120000, // 2 minutes for setup (testcontainers)
