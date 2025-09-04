@@ -313,7 +313,7 @@ export function createEnvConfig<T extends ServiceName>(
 
   // Special case for GOOGLE_REDIRECT_URL - only set if in schema
   if ("GOOGLE_REDIRECT_URL" in schemaShape && !env.GOOGLE_REDIRECT_URL) {
-    env.GOOGLE_REDIRECT_URL = `${env.FRONTEND_URL}/auth/google/callback`
+    env.GOOGLE_REDIRECT_URL = `${env.FRONTEND_URL}/auth/google`
   }
   return env
 }

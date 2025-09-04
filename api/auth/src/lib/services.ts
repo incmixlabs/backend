@@ -61,6 +61,7 @@ export async function createUserProfile(
         localeId,
         onboardingCompleted: false,
       })
+      .onConflict((oc) => oc.column("id").doNothing())
       .execute()
   }
 
@@ -103,8 +104,17 @@ export async function deleteUserProfile(c: Context, id: string) {
   if (result.numDeletedRows === 0n) {
     throw new BadRequestError()
   }
+  await db.transaction().execute(async (trx) => {
+    const res = await trx
+      .deleteFrom("userProfiles")
+      .where("id", "=", id)
+      .executeTakeFirst()
 
-  await db.deleteFrom("users").where("id", "=", id).executeTakeFirst()
+    if (res.numDeletedRows === 0n) {
+      throw new BadRequestError("User profile not found")
+    }
 
+    await trx.deleteFrom("users").where("id", "=", id).executeTakeFirst()
+  })
   return { message: "User profile deleted successfully" } as MessageResponse
 }

@@ -161,8 +161,8 @@ export const sendVerificationEmail = async (
   verificationCode: string,
   requestedBy: string
 ) => {
-  const verificationLink = `${envVars.FRONTEND_URL}/email-verification?code=${verificationCode}&email=${recipient}`
-  const emailUrl = `${envVars.EMAIL_API_URL}`
+  const verificationLink = `${envVars.FRONTEND_URL}/email-verification?code=${encodeURIComponent(verificationCode)}&email=${encodeURIComponent(recipient)}`
+  const emailUrl = String(envVars.EMAIL_API_URL)
 
   const sentryHeaders = generateSentryHeaders(c)
   await fetch(emailUrl, {
@@ -190,8 +190,7 @@ export const sendForgetPasswordEmail = async (
 ) => {
   const emailUrl = envVars.EMAIL_API_URL as string
   const [username] = recipient.split("@")
-  const resetPasswordLink = `${envVars.FRONTEND_URL}/reset-password?code=${verificationCode}&email=${recipient}`
-
+  const resetPasswordLink = `${envVars.FRONTEND_URL}/reset-password?code=${encodeURIComponent(verificationCode)}&email=${encodeURIComponent(recipient)}`
   const sentryHeaders = generateSentryHeaders(c)
   const request = new Request(emailUrl, {
     method: "POST",

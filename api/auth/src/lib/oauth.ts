@@ -11,14 +11,14 @@ export function initializeGoogleAuth(
   options: GoogleAuthOptions = {}
 ) {
   const baseUrl =
-    envVars.GOOGLE_REDIRECT_URL || `${envVars.FRONTEND_URL}/auth/google`
+    envVars.GOOGLE_REDIRECT_URL ?? `${envVars.FRONTEND_URL}/auth/google`
   const redirectUrl = options.isTauri
     ? `${baseUrl}/tauri-callback`
     : `${baseUrl}/callback`
 
   return new Google(
-    envVars.GOOGLE_CLIENT_ID,
-    envVars.GOOGLE_CLIENT_SECRET,
+    envVars.GOOGLE_CLIENT_ID as string,
+    envVars.GOOGLE_CLIENT_SECRET as string,
     redirectUrl
   )
 }
