@@ -37,14 +37,16 @@ weatherRoutes.openapi(getWeatherForecast, async (c) => {
     return c.json(data, 200)
   }
 
-  searchParams.append("apikey", envVars.WEATHER_API_KEY)
+  searchParams.append("apikey", envVars.WEATHER_API_KEY as string)
+  const ctrl = new AbortController()
+  const t = setTimeout(() => ctrl.abort(), Number(envVars.TIMEOUT_MS) || 10000)
   const res = await fetch(
     `${envVars.WEATHER_URL}/forecast?${searchParams.toString()}`,
-    {
-      method: "get",
-    }
-  )
-
+    { method: "GET", signal: ctrl.signal }
+  ).finally(() => clearTimeout(t))
+  if (!res.ok) {
+    return c.json({ message: "Weather provider error" }, 502)
+  }
   const weatherForecast = (await res.json()) as WeatherApiResponse
   const data = {
     temperatureUnit: "c",
@@ -59,7 +61,7 @@ weatherRoutes.openapi(getWeatherForecast, async (c) => {
     location: address?.city ?? address?.state ?? address?.country,
   }
 
-  // // Expires 1 day
+  // Expires 1 day
   await redis.set(key, JSON.stringify(data), {
     EX: 60 * 60 * 24,
   })

@@ -28,5 +28,13 @@ export const getWeatherForecast = createRoute({
       },
       description: "Bad Request",
     },
+    502: {
+      content: {
+        "application/json": {
+          schema: MessageResponseSchema,
+        },
+      },
+      description: "Weather provider error",
+    },
   },
 })
