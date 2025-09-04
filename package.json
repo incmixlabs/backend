@@ -12,7 +12,7 @@
     "lint:fix": "NODE_NO_WARNINGS=1 biome check --fix --unsafe",
     "lint:packages": "pnpx sherif@latest",
     "typecheck": "turbo typecheck",
-    "test": "turbo test",
+    "test:integration": "turbo test:integration",
     "test:e2e": "turbo test:e2e"
   },
   "engines": {

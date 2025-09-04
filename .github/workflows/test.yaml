@@ -6,9 +6,6 @@ on:
       - main
     paths:
       - "backend/auth/**"
-      - "backend/files-api/**"
-      - "backend/tasks-api/**"
-      - "backend/users-api/**"
       - "backend/org-api/**"
       - ".github/workflows/test.yaml"
 jobs:
@@ -26,6 +23,6 @@ jobs:
       - name: Install Dependencies
         run: pnpm install
       - name: Run tests
-        run: pnpm run test
+        run: pnpm run test:integration
 
 

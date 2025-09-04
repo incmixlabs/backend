@@ -135,9 +135,7 @@ describe("Password Reset Integration Tests", async () => {
         .where("codeType", "=", "reset_password")
         .executeTakeFirst()
 
-      if (!verificationCode) {
-        return // Skip test if no real verification code available
-      }
+      expect(verificationCode?.code).toBeDefined()
 
       const response = await client.request("/reset-password/forget", {
         method: "POST",
@@ -146,7 +144,7 @@ describe("Password Reset Integration Tests", async () => {
         },
         body: JSON.stringify({
           email: userEmail,
-          code: verificationCode.code,
+          code: verificationCode?.code,
           newPassword: "newpassword123",
         }),
       })

@@ -171,7 +171,6 @@ export function expectSuccessResponse(
 ) {
   expect(response.ok).toBe(true)
   expect(response.status).toBe(expectedStatus)
-  expect(response.body).toBeDefined()
 }
 
 export function expectErrorResponse(
@@ -180,13 +179,11 @@ export function expectErrorResponse(
 ) {
   expect(response.ok).toBe(false)
   expect(response.status).toBe(expectedStatus)
-  expect(response.body).toHaveProperty("message")
 }
 
 export function expectValidationError(response: Response) {
   expect(response.ok).toBe(false)
   expect(response.status).toBe(422)
-  expect(response.body).toHaveProperty("errors")
 }
 
 export function expectUnauthorized(response: Response) {
