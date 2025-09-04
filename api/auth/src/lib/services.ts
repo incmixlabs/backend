@@ -1,9 +1,21 @@
 import type { MessageResponse } from "@/routes/types"
 import type { Context } from "@/types"
 import { BadRequestError, ServerError } from "@incmix-api/utils/errors"
-import type { UserProfile } from "@incmix/utils/types"
 
-export async function getUserProfile(c: Context, id: string, _cookie: string) {
+export type ProfileDTO = {
+  id: string
+  email: string
+  name: string
+  avatar: string | null
+  profileImage: string | null
+  localeId: number
+}
+
+export async function getUserProfile(
+  c: Context,
+  id: string,
+  _cookie: string
+): Promise<ProfileDTO> {
   // User profile is now handled directly in the auth service
   const user = await c
     .get("db")
@@ -12,7 +24,7 @@ export async function getUserProfile(c: Context, id: string, _cookie: string) {
     .select([
       "users.id",
       "users.email",
-      "userProfiles.fullName as name",
+      "userProfiles.fullName",
       "userProfiles.avatar",
       "userProfiles.profileImage",
       "userProfiles.localeId",
@@ -27,51 +39,47 @@ export async function getUserProfile(c: Context, id: string, _cookie: string) {
   return {
     id: user.id,
     email: user.email,
-    name: user.name,
+    name: user.fullName,
     avatar: user.avatar,
     profileImage: user.profileImage,
-    localeId: user.localeId || 1,
-  } as UserProfile
+    localeId: user.localeId ?? 1,
+  }
 }
+
 export async function createUserProfile(
   c: Context,
   id: string,
   fullName: string,
   email: string,
   localeId: number
-) {
-  // User profile creation is now handled directly in the auth service
-  const db = c.get("db")
-
-  // Check if profile already exists
-  const existingProfile = await db
-    .selectFrom("userProfiles")
-    .selectAll()
-    .where("id", "=", id)
-    .executeTakeFirst()
-
-  if (!existingProfile) {
-    // Create new profile
-    await db
+): Promise<ProfileDTO> {
+  // Ensure user profile exists
+  try {
+    await c
+      .get("db")
       .insertInto("userProfiles")
       .values({
         id,
         email,
         fullName: fullName || email,
-        localeId,
         onboardingCompleted: false,
+        localeId,
       })
       .onConflict((oc) => oc.column("id").doNothing())
       .execute()
+  } catch (error) {
+    console.error("Error creating user profile:", error)
   }
 
-  const user = await db
+  // Fetch the user profile
+  const user = await c
+    .get("db")
     .selectFrom("users")
     .innerJoin("userProfiles", "users.id", "userProfiles.id")
     .select([
       "users.id",
       "users.email",
-      "userProfiles.fullName as name",
+      "userProfiles.fullName",
       "userProfiles.avatar",
       "userProfiles.profileImage",
       "userProfiles.localeId",
@@ -86,35 +94,32 @@ export async function createUserProfile(
   return {
     id: user.id,
     email: user.email,
-    name: user.name,
+    name: user.fullName,
     avatar: user.avatar,
     profileImage: user.profileImage,
-    localeId: user.localeId || 1,
-  } as UserProfile
+    localeId: user.localeId ?? 1,
+  }
 }
-export async function deleteUserProfile(c: Context, id: string) {
-  // User deletion is now handled directly in the auth service
-  const db = c.get("db")
 
-  const result = await db
+export async function deleteUserProfile(
+  c: Context,
+  id: string
+): Promise<MessageResponse> {
+  // Delete user profile
+  const result = await c
+    .get("db")
     .deleteFrom("userProfiles")
     .where("id", "=", id)
-    .executeTakeFirst()
+    .execute()
 
-  if (result.numDeletedRows === 0n) {
-    throw new BadRequestError()
+  if (result.length === 0) {
+    throw new BadRequestError("User profile not found")
   }
-  await db.transaction().execute(async (trx) => {
-    const res = await trx
-      .deleteFrom("userProfiles")
-      .where("id", "=", id)
-      .executeTakeFirst()
 
-    if (res.numDeletedRows === 0n) {
-      throw new BadRequestError("User profile not found")
-    }
+  // Delete user
+  await c.get("db").deleteFrom("users").where("id", "=", id).execute()
 
-    await trx.deleteFrom("users").where("id", "=", id).executeTakeFirst()
-  })
-  return { message: "User profile deleted successfully" } as MessageResponse
+  return {
+    message: "User profile deleted successfully",
+  }
 }
