@@ -2,6 +2,7 @@ import { FigmaService } from "@/lib/figma"
 import {
   generateMultipleUserStories as aiGenerateMultipleUserStories,
   generateProject as aiGenerateProject,
+  generateProjectHierarchy as aiGenerateProjectHierarchy,
   generateUserStory as aiGenerateUserStory,
   generateUserStoryFromImage,
 } from "@/lib/services"
@@ -9,6 +10,7 @@ import {
   generateCodeFromFigma,
   generateMultipleUserStories,
   generateProject,
+  generateProjectHierarchy,
   generateUserStory,
   generateUserStoryFromFigma,
   getFigmaImage,
@@ -62,6 +64,45 @@ genaiRoutes.openapi(generateProject, async (c) => {
     ])
   }
 })
+
+genaiRoutes.openapi(generateProjectHierarchy, async (c) => {
+  try {
+    const user = c.get("user")
+    const t = await useTranslation(c)
+    if (!user) {
+      const msg = await t.text(ERROR_UNAUTHORIZED)
+      throw new UnauthorizedError(msg)
+    }
+
+    const { projectDescription, userTier, templateId } = c.req.valid("json")
+
+    let template = undefined
+    if (templateId) {
+      template = await c
+        .get("db")
+        .selectFrom("storyTemplates")
+        .selectAll()
+        .where("id", "=", templateId)
+        .executeTakeFirst()
+    }
+
+    return streamSSE(c, async (stream) => {
+      const result = aiGenerateProjectHierarchy(c, projectDescription, template, userTier)
+      for await (const chunk of result.partialObjectStream) {
+        stream.writeSSE({
+          data: JSON.stringify(chunk),
+        })
+      }
+      stream.close()
+    })
+  } catch (error) {
+    return await processError<typeof generateProjectHierarchy>(c, error, [
+      "{{ default }}",
+      "generate-project-hierarchy",
+    ])
+  }
+})
+
 genaiRoutes.openapi(generateUserStory, async (c) => {
   try {
     const user = c.get("user")

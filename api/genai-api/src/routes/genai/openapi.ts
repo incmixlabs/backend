@@ -4,6 +4,7 @@ import {
   FigmaSchema,
   GenerateCodeFromFigmaSchema,
   GenerateMultipleUserStoriesSchema,
+  GenerateProjectHierarchySchema,
   GenerateUserStorySchema,
   MultipleUserStoriesResponseSchema,
   UserStoryResponseSchema,
@@ -269,6 +270,60 @@ export const generateMultipleUserStories = createRoute({
         },
       },
       description: "Error response when user story generation fails",
+    },
+    401: {
+      content: {
+        "application/json": {
+          schema: ResponseSchema,
+        },
+      },
+      description: "Error response when not authenticated",
+    },
+    500: {
+      content: {
+        "application/json": {
+          schema: ResponseSchema,
+        },
+      },
+      description: "Internal Server Error",
+    },
+  },
+})
+
+export const generateProjectHierarchy = createRoute({
+  method: "post",
+  path: "/generate-project-hierarchy",
+  summary: "Generate Project Hierarchy",
+  tags: ["Project"],
+  description: "Generate comprehensive project hierarchy with epics, features, and user stories from a project description",
+  security: [{ cookieAuth: [] }],
+  request: {
+    body: {
+      content: {
+        "application/json": {
+          schema: GenerateProjectHierarchySchema,
+        },
+      },
+    },
+  },
+  responses: {
+    200: {
+      content: {
+        "text/event-stream": {
+          schema: z.object({
+            data: z.string(),
+          }),
+        },
+      },
+      description: "Streams the generated project hierarchy with epics, features, and stories",
+    },
+    400: {
+      content: {
+        "application/json": {
+          schema: ResponseSchema,
+        },
+      },
+      description: "Error response when project hierarchy generation fails",
     },
     401: {
       content: {

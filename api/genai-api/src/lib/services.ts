@@ -2,6 +2,7 @@ import { envVars } from "@/env-vars"
 import {
   type MultipleUserStoriesResponse,
   MultipleUserStoriesResponseSchema,
+  ProjectHierarchyResponseSchema,
   type UserStoryResponse,
   UserStoryResponseSchema,
 } from "@/routes/genai/types"
@@ -333,6 +334,123 @@ async function getAiResponseUsingImagePrompt(
   } catch (error) {
     console.error(`Error getting AI response with image using ${model}:`, error)
     throw new Error(`AI Service error: ${(error as Error).message}`)
+  }
+}
+
+export function generateProjectHierarchy(
+  _c: Context,
+  projectDescription: string,
+  template?: StoryTemplate,
+  userTier: "free" | "paid" = "free"
+) {
+  const model = userTier === "paid" ? "claude" : "gemini"
+
+  const promptTemplate =
+    template?.content ||
+    `As a [type of user], I want [goal] so that [benefit/value].
+
+[Design Description]
+
+Acceptance Criteria:
+- [criterion 1]
+- [criterion 2]
+- [criterion 3]`
+
+  const enhancedPrompt = `
+Analyze the following project description and generate a comprehensive project hierarchy:
+
+Project Description: "${projectDescription}"
+
+Create a detailed project breakdown with the following structure:
+1. Multiple Epics (major work streams or components)
+2. Multiple Features per Epic (specific functionalities)
+3. Multiple User Stories per Feature (implementable tasks)
+
+For the e-commerce example provided, think about:
+- User management & authentication
+- Product catalog & search
+- Shopping cart & checkout
+- International payment processing
+- Order management & tracking
+- Shipping & logistics (including split shipments)
+- Returns & refunds
+- Customer support
+- Admin dashboard
+- Reporting & analytics
+
+Return ONLY a valid JSON object that matches this exact structure:
+{
+  "project": {
+    "title": "string - concise project title",
+    "description": "string - brief project overview",
+    "epics": [
+      {
+        "id": "epic-1",
+        "title": "string - epic title",
+        "description": "string - epic description",
+        "features": [
+          {
+            "id": "feature-1-1",
+            "title": "string - feature title",
+            "description": "string - feature description",
+            "stories": [
+              {
+                "id": "story-1-1-1",
+                "title": "string - story title",
+                "description": "string - user story in format: ${promptTemplate}",
+                "acceptanceCriteria": ["criterion 1", "criterion 2", "criterion 3"],
+                "estimatedPoints": 3
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}
+
+Requirements:
+- Generate at least 4-6 epics
+- Each epic should have 2-4 features
+- Each feature should have 2-4 user stories
+- Use clear, descriptive titles
+- Each user story description should follow the template format
+- Include realistic acceptance criteria
+- Assign story points (1, 2, 3, 5, or 8) based on complexity
+- Ensure IDs follow the pattern: epic-X, feature-X-Y, story-X-Y-Z
+
+Important: Return ONLY the JSON object, no additional text or markdown formatting.`
+
+  try {
+    if (model === "claude") {
+      if (!envVars.ANTHROPIC_API_KEY) {
+        throw new Error("AI Service is not available")
+      }
+
+      const result = streamObject({
+        model: anthropic(MODEL_MAP[model]),
+        prompt: enhancedPrompt,
+        schema: ProjectHierarchyResponseSchema,
+      })
+      return result
+    }
+
+    if (!envVars.GOOGLE_AI_API_KEY) {
+      throw new Error("AI Service is not available")
+    }
+
+    const result = streamObject({
+      model: google(MODEL_MAP[model]),
+      prompt: enhancedPrompt,
+      schema: ProjectHierarchyResponseSchema,
+    })
+
+    return result
+  } catch (error) {
+    console.error(`Error generating project hierarchy with ${model}:`, error)
+    throw new Error(
+      `Failed to generate project hierarchy: ${(error as Error).message}`
+    )
   }
 }
 
