@@ -22,7 +22,7 @@ jobs:
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
-          redis-server --requirepass redis_password
+        cmd: redis-server --requirepass redis_password
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
