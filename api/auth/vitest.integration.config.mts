@@ -15,7 +15,7 @@ export default defineConfig({
       "@": path.resolve(__dirname, "./src"),
       "@test": path.resolve(__dirname, "./test"),
       // Redirect env-vars import to test environment
-      "../../env-vars": path.resolve(__dirname, "./test/utils/test-env.ts"),
+      "@/env-vars": path.resolve(__dirname, "./test/utils/test-env.ts"),
     },
   },
   test: {

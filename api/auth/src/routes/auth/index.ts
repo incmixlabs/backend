@@ -45,7 +45,7 @@ const authRoutes = new OpenAPIHono<HonoApp>({
 })
 
 authRoutes.openapi(getCurrentUser, async (c) => {
-  console.log("envVars.NODE_ENV", envVars.COOKIE_NAME)
+  console.log("envVars.CookieName", c.req.raw.headers.get("Cookie"))
   const user = c.get("user")
   const session = c.get("session")
   if (user && session) {
@@ -135,6 +135,7 @@ authRoutes.openapi(getUser, async (c) => {
 })
 
 authRoutes.openapi(signup, async (c) => {
+  console.log("🚀 envVars.NODE_ENV", envVars.NODE_ENV)
   const { fullName, email, password } = c.req.valid("json")
   try {
     const existing = await c

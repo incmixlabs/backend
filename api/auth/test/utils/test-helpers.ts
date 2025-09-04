@@ -1,4 +1,6 @@
+import { authMiddleware } from "@/auth/middleware"
 import type { Session } from "@/auth/types"
+import { createi18nMockMiddleware } from "@incmix-api/test-utils"
 import { createService } from "@incmix-api/utils"
 import type {
   Database,
@@ -6,15 +8,14 @@ import type {
   NewUser,
   User,
 } from "@incmix-api/utils/db-schema"
-import { showRoutes } from "hono/dev"
+import { setupApiMiddleware } from "@incmix-api/utils/middleware"
 import type { Kysely } from "kysely"
 import { expect } from "vitest"
 import { BASE_PATH } from "../../src/lib/constants"
-import { middlewares } from "../../src/middleware"
 import { routes } from "../../src/routes"
 import type { HonoApp } from "../../src/types"
+import { testDb } from "./setup"
 import { envVars } from "./test-env"
-
 type Credentials = {
   email: string
   password: string
@@ -28,25 +29,37 @@ type SignupData = {
 
 // Create a test client using Hono's testClient
 export function createTestClient() {
+  const connectionString = process.env.DATABASE_URL as string
   // Create the service without starting the server
   const service = createService<HonoApp["Bindings"], HonoApp["Variables"]>({
     name: "auth-api-test",
     port: (envVars.PORT as number) || 0, // Use test environment port or 0 to avoid conflicts
     basePath: BASE_PATH,
     setupMiddleware: (app) => {
-      middlewares(app)
+      setupApiMiddleware(app, {
+        basePath: BASE_PATH,
+        serviceName: "auth-api-test",
+        databaseUrl: connectionString,
+        customAuthMiddleware: authMiddleware,
+        customI18nMiddleware: createi18nMockMiddleware,
+        corsFirst: true,
+      })
     },
+    needDB: true,
+    databaseUrl: connectionString,
     setupRoutes: (app) => routes(app),
   })
 
   const { app: testApp } = service
   // Add a request method that works with the BASE_PATH
-  return {
+  const client = {
     request: async (path: string, options: RequestInit = {}) => {
       const fullPath = `${BASE_PATH}${path}`
       return await testApp.request(fullPath, options)
     },
   }
+
+  return client
 }
 
 export type TestAgent = ReturnType<typeof createTestClient>
@@ -101,7 +114,8 @@ export function createLoginData(overrides: Partial<Credentials> = {}) {
 // Authentication helpers
 
 export async function loginUser(client: TestAgent, credentials: Credentials) {
-  const response = await client.request("/api/auth/login", {
+  const { request } = client
+  const response = await request("/api/auth/login", {
     method: "POST",
     body: JSON.stringify(credentials),
   })
@@ -119,7 +133,8 @@ export async function loginUser(client: TestAgent, credentials: Credentials) {
 }
 
 export async function signupUser(client: TestAgent, userData: SignupData) {
-  return await client.request("/api/auth/signup", {
+  const { request } = client
+  return await request("/api/auth/signup", {
     method: "POST",
     body: JSON.stringify(userData),
   })
@@ -129,7 +144,8 @@ export async function getAuthenticatedUser(
   client: TestAgent,
   sessionCookie: string
 ) {
-  return await client.request("/api/auth/me", {
+  const { request } = client
+  return await request("/api/auth/me", {
     method: "GET",
     headers: {
       cookie: sessionCookie,
@@ -138,7 +154,8 @@ export async function getAuthenticatedUser(
 }
 
 export async function deleteUser(client: TestAgent, sessionCookie: string) {
-  return await client.request("/api/auth/delete", {
+  const { request } = client
+  return await request("/api/auth/delete", {
     method: "DELETE",
     headers: {
       cookie: sessionCookie,

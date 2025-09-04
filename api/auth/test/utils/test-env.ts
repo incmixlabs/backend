@@ -4,7 +4,7 @@ import { createEnvConfig } from "@incmix-api/utils/env-config"
 process.env.NODE_ENV = "test"
 
 // Load environment variables for tests
-export const testEnvVars = createEnvConfig("auth")
+export const testEnvVars = createEnvConfig("auth", undefined, "test")
 
 // Export the environment variables for use in tests
 export { testEnvVars as envVars }

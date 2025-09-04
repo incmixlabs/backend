@@ -19,7 +19,8 @@
       "package.json",
       "pnpm-workspace.yaml",
       "**/*/*spec*",
-      "**/*/*mock*"
+      "**/*/*mock*",
+      "*.sql"
     ]
   },
   "formatter": {

@@ -29,6 +29,7 @@
     "@types/pg": "catalog:",
     "dotenv": "catalog:",
     "testcontainers": "^11.5.1",
+    "@incmix-api/test-utils": "workspace:^",
     "tsc-alias": "catalog:",
     "tsx": "catalog:",
     "typescript": "catalog:",

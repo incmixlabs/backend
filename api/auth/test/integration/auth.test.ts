@@ -1,8 +1,8 @@
-import { beforeAll, beforeEach, describe, expect, it } from "vitest"
-import { testDb } from "../utils/database"
+import { beforeEach, describe, expect, it } from "vitest"
+import { testDb } from "../utils/setup"
 import { createSignupData, createTestClient } from "../utils/test-helpers"
 
-describe("Auth Integration Tests", () => {
+describe("Auth Integration Tests", async () => {
   const client = createTestClient()
 
   beforeEach(async () => {
@@ -148,8 +148,9 @@ describe("Auth Integration Tests", () => {
         body: JSON.stringify(credentials),
       })
 
-      expect(response.status).toBe(200)
       const body = await response.json()
+
+      expect(response.status).toBe(200)
       expect(body).toHaveProperty("email", userDataGlobal.email)
       expect(body).toHaveProperty("session")
     })
@@ -226,7 +227,7 @@ describe("Auth Integration Tests", () => {
       expect(loginResponse.status).toBe(200)
       const setCookie = loginResponse.headers.get("set-cookie")
       const sessionCookie = setCookie?.split(";")[0] || ""
-
+      console.log("🚀 sessionCookie", sessionCookie)
       // Now test the /me endpoint
       const response = await client.request("", {
         method: "GET",

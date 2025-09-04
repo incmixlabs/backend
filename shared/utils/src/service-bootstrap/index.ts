@@ -1,6 +1,7 @@
 import { serve } from "@hono/node-server"
 import { OpenAPIHono } from "@hono/zod-openapi"
 import { setupRbac } from "@incmix-api/utils/authorization"
+import { initDb } from "@incmix-api/utils/db-schema"
 import type { Context } from "hono"
 import { logger } from "hono/logger"
 import { setupKvStore } from "@/middleware"
@@ -23,6 +24,8 @@ export interface ServiceConfig<
     app: OpenAPIHono<{ Bindings: TBindings; Variables: TVariables }>
   ) => void
   needRBAC?: boolean
+  needDB?: boolean
+  databaseUrl?: string
   onBeforeStart?: () => Promise<void>
   bindings?: TBindings
   variables?: TVariables
@@ -36,6 +39,18 @@ export function createService<
     Bindings: TBindings
     Variables: TVariables
   }>()
+
+  if (config.needDB !== false) {
+    if (!config.databaseUrl) {
+      throw new Error("DATABASE_URL is required")
+    }
+    app.use(async (c, next) => {
+      const db = initDb(config.databaseUrl as string)
+      // @ts-expect-error - db is a valid variable
+      c.set("db", db)
+      await next()
+    })
+  }
 
   // Initialize KVStore
   const kvStore = new KVStore({ name: config.name })

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest"
-import { ResponseHelpers, createTestClient } from "../utils/test-helpers"
+import { createTestClient } from "../utils/test-helpers"
 
-describe("Health Check Integration Tests", () => {
+describe("Health Check Integration Tests", async () => {
   const client = createTestClient()
 
   describe("GET /api/auth/healthcheck", () => {

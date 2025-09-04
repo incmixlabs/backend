@@ -1,6 +1,11 @@
+import {
+  mockApi,
+  mockFetch,
+  resetMocks,
+  setupTestEnv,
+  testDb,
+} from "@incmix-api/test-utils"
 import { afterAll, afterEach, beforeAll, beforeEach, vi } from "vitest"
-import { testDb } from "./database"
-import { mockFetch, resetMocks, setupIntlMocks, setupTestEnv } from "./mocks"
 
 // Global test setup
 beforeAll(async () => {
@@ -9,14 +14,13 @@ beforeAll(async () => {
 
   // Setup test environment
   const testEnv = setupTestEnv()
-  process.env = { ...process.env, ...testEnv }
-
-  // Setup mocks
-  setupIntlMocks()
-  global.fetch = mockFetch as any
+  await testDb.setup()
+  const connectionString = testDb.getConnectionString()
+  process.env = { ...process.env, ...testEnv, DATABASE_URL: connectionString }
+  mockApi()
+  global.fetch = mockFetch
 
   // Initialize test database
-  await testDb.setup()
 
   console.log("🚀 Test environment initialized")
 })
@@ -39,5 +43,5 @@ afterEach(() => {
 })
 
 // Export utilities for use in tests
-export { testDb } from "./database"
-export * from "./mocks"
+export * from "@incmix-api/test-utils"
+export { testDb } from "@incmix-api/test-utils"

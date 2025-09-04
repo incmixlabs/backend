@@ -1,5 +1,6 @@
-import { dirname } from "node:path"
-import { fileURLToPath } from "node:url"
+import fs from "node:fs/promises"
+import path from "node:path"
+import { findProjectRoot } from "@incmix-api/utils"
 import type { Database } from "@incmix-api/utils/db-schema"
 import {
   PostgreSqlContainer,
@@ -7,8 +8,6 @@ import {
 } from "@testcontainers/postgresql"
 import { CamelCasePlugin, Kysely, PostgresDialect } from "kysely"
 import { Pool } from "pg"
-
-const __dirname = dirname(fileURLToPath(import.meta.url))
 
 export class TestDatabase {
   private db: Kysely<Database> | null = null
@@ -107,17 +106,19 @@ export class TestDatabase {
         max: 1,
       })
 
-      // Run only essential migrations for auth service
-      const essentialMigrations = [
-        "001.do.intl-init.sql",
-        "002.do.auth-init.sql",
-        "003.do.user-profile.sql",
-      ]
+      // Get all filenames in db/api-migrations directory as array
+      const projectRoot = await findProjectRoot()
+      if (!projectRoot) {
+        throw new Error("Project root not found")
+      }
+      const migrationsDir = path.resolve(projectRoot, "db/api-migrations")
+      const essentialMigrations = (await fs.readdir(migrationsDir)).filter(
+        (file) => !file.includes("undo")
+      )
 
       for (const migrationFile of essentialMigrations) {
         try {
-          const migrationPath = `${__dirname}/../../../../db/api-migrations/${migrationFile}`
-          const fs = await import("node:fs/promises")
+          const migrationPath = `${migrationsDir}/${migrationFile}`
           const migrationSQL = await fs.readFile(migrationPath, "utf-8")
 
           await migrationClient.query(migrationSQL)
@@ -151,25 +152,18 @@ export class TestDatabase {
     this.db = null
   }
 
-  async transaction<T>(
-    callback: (db: Kysely<Database>) => Promise<T>
-  ): Promise<T> {
-    if (!this.db) {
-      throw new Error("Database not initialized")
-    }
-
-    return await this.db.transaction().execute(async (trx) => {
-      const result = await callback(trx)
-      // In tests, we don't actually commit - just return the result
-      return result
-    })
-  }
-
   getDb(): Kysely<Database> {
     if (!this.db) {
       throw new Error("Database not initialized. Call setup() first.")
     }
     return this.db
+  }
+
+  getConnectionString(): string {
+    if (!this.container) {
+      throw new Error("Database not initialized. Call setup() first.")
+    }
+    return this.container.getConnectionUri()
   }
 }
 
