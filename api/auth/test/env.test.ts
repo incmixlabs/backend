@@ -32,7 +32,6 @@ describe("Environment Configuration Tests", () => {
         DOMAIN: process.env.DOMAIN,
         EMAIL_API_URL: process.env.EMAIL_API_URL,
         INTL_API_URL: process.env.INTL_API_URL,
-        USERS_API_URL: process.env.USERS_API_URL,
       },
     }))
     expect(process.env.NODE_ENV).toBe("test")
@@ -60,7 +59,6 @@ describe("Environment Configuration Tests", () => {
         DOMAIN: process.env.DOMAIN,
         EMAIL_API_URL: process.env.EMAIL_API_URL,
         INTL_API_URL: process.env.INTL_API_URL,
-        USERS_API_URL: process.env.USERS_API_URL,
       },
     }))
 
@@ -91,8 +89,6 @@ describe("Environment Configuration Tests", () => {
           process.env.EMAIL_API_URL || "http://localhost:8787/api/email",
         INTL_API_URL:
           process.env.INTL_API_URL || "http://localhost:8787/api/intl",
-        USERS_API_URL:
-          process.env.USERS_API_URL || "http://localhost:8787/api/users",
       },
     }))
 
@@ -124,9 +120,7 @@ describe("Environment Configuration Tests", () => {
         EMAIL_API_URL:
           process.env.EMAIL_API_URL || "https://staging-api.example.com/email",
         INTL_API_URL:
-          process.env.INTL_API_URL || "https://staging-api.example.com/intl",
-        USERS_API_URL:
-          process.env.USERS_API_URL || "https://staging-api.example.com/users",
+          process.env.INTL_API_URL || "https://staging-api.example.com/intl"
       },
     }))
 
@@ -202,7 +196,6 @@ describe("Environment Configuration Tests", () => {
         DOMAIN: "example.com",
         EMAIL_API_URL: "https://api.example.com/email",
         INTL_API_URL: "https://api.example.com/intl",
-        USERS_API_URL: "https://api.example.com/users",
       },
     }))
 
@@ -237,7 +230,6 @@ describe("Environment Configuration Tests", () => {
         DOMAIN: "localhost",
         EMAIL_API_URL: "http://localhost:8787/api/email",
         INTL_API_URL: "http://localhost:8787/api/intl",
-        USERS_API_URL: "http://localhost:8787/api/users",
       },
     }))
 
@@ -299,9 +291,7 @@ describe("Environment Configuration Tests", () => {
         EMAIL_API_URL:
           process.env.EMAIL_API_URL || "http://localhost:8787/api/email",
         INTL_API_URL:
-          process.env.INTL_API_URL || "http://localhost:8787/api/intl",
-        USERS_API_URL:
-          process.env.USERS_API_URL || "http://localhost:8787/api/users",
+          process.env.INTL_API_URL || "http://localhost:8787/api/intl"
       },
     }))
 

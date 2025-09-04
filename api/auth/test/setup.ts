@@ -117,7 +117,6 @@ vi.mock("hono/adapter", () => ({
     NODE_ENV: "test",
     INTL_API_URL: "http://localhost:9090/api/intl",
     EMAIL_API_URL: "http://localhost:8989/api/email",
-    USERS_API_URL: "http://localhost:9696/api/users",
     DATABASE_URL: "postgresql://postgres:password@localhost:54321/incmix",
   })),
 }))
