@@ -20,7 +20,10 @@
       "pnpm-workspace.yaml",
       "**/*/*spec*",
       "**/*/*mock*",
-      "*.sql"
+      "*.sql",
+      "**/*.test.*",
+      "test",
+      "shared/test-utils"
     ]
   },
   "formatter": {

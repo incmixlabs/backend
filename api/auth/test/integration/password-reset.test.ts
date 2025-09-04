@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it } from "vitest"
 import { testDb } from "../utils/setup"
 import { createSignupData, createTestClient } from "../utils/test-helpers"
 
-describe("Password Reset Integration Tests", async () => {
+describe("Password Reset Integration Tests", () => {
   const client = createTestClient()
 
   beforeEach(async () => {

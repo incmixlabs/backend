@@ -1,7 +1,7 @@
 import { DEFAULT_LOCALE, DEFAULT_MESSAGES } from "@incmix-api/utils"
-import { Locale } from "@incmix-api/utils/db-schema"
-import { KVStore } from "@incmix-api/utils/kv-store"
-import { MiddlewareHandler } from "hono"
+import type { Locale } from "@incmix-api/utils/db-schema"
+import type { KVStore } from "@incmix-api/utils/kv-store"
+import type { MiddlewareHandler } from "hono"
 import { getCookie } from "hono/cookie"
 import { vi } from "vitest"
 
@@ -10,8 +10,7 @@ export const mockFetch = vi.fn()
 
 // Mock internationalization service responses
 export function createi18nMockMiddleware(): MiddlewareHandler {
-
-  const mockLocale:Locale = {
+  const mockLocale: Locale = {
     id: 1,
     code: "en",
     name: "English",
@@ -25,17 +24,15 @@ export function createi18nMockMiddleware(): MiddlewareHandler {
     c.set("locale", mockLocale.code)
     await kv.getItem(DEFAULT_LOCALE, { fn: () => Promise.resolve(mockLocale) })
 
-
     const locale = "en"
 
     c.set("locale", locale)
-    await kv.getItem(locale, { fn: () => Promise.resolve([])})
-    await kv.getItem(DEFAULT_MESSAGES, { fn: () => Promise.resolve([])})
+    await kv.getItem(locale, { fn: () => Promise.resolve([]) })
+    await kv.getItem(DEFAULT_MESSAGES, { fn: () => Promise.resolve([]) })
 
     c.header("content-language", locale, { append: true })
     return await next()
   }
-
 }
 
 const MockUser = {
@@ -56,34 +53,39 @@ const mockAdminUser = {
   isSuperAdmin: true,
 }
 
-export const mockApi = ()=>{
-  mockFetch.mockImplementation((url: string | URL | Request, options?: RequestInit) => {
-    let urlString: string
+export const mockApi = () => {
+  mockFetch.mockImplementation(
+    (url: string | URL | Request, _options?: RequestInit) => {
+      let urlString: string
 
-    if (typeof url === 'string') {
-      urlString = url
-    } else if (url instanceof URL) {
-      urlString = url.toString()
-    } else if (url instanceof Request) {
-      urlString = url.url
-    } else {
-      urlString = String(url)
+      if (typeof url === "string") {
+        urlString = url
+      } else if (url instanceof URL) {
+        urlString = url.toString()
+      } else if (url instanceof Request) {
+        urlString = url.url
+      } else {
+        urlString = String(url)
+      }
+      // Mock email service responses
+      if (
+        urlString.includes("/api/email") ||
+        urlString.includes("localhost:8989")
+      ) {
+        return Promise.resolve({
+          ok: true,
+          json: async () => ({
+            message: "Mail sent successfully",
+            id: "test-email-id",
+          }),
+        } as Response)
+      }
+      return Promise.resolve({
+        ok: false,
+        status: 404,
+      } as Response)
     }
-   // Mock email service responses
-   if (urlString.includes("/api/email") || urlString.includes("localhost:8989")) {
-    return Promise.resolve({
-      ok: true,
-      json: async () => ({
-        message: "Mail sent successfully",
-        id: "test-email-id"
-      }),
-    } as Response)
-  }
-  return Promise.resolve({
-    ok: false,
-    status: 404,
-  } as Response)
-})
+  )
 }
 
 export function createAuthMockMiddleware(): MiddlewareHandler {
@@ -93,19 +95,18 @@ export function createAuthMockMiddleware(): MiddlewareHandler {
 
     if (!sessionId) {
       c.set("user", null)
-      return next()
+      return await next()
     }
 
-    let user =  MockUser
+    let user = MockUser
     if (sessionId === "test-admin-session") {
       user = mockAdminUser
     }
 
     c.set("user", user)
-    return next()
+    return await next()
   }
 }
-
 
 // Mock environment variables for testing
 export function setupTestEnv() {
