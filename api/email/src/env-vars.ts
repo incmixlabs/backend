@@ -1,4 +1,4 @@
-import { type EmailEnv, createEnvConfig } from "@incmix-api/utils/env-config"
+import { createEnvConfig, type EmailEnv } from "@incmix-api/utils/env-config"
 
 // Use the new env-config system with dotenv-mono
 // This will automatically merge:

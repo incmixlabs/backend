@@ -1,4 +1,3 @@
-import type { IntlMessage, Locale } from "@/types"
 import {
   DEFAULT_LOCALE,
   DEFAULT_MESSAGES,
@@ -8,6 +7,7 @@ import {
 } from "@incmix-api/utils"
 import { getHeaderLocale } from "@intlify/utils"
 import type { Context, MiddlewareHandler } from "hono"
+import type { IntlMessage, Locale } from "@/types"
 
 declare module "hono" {
   interface ContextVariableMap {

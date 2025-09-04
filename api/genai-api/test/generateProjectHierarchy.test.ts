@@ -1,7 +1,7 @@
 import { OpenAPIHono } from "@hono/zod-openapi"
 import { beforeEach, describe, expect, it, vi } from "vitest"
-import type { HonoApp } from "../src/types"
 import genaiRoutes from "../src/routes/genai"
+import type { HonoApp } from "../src/types"
 
 // Mock environment variables
 vi.mock("../src/env-vars", () => ({
@@ -15,28 +15,30 @@ vi.mock("../src/env-vars", () => ({
 
 // Mock the services
 vi.mock("../src/lib/services", () => ({
-  generateProjectHierarchy: vi.fn((c, projectDescription, template, userTier) => ({
-    partialObjectStream: (async function* () {
-      yield {
-        type: "project",
-        name: "Test Project",
-        description: "Test project description",
-      }
-      yield {
-        type: "epic",
-        name: "Epic 1",
-        description: "Test epic description",
-        projectId: "proj-1",
-      }
-      yield {
-        type: "userStory",
-        name: "User Story 1",
-        description: "As a user, I want to test",
-        epicId: "epic-1",
-        projectId: "proj-1",
-      }
-    })(),
-  })),
+  generateProjectHierarchy: vi.fn(
+    (_c, _projectDescription, _template, _userTier) => ({
+      partialObjectStream: (function* () {
+        yield {
+          type: "project",
+          name: "Test Project",
+          description: "Test project description",
+        }
+        yield {
+          type: "epic",
+          name: "Epic 1",
+          description: "Test epic description",
+          projectId: "proj-1",
+        }
+        yield {
+          type: "userStory",
+          name: "User Story 1",
+          description: "As a user, I want to test",
+          epicId: "epic-1",
+          projectId: "proj-1",
+        }
+      })(),
+    })
+  ),
   generateProject: vi.fn(),
   generateUserStory: vi.fn(),
   generateMultipleUserStories: vi.fn(),
@@ -59,7 +61,7 @@ vi.mock("@incmix-api/utils/errors", () => ({
       this.name = "UnauthorizedError"
     }
   },
-  processError: vi.fn(async (c, error) => {
+  processError: vi.fn((c, error) => {
     if (error.name === "UnauthorizedError") {
       return c.json({ error: error.message }, 401)
     }
@@ -100,7 +102,7 @@ describe("generateProjectHierarchy endpoint", () => {
 
     // Create a new app instance with mock context
     app = new OpenAPIHono<HonoApp>()
-    
+
     // Add middleware to set up context
     app.use("*", async (c, next) => {
       c.set("user", { id: "user-123", email: "test@example.com" })
@@ -127,13 +129,15 @@ describe("generateProjectHierarchy endpoint", () => {
       })
 
       expect(response.status).toBe(200)
-      expect(response.headers.get("content-type")).toContain("text/event-stream")
-      
+      expect(response.headers.get("content-type")).toContain(
+        "text/event-stream"
+      )
+
       // Read the SSE stream
       const reader = response.body?.getReader()
       const decoder = new TextDecoder()
-      let chunks = []
-      
+      const chunks = []
+
       if (reader) {
         let done = false
         while (!done) {
@@ -167,7 +171,9 @@ describe("generateProjectHierarchy endpoint", () => {
       })
 
       expect(response.status).toBe(200)
-      expect(response.headers.get("content-type")).toContain("text/event-stream")
+      expect(response.headers.get("content-type")).toContain(
+        "text/event-stream"
+      )
     })
 
     it("should return 401 when user is not authenticated", async () => {
@@ -180,16 +186,19 @@ describe("generateProjectHierarchy endpoint", () => {
       })
       appWithoutUser.route("/genai", genaiRoutes)
 
-      const response = await appWithoutUser.request("/genai/generate-project-hierarchy", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          projectDescription: "Test project description for testing",
-          userTier: "free",
-        }),
-      })
+      const response = await appWithoutUser.request(
+        "/genai/generate-project-hierarchy",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            projectDescription: "Test project description for testing",
+            userTier: "free",
+          }),
+        }
+      )
 
       expect(response.status).toBe(401)
       const data = await response.json()
@@ -232,7 +241,9 @@ describe("generateProjectHierarchy endpoint", () => {
       mockDb.selectFrom.mockImplementationOnce(() => ({
         selectAll: () => ({
           where: () => ({
-            executeTakeFirst: vi.fn().mockRejectedValue(new Error("Database error")),
+            executeTakeFirst: vi
+              .fn()
+              .mockRejectedValue(new Error("Database error")),
           }),
         }),
       }))
@@ -257,12 +268,19 @@ describe("generateProjectHierarchy endpoint", () => {
     it("should handle stream errors gracefully", async () => {
       // Mock service to throw error during streaming
       const { generateProjectHierarchy } = await import("../src/lib/services")
-      ;(generateProjectHierarchy as any).mockImplementationOnce((c: any, projectDescription: any, template: any, userTier: any) => ({
-        partialObjectStream: (async function* () {
-          yield { type: "project", name: "Test" }
-          throw new Error("Stream error")
-        })(),
-      }))
+      ;(generateProjectHierarchy as any).mockImplementationOnce(
+        (
+          _c: any,
+          _projectDescription: any,
+          _template: any,
+          _userTier: any
+        ) => ({
+          partialObjectStream: (function* () {
+            yield { type: "project", name: "Test" }
+            throw new Error("Stream error")
+          })(),
+        })
+      )
 
       const response = await app.request("/genai/generate-project-hierarchy", {
         method: "POST",
@@ -276,12 +294,12 @@ describe("generateProjectHierarchy endpoint", () => {
       })
 
       expect(response.status).toBe(200) // SSE starts with 200
-      
+
       // Read the stream to trigger the error
       const reader = response.body?.getReader()
       const decoder = new TextDecoder()
       let errorOccurred = false
-      
+
       if (reader) {
         try {
           let done = false

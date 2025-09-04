@@ -1,5 +1,5 @@
-import type { Context } from "@/types"
 import { Google } from "arctic"
+import type { Context } from "@/types"
 import { envVars } from "../env-vars"
 
 type GoogleAuthOptions = {

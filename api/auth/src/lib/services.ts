@@ -1,6 +1,6 @@
+import { BadRequestError, ServerError } from "@incmix-api/utils/errors"
 import type { MessageResponse } from "@/routes/types"
 import type { Context } from "@/types"
-import { BadRequestError, ServerError } from "@incmix-api/utils/errors"
 
 export type ProfileDTO = {
   id: string

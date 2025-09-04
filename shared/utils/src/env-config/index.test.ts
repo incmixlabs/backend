@@ -244,7 +244,6 @@ describe("Environment Config", () => {
       // Should keep the explicitly set values
       expect(env.AUTH_API_URL).toBe("https://auth.production.com/api")
       expect(env.EMAIL_API_URL).toBe("https://email.production.com/api")
-
     })
   })
 

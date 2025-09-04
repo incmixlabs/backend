@@ -1,5 +1,5 @@
-import { findUserById } from "@/lib/db"
 import { getCookie } from "hono/cookie"
+import { findUserById } from "@/lib/db"
 import { envVars } from "../env-vars"
 import type { Context } from "../types"
 import { deleteSessionCookie, setSessionCookie } from "./cookies"

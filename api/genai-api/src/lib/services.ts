@@ -1,3 +1,7 @@
+import { createAnthropic } from "@ai-sdk/anthropic"
+import { createGoogleGenerativeAI } from "@ai-sdk/google"
+import type { StoryTemplate } from "@incmix-api/utils/db-schema"
+import { generateText, streamObject } from "ai"
 import { envVars } from "@/env-vars"
 import {
   type MultipleUserStoriesResponse,
@@ -7,10 +11,6 @@ import {
   UserStoryResponseSchema,
 } from "@/routes/genai/types"
 import type { Context } from "@/types"
-import { createAnthropic } from "@ai-sdk/anthropic"
-import { createGoogleGenerativeAI } from "@ai-sdk/google"
-import type { StoryTemplate } from "@incmix-api/utils/db-schema"
-import { generateText, streamObject } from "ai"
 import { type AIModel, MODEL_MAP } from "./constants"
 
 const anthropic = createAnthropic({

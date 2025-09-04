@@ -1,47 +1,47 @@
-import { invalidateAllSessions } from "@/auth/session"
-import { hashPassword } from "@/auth/utils"
-import { findUserById } from "@/lib/db"
-import type { HonoApp } from "@/types"
 import { OpenAPIHono } from "@hono/zod-openapi"
 import {
-  ERROR_CASL_FORBIDDEN,
-  ERROR_UNAUTHORIZED,
   createKyselyFilter,
+  ERROR_CASL_FORBIDDEN,
+  ERROR_FORBIDDEN,
+  ERROR_UNAUTHORIZED,
   parseQueryParams,
 } from "@incmix-api/utils"
-import {
-  ForbiddenError,
-  ServerError,
-  UnauthorizedError,
-  processError,
-  zodError,
-} from "@incmix-api/utils/errors"
-import { useTranslation } from "@incmix-api/utils/middleware"
-import type { ExpressionWrapper, OrderByExpression, SqlBool } from "kysely"
-import { getAllUsers, setEnabled, setPassword, setVerified } from "./openapi"
-
-import {
-  ERROR_NO_PP,
-  ERROR_PP_DELETE_FAIL,
-  ERROR_PRESIGNED_URL,
-  ERROR_UPLOAD_FAIL,
-  ERROR_USER_DEL_FAILED,
-  ERROR_USER_NOT_FOUND,
-  USER_DEL,
-} from "@/lib/constants"
-import { ERROR_FORBIDDEN } from "@incmix-api/utils"
 import {
   type Database,
   type UserProfileColumns,
   userProfileColumns,
 } from "@incmix-api/utils/db-schema"
-import { NotFoundError } from "@incmix-api/utils/errors"
+import {
+  ForbiddenError,
+  NotFoundError,
+  processError,
+  ServerError,
+  UnauthorizedError,
+  zodError,
+} from "@incmix-api/utils/errors"
+import { useTranslation } from "@incmix-api/utils/middleware"
+import type { ExpressionWrapper, OrderByExpression, SqlBool } from "kysely"
 import { sql } from "kysely"
+import { invalidateAllSessions } from "@/auth/session"
+import { hashPassword } from "@/auth/utils"
+import {
+  ERROR_NO_PP,
+  ERROR_PP_DELETE_FAIL,
+  ERROR_PRESIGNED_URL,
+  ERROR_UPLOAD_FAIL,
+  ERROR_USER_NOT_FOUND,
+} from "@/lib/constants"
+import { findUserById } from "@/lib/db"
+import type { HonoApp } from "@/types"
 import { envVars } from "../../env-vars"
 import {
   addProfilePicture,
   deleteProfilePicture,
+  getAllUsers,
   getProfilePicture,
+  setEnabled,
+  setPassword,
+  setVerified,
   updateUser,
   userOnboarding,
 } from "./openapi"
