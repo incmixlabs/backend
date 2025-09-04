@@ -1,8 +1,0 @@
-CREATE TABLE story_templates (
-  id SERIAL PRIMARY KEY,
-  name TEXT NOT NULL UNIQUE,
-  content TEXT NOT NULL,
-  created_at TIMESTAMP NOT NULL DEFAULT NOW(),
-  updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
-  created_by TEXT NOT NULL
-);

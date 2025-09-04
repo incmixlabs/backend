@@ -74,7 +74,7 @@ export class PermissionService {
       ])
 
     if (orgId) {
-      query.where("roles.organizationId", "=", orgId)
+      query.where("roles.orgId", "=", orgId)
     }
 
     const permissionData = await query.execute()
@@ -113,7 +113,7 @@ export class PermissionService {
         "rolePermissions.permissionId"
       )
       .innerJoin("members", "members.roleId", "roles.id")
-      .innerJoin("organisations", "organisations.id", "members.orgId")
+      .innerJoin("orgs", "orgs.id", "members.orgId")
       .leftJoin("projectMembers", "projectMembers.roleId", "roles.id")
       .leftJoin("projects", "projects.id", "projectMembers.projectId")
       .select([
@@ -125,8 +125,8 @@ export class PermissionService {
         "roles.scope",
         "roles.id as roleId",
         "roles.description as roleDescription",
-        "organisations.id as orgId",
-        "organisations.name as orgName",
+        "orgs.id as orgId",
+        "orgs.name as orgName",
         "projects.id as projectId",
         "projects.name as projectName",
       ])
@@ -152,7 +152,7 @@ export class PermissionService {
           subject: permission.resourceType,
         }
 
-        if (scope === "organization" || scope === "both") {
+        if (scope === "org" || scope === "both") {
           if (!acc.orgPermissions.find((o) => o.orgId === orgId)) {
             acc.orgPermissions.push({
               role: { name: roleName, id: roleId },
@@ -216,7 +216,7 @@ export class PermissionService {
       return build()
     }
 
-    if (scope === "organization") {
+    if (scope === "org") {
       const permissions =
         memberPermissions.orgPermissions
           .find((o) => o.orgId === id)
@@ -292,7 +292,7 @@ export class PermissionService {
     const isMember = await this.isOrgMember(id)
     if (!isMember) return false
 
-    const ability = await this.buildAbility("organization", id)
+    const ability = await this.buildAbility("org", id)
     if (!ability) return false
 
     return ability.can(action, subject)

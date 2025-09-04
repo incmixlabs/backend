@@ -48,7 +48,7 @@ export interface ServiceUser {
   avatar?: string
   role?: string
   permissions?: string[]
-  organizationId?: string
+  orgId?: string
   projectIds?: string[]
   [key: string]: any
 }

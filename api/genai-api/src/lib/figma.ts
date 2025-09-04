@@ -475,7 +475,7 @@ function getStylingInstructions(styling: string): string {
     case "tailwind":
       return "- Use Tailwind CSS utility classes\n- Follow Tailwind's responsive design patterns\n- Use Tailwind's color palette and spacing system"
     case "css":
-      return "- Use vanilla CSS with proper organization\n- Follow CSS best practices\n- Use CSS custom properties for theming"
+      return "- Use vanilla CSS with proper org\n- Follow CSS best practices\n- Use CSS custom properties for theming"
     case "styled-components":
       return "- Use styled-components for component styling\n- Follow styled-components best practices\n- Use theme provider for consistent styling"
     case "css-modules":

@@ -1,5 +1,5 @@
 import { z } from "@hono/zod-openapi"
-import type { PermissionService } from "@incmix-api/utils/authorization"
+import type { PermissionService } from "@incmix-api/utils/auth"
 import type { KyselyDb } from "@incmix-api/utils/db-schema"
 import type { AuthUser as User } from "@incmix/utils/types"
 import type { Context as HonoContext } from "hono"

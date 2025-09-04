@@ -25,7 +25,7 @@ export const UpdatePermissionSchema = z
     updates: z.array(
       z.object({
         subject: z.enum(subjects).openapi({
-          example: "Organisation",
+          example: "Org",
           description: "The resource being affected",
         }),
         action: z.enum(actions).openapi({

@@ -2,7 +2,7 @@ import type { Context } from "@/types"
 import type {
   KyselyDb,
   NewMember,
-  NewOrganisation,
+  NewOrg,
   NewPermission,
   NewRole,
   UpdatedPermission,
@@ -49,10 +49,7 @@ export function findAllRoles(c: Context, orgId?: string) {
 
   if (orgId) {
     query = query.where((eb) =>
-      eb.or([
-        eb("organizationId", "=", orgId),
-        eb("organizationId", "is", null),
-      ])
+      eb.or([eb("orgId", "=", orgId), eb("orgId", "is", null)])
     )
   }
 
@@ -64,7 +61,7 @@ export function findRoleByName(c: Context, name: string, orgId?: string) {
 
   if (orgId) {
     query = query.where((eb) =>
-      eb.and([eb("organizationId", "=", orgId), eb("name", "=", name)])
+      eb.and([eb("orgId", "=", orgId), eb("name", "=", name)])
     )
   } else {
     query = query.where("name", "=", name)
@@ -78,7 +75,7 @@ export function findRoleById(c: Context, id: number, orgId?: string) {
 
   if (orgId) {
     query = query.where((eb) =>
-      eb.and([eb("organizationId", "=", orgId), eb("id", "=", id)])
+      eb.and([eb("orgId", "=", orgId), eb("id", "=", id)])
     )
   } else {
     query = query.where("id", "=", id)
@@ -87,10 +84,10 @@ export function findRoleById(c: Context, id: number, orgId?: string) {
   return query.executeTakeFirst()
 }
 
-export function insertOrganisation(c: Context, org: NewOrganisation) {
+export function insertOrg(c: Context, org: NewOrg) {
   return c
     .get("db")
-    .insertInto("organisations")
+    .insertInto("orgs")
     .values(org)
     .returningAll()
     .executeTakeFirst()
@@ -99,7 +96,7 @@ export function insertOrganisation(c: Context, org: NewOrganisation) {
 export async function checkHandleAvailability(c: Context, handle: string) {
   const org = await c
     .get("db")
-    .selectFrom("organisations")
+    .selectFrom("orgs")
     .selectAll()
     .where("handle", "=", handle)
     .executeTakeFirst()
@@ -107,23 +104,23 @@ export async function checkHandleAvailability(c: Context, handle: string) {
   return false
 }
 
-export async function findOrganisationByHandle(c: Context, handle: string) {
+export async function findOrgByHandle(c: Context, handle: string) {
   const org = await c
     .get("db")
 
-    .selectFrom("organisations")
+    .selectFrom("orgs")
     .select((eb) => [
-      "organisations.id",
-      "organisations.name",
-      "organisations.handle",
-      "organisations.createdAt",
-      "organisations.updatedAt",
+      "orgs.id",
+      "orgs.name",
+      "orgs.handle",
+      "orgs.createdAt",
+      "orgs.updatedAt",
       jsonArrayFrom(
         eb
           .selectFrom("members")
           .innerJoin("roles", "roles.id", "members.roleId")
           .select(["members.userId as userId", "roles.name as role"])
-          .whereRef("members.orgId", "=", "organisations.id")
+          .whereRef("members.orgId", "=", "orgs.id")
       ).as("members"),
     ])
     .where("handle", "=", handle)
@@ -141,10 +138,10 @@ export async function findOrganisationByHandle(c: Context, handle: string) {
 
   return { ...org, owners }
 }
-export async function findOrganisationByName(c: Context, name: string) {
+export async function findOrgByName(c: Context, name: string) {
   const org = await c
     .get("db")
-    .selectFrom("organisations")
+    .selectFrom("orgs")
     .selectAll()
     .where("name", "=", name)
     .executeTakeFirst()
@@ -158,43 +155,43 @@ export async function findOrganisationByName(c: Context, name: string) {
   return org
 }
 
-export function findOrganisationByUserId(c: Context, userId: string) {
+export function findOrgByUserId(c: Context, userId: string) {
   return c
     .get("db")
-    .selectFrom("organisations")
-    .innerJoin("members", "members.orgId", "organisations.id")
+    .selectFrom("orgs")
+    .innerJoin("members", "members.orgId", "orgs.id")
     .select((eb) => [
-      "organisations.id",
-      "organisations.name",
-      "organisations.handle",
+      "orgs.id",
+      "orgs.name",
+      "orgs.handle",
       jsonArrayFrom(
         eb
           .selectFrom("members")
           .innerJoin("roles", "roles.id", "members.roleId")
           .select(["members.userId as userId", "roles.name as role"])
-          .whereRef("members.orgId", "=", "organisations.id")
+          .whereRef("members.orgId", "=", "orgs.id")
       ).as("members"),
     ])
     .where("members.userId", "=", userId)
     .execute()
 }
 
-export async function findOrganisationById(c: Context, id: string) {
+export async function findOrgById(c: Context, id: string) {
   const org = await c
     .get("db")
-    .selectFrom("organisations")
+    .selectFrom("orgs")
     .select((eb) => [
-      "organisations.id",
-      "organisations.name",
-      "organisations.handle",
-      "organisations.createdAt",
-      "organisations.updatedAt",
+      "orgs.id",
+      "orgs.name",
+      "orgs.handle",
+      "orgs.createdAt",
+      "orgs.updatedAt",
       jsonArrayFrom(
         eb
           .selectFrom("members")
           .innerJoin("roles", "roles.id", "members.roleId")
           .select(["members.userId as userId", "roles.name as role"])
-          .whereRef("members.orgId", "=", "organisations.id")
+          .whereRef("members.orgId", "=", "orgs.id")
       ).as("members"),
     ])
     .where("id", "=", id)
@@ -290,14 +287,14 @@ export async function ensureAtLeastOneOwner(
   }
 }
 
-export async function doesOrganisationExist(
+export async function doesOrgExist(
   c: Context,
   name: string,
   userId: string
 ): Promise<boolean> {
   const org = await c
     .get("db")
-    .selectFrom("organisations")
+    .selectFrom("orgs")
     .select("id")
     .where((eb) => eb.and([eb("name", "=", name)]))
     .executeTakeFirst()

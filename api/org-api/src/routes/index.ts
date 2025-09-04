@@ -1,5 +1,5 @@
 import { BASE_PATH } from "@/lib/constants"
-import orgRoutes from "@/routes/organisations"
+import orgRoutes from "@/routes/orgs"
 import type { HonoApp } from "@/types"
 import type { OpenAPIHono } from "@hono/zod-openapi"
 import healthcheckRoutes from "./health-check"

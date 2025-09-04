@@ -18,7 +18,7 @@ export const validateHandle = createRoute({
   method: "post",
   path: "/validate-handle",
   summary: "Validate Handle",
-  tags: ["Organisations"],
+  tags: ["Orgs"],
   security: [{ cookieAuth: [] }],
   request: {
     body: {
@@ -60,16 +60,16 @@ export const validateHandle = createRoute({
           schema: MessageResponseSchema,
         },
       },
-      description: "Error response when Organisation creation fails",
+      description: "Error response when Org creation fails",
     },
   },
 })
 
-export const createOrganisation = createRoute({
+export const createOrg = createRoute({
   method: "post",
   path: "",
-  summary: "Create Organisation",
-  tags: ["Organisations"],
+  summary: "Create Org",
+  tags: ["Orgs"],
   security: [{ cookieAuth: [] }],
   request: {
     body: {
@@ -87,7 +87,7 @@ export const createOrganisation = createRoute({
           schema: OrgSchema,
         },
       },
-      description: "Creates a new Organisation",
+      description: "Creates a new Org",
     },
     401: {
       content: {
@@ -111,7 +111,7 @@ export const createOrganisation = createRoute({
           schema: MessageResponseSchema,
         },
       },
-      description: "Error response when Organisation creation fails",
+      description: "Error response when Org creation fails",
     },
   },
 })
@@ -120,7 +120,7 @@ export const addMember = createRoute({
   method: "post",
   path: "/{handle}/members",
   summary: "Add Member",
-  tags: ["Organisations"],
+  tags: ["Orgs"],
   security: [{ cookieAuth: [] }],
   request: {
     params: OrgHandleSchema,
@@ -139,7 +139,7 @@ export const addMember = createRoute({
           schema: OrgSchema,
         },
       },
-      description: "Add member to organisation",
+      description: "Add member to org",
     },
     401: {
       content: {
@@ -184,11 +184,11 @@ export const addMember = createRoute({
   },
 })
 
-export const updateOrganisation = createRoute({
+export const updateOrg = createRoute({
   method: "put",
   path: "/{handle}",
-  summary: "Update Organisation",
-  tags: ["Organisations"],
+  summary: "Update Org",
+  tags: ["Orgs"],
   security: [{ cookieAuth: [] }],
   request: {
     params: OrgHandleSchema,
@@ -207,7 +207,7 @@ export const updateOrganisation = createRoute({
           schema: OrgSchema,
         },
       },
-      description: "Organisation Updated",
+      description: "Org Updated",
     },
     401: {
       content: {
@@ -239,7 +239,7 @@ export const updateOrganisation = createRoute({
           schema: MessageResponseSchema,
         },
       },
-      description: "Error response when Organisation update fails",
+      description: "Error response when Org update fails",
     },
     404: {
       content: {
@@ -251,11 +251,11 @@ export const updateOrganisation = createRoute({
     },
   },
 })
-export const deleteOrganisation = createRoute({
+export const deleteOrg = createRoute({
   method: "delete",
   path: "/{handle}",
-  summary: "Delete Organisation",
-  tags: ["Organisations"],
+  summary: "Delete Org",
+  tags: ["Orgs"],
   security: [{ cookieAuth: [] }],
   request: {
     params: OrgHandleSchema,
@@ -267,7 +267,7 @@ export const deleteOrganisation = createRoute({
           schema: MessageResponseSchema,
         },
       },
-      description: "Organisation Deleted",
+      description: "Org Deleted",
     },
     401: {
       content: {
@@ -308,7 +308,7 @@ export const removeMembers = createRoute({
   method: "delete",
   path: "/{handle}/members",
   summary: "Remove Members",
-  tags: ["Organisations"],
+  tags: ["Orgs"],
   security: [{ cookieAuth: [] }],
   request: {
     params: OrgHandleSchema,
@@ -367,7 +367,7 @@ export const removeMembers = createRoute({
           schema: MessageResponseSchema,
         },
       },
-      description: "Organisation must have at least one owner",
+      description: "Org must have at least one owner",
     },
   },
 })
@@ -376,7 +376,7 @@ export const updateMemberRole = createRoute({
   method: "put",
   path: "/{handle}/members",
   summary: "Update Role",
-  tags: ["Organisations"],
+  tags: ["Orgs"],
   security: [{ cookieAuth: [] }],
   request: {
     params: OrgHandleSchema,
@@ -443,16 +443,16 @@ export const updateMemberRole = createRoute({
           schema: MessageResponseSchema,
         },
       },
-      description: "Organisation must have at least one owner",
+      description: "Org must have at least one owner",
     },
   },
 })
 
-export const getOrganisation = createRoute({
+export const getOrg = createRoute({
   method: "get",
   path: "/handle/{handle}",
-  summary: "Get Organisation",
-  tags: ["Organisations"],
+  summary: "Get Org",
+  tags: ["Orgs"],
   security: [{ cookieAuth: [] }],
   request: {
     params: OrgHandleSchema,
@@ -464,7 +464,7 @@ export const getOrganisation = createRoute({
           schema: OrgSchema,
         },
       },
-      description: "Organisation details",
+      description: "Org details",
     },
     401: {
       content: {
@@ -500,11 +500,11 @@ export const getOrganisation = createRoute({
     },
   },
 })
-export const getOrganisationById = createRoute({
+export const getOrgById = createRoute({
   method: "get",
   path: "/id/{id}",
-  summary: "Get Organisation By Id",
-  tags: ["Organisations"],
+  summary: "Get Org By Id",
+  tags: ["Orgs"],
   security: [{ cookieAuth: [] }],
   request: {
     params: OrgIdSchema,
@@ -516,7 +516,7 @@ export const getOrganisationById = createRoute({
           schema: OrgSchema,
         },
       },
-      description: "Organisation details",
+      description: "Org details",
     },
     401: {
       content: {
@@ -553,11 +553,11 @@ export const getOrganisationById = createRoute({
   },
 })
 
-export const getUserOrganisations = createRoute({
+export const getUserOrgs = createRoute({
   method: "get",
   path: "/user",
-  summary: "Get User's Organisations",
-  tags: ["Organisations"],
+  summary: "Get User's Orgs",
+  tags: ["Orgs"],
   security: [{ cookieAuth: [] }],
   responses: {
     200: {
@@ -566,7 +566,7 @@ export const getUserOrganisations = createRoute({
           schema: OrgSchema.array(),
         },
       },
-      description: "List user's organisations",
+      description: "List user's orgs",
     },
     401: {
       content: {
@@ -591,7 +591,7 @@ export const getOrganizationMembers = createRoute({
   method: "get",
   path: "/{handle}/members",
   summary: "Get Organization Members",
-  tags: ["Organisations"],
+  tags: ["Orgs"],
   security: [{ cookieAuth: [] }],
   request: {
     params: OrgHandleSchema,
@@ -644,7 +644,7 @@ export const getOrganizationPermissions = createRoute({
   method: "get",
   path: "/{handle}/permissions",
   summary: "Get Member Permissions",
-  tags: ["Organisations"],
+  tags: ["Orgs"],
   security: [{ cookieAuth: [] }],
   request: {
     params: OrgHandleSchema,
@@ -656,7 +656,7 @@ export const getOrganizationPermissions = createRoute({
           schema: PermissionsResponseSchema,
         },
       },
-      description: "User's permissions for the organization",
+      description: "User's permissions for the org",
     },
     401: {
       content: {
