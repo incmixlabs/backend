@@ -42,7 +42,8 @@
     "concurrently": "^9.2.1",
     "lefthook": "1.12.3",
     "tsc-alias": "catalog:",
-    "turbo": "2.5.6"
+    "turbo": "2.5.6",
+    "vite-tsconfig-paths": "catalog:"
   },
   "trustedDependencies": [
     "@biomejs/biome",

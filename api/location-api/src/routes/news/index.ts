@@ -2,7 +2,7 @@ import { getLocationFromIp } from "@/lib/helper"
 import type { HonoApp } from "@/types"
 import { OpenAPIHono } from "@hono/zod-openapi"
 import { zodError } from "@incmix-api/utils/errors"
-import { env } from "hono/adapter"
+import { envVars } from "../../env-vars"
 import { getNews, getNewsTopics } from "./openapi"
 import type { NewsApiResponse, NewsResponse, TopicApiResponse } from "./types"
 
@@ -40,8 +40,8 @@ newsRoutes.openapi(getNewsTopics, async (c) => {
       200
     )
   }
-  searchParams.append("api_key", env(c).SERP_API_KEY)
-  const res = await fetch(`${env(c).SERP_NEWS_URL}?${searchParams.toString()}`)
+  searchParams.append("api_key", envVars.SERP_API_KEY)
+  const res = await fetch(`${envVars.SERP_NEWS_URL}?${searchParams.toString()}`)
   if (!res.ok) {
     const { error } = (await res.json()) as { error: string }
     return c.json({ message: error }, 400)
@@ -85,9 +85,9 @@ newsRoutes.openapi(getNews, async (c) => {
     const parsedCache = JSON.parse(cache as string) as NewsResponse
     return c.json(parsedCache, 200)
   }
-  searchParams.append("api_key", env(c).SERP_API_KEY)
+  searchParams.append("api_key", envVars.SERP_API_KEY)
 
-  const res = await fetch(`${env(c).SERP_NEWS_URL}?${searchParams.toString()}`)
+  const res = await fetch(`${envVars.SERP_NEWS_URL}?${searchParams.toString()}`)
   if (!res.ok) {
     const { error } = (await res.json()) as { error: string }
     return c.json({ message: error }, 400)

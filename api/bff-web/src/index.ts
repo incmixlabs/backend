@@ -29,7 +29,7 @@ const service = createService<HonoApp["Bindings"]>({
       const healthChecks = apis
         .filter(([key]) => key !== "RATELIMITS")
         .map(async ([key]) => {
-          const apiUrl = env(c)[`${key}_API_URL` as keyof Env]
+          const apiUrl = envVars[`${key}_API_URL` as keyof Env]
           try {
             const response = await fetch(`${apiUrl}/healthcheck`, {
               method: "GET",

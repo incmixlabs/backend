@@ -22,7 +22,6 @@ export interface ServiceBindings {
   GENAI_API_URL?: string
   FILES_API_URL?: string
   PROJECTS_API_URL?: string
-  USERS_API_URL?: string
   COMMENTS_API_URL?: string
   LOCATION_API_URL?: string
   RXDB_API_URL?: string

@@ -12,7 +12,7 @@ declare module "hono" {
 
 export function createAuthMiddleware(): MiddlewareHandler {
   return async (c, next) => {
-    const cookieName = envVars.COOKIE_NAME ?? "session"
+    const cookieName = (envVars.COOKIE_NAME ?? "session") as string
     const sessionId = getCookie(c, cookieName) ?? null
 
     if (!sessionId) {

@@ -1,7 +1,7 @@
 import { getAddressFromLocation, getLocationFromIp } from "@/lib/helper"
 import type { Address, HonoApp } from "@/types"
 import { OpenAPIHono } from "@hono/zod-openapi"
-import { env } from "hono/adapter"
+import { envVars } from "../../env-vars"
 import { getWeatherForecast } from "./openapi"
 import {
   type WeatherApiResponse,
@@ -37,14 +37,16 @@ weatherRoutes.openapi(getWeatherForecast, async (c) => {
     return c.json(data, 200)
   }
 
-  searchParams.append("apikey", env(c).WEATHER_API_KEY)
+  searchParams.append("apikey", envVars.WEATHER_API_KEY as string)
+  const ctrl = new AbortController()
+  const t = setTimeout(() => ctrl.abort(), Number(envVars.TIMEOUT_MS) || 10000)
   const res = await fetch(
-    `${env(c).WEATHER_URL}/forecast?${searchParams.toString()}`,
-    {
-      method: "get",
-    }
-  )
-
+    `${envVars.WEATHER_URL}/forecast?${searchParams.toString()}`,
+    { method: "GET", signal: ctrl.signal }
+  ).finally(() => clearTimeout(t))
+  if (!res.ok) {
+    return c.json({ message: "Weather provider error" }, 502)
+  }
   const weatherForecast = (await res.json()) as WeatherApiResponse
   const data = {
     temperatureUnit: "c",
@@ -59,7 +61,7 @@ weatherRoutes.openapi(getWeatherForecast, async (c) => {
     location: address?.city ?? address?.state ?? address?.country,
   }
 
-  // // Expires 1 day
+  // Expires 1 day
   await redis.set(key, JSON.stringify(data), {
     EX: 60 * 60 * 24,
   })

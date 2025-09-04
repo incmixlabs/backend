@@ -40,9 +40,9 @@ import {
   ChecklistItemSchema,
   ChecklistSchema,
 } from "@incmix-api/utils/zod-schema"
-import { env } from "hono/adapter"
 import { sql } from "kysely"
 import { nanoid } from "nanoid"
+import { envVars } from "../../env-vars"
 import {
   addProjectChecklist,
   addProjectMembers,
@@ -170,7 +170,7 @@ projectRoutes.openapi(createProject, async (c) => {
 
           const fileName = `projects/${id}${fileExtension}`
           const presignedUrlResponse = await fetch(
-            `${env(c).FILES_API_URL}/presigned-upload?fileName=${encodeURIComponent(
+            `${envVars.FILES_API_URL}/presigned-upload?fileName=${encodeURIComponent(
               fileName
             )}`,
             {

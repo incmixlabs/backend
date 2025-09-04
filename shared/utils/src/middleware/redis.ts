@@ -1,7 +1,7 @@
 import type { OpenAPIHono } from "@hono/zod-openapi"
 import type { Env as HonoEnv } from "hono"
-import { env } from "hono/adapter"
 import { type RedisClientType, createClient } from "redis"
+import { envVars } from "../env-config"
 
 declare module "hono" {
   interface ContextVariableMap {
@@ -84,7 +84,7 @@ async function createRedisConnection(redisUrl: string): Promise<void> {
     redisClient = createClient({
       url: redisUrl,
       socket: {
-        reconnectStrategy: (retries) => {
+        reconnectStrategy: (retries = 3) => {
           if (retries > 10) {
             console.error("Redis max reconnection attempts reached")
             return new Error("Redis max reconnection attempts reached")
@@ -96,7 +96,7 @@ async function createRedisConnection(redisUrl: string): Promise<void> {
     })
 
     // Set up error handling
-    redisClient.on("error", (error) => {
+    redisClient.on("error", (error: unknown) => {
       console.error("Redis client error:", error)
     })
 
@@ -149,10 +149,10 @@ export function setupRedisMiddleware<T extends Env>(
 ) {
   app.use(`${basePath}/*`, async (c, next) => {
     try {
-      const redisUrl = env(c).REDIS_URL
+      const redisUrl = envVars.REDIS_URL
 
       // Get the singleton Redis client
-      const redis = await getRedisClient(redisUrl)
+      const redis = await getRedisClient(redisUrl as string)
 
       // Verify client health before proceeding
       if (!(await checkRedisHealth())) {
@@ -173,7 +173,7 @@ export function setupRedisMiddleware<T extends Env>(
         }
 
         // Create new healthy connection after old client is closed
-        const healthyRedis = await getRedisClient(redisUrl)
+        const healthyRedis = await getRedisClient(redisUrl as string)
         c.set("redis", healthyRedis)
       } else {
         c.set("redis", redis)

@@ -141,7 +141,11 @@ export type Project = z.infer<typeof ProjectSchema>
 export const RefUrlSchema = z
   .object({
     id: z.string().max(100).openapi({ example: "ref123" }),
-    url: z.url().max(1000).openapi({ example: "https://example.com/figma" }),
+    url: z
+      .string()
+      .url()
+      .max(1000)
+      .openapi({ example: "https://example.com/figma" }),
     title: z.string().max(255).optional().openapi({ example: "Figma Design" }),
     type: z.enum(["figma", "task", "external"]).openapi({ example: "figma" }),
     taskId: z.string().max(100).optional().openapi({ example: "task123" }),

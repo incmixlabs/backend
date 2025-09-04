@@ -3,9 +3,9 @@ import type { Context } from "@/types"
 import { generateSentryHeaders } from "@incmix-api/utils"
 import type { KyselyDb, Provider, TokenType } from "@incmix-api/utils/db-schema"
 import { ServerError } from "@incmix-api/utils/errors"
-import { env } from "hono/adapter"
 import { TimeSpan, createDate, isWithinExpirationDate } from "oslo"
 import { alphabet, generateRandomString } from "oslo/crypto"
+import { envVars } from "../env-vars"
 import { insertUser } from "./db"
 
 export async function verifyVerificationCode(
@@ -161,8 +161,8 @@ export const sendVerificationEmail = async (
   verificationCode: string,
   requestedBy: string
 ) => {
-  const verificationLink = `${env(c).FRONTEND_URL}/email-verification?code=${verificationCode}&email=${recipient}`
-  const emailUrl = `${env(c).EMAIL_API_URL}`
+  const verificationLink = `${envVars.FRONTEND_URL}/email-verification?code=${encodeURIComponent(verificationCode)}&email=${encodeURIComponent(recipient)}`
+  const emailUrl = String(envVars.EMAIL_API_URL)
 
   const sentryHeaders = generateSentryHeaders(c)
   await fetch(emailUrl, {
@@ -188,10 +188,9 @@ export const sendForgetPasswordEmail = async (
   verificationCode: string,
   requestedBy: string
 ) => {
-  const emailUrl = env(c).EMAIL_API_URL as string
+  const emailUrl = envVars.EMAIL_API_URL as string
   const [username] = recipient.split("@")
-  const resetPasswordLink = `${env(c).FRONTEND_URL}/reset-password?code=${verificationCode}&email=${recipient}`
-
+  const resetPasswordLink = `${envVars.FRONTEND_URL}/reset-password?code=${encodeURIComponent(verificationCode)}&email=${encodeURIComponent(recipient)}`
   const sentryHeaders = generateSentryHeaders(c)
   const request = new Request(emailUrl, {
     method: "POST",

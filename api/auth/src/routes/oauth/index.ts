@@ -15,8 +15,8 @@ import {
 } from "@incmix-api/utils/errors"
 import { useTranslation } from "@incmix-api/utils/middleware"
 import { generateCodeVerifier, generateState } from "arctic"
-import { env } from "hono/adapter"
 import { getCookie } from "hono/cookie"
+import { envVars } from "../../env-vars"
 
 const oAuthRoutes = new OpenAPIHono<HonoApp>({
   defaultHook: zodError,
@@ -38,8 +38,8 @@ oAuthRoutes.openapi(googleOAuth, async (c) => {
 
     let options = "Max-Age=600; Path=/; HttpOnly; Secure; SameSite=None "
 
-    if (!env(c).DOMAIN.includes("localhost")) {
-      options += `; Domain=${env(c).DOMAIN}`
+    if (!(envVars.DOMAIN as string).includes("localhost")) {
+      options += `; Domain=${envVars.DOMAIN}`
     }
 
     c.res.headers.append("Set-Cookie", `state=${state}; ${options}`)

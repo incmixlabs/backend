@@ -36,8 +36,8 @@ import {
   userProfileColumns,
 } from "@incmix-api/utils/db-schema"
 import { NotFoundError } from "@incmix-api/utils/errors"
-import { env } from "hono/adapter"
 import { sql } from "kysely"
+import { envVars } from "../../env-vars"
 import {
   addProfilePicture,
   deleteProfilePicture,
@@ -362,7 +362,7 @@ usersRoutes.openapi(addProfilePicture, async (c) => {
 
     const fileName = `profile_image/${targetId}.jpg`
     const presignedUrlResponse = await fetch(
-      `${env(c).FILES_API_URL}/presigned-upload?fileName=${encodeURIComponent(fileName)}`,
+      `${envVars.FILES_API_URL}/presigned-upload?fileName=${encodeURIComponent(fileName)}`,
       {
         method: "GET",
         headers: c.req.raw.headers,
@@ -457,7 +457,7 @@ usersRoutes.openapi(deleteProfilePicture, async (c) => {
     }
 
     const presignedUrlResponse = await fetch(
-      `${env(c).FILES_API_URL}/presigned-delete?fileName=${encodeURIComponent(
+      `${envVars.FILES_API_URL}/presigned-delete?fileName=${encodeURIComponent(
         profile.profileImage
       )}`,
       {
@@ -549,7 +549,7 @@ usersRoutes.openapi(getProfilePicture, async (c) => {
     }
 
     const presignedUrlResponse = await fetch(
-      `${env(c).FILES_API_URL}/presigned-download?fileName=${encodeURIComponent(
+      `${envVars.FILES_API_URL}/presigned-download?fileName=${encodeURIComponent(
         profile.profileImage
       )}`,
       {

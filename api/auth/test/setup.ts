@@ -73,13 +73,13 @@ vi.mock("@/auth/cookies", () => ({
   setSessionCookie: vi.fn((c: any, sessionId: string, _expiresAt: Date) => {
     c.header(
       "Set-Cookie",
-      `auth-session=${sessionId}; Path=/; HttpOnly; SameSite=None; Secure=false`
+      `incmix_session=${sessionId}; Path=/; HttpOnly; SameSite=None; Secure=false`
     )
   }),
   deleteSessionCookie: vi.fn((c: any) => {
     c.header(
       "Set-Cookie",
-      "auth-session=; Path=/; HttpOnly; SameSite=None; Max-Age=0"
+      "incmix_session=; Path=/; HttpOnly; SameSite=None; Max-Age=0"
     )
   }),
 }))
@@ -112,14 +112,26 @@ vi.mock("hono/cookie", () => ({
 // Mock env function from hono/adapter
 vi.mock("hono/adapter", () => ({
   env: vi.fn(() => ({
-    COOKIE_NAME: "auth-session",
+    COOKIE_NAME: "incmix_session",
     DOMAIN: "http://localhost",
     NODE_ENV: "test",
     INTL_API_URL: "http://localhost:9090/api/intl",
     EMAIL_API_URL: "http://localhost:8989/api/email",
-    USERS_API_URL: "http://localhost:9696/api/users",
     DATABASE_URL: "postgresql://postgres:password@localhost:54321/incmix",
   })),
+}))
+
+// Mock envVars from auth module
+vi.mock("@/env-vars", () => ({
+  envVars: {
+    COOKIE_NAME: "incmix_session",
+    DOMAIN: "localhost",
+    NODE_ENV: "test",
+    INTL_API_URL: "http://localhost:9090/api/intl",
+    EMAIL_API_URL: "http://localhost:8989/api/email",
+    DATABASE_URL: "postgresql://postgres:password@localhost:54321/incmix",
+    PORT: 8787,
+  },
 }))
 
 beforeAll(() => {

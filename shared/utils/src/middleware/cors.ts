@@ -1,6 +1,7 @@
 import type { OpenAPIHono } from "@hono/zod-openapi"
 import type { Env } from "hono"
 import { cors } from "hono/cors"
+import { envVars } from "../env-config"
 
 const allowedOrigins = [
   "http://localhost:1420",
@@ -21,7 +22,7 @@ export function setupCors<T extends Env>(
     `${basePath}/*`,
     cors({
       origin: (origin) => {
-        const DOMAIN = process.env.DOMAIN
+        const DOMAIN = envVars.DOMAIN
         if (!DOMAIN) {
           return null
         }
