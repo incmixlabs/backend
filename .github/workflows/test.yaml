@@ -17,11 +17,14 @@ jobs:
         image: redis:7-alpine
         ports:
           - 6379:6379
+        env:
+          REDIS_PASSWORD: redis_password
         options: >-
-          --health-cmd "redis-cli ping"
+          --health-cmd "redis-cli -a redis_password ping"
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
+          --requirepass redis_password
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -39,6 +42,6 @@ jobs:
       - name: Run tests
         run: pnpm run test:integration
         env:
-          REDIS_URL: redis://localhost:6379
+          REDIS_URL: redis://:redis_password@localhost:6379
 
 
