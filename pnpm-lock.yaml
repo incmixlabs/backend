@@ -896,6 +896,13 @@ importers:
         version: 3.1.2(@types/node@24.3.0)(jiti@2.5.1)(tsx@4.19.3)(yaml@2.8.1)
 
   shared/test-utils:
+    dependencies:
+      '@testcontainers/postgresql':
+        specifier: ^11.5.1
+        version: 11.5.1
+      testcontainers:
+        specifier: ^11.5.1
+        version: 11.5.1
     devDependencies:
       '@incmix-api/config':
         specifier: workspace:^
@@ -903,18 +910,12 @@ importers:
       '@incmix-api/utils':
         specifier: workspace:^
         version: link:../utils
-      '@testcontainers/postgresql':
-        specifier: ^11.5.1
-        version: 11.5.1
       '@types/node':
         specifier: 'catalog:'
         version: 22.10.1
       '@types/pg':
         specifier: 'catalog:'
         version: 8.11.11
-      testcontainers:
-        specifier: ^11.5.1
-        version: 11.5.1
       tsc-alias:
         specifier: 'catalog:'
         version: 1.8.16
@@ -6672,6 +6673,14 @@ snapshots:
       chai: 5.3.3
       tinyrainbow: 2.0.0
 
+  '@vitest/mocker@3.1.2(vite@6.3.5(@types/node@22.10.1)(jiti@2.5.1)(tsx@4.19.3)(yaml@2.8.1))':
+    dependencies:
+      '@vitest/spy': 3.1.2
+      estree-walker: 3.0.3
+      magic-string: 0.30.18
+    optionalDependencies:
+      vite: 6.3.5(@types/node@22.10.1)(jiti@2.5.1)(tsx@4.19.3)(yaml@2.8.1)
+
   '@vitest/mocker@3.1.2(vite@6.3.5(@types/node@24.3.0)(jiti@2.5.1)(tsx@4.19.3)(yaml@2.8.1))':
     dependencies:
       '@vitest/spy': 3.1.2
@@ -9116,7 +9125,7 @@ snapshots:
   vitest@3.1.2(@types/node@22.10.1)(jiti@2.5.1)(tsx@4.19.3)(yaml@2.8.1):
     dependencies:
       '@vitest/expect': 3.1.2
-      '@vitest/mocker': 3.1.2(vite@6.3.5(@types/node@24.3.0)(jiti@2.5.1)(tsx@4.19.3)(yaml@2.8.1))
+      '@vitest/mocker': 3.1.2(vite@6.3.5(@types/node@22.10.1)(jiti@2.5.1)(tsx@4.19.3)(yaml@2.8.1))
       '@vitest/pretty-format': 3.2.4
       '@vitest/runner': 3.1.2
       '@vitest/snapshot': 3.1.2
