@@ -11,16 +11,16 @@ export async function authMiddleware(c: Context, next: () => Promise<void>) {
   const sessionId = getCookie(c, cookieName)
 
   if (!sessionId) {
-    c.set("user", null)
-    c.set("session", null)
+    c.set("user", undefined)
+    c.set("session", undefined)
     return await next()
   }
 
   const session = await validateSession(db, sessionId)
   if (!session) {
     deleteSessionCookie(c)
-    c.set("user", null)
-    c.set("session", null)
+    c.set("user", undefined)
+    c.set("session", undefined)
     return await next()
   }
 
@@ -29,8 +29,8 @@ export async function authMiddleware(c: Context, next: () => Promise<void>) {
 
   if (!user) {
     deleteSessionCookie(c)
-    c.set("user", null)
-    c.set("session", null)
+    c.set("user", undefined)
+    c.set("session", undefined)
     return await next()
   }
 

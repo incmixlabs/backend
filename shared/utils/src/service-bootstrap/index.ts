@@ -8,10 +8,11 @@ import { setupKvStore } from "@/middleware"
 import { KVStore } from "../kv-store"
 import { shutdownRedis } from "../middleware/redis"
 import { setupOpenApi } from "./open-api"
+import type { ServiceVariables, ServiceBindings } from "../types/service"
 
 export interface ServiceConfig<
-  TBindings extends object = Record<string, unknown>,
-  TVariables extends object = Record<string, unknown>,
+  TBindings extends ServiceBindings = ServiceBindings,
+  TVariables extends ServiceVariables = ServiceVariables,
 > {
   name: string
   version?: string
@@ -32,8 +33,8 @@ export interface ServiceConfig<
 }
 
 export function createService<
-  TBindings extends object = Record<string, unknown>,
-  TVariables extends object = Record<string, unknown>,
+  TBindings extends ServiceBindings = ServiceBindings,
+  TVariables extends ServiceVariables = ServiceVariables,
 >(config: ServiceConfig<TBindings, TVariables>) {
   const app = new OpenAPIHono<{
     Bindings: TBindings
@@ -123,16 +124,16 @@ export function createService<
 }
 
 export type ServiceApp<
-  TBindings extends object = Record<string, unknown>,
-  TVariables extends object = Record<string, unknown>,
+  TBindings extends ServiceBindings = ServiceBindings,
+  TVariables extends ServiceVariables = ServiceVariables,
 > = OpenAPIHono<{
   Bindings: TBindings
   Variables: TVariables
 }>
 
 export type ServiceContext<
-  TBindings extends object = Record<string, unknown>,
-  TVariables extends object = Record<string, unknown>,
+  TBindings extends ServiceBindings = ServiceBindings,
+  TVariables extends ServiceVariables = ServiceVariables,
 > = Context<{
   Bindings: TBindings
   Variables: TVariables
