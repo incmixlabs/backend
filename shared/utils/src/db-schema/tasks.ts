@@ -7,7 +7,7 @@ import type {
 } from "kysely"
 import type {
   Attachment,
-  Checklist,
+  ChecklistItem,
   LabelTag,
   LabelType,
   ProjectStatus,
@@ -24,8 +24,8 @@ type TasksTable = {
   startDate: ColumnType<Date, string, string> | null
   endDate: ColumnType<Date, string, string> | null
   description: string
-  acceptanceCriteria: JSONColumnType<Checklist[]>
-  checklist: JSONColumnType<Checklist[]>
+  acceptanceCriteria: JSONColumnType<ChecklistItem[]>
+  checklist: JSONColumnType<ChecklistItem[]>
   completed: boolean
   refUrls: JSONColumnType<RefUrl[]>
   labelsTags: JSONColumnType<LabelTag[]>
@@ -67,8 +67,8 @@ type ProjectsTable = {
   description: string | null
   company: string | null
   logo: string | null
-  checklist: JSONColumnType<Checklist[]>
-  acceptanceCriteria: JSONColumnType<Checklist[]>
+  checklist: JSONColumnType<ChecklistItem[]>
+  acceptanceCriteria: JSONColumnType<ChecklistItem[]>
   createdAt: ColumnType<Date, string, never>
   updatedAt: ColumnType<Date, string, string>
   createdBy: ColumnType<string, string, never>

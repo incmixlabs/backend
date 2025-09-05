@@ -11,7 +11,7 @@ import {
   zodError,
 } from "@incmix-api/utils/errors"
 import { useTranslation } from "@incmix-api/utils/middleware"
-import type { Checklist } from "@incmix-api/utils/zod-schema"
+import type { ChecklistItem } from "@incmix-api/utils/zod-schema"
 import { ChecklistItemSchema } from "@incmix-api/utils/zod-schema"
 import { sql } from "kysely"
 import { nanoid } from "nanoid"
@@ -548,7 +548,7 @@ projectRoutes.openapi(addProjectChecklist, async (c) => {
     }
 
     const id = nanoid(6)
-    const newChecklist: Checklist = {
+    const newChecklist: ChecklistItem = {
       id,
       text: checklist.text,
       checked: checklist.checked,
@@ -590,7 +590,7 @@ projectRoutes.openapi(updateProjectChecklist, async (c) => {
     const { checklist } = c.req.valid("json")
     const { projectId, checklistId } = c.req.valid("param")
 
-    const updatedChecklist: Checklist = {
+    const updatedChecklist: ChecklistItem = {
       id: checklistId,
       text: checklist.text,
       checked: checklist.checked,
