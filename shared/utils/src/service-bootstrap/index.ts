@@ -1,16 +1,18 @@
 import { serve } from "@hono/node-server"
 import { OpenAPIHono } from "@hono/zod-openapi"
 import { setupRbac } from "@incmix-api/utils/authorization"
+import { initDb } from "@incmix-api/utils/db-schema"
 import type { Context } from "hono"
 import { logger } from "hono/logger"
 import { setupKvStore } from "@/middleware"
 import { KVStore } from "../kv-store"
 import { shutdownRedis } from "../middleware/redis"
+import type { ServiceBindings, ServiceVariables } from "../types/service"
 import { setupOpenApi } from "./open-api"
 
 export interface ServiceConfig<
-  TBindings extends object = Record<string, unknown>,
-  TVariables extends object = Record<string, unknown>,
+  TBindings extends ServiceBindings = ServiceBindings,
+  TVariables extends ServiceVariables = ServiceVariables,
 > {
   name: string
   version?: string
@@ -23,19 +25,34 @@ export interface ServiceConfig<
     app: OpenAPIHono<{ Bindings: TBindings; Variables: TVariables }>
   ) => void
   needRBAC?: boolean
+  needDB?: boolean
+  databaseUrl?: string
   onBeforeStart?: () => Promise<void>
   bindings?: TBindings
   variables?: TVariables
 }
 
 export function createService<
-  TBindings extends object = Record<string, unknown>,
-  TVariables extends object = Record<string, unknown>,
+  TBindings extends ServiceBindings = ServiceBindings,
+  TVariables extends ServiceVariables = ServiceVariables,
 >(config: ServiceConfig<TBindings, TVariables>) {
   const app = new OpenAPIHono<{
     Bindings: TBindings
     Variables: TVariables
   }>()
+
+  // Initialize DB once and attach per-request
+  let db: ReturnType<typeof initDb> | undefined
+  if (config.needDB !== false) {
+    if (!config.databaseUrl) {
+      throw new Error(`DATABASE_URL is required for ${config.name}`)
+    }
+    db = initDb(config.databaseUrl)
+    app.use((c, next) => {
+      if (db) c.set("db", db)
+      return next()
+    })
+  }
 
   // Initialize KVStore
   const kvStore = new KVStore({ name: config.name })
@@ -107,16 +124,16 @@ export function createService<
 }
 
 export type ServiceApp<
-  TBindings extends object = Record<string, unknown>,
-  TVariables extends object = Record<string, unknown>,
+  TBindings extends ServiceBindings = ServiceBindings,
+  TVariables extends ServiceVariables = ServiceVariables,
 > = OpenAPIHono<{
   Bindings: TBindings
   Variables: TVariables
 }>
 
 export type ServiceContext<
-  TBindings extends object = Record<string, unknown>,
-  TVariables extends object = Record<string, unknown>,
+  TBindings extends ServiceBindings = ServiceBindings,
+  TVariables extends ServiceVariables = ServiceVariables,
 > = Context<{
   Bindings: TBindings
   Variables: TVariables

@@ -14,9 +14,14 @@ export type AuthUser = {
 }
 
 export type Variables = {
-  user: AuthUser | null
-  session: Session | null
+  user?: AuthUser
+  session?: Session
   db: KyselyDb
+  redis?: any
+  requestId?: string
+  locale?: string
+  i18n?: any
+  kvStore?: any
 }
 
 export type GoogleUser = {

@@ -9,6 +9,7 @@ import type {
 type LocaleTable = {
   id: Generated<number>
   code: string
+  name: string
   isDefault: boolean | null
   createdAt: ColumnType<Date, string, never>
   updatedAt: ColumnType<Date, string, never>

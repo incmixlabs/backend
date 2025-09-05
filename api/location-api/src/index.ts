@@ -12,6 +12,7 @@ const service = createService<HonoApp["Bindings"], HonoApp["Variables"]>({
   setupMiddleware: (app) => {
     middlewares(app)
   },
+  needDB: false,
   setupRoutes: (app) => routes(app),
 })
 

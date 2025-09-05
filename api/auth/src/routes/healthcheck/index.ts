@@ -1,6 +1,5 @@
 import { createHealthCheckRoute } from "@incmix-api/utils"
 import { envVars } from "@/env-vars"
-import { BASE_PATH } from "@/lib/constants"
 import type { HonoApp } from "@/types"
 
 const healthcheckRoutes = createHealthCheckRoute<HonoApp>({
@@ -17,7 +16,8 @@ const healthcheckRoutes = createHealthCheckRoute<HonoApp>({
     DATABASE_URL: envVars.DATABASE_URL,
   },
 
-  basePath: BASE_PATH,
+  // Disable reference endpoint check for now
+  basePath: undefined,
 
   // Add service-specific checks
   checks: [

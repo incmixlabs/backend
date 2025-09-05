@@ -10,13 +10,6 @@
   "tsc-alias": {
     "resolveFullPaths": true
   },
-  "include": ["src/**/*.ts"],
-  "exclude": [
-    "node_modules",
-    "e2e",
-    "test",
-    "**/test/**",
-    "**/e2e/**",
-    "playwright.config.ts"
-  ]
+  "include": ["src/**/*.ts", "test/**/*.ts"],
+  "exclude": ["node_modules"]
 }

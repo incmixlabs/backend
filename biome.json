@@ -18,9 +18,12 @@
       "vitest-pool-workers",
       "package.json",
       "pnpm-workspace.yaml",
-      "**/*/*test*",
       "**/*/*spec*",
-      "**/*/*mock*"
+      "**/*/*mock*",
+      "*.sql",
+      "**/*.test.*",
+      "test",
+      "shared/test-utils"
     ]
   },
   "formatter": {
