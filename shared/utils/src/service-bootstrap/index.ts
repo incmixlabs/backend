@@ -40,15 +40,16 @@ export function createService<
     Variables: TVariables
   }>()
 
+  // Initialize DB once and attach per-request
+  let db: ReturnType<typeof initDb> | undefined
   if (config.needDB !== false) {
     if (!config.databaseUrl) {
-      throw new Error("DATABASE_URL is required")
+      throw new Error(`DATABASE_URL is required for ${config.name}`)
     }
-    app.use(async (c, next) => {
-      const db = initDb(config.databaseUrl as string)
-      // @ts-expect-error - db is a valid variable
-      c.set("db", db)
-      await next()
+    db = initDb(config.databaseUrl)
+    app.use((c, next) => {
+      if (db) c.set("db", db)
+      return next()
     })
   }
 
