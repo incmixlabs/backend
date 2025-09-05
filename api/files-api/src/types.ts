@@ -1,14 +1,25 @@
-import type { AuthUser as User } from "@incmix/utils/types"
-import type { Database } from "@incmix-api/utils/db-schema"
+import type { KyselyDb } from "@incmix-api/utils/db-schema"
 import type { Context as HonoContext } from "hono"
-import type { Kysely } from "kysely"
 import type { Env } from "./env-vars"
 
 export type Bindings = Env
 
+interface User {
+  id: string
+  email: string
+  isSuperAdmin: boolean
+  emailVerified: boolean
+  [key: string]: any
+}
+
 type Variables = {
-  user: User | null
-  db?: Kysely<Database>
+  user?: User
+  db: KyselyDb
+  redis?: any
+  requestId?: string
+  locale?: string
+  i18n?: any
+  kvStore?: any
 }
 
 export type HonoApp = { Bindings: Bindings; Variables: Variables }

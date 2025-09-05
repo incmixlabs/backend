@@ -85,6 +85,7 @@ services:
     image: registry.incmix.com/auth-service:latest
     environment:
       <<: *common-env
+      <<: *common-env
       PORT: 8787
       # OAuth and authentication
       GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
@@ -104,7 +105,9 @@ services:
     image: registry.incmix.com/email-service:latest
     environment:
       <<: *common-env
+      <<: *common-env
       PORT: 8989
+      EMAIL_FROM: ${EMAIL_FROM}
       EMAIL_FROM: ${EMAIL_FROM}
       # Email service
       RESEND_API_KEY: ${RESEND_API_KEY}
@@ -122,6 +125,7 @@ services:
   org-api:
     image: registry.incmix.com/org-api:latest
     environment:
+      <<: *common-env
       <<: *common-env
       PORT: 9292
     networks:
@@ -173,6 +177,7 @@ services:
     image: registry.incmix.com/files-api:latest
     environment:
       <<: *common-env
+      <<: *common-env
       PORT: 8282
       # AWS/S3 configuration
       AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
@@ -194,6 +199,7 @@ services:
   genai-api:
     image: registry.incmix.com/genai-api:latest
     environment:
+      <<: *common-env
       <<: *common-env
       REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379
       PORT: 8383
@@ -217,6 +223,7 @@ services:
     image: registry.incmix.com/projects-api:latest
     environment:
       <<: *common-env
+      <<: *common-env
       PORT: 8484
     networks:
       - incmix-network
@@ -232,6 +239,7 @@ services:
   location-api:
     image: registry.incmix.com/location-api:latest
     environment:
+      <<: *common-env
       <<: *common-env
       PORT: 9494
       # Location and weather services
@@ -258,6 +266,7 @@ services:
     image: registry.incmix.com/comments-api:latest
     environment:
       <<: *common-env
+      <<: *common-env
       PORT: 8585
     networks:
       - incmix-network
@@ -273,6 +282,7 @@ services:
   rxdb-api:
     image: registry.incmix.com/rxdb-api:latest
     environment:
+      <<: *common-env
       <<: *common-env
       PORT: 8686
 
@@ -290,6 +300,7 @@ services:
   bff-web:
     image: registry.incmix.com/bff-web:latest
     environment:
+      <<: *common-env
       <<: *common-env
       PORT: 8080
     ports:

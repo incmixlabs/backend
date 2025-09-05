@@ -14,6 +14,7 @@ const service = createService<HonoApp["Bindings"], HonoApp["Variables"]>({
   setupMiddleware: (app) => {
     setupCors(app as any, "/api")
   },
+  needDb: false,
   setupRoutes: (app) => {
     app.get("/api/timestamp", (c) => {
       return c.json({ time: Date.now() })

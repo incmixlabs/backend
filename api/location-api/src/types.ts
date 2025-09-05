@@ -1,6 +1,5 @@
-import type { Database } from "@incmix-api/utils/db-schema"
+import type { KyselyDb } from "@incmix-api/utils/db-schema"
 import type { Context as HonoContext } from "hono"
-import type { Kysely } from "kysely"
 import type { Env } from "./env-vars"
 
 type EnvVariables = Env
@@ -19,7 +18,17 @@ export type Address = {
 
 export type Variables = {
   defaultLocation: Address
-  db?: Kysely<Database>
+  db: KyselyDb
+  redis?: any
+  requestId?: string
+  user?: {
+    id: string
+    email: string
+    [key: string]: any
+  }
+  locale?: string
+  i18n?: any
+  kvStore?: any
 }
 
 export type HonoApp = { Bindings: Bindings; Variables: Variables }

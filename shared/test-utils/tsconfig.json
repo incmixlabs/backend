@@ -1,0 +1,17 @@
+{
+  "extends": "@incmix-api/config/hono.json",
+  "compilerOptions": {
+    "rootDir": ".",
+    "outDir": "./dist",
+    "baseUrl": "./",
+    "paths": {
+      "@/*": ["./src/*"]
+    },
+    "noEmit": false,
+    "declaration": true
+  },
+  "tsc-alias": {
+    "resolveFullPaths": true
+  },
+  "exclude": ["dist/**", "**/node_modules/**"]
+}

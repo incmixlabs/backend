@@ -172,11 +172,12 @@ const serviceSchemas = {
 export type ServiceName = keyof typeof serviceSchemas
 export function createEnvConfig<T extends ServiceName>(
   serviceName?: T,
-  customSchema?: z.ZodObject<any>
+  customSchema?: z.ZodObject<any>,
+  envOverride?: "test" | "development" | "production"
 ) {
   // Load environment variables using dotenv-mono
   // This will merge root .env with service-specific .env and NODE_ENV specific files
-  const nodeEnv = process.env.NODE_ENV || "development"
+  const nodeEnv = envOverride || process.env.NODE_ENV || "development"
 
   // Get the directory of the current module
   const __dirname = path.dirname(fileURLToPath(import.meta.url))
@@ -274,6 +275,7 @@ export function createEnvConfig<T extends ServiceName>(
     schema = schema.extend(customSchema.shape) as z.ZodObject<any>
   }
 
+  process.env.NODE_ENV = nodeEnv
   // Parse and validate environment variables
   const result = schema.safeParse(process.env)
 

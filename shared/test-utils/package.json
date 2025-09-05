@@ -1,0 +1,31 @@
+{
+  "name": "@incmix-api/test-utils",
+  "version": "0.0.0",
+  "license": "MIT",
+  "type": "module",
+  "scripts": {
+    "dev": "tsc && (concurrently \"tsc -w\" \"tsc-alias -w\")",
+    "build": "tsc && tsc-alias",
+    "clean": "rm -rf dist"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/src/index.d.ts",
+      "default": "./dist/src/index.js"
+    }
+  },
+  "dependencies": {
+    "testcontainers": "^11.5.1",
+    "@testcontainers/postgresql": "^11.5.1"
+  },
+  "devDependencies": {
+    "@incmix-api/utils": "workspace:^",
+    "@incmix-api/config": "workspace:^",
+    "@types/node": "catalog:",
+    "@types/pg": "catalog:",
+    "tsc-alias": "catalog:",
+    "tsx": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  }
+}

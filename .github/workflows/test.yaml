@@ -5,16 +5,29 @@ on:
     branches:
       - main
     paths:
-      - "backend/auth/**"
-      - "backend/files-api/**"
-      - "backend/tasks-api/**"
-      - "backend/users-api/**"
-      - "backend/org-api/**"
+      - "api/auth/**"
+      - "api/org-api/**"
       - ".github/workflows/test.yaml"
+      - "shared/**"
+      - "pnpm-workspace.yaml"
+      - "pnpm-lock.yaml"
+      - "package.json"
+      - "tsconfig.json"
 jobs:
   unit_test:
     runs-on: ubuntu-latest
     name: Unit Test
+    services:
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli -a redis_password ping || redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        cmd: redis-server --requirepass redis_password
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -25,7 +38,13 @@ jobs:
           cache: 'pnpm'
       - name: Install Dependencies
         run: pnpm install
+      - name: Build utils
+        run: pnpm build --filter=./shared/utils
+      - name: Build test-utils
+        run: pnpm build --filter=./shared/test-utils
       - name: Run tests
-        run: pnpm run test
+        run: pnpm run test:integration
+        env:
+          REDIS_URL: redis://:redis_password@localhost:6379
 
 

@@ -24,7 +24,7 @@ CREATE TABLE projects (
   company text,
   logo text,
   checklist jsonb DEFAULT '[]' :: jsonb,
-  acceptance_criteria jsonb DEFAULT '[]' :: jsonb;
+  acceptance_criteria jsonb DEFAULT '[]' :: jsonb,
   created_by text references users(id) on delete cascade,
   updated_by text references users(id) on delete cascade,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),

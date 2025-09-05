@@ -13,7 +13,7 @@
       "outputs": ["dist/**", "!dist/**/test/**", "!dist/**/e2e/**"],
       "cache": true
     },
-    "test": {},
+    "test:integration": {},
     "@incmix-api/tasks-api#test:e2e": {
       "dependsOn": ["@incmix-api/auth#test:e2e"]
     },

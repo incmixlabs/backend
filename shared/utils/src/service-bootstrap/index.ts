@@ -8,6 +8,7 @@ import { type Database, initDb } from "@/db-schema"
 import { setupKvStore } from "@/middleware"
 import { KVStore } from "../kv-store"
 import { shutdownRedis } from "../middleware/redis"
+import type { ServiceBindings, ServiceVariables } from "../types/service"
 import { setupOpenApi } from "./open-api"
 
 type BaseBindings = {
@@ -129,16 +130,16 @@ export function createService<
 }
 
 export type ServiceApp<
-  TBindings extends object = Record<string, unknown>,
-  TVariables extends object = Record<string, unknown>,
+  TBindings extends ServiceBindings = ServiceBindings,
+  TVariables extends ServiceVariables = ServiceVariables,
 > = OpenAPIHono<{
   Bindings: TBindings
   Variables: TVariables
 }>
 
 export type ServiceContext<
-  TBindings extends object = Record<string, unknown>,
-  TVariables extends object = Record<string, unknown>,
+  TBindings extends ServiceBindings = ServiceBindings,
+  TVariables extends ServiceVariables = ServiceVariables,
 > = Context<{
   Bindings: TBindings
   Variables: TVariables
