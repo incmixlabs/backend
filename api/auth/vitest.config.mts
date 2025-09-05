@@ -1,27 +1,39 @@
+import path from "path"
+import { fileURLToPath } from "url"
 import tsconfigPaths from "vite-tsconfig-paths"
 import { defineConfig } from "vitest/config"
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url))
+
+// Set NODE_ENV before any imports
+process.env.NODE_ENV = "test"
 
 export default defineConfig({
   plugins: [tsconfigPaths()],
   resolve: {
     alias: {
-      "@": "/Users/umam3/projects/venturaz/incmix/backend/api/auth/src",
-      "@test": "/Users/umam3/projects/venturaz/incmix/backend/api/auth/test",
+      "@": path.resolve(__dirname, "./src"),
+      "@test": path.resolve(__dirname, "./test"),
+      // Redirect env-vars import to test environment
+      "@/env-vars": path.resolve(__dirname, "./test/utils/test-env.ts"),
     },
   },
   test: {
-    dir: "./test",
+    dir: "./test/integration",
+    setupFiles: ["./test/utils/setup.ts"],
     env: {
       NODE_ENV: "test",
       DATABASE_URL: "postgresql://postgres:password@localhost:54321/incmix",
-      GOOGLE_CLIENT_ID: "test-google-client-id",
-      GOOGLE_CLIENT_SECRET: "test-google-client-secret",
-      FRONTEND_URL: "http://localhost:1472",
-      GOOGLE_REDIRECT_URL: "http://localhost:1472/auth/google/callback",
-      COOKIE_NAME: "test_session",
-      DOMAIN: "localhost",
-      EMAIL_API_URL: "http://localhost:8787/api/email",
-      INTL_API_URL: "http://localhost:8787/api/intl",
+      FRONTEND_URL: "http://localhost:1420",
+    },
+    testTimeout: 60000, // 60 seconds for integration tests
+    hookTimeout: 120000, // 2 minutes for setup (testcontainers)
+    teardownTimeout: 30000,
+    pool: "forks", // Use separate processes for each test file
+    poolOptions: {
+      forks: {
+        singleFork: true, // Use single fork to avoid port conflicts
+      },
     },
   },
 })
