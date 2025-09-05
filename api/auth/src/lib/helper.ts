@@ -163,7 +163,6 @@ export const sendVerificationEmail = async (
 ) => {
   const verificationLink = `${envVars.FRONTEND_URL}/email-verification?code=${encodeURIComponent(verificationCode)}&email=${encodeURIComponent(recipient)}`
   const emailUrl = String(envVars.EMAIL_API_URL)
-
   const sentryHeaders = generateSentryHeaders(c)
   await fetch(emailUrl, {
     method: "POST",

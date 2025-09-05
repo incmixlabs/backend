@@ -21,8 +21,11 @@ export function setSessionCookie(
 }
 
 export function deleteSessionCookie(c: Context): void {
-  c.header(
-    "Set-Cookie",
-    `${COOKIE_NAME}=; Domain=${envVars.DOMAIN}; Path=${COOKIE_PATH}; HttpOnly; SameSite=${SAME_SITE}; Max-Age=0; Expires=Thu, 01 Jan 1970 00:00:00 GMT; Secure=${isProduction()}`
-  )
+  const domain = envVars.DOMAIN
+  const isIp = domain ? /^\d{1,3}(\.\d{1,3}){3}$/.test(domain) : false
+  const domainPart =
+    domain && !/localhost/i.test(domain) && !isIp ? `; Domain=${domain}` : ""
+  const cookie = `${COOKIE_NAME}=; Path=${COOKIE_PATH}; HttpOnly; SameSite=${SAME_SITE}; Max-Age=0; Expires=Thu, 01 Jan 1970 00:00:00 GMT; Secure${domainPart}`
+  c.header("Set-Cookie", cookie, { append: true })
 }
+
