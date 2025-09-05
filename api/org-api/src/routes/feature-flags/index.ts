@@ -4,7 +4,6 @@ import {
   NotFoundError,
   processError,
   UnauthorizedError,
-  ForbiddenError,
   zodError,
 } from "@incmix-api/utils/errors"
 import { useTranslation } from "@incmix-api/utils/middleware"

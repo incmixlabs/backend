@@ -83,12 +83,9 @@ const service = createService<HonoApp["Bindings"], HonoApp["Variables"]>({
       return c.json(aggregatedResults, 200)
     })
     app.get("/api/rate-limits", async (c) => {
-      const location = await fetch(
-        `${envVars.LOCATION_API_URL}/rate-limits`,
-        {
-          method: "get",
-        }
-      ).then(async (res) => await res.json())
+      const location = await fetch(`${envVars.LOCATION_API_URL}/rate-limits`, {
+        method: "get",
+      }).then(async (res) => await res.json())
 
       return c.json(
         {

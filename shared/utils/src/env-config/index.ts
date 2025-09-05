@@ -298,7 +298,7 @@ export function createEnvConfig<T extends ServiceName>(
   for (const [serviceName, serviceConfig] of Object.entries(services)) {
     // Convert service name to API URL field name (e.g., "auth" -> "AUTH_API_URL")
     const endpoint = (serviceConfig as any)?.endpoint || serviceName
-    const apiUrlFieldName = `${endpoint.toUpperCase()}_API_URL`
+    const apiUrlFieldName = `${serviceName.toUpperCase()}_API_URL`
     const fieldName = apiUrlFieldName.replaceAll("-", "_")
     const apiPath = `/api/${endpoint}`
 
