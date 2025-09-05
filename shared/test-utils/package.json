@@ -14,11 +14,12 @@
       "default": "./dist/src/index.js"
     }
   },
-  "dependencies": {},
+  "dependencies": {
+    "testcontainers": "^11.5.1",
+    "@testcontainers/postgresql": "^11.5.1"
+  },
   "devDependencies": {
     "@incmix-api/utils": "workspace:^",
-    "@testcontainers/postgresql": "^11.5.1",
-    "testcontainers": "^11.5.1",
     "@incmix-api/config": "workspace:^",
     "@types/node": "catalog:",
     "@types/pg": "catalog:",
