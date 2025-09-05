@@ -96,63 +96,65 @@ export class TestDatabase {
     return mockDb
   }
 
-async runMigrations(connectionString: string): Promise<void> {
-  if (!this.pool) return
+  async runMigrations(connectionString: string): Promise<void> {
+    if (!this.pool) return
 
-  try {
-    // Separate pool for migrations
-    const migrationClient = new Pool({
-      connectionString,
-      max: 1,
-    })
+    try {
+      // Separate pool for migrations
+      const migrationClient = new Pool({
+        connectionString,
+        max: 1,
+      })
 
-    // Get all filenames in db/api-migrations directory as array
-    const projectRoot = await findProjectRoot()
-    if (!projectRoot) {
-      throw new Error("Project root not found")
-    }
-    const migrationsDir = path.resolve(projectRoot, "db/api-migrations")
-    const essentialMigrations = (await fs.readdir(migrationsDir))
-      .filter((file) => file.endsWith(".sql") && !file.includes("undo"))
-      .sort((a, b) => a.localeCompare(b, undefined, { numeric: true }))
-
-    let hadFailure = false
-    for (const migrationFile of essentialMigrations) {
-      try {
-        const migrationPath = `${migrationsDir}/${migrationFile}`
-        const migrationSQL = await fs.readFile(migrationPath, "utf-8")
-
-        const client = await migrationClient.connect()
-        try {
-          await client.query(migrationSQL)
-        } catch (migrationError) {
-          hadFailure = true
-          try { await client.query("ROLLBACK") } catch {}
-          throw migrationError
-        } finally {
-          client.release()
-        }
-
-        console.log(`✅ Applied migration: ${migrationFile}`)
-      } catch (migrationError) {
-        console.warn(
-          `⚠️  Failed to apply migration ${migrationFile}:`,
-          migrationError
-        )
+      // Get all filenames in db/api-migrations directory as array
+      const projectRoot = await findProjectRoot()
+      if (!projectRoot) {
+        throw new Error("Project root not found")
       }
-    }
+      const migrationsDir = path.resolve(projectRoot, "db/api-migrations")
+      const essentialMigrations = (await fs.readdir(migrationsDir))
+        .filter((file) => file.endsWith(".sql") && !file.includes("undo"))
+        .sort((a, b) => a.localeCompare(b, undefined, { numeric: true }))
 
-    if (hadFailure) {
-      throw new Error("One or more migrations failed")
-    }
+      let hadFailure = false
+      for (const migrationFile of essentialMigrations) {
+        try {
+          const migrationPath = `${migrationsDir}/${migrationFile}`
+          const migrationSQL = await fs.readFile(migrationPath, "utf-8")
 
-    await migrationClient.end()
-  } catch (error) {
-    console.warn("⚠️  Failed to run migrations:", error)
-    // Bubble up so setup() can fallback to mock DB
-    throw error
+          const client = await migrationClient.connect()
+          try {
+            await client.query(migrationSQL)
+          } catch (migrationError) {
+            hadFailure = true
+            try {
+              await client.query("ROLLBACK")
+            } catch {}
+            throw migrationError
+          } finally {
+            client.release()
+          }
+
+          console.log(`✅ Applied migration: ${migrationFile}`)
+        } catch (migrationError) {
+          console.warn(
+            `⚠️  Failed to apply migration ${migrationFile}:`,
+            migrationError
+          )
+        }
+      }
+
+      if (hadFailure) {
+        throw new Error("One or more migrations failed")
+      }
+
+      await migrationClient.end()
+    } catch (error) {
+      console.warn("⚠️  Failed to run migrations:", error)
+      // Bubble up so setup() can fallback to mock DB
+      throw error
+    }
   }
-}
 
   async cleanup(): Promise<void> {
     if (this.pool) {

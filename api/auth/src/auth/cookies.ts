@@ -28,4 +28,3 @@ export function deleteSessionCookie(c: Context): void {
   const cookie = `${COOKIE_NAME}=; Path=${COOKIE_PATH}; HttpOnly; SameSite=${SAME_SITE}; Max-Age=0; Expires=Thu, 01 Jan 1970 00:00:00 GMT; Secure${domainPart}`
   c.header("Set-Cookie", cookie, { append: true })
 }
-
