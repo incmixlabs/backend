@@ -47,14 +47,6 @@ export const services = {
     port: 8484,
     dir: "projects-api",
   },
-  tasks: {
-    port: 8888,
-    dir: "tasks-api",
-  },
-  permissions: {
-    port: 9191,
-    dir: "permissions-api",
-  },
   rxdb: {
     port: 8686,
     dir: "rxdb-api",
