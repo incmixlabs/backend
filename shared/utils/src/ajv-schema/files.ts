@@ -7,11 +7,11 @@ export const UploadFileSchema = {
   properties: {
     file: {
       type: "object",
-      description: "File to upload"
-    }
+      description: "File to upload",
+    },
   },
   required: ["file"],
-  additionalProperties: false
+  additionalProperties: false,
 } as const
 
 export const validateUploadFile = ajv.compile(UploadFileSchema)

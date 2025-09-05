@@ -1,8 +1,8 @@
-import type { OpenAPIHono } from "@hono/zod-openapi"
 import { initDb } from "@incmix-api/utils/db-schema"
 import type { Context, MiddlewareHandler } from "hono"
 import { compress } from "hono/compress"
 import { envVars } from "../env-config"
+import type { AjvOpenApiHono } from "../openapi/ajv-openapi"
 import { createAuthMiddleware } from "./auth"
 import { setupCors } from "./cors"
 import { createI18nMiddleware } from "./i18n"
@@ -59,7 +59,7 @@ export function createReferenceEndpointCheck(basePath: string) {
 }
 
 export function setupApiMiddleware<T extends { Bindings: any; Variables: any }>(
-  app: OpenAPIHono<T>,
+  app: AjvOpenApiHono<T>,
   config: MiddlewareConfig
 ) {
   const {

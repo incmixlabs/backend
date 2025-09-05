@@ -10,8 +10,6 @@
   },
   "dependencies": {
     "@casl/ability": "catalog:",
-    "@hono/zod-openapi": "catalog:",
-    "@hono/zod-validator": "catalog:",
     "@incmix-api/utils": "workspace:^",
     "@incmix/utils": "catalog:",
     "hono": "catalog:",
@@ -19,10 +17,10 @@
     "kysely-ctl": "catalog:",
     "lodash": "catalog:",
     "nanoid": "catalog:",
-    "pg": "catalog:",
-    "zod": "catalog:"
+    "pg": "catalog:"
   },
   "devDependencies": {
+    "@hono/zod-openapi": "catalog:",
     "@incmix-api/config": "workspace:^",
     "@types/lodash": "catalog:",
     "@types/node": "catalog:",

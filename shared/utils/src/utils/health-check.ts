@@ -1,15 +1,8 @@
-import { createRoute, OpenAPIHono, z } from "@hono/zod-openapi"
 import type { Context, Env } from "hono"
+import { HealthCheckSchema } from "../ajv-schema/health-check"
 import { envVars } from "../env-config"
-/**
- * Schema for the health check response
- */
-export const HealthCheckSchema = z
-  .object({
-    status: z.string().openapi({ example: "UP" }),
-    reason: z.string().optional().openapi({ example: "Service unavailable" }),
-  })
-  .openapi("Healthcheck")
+import { AjvOpenApiHono } from "../openapi/ajv-openapi"
+// Health check schema is now imported from ajv-schema/health-check
 
 /**
  * Create a health check function for the /reference endpoint
@@ -100,29 +93,23 @@ export function createHealthCheckRoute<T extends Env>({
     })
   }
 
-  // Create the OpenAPI route schema
-  const healthCheckRoute = createRoute({
-    path: "/",
-    method: "get",
-    security,
-    tags,
+  // Create the AJV OpenAPI route configuration
+  const routeConfig = {
     summary: "Check Service Health",
+    tags,
+    security,
     responses: {
       200: {
-        content: {
-          "application/json": {
-            schema: HealthCheckSchema,
-          },
-        },
         description: "Returns Service Status",
+        schema: HealthCheckSchema,
       },
     },
-  })
+  }
 
-  // Create the Hono route handler
-  const healthCheckRoutes = new OpenAPIHono<T>()
+  // Create the AJV Hono route handler
+  const healthCheckRoutes = new AjvOpenApiHono<T>()
 
-  healthCheckRoutes.openapi(healthCheckRoute, async (c) => {
+  healthCheckRoutes.openapi("/", "get", routeConfig, async (c: any) => {
     try {
       let status = "UP"
       const missing: string[] = []

@@ -32,10 +32,6 @@
       "types": "./dist/src/db-schema/index.d.ts",
       "default": "./dist/src/db-schema/index.js"
     },
-    "./zod-schema": {
-      "types": "./dist/src/zod-schema/index.d.ts",
-      "default": "./dist/src/zod-schema/index.js"
-    },
     "./ajv-schema": {
       "types": "./dist/src/ajv-schema/index.d.ts",
       "default": "./dist/src/ajv-schema/index.js"
@@ -63,13 +59,20 @@
     "./validation": {
       "types": "./dist/src/validation/index.d.ts",
       "default": "./dist/src/validation/index.js"
+    },
+    "./openapi/ajv-openapi": {
+      "types": "./dist/src/openapi/ajv-openapi.d.ts",
+      "default": "./dist/src/openapi/ajv-openapi.js"
+    },
+    "./zod-schema": {
+      "types": "./dist/src/zod-schema/index.d.ts",
+      "default": "./dist/src/zod-schema/index.js"
     }
   },
   "dependencies": {
     "@casl/ability": "catalog:",
     "@hono/node-server": "catalog:",
     "@hono/sentry": "1.2.0",
-    "@hono/zod-openapi": "catalog:",
     "@incmix/utils": "catalog:",
     "@intlify/utils": "0.13.0",
     "@scalar/hono-api-reference": "catalog:",
@@ -83,7 +86,6 @@
     "kysely": "catalog:",
     "pg": "catalog:",
     "redis": "catalog:",
-    "zod": "catalog:",
     "ajv": "catalog:",
     "ajv-formats": "catalog:"
   },

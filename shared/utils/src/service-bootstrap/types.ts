@@ -1,6 +1,6 @@
-import type { OpenAPIHono } from "@hono/zod-openapi"
 import type { Context } from "hono"
 import type { Kysely } from "kysely"
+import type { AjvOpenApiHono } from "../openapi/ajv-openapi"
 // Redis client type - define as any to avoid redis package dependency
 export type RedisClientType = any
 
@@ -26,7 +26,7 @@ export interface CommonVariables {
 export type HonoApp<
   TBindings extends CommonBindings = CommonBindings,
   TVariables extends CommonVariables = CommonVariables,
-> = OpenAPIHono<{
+> = AjvOpenApiHono<{
   Bindings: TBindings
   Variables: TVariables
 }>

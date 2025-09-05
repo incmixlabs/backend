@@ -1,13 +1,13 @@
+import { projectStatus } from "@incmix-api/utils/db-schema"
 import Ajv from "ajv"
 import addFormats from "ajv-formats"
-import { projectStatus } from "@incmix-api/utils/db-schema"
 
 const ajv = new Ajv({ allErrors: true, strict: false })
 addFormats(ajv)
 
 export const taskStatusEnum = [
   "backlog",
-  "active", 
+  "active",
   "on_hold",
   "cancelled",
   "archived",
@@ -26,18 +26,18 @@ const UserSchema = {
     id: {
       type: "string",
       maxLength: 100,
-      example: "user123"
+      example: "user123",
     },
     name: {
-      type: "string", 
+      type: "string",
       maxLength: 200,
-      example: "John Doe"
+      example: "John Doe",
     },
     image: {
       type: "string",
       maxLength: 500,
-      example: "https://example.com/avatar.png"
-    }
+      example: "https://example.com/avatar.png",
+    },
   },
   required: ["id", "name"],
   additionalProperties: false,
@@ -45,7 +45,7 @@ const UserSchema = {
     id: "user123",
     name: "John Doe",
     image: "https://example.com/avatar.png",
-  }
+  },
 } as const
 
 export interface User {
@@ -60,33 +60,33 @@ export const ChecklistItemSchema = {
     id: {
       type: "string",
       maxLength: 100,
-      example: "item123"
+      example: "item123",
     },
     text: {
       type: "string",
       maxLength: 500,
-      example: "Checklist item text"
+      example: "Checklist item text",
     },
     checked: {
       type: "boolean",
       default: false,
-      example: false
+      example: false,
     },
     order: {
       type: "integer",
       minimum: 0,
       default: 0,
-      example: 1
-    }
+      example: 1,
+    },
   },
   required: ["id", "text"],
   additionalProperties: false,
   example: {
     id: "item123",
-    text: "Checklist item text", 
+    text: "Checklist item text",
     checked: false,
     order: 1,
-  }
+  },
 } as const
 
 export interface ChecklistItem {
@@ -102,18 +102,18 @@ export const CommentSchema = {
     id: {
       type: "string",
       maxLength: 100,
-      example: "comment123"
+      example: "comment123",
     },
     content: {
       type: "string",
       maxLength: 2000,
-      example: "Comment content"
+      example: "Comment content",
     },
     createdAt: {
       type: "number",
-      example: 1640995200000
+      example: 1640995200000,
     },
-    createdBy: UserSchema
+    createdBy: UserSchema,
   },
   required: ["id", "content", "createdAt", "createdBy"],
   additionalProperties: false,
@@ -126,7 +126,7 @@ export const CommentSchema = {
       name: "John Doe",
       image: "https://example.com/avatar.png",
     },
-  }
+  },
 } as const
 
 export interface Comment {
@@ -143,7 +143,7 @@ export const ProjectMemberSchema = {
     name: { type: "string" },
     avatar: { type: ["string", "null"] },
     role: { type: "string" },
-    isOwner: { type: "boolean" }
+    isOwner: { type: "boolean" },
   },
   required: ["id", "name", "role", "isOwner"],
   additionalProperties: false,
@@ -153,7 +153,7 @@ export const ProjectMemberSchema = {
     avatar: "https://example.com/avatar.png",
     role: "member",
     isOwner: false,
-  }
+  },
 } as const
 
 export interface ProjectMember {
@@ -169,24 +169,24 @@ export const ChecklistSchema = {
   properties: {
     id: {
       type: "string",
-      example: "2hek2bkjh"
+      example: "2hek2bkjh",
     },
     text: {
       type: "string",
-      example: "Checklist item"
+      example: "Checklist item",
     },
     checked: {
       type: "boolean",
-      example: false
+      example: false,
     },
     order: {
       type: "integer",
       minimum: 0,
-      example: 1
-    }
+      example: 1,
+    },
   },
   required: ["id", "text", "checked", "order"],
-  additionalProperties: false
+  additionalProperties: false,
 } as const
 
 export interface Checklist {
@@ -202,86 +202,95 @@ export const ProjectSchema = {
     id: {
       type: "string",
       maxLength: 30,
-      example: "2hek2bkjh"
+      example: "2hek2bkjh",
     },
     name: {
       type: "string",
-      example: "My Project"
+      example: "My Project",
     },
     company: {
       type: ["string", "null"],
-      example: "Acme Corp"
+      example: "Acme Corp",
     },
     logo: {
       type: ["string", "null"],
-      example: "https://example.com/logo.png"
+      example: "https://example.com/logo.png",
     },
     description: {
       type: ["string", "null"],
-      example: "Project description"
+      example: "Project description",
     },
     progress: {
       type: "integer",
-      example: 75
+      example: 75,
     },
     timeLeft: {
       type: "string",
-      example: "2 weeks"
+      example: "2 weeks",
     },
     members: {
       type: "array",
-      items: ProjectMemberSchema
+      items: ProjectMemberSchema,
     },
     orgId: {
       type: "string",
-      example: "org123"
+      example: "org123",
     },
     checklist: {
       type: "array",
       items: ChecklistSchema,
-      default: []
+      default: [],
     },
     acceptanceCriteria: {
       type: "array",
       items: ChecklistItemSchema,
-      default: []
+      default: [],
     },
     status: {
       enum: projectStatus,
-      example: "started"
+      example: "started",
     },
     startDate: {
       type: "string",
       format: "date-time",
-      example: "2025-01-01T00:00:00Z"
+      example: "2025-01-01T00:00:00Z",
     },
     endDate: {
       type: "string",
       format: "date-time",
-      example: "2025-01-01T00:00:00Z"
+      example: "2025-01-01T00:00:00Z",
     },
     budget: {
       type: ["integer", "null"],
-      example: 10000
+      example: 10000,
     },
     createdAt: {
       type: "string",
       format: "date-time",
-      example: "2025-01-01T00:00:00Z"
+      example: "2025-01-01T00:00:00Z",
     },
     updatedAt: {
       type: "string",
       format: "date-time",
-      example: "2025-01-01T00:00:00Z"
+      example: "2025-01-01T00:00:00Z",
     },
     createdBy: UserSchema,
-    updatedBy: UserSchema
+    updatedBy: UserSchema,
   },
   required: [
-    "id", "name", "progress", "timeLeft", "members", "orgId", 
-    "status", "createdAt", "updatedAt", "createdBy", "updatedBy"
+    "id",
+    "name",
+    "progress",
+    "timeLeft",
+    "members",
+    "orgId",
+    "status",
+    "createdAt",
+    "updatedAt",
+    "createdBy",
+    "updatedBy",
   ],
-  additionalProperties: false
+  additionalProperties: false,
 } as const
 
 export interface Project {
@@ -296,7 +305,7 @@ export interface Project {
   orgId: string
   checklist?: Checklist[]
   acceptanceCriteria?: ChecklistItem[]
-  status: typeof projectStatus[number]
+  status: (typeof projectStatus)[number]
   startDate?: string
   endDate?: string
   budget?: number | null
@@ -312,40 +321,41 @@ export const RefUrlSchema = {
     id: {
       type: "string",
       maxLength: 100,
-      example: "ref123"
+      example: "ref123",
     },
     url: {
       type: "string",
       format: "uri",
       maxLength: 1000,
-      example: "https://example.com/figma"
+      example: "https://example.com/figma",
     },
     title: {
       type: "string",
       maxLength: 255,
-      example: "Figma Design"
+      example: "Figma Design",
     },
     type: {
       enum: ["figma", "task", "external"],
-      example: "figma"
+      example: "figma",
     },
     taskId: {
       type: "string",
       maxLength: 100,
-      example: "task123"
-    }
+      example: "task123",
+    },
   },
   required: ["id", "url", "type"],
   additionalProperties: false,
   allOf: [
     {
       if: {
-        properties: { type: { const: "task" } }
+        properties: { type: { const: "task" } },
       },
+      // biome-ignore lint/suspicious/noThenProperty: This is valid JSON Schema syntax for conditional validation
       then: {
-        required: ["taskId"]
-      }
-    }
+        required: ["taskId"],
+      },
+    },
   ],
   example: {
     id: "ref123",
@@ -353,7 +363,7 @@ export const RefUrlSchema = {
     title: "Figma Design",
     type: "figma",
     taskId: "task123",
-  }
+  },
 } as const
 
 export const LabelTagSchema = {
@@ -362,18 +372,18 @@ export const LabelTagSchema = {
     value: {
       type: "string",
       maxLength: 200,
-      example: "high"
+      example: "high",
     },
     label: {
       type: "string",
       maxLength: 200,
-      example: "High Priority"
+      example: "High Priority",
     },
     color: {
       type: "string",
       maxLength: 100,
-      example: "#ff0000"
-    }
+      example: "#ff0000",
+    },
   },
   required: ["value", "label", "color"],
   additionalProperties: false,
@@ -381,7 +391,7 @@ export const LabelTagSchema = {
     value: "high",
     label: "High Priority",
     color: "#ff0000",
-  }
+  },
 } as const
 
 export const AttachmentSchema = {
@@ -390,28 +400,28 @@ export const AttachmentSchema = {
     id: {
       type: "string",
       maxLength: 100,
-      example: "att123"
+      example: "att123",
     },
     name: {
       type: "string",
       maxLength: 255,
-      example: "document.pdf"
+      example: "document.pdf",
     },
     url: {
       type: "string",
       maxLength: 1000,
-      example: "https://example.com/document.pdf"
+      example: "https://example.com/document.pdf",
     },
     size: {
       type: "string",
       maxLength: 50,
-      example: "1.2MB"
+      example: "1.2MB",
     },
     type: {
       type: "string",
       maxLength: 100,
-      example: "application/pdf"
-    }
+      example: "application/pdf",
+    },
   },
   required: ["id", "name", "url", "size"],
   additionalProperties: false,
@@ -421,7 +431,7 @@ export const AttachmentSchema = {
     url: "https://example.com/document.pdf",
     size: "1.2MB",
     type: "application/pdf",
-  }
+  },
 } as const
 
 export const SubTaskSchema = {
@@ -430,24 +440,24 @@ export const SubTaskSchema = {
     id: {
       type: "string",
       maxLength: 100,
-      example: "subtask123"
+      example: "subtask123",
     },
     name: {
       type: "string",
       maxLength: 300,
-      example: "Subtask name"
+      example: "Subtask name",
     },
     completed: {
       type: "boolean",
       default: false,
-      example: false
+      example: false,
     },
     order: {
       type: "integer",
       minimum: 0,
       default: 0,
-      example: 1
-    }
+      example: 1,
+    },
   },
   required: ["id", "name"],
   additionalProperties: false,
@@ -456,7 +466,7 @@ export const SubTaskSchema = {
     name: "Subtask name",
     completed: false,
     order: 1,
-  }
+  },
 } as const
 
 export const LabelSchema = {
@@ -465,53 +475,60 @@ export const LabelSchema = {
     id: {
       type: "string",
       maxLength: 100,
-      example: "label123"
+      example: "label123",
     },
     projectId: {
       type: "string",
       maxLength: 100,
-      example: "project123"
+      example: "project123",
     },
     type: {
       enum: labelTypeEnum,
-      example: "status"
+      example: "status",
     },
     name: {
       type: "string",
       maxLength: 200,
-      example: "In Progress"
+      example: "In Progress",
     },
     color: {
       type: "string",
       maxLength: 50,
-      example: "#00ff00"
+      example: "#00ff00",
     },
     order: {
       type: "integer",
       minimum: 0,
       default: 0,
-      example: 1
+      example: 1,
     },
     description: {
       type: "string",
       maxLength: 500,
       default: "",
-      example: "Task is in progress"
+      example: "Task is in progress",
     },
     createdAt: {
       type: "number",
-      example: 1640995200000
+      example: 1640995200000,
     },
     updatedAt: {
       type: "number",
-      example: 1640995200000
+      example: 1640995200000,
     },
     createdBy: UserSchema,
-    updatedBy: UserSchema
+    updatedBy: UserSchema,
   },
   required: [
-    "id", "projectId", "type", "name", "color", 
-    "createdAt", "updatedAt", "createdBy", "updatedBy"
+    "id",
+    "projectId",
+    "type",
+    "name",
+    "color",
+    "createdAt",
+    "updatedAt",
+    "createdBy",
+    "updatedBy",
   ],
   additionalProperties: false,
   example: {
@@ -534,7 +551,7 @@ export const LabelSchema = {
       name: "John Doe",
       image: "https://example.com/avatar.png",
     },
-  }
+  },
 } as const
 
 export const TaskSchema = {
@@ -543,108 +560,115 @@ export const TaskSchema = {
     id: {
       type: "string",
       maxLength: 100,
-      example: "task123"
+      example: "task123",
     },
     projectId: {
       type: "string",
       maxLength: 100,
-      example: "project123"
+      example: "project123",
     },
     name: {
       type: "string",
       maxLength: 500,
-      example: "Task name"
+      example: "Task name",
     },
     statusId: {
       type: "string",
       maxLength: 100,
-      example: "status123"
+      example: "status123",
     },
     priorityId: {
       type: "string",
       maxLength: 100,
-      example: "priority123"
+      example: "priority123",
     },
     parentTaskId: {
       type: ["string", "null"],
       maxLength: 100,
       default: null,
-      example: null
+      example: null,
     },
     isSubtask: {
       type: "boolean",
       default: false,
-      example: false
+      example: false,
     },
     taskOrder: {
       type: "integer",
       minimum: 0,
       default: 0,
-      example: 1
+      example: 1,
     },
     startDate: {
       type: "number",
-      example: 1640995200000
+      example: 1640995200000,
     },
     endDate: {
       type: "number",
-      example: 1640995200000
+      example: 1640995200000,
     },
     description: {
       type: "string",
       maxLength: 2000,
       default: "",
-      example: "Task description"
+      example: "Task description",
     },
     acceptanceCriteria: {
       type: "array",
       items: ChecklistItemSchema,
-      default: []
+      default: [],
     },
     checklist: {
       type: "array",
       items: ChecklistItemSchema,
-      default: []
+      default: [],
     },
     completed: {
       type: "boolean",
       default: false,
-      example: false
+      example: false,
     },
     refUrls: {
       type: "array",
       items: RefUrlSchema,
-      default: []
+      default: [],
     },
     labelsTags: {
       type: "array",
       items: LabelTagSchema,
-      default: []
+      default: [],
     },
     attachments: {
       type: "array",
       items: AttachmentSchema,
-      default: []
+      default: [],
     },
     assignedTo: {
       type: "array",
       items: UserSchema,
-      default: []
+      default: [],
     },
     createdAt: {
       type: "number",
-      example: 1640995200000
+      example: 1640995200000,
     },
     updatedAt: {
       type: "number",
-      example: 1640995200000
+      example: 1640995200000,
     },
     createdBy: UserSchema,
-    updatedBy: UserSchema
+    updatedBy: UserSchema,
   },
   required: [
-    "id", "projectId", "name", "statusId", "priorityId",
-    "createdAt", "updatedAt", "createdBy", "updatedBy"
+    "id",
+    "projectId",
+    "name",
+    "statusId",
+    "priorityId",
+    "createdAt",
+    "updatedAt",
+    "createdBy",
+    "updatedBy",
   ],
   additionalProperties: false,
   example: {
@@ -678,7 +702,7 @@ export const TaskSchema = {
       name: "John Doe",
       image: "https://example.com/avatar.png",
     },
-  }
+  },
 } as const
 
 export interface Task {

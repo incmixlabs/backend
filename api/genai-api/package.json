@@ -12,9 +12,6 @@
   "dependencies": {
     "@ai-sdk/anthropic": "2.0.6",
     "@ai-sdk/google": "2.0.8",
-
-    "@hono/zod-openapi": "catalog:",
-    "@hono/zod-validator": "catalog:",
     "@incmix-api/utils": "workspace:^",
     "@incmix/utils": "catalog:",
     "ai": "5.0.23",
@@ -23,11 +20,11 @@
     "kysely-ctl": "catalog:",
     "luxon": "catalog:",
     "nanoid": "catalog:",
-    "pg": "catalog:",
-    "zod": "catalog:"
+    "pg": "catalog:"
   },
   "devDependencies": {
     "@figma/rest-api-spec": "^0.32.0",
+    "@hono/zod-openapi": "catalog:",
     "@incmix-api/config": "workspace:^",
     "@playwright/test": "catalog:",
     "@types/node": "catalog:",

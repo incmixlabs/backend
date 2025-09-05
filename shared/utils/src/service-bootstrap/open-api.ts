@@ -1,20 +1,17 @@
-import type { OpenAPIHono } from "@hono/zod-openapi"
 import { apiReference } from "@scalar/hono-api-reference"
 import type { Env } from "hono"
+import type { AjvOpenApiHono } from "../openapi/ajv-openapi"
 
 export function setupOpenApi<T extends Env>(
-  app: OpenAPIHono<T>,
+  app: AjvOpenApiHono<T>,
   basePath: string,
   title?: string,
   description?: string
 ) {
   app.doc(`${basePath}/openapi.json`, {
-    openapi: "3.0.0",
-    info: {
-      version: "1.0.0",
-      title: title ?? "Open Api Docs",
-      ...(description ? { description } : {}),
-    },
+    title: title ?? "Open Api Docs",
+    version: "1.0.0",
+    ...(description ? { description } : {}),
   })
 
   app.get(
@@ -25,10 +22,4 @@ export function setupOpenApi<T extends Env>(
       },
     })
   )
-
-  app.openAPIRegistry.registerComponent("securitySchemes", "cookieAuth", {
-    type: "apiKey",
-    in: "cookie",
-    name: "session",
-  })
 }

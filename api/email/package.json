@@ -9,8 +9,6 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
-    "@hono/zod-openapi": "catalog:",
-    "@hono/zod-validator": "catalog:",
     "@incmix-api/utils": "workspace:^",
     "@incmix/utils": "catalog:",
     "@react-email/body": "0.0.11",
@@ -39,10 +37,10 @@
     "pnpm": "10.7.0",
     "react": "19.1.0",
     "react-dom": "19.1.0",
-    "resend": "^3.5.0",
-    "zod": "catalog:"
+    "resend": "^3.5.0"
   },
   "devDependencies": {
+    "@hono/zod-openapi": "catalog:",
     "@incmix-api/config": "workspace:^",
     "@types/node": "catalog:",
     "@types/pg": "catalog:",

@@ -1,11 +1,11 @@
 import { serve } from "@hono/node-server"
-import { OpenAPIHono } from "@hono/zod-openapi"
 import { setupRbac } from "@incmix-api/utils/authorization"
 import type { Context } from "hono"
 import { logger } from "hono/logger"
 import { setupKvStore } from "@/middleware"
 import { KVStore } from "../kv-store"
 import { shutdownRedis } from "../middleware/redis"
+import { AjvOpenApiHono } from "../openapi/ajv-openapi"
 import { setupOpenApi } from "./open-api"
 
 export interface ServiceConfig<
@@ -17,10 +17,10 @@ export interface ServiceConfig<
   port: number
   basePath: string
   setupMiddleware?: (
-    app: OpenAPIHono<{ Bindings: TBindings; Variables: TVariables }>
+    app: AjvOpenApiHono<{ Bindings: TBindings; Variables: TVariables }>
   ) => void
   setupRoutes?: (
-    app: OpenAPIHono<{ Bindings: TBindings; Variables: TVariables }>
+    app: AjvOpenApiHono<{ Bindings: TBindings; Variables: TVariables }>
   ) => void
   needRBAC?: boolean
   onBeforeStart?: () => Promise<void>
@@ -32,7 +32,7 @@ export function createService<
   TBindings extends object = Record<string, unknown>,
   TVariables extends object = Record<string, unknown>,
 >(config: ServiceConfig<TBindings, TVariables>) {
-  const app = new OpenAPIHono<{
+  const app = new AjvOpenApiHono<{
     Bindings: TBindings
     Variables: TVariables
   }>()
@@ -109,7 +109,7 @@ export function createService<
 export type ServiceApp<
   TBindings extends object = Record<string, unknown>,
   TVariables extends object = Record<string, unknown>,
-> = OpenAPIHono<{
+> = AjvOpenApiHono<{
   Bindings: TBindings
   Variables: TVariables
 }>

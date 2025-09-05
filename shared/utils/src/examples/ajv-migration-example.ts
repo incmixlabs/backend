@@ -1,26 +1,26 @@
 // Example showing how to migrate from Zod to AJV validation
 // This can be used as a reference for gradual migration
 
-import { Hono } from "hono"
+import { type Task, validateTask } from "@incmix-api/utils/ajv-schema"
 import { ajvValidator, getValidatedData } from "@incmix-api/utils/validation"
-import { validateTask, type Task } from "@incmix-api/utils/ajv-schema"
+import { Hono } from "hono"
 
 const app = new Hono()
 
 // Example: Using AJV validation in a Hono route
 app.post(
   "/tasks-ajv",
-  ajvValidator(validateTask, { target: 'json' }), // AJV validation middleware
-  async (c) => {
+  ajvValidator(validateTask, { target: "json" }), // AJV validation middleware
+  (c) => {
     // Get validated data (typed as Task)
     const taskData = getValidatedData<Task>(c)
-    
+
     // Use the validated data
     console.log("Valid task data:", taskData)
-    
+
     return c.json({
       success: true,
-      data: taskData
+      data: taskData,
     })
   }
 )
@@ -28,28 +28,31 @@ app.post(
 // Example: Manual validation without middleware
 app.post("/tasks-manual-ajv", async (c) => {
   const body = await c.req.json()
-  
+
   // Manual validation
   const valid = validateTask(body)
-  
+
   if (!valid) {
     const errors = validateTask.errors || []
-    return c.json({
-      success: false,
-      errors: errors.map(error => ({
-        path: error.instancePath,
-        message: error.message,
-        value: error.data
-      }))
-    }, 422)
+    return c.json(
+      {
+        success: false,
+        errors: errors.map((error) => ({
+          path: error.instancePath,
+          message: error.message,
+          value: error.data,
+        })),
+      },
+      422
+    )
   }
-  
+
   // Body is now validated as Task type
   const taskData = body as Task
-  
+
   return c.json({
     success: true,
-    data: taskData
+    data: taskData,
   })
 })
 

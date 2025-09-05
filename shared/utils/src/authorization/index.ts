@@ -1,11 +1,11 @@
 export * from "./casl"
 
-import type { OpenAPIHono } from "@hono/zod-openapi"
 import type { Env } from "hono"
+import type { AjvOpenApiHono } from "../openapi/ajv-openapi"
 import { PermissionService } from "./casl"
 
 export function setupRbac<T extends Env>(
-  app: OpenAPIHono<T>,
+  app: AjvOpenApiHono<T>,
   basePath: string,
   rbac?: PermissionService
 ) {

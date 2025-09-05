@@ -16,6 +16,8 @@ catalog:
   '@types/node': 22.10.1
   '@types/pg': 8.11.11
   '@types/react': 19.0.12
+  ajv: 8.17.1
+  ajv-formats: 3.0.1
   bullmq: 5.56.10
   dotenv: 16.5.0
   dotenv-expand: 12.0.2
