@@ -722,7 +722,7 @@ projectRoutes.openapi(getProjectReference, async (c) => {
         "planning",
         "in_progress",
         "completed",
-        "on_hold",
+        "on-hold",
         "cancelled",
       ],
       roles: ["project_manager", "developer", "designer", "tester", "viewer"],

@@ -28,7 +28,6 @@ const service = createService<HonoApp["Bindings"], HonoApp["Variables"]>({
       const cookies = c.req.raw.headers.get("cookie")
       const healthChecks = apis.map(async ([key]) => {
         const apiUrl = envVars[`${key.toUpperCase()}_API_URL` as keyof Env]
-        console.log("apiUrl", apiUrl)
         try {
           const response = await fetch(`${apiUrl}/healthcheck`, {
             method: "GET",

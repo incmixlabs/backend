@@ -35,13 +35,21 @@ export function parseQueryParams<Column extends string>(
       const sortResult = sortParser<Sort<Column>>(value, {
         validKeys: new Set(columns),
       })
-      if (sortResult.data) res.sort = sortResult.data
+      if (sortResult.data) {
+        res.sort = sortResult.data
+      } else if (sortResult.error) {
+        throw new BadRequestError(`Invalid sort parameter: ${sortResult.error}`)
+      }
     } else if (key === "filters") {
       const filtersResult = filterParser<Filter<Column>>(value, {
         validKeys: new Set(columns),
       })
       if (filtersResult.data) {
         res.filters = filtersResult.data
+      } else if (filtersResult.error) {
+        throw new BadRequestError(
+          `Invalid filters parameter: ${filtersResult.error}`
+        )
       }
     } else if (key === "joinOperator") {
       res.joinOperator = value as JoinOperator

@@ -96,7 +96,7 @@ export const ProjectMemberSchema = z
 
 export type ProjectMember = z.infer<typeof ProjectMemberSchema>
 
-export type Checklist = z.infer<typeof ChecklistItemSchema>
+export type ChecklistItem = z.infer<typeof ChecklistItemSchema>
 
 export const ProjectSchema = z.object({
   id: z.string().max(30).openapi({ example: "2hek2bkjh" }),

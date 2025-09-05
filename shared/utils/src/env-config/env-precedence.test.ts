@@ -71,7 +71,9 @@ describe.sequential("Environment Variable Precedence", () => {
       testBackups.push([filePath, backup])
     }
     // Ensure service directory exists
-    await fs.mkdir(path.join(backendRoot, "api/projects-api"), { recursive: true })
+    await fs.mkdir(path.join(backendRoot, "api/projects-api"), {
+      recursive: true,
+    })
     // Create test environment files
     await fs.writeFile(
       path.join(backendRoot, ".env"),
