@@ -151,6 +151,24 @@ services:
       retries: 5
       start_period: 5s
 
+  feature-flags-api:
+    image: registry.incmix.com/feature-flags-api:latest
+    environment:
+      # Database
+      DATABASE_URL: ${DATABASE_URL}
+      # Service configuration
+      NODE_ENV: ${NODE_ENV}
+      COOKIE_NAME: ${COOKIE_NAME}
+      DOMAIN: ${DOMAIN}
+      PORT: 9797
+      # Service URLs
+      AUTH_API_URL: ${AUTH_API_URL:-http://auth-api:8787/api/auth}
+      INTL_API_URL: ${INTL_API_URL:-http://intl-api:9090/api/intl}
+    networks:
+      - incmix-network
+    depends_on:
+      - postgres
+
   files-api:
     image: registry.incmix.com/files-api:latest
     environment:

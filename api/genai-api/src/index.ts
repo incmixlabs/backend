@@ -1,7 +1,7 @@
-import type { ChecklistItem } from "@incmix/utils/types"
 import { createService } from "@incmix-api/utils"
 import { initDb } from "@incmix-api/utils/db-schema"
 import { startUserStoryWorker } from "@incmix-api/utils/queue"
+import type { Checklist } from "@incmix-api/utils/zod-schema"
 import type { DeepPartial } from "ai"
 import { nanoid } from "nanoid"
 import { BASE_PATH } from "@/lib/constants"
@@ -11,7 +11,7 @@ import type { HonoApp } from "@/types"
 import { envVars } from "./env-vars"
 import { generateUserStory } from "./lib/services"
 
-const mapToChecklistItems = (items: (string | undefined)[]): ChecklistItem[] =>
+const mapToChecklistItems = (items: (string | undefined)[]): Checklist[] =>
   items
     .filter(
       (item): item is string => item !== undefined && item.trim().length > 0
@@ -137,7 +137,9 @@ const service = createService<HonoApp["Bindings"], HonoApp["Variables"]>({
   setupMiddleware: (app) => {
     middlewares(app)
   },
+  needDb: true,
   setupRoutes: (app) => routes(app),
+  bindings: envVars,
 })
 
 const { app, startServer } = service

@@ -6,7 +6,7 @@
     "apiUrl": "https://turbo-cache.incmix.com",
     "teamSlug": "incmix"
   },
-  "concurrency": "15",
+  "concurrency": "20",
   "tasks": {
     "build": {
       "dependsOn": ["clean", "^build"],

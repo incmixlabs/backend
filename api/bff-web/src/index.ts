@@ -7,7 +7,7 @@ import type { HonoApp } from "./types"
 
 type Env = typeof envVars
 
-const service = createService<HonoApp["Bindings"]>({
+const service = createService<HonoApp["Bindings"], HonoApp["Variables"]>({
   name: "bff-web",
   port: envVars.PORT,
   basePath: "/api",

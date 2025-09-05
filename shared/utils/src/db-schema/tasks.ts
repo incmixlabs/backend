@@ -10,6 +10,7 @@ import type {
   Checklist,
   LabelTag,
   LabelType,
+  ProjectStatus,
   RefUrl,
 } from "../zod-schema"
 
@@ -54,10 +55,6 @@ type LabelsTable = {
   createdBy: string
   updatedBy: string
 }
-
-export const projectStatus = ["all", "started", "on-hold", "completed"] as const
-
-export type ProjectStatus = (typeof projectStatus)[number]
 
 type ProjectsTable = {
   id: string

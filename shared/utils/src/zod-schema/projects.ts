@@ -1,5 +1,8 @@
 import { z } from "@hono/zod-openapi"
-import { projectStatus } from "@incmix-api/utils/db-schema"
+
+export const projectStatus = ["all", "started", "on-hold", "completed"] as const
+
+export type ProjectStatus = (typeof projectStatus)[number]
 
 export const taskStatusEnum = [
   "backlog",

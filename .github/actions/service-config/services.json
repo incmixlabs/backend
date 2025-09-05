@@ -31,6 +31,12 @@
       "image_name": "genai-api"
     },
     {
+      "name": "feature-flags-api",
+      "dockerfile": "api/feature-flags-api/Dockerfile",
+      "context": ".",
+      "image_name": "feature-flags-api"
+    },
+    {
       "name": "intl-api",
       "dockerfile": "api/intl-api/Dockerfile",
       "context": ".",

@@ -1,6 +1,12 @@
 import { API } from "@incmix/utils/env"
 
 export const BASE_PATH = API.org
+
+export const FEATURE_FLAG_NOT_FOUND = {
+  key: "feature-flag-not-found",
+  namespace: "feature-flags",
+}
+
 export const ERROR_ORG_EXIST = {
   namespace: "errors",
   key: "org_exist",

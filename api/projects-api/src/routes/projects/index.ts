@@ -12,10 +12,7 @@ import {
 } from "@incmix-api/utils/errors"
 import { useTranslation } from "@incmix-api/utils/middleware"
 import type { Checklist } from "@incmix-api/utils/zod-schema"
-import {
-  ChecklistItemSchema,
-  ChecklistSchema,
-} from "@incmix-api/utils/zod-schema"
+import { ChecklistItemSchema } from "@incmix-api/utils/zod-schema"
 import { sql } from "kysely"
 import { nanoid } from "nanoid"
 import {
@@ -102,7 +99,8 @@ projectRoutes.openapi(createProject, async (c) => {
 
     // Parse checklist (default to [] if empty)
     const parsedChecklist = checklist ? JSON.parse(checklist) : []
-    const checklistResult = ChecklistSchema.array().safeParse(parsedChecklist)
+    const checklistResult =
+      ChecklistItemSchema.array().safeParse(parsedChecklist)
     if (!checklistResult.success) {
       const msg = await t.text(ERROR_PROJECT_CREATE_FAILED)
       throw new BadRequestError(msg)
