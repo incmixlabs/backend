@@ -7,8 +7,8 @@ import { logger } from "hono/logger"
 import { setupKvStore } from "@/middleware"
 import { KVStore } from "../kv-store"
 import { shutdownRedis } from "../middleware/redis"
+import type { ServiceBindings, ServiceVariables } from "../types/service"
 import { setupOpenApi } from "./open-api"
-import type { ServiceVariables, ServiceBindings } from "../types/service"
 
 export interface ServiceConfig<
   TBindings extends ServiceBindings = ServiceBindings,
