@@ -144,7 +144,7 @@ const serviceSchemas = {
     FILES_API_URL: z.string().url().optional(),
     EMAIL_API_URL: z.string().url().optional(),
     LOCATION_API_URL: z.string().url().optional(),
-    RXDB_SYNC_API_URL: z.string().url().optional(),
+    RXDB_API_URL: z.string().url().optional(),
   }),
   comments: baseEnvSchema.extend({
     PORT: z.coerce.number().default(services.comments.port),
