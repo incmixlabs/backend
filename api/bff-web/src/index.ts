@@ -25,43 +25,42 @@ const service = createService<HonoApp["Bindings"]>({
     app.get("/api/healthcheck", async (c) => {
       const apis = Object.entries(API)
       const cookies = c.req.raw.headers.get("cookie")
-      const healthChecks = apis
-        .filter(([key]) => key !== "RATELIMITS")
-        .map(async ([key]) => {
-          const apiUrl = envVars[`${key}_API_URL` as keyof Env]
-          try {
-            const response = await fetch(`${apiUrl}/healthcheck`, {
-              method: "GET",
-              headers: {
-                Cookie: cookies ?? "",
-              },
-              signal: AbortSignal.timeout(envVars.TIMEOUT_MS), // 5 second timeout
-            })
+      const healthChecks = apis.map(async ([key]) => {
+        const apiUrl = envVars[`${key.toUpperCase()}_API_URL` as keyof Env]
+        console.log("apiUrl", apiUrl)
+        try {
+          const response = await fetch(`${apiUrl}/healthcheck`, {
+            method: "GET",
+            headers: {
+              Cookie: cookies ?? "",
+            },
+            signal: AbortSignal.timeout(envVars.TIMEOUT_MS), // 5 second timeout
+          })
 
-            if (!response.ok) {
-              return {
-                [key]: {
-                  status: "DOWN",
-                  error: `HTTP ${response.status}: ${response.statusText}`,
-                  timestamp: new Date().toISOString(),
-                },
-              }
-            }
-
-            const data = await response.json()
-            return {
-              [key]: data,
-            }
-          } catch (error) {
+          if (!response.ok) {
             return {
               [key]: {
                 status: "DOWN",
-                error: error instanceof Error ? error.message : "Unknown error",
+                error: `HTTP ${response.status}: ${response.statusText}`,
                 timestamp: new Date().toISOString(),
               },
             }
           }
-        })
+
+          const data = await response.json()
+          return {
+            [key]: data,
+          }
+        } catch (error) {
+          return {
+            [key]: {
+              status: "DOWN",
+              error: error instanceof Error ? error.message : "Unknown error",
+              timestamp: new Date().toISOString(),
+            },
+          }
+        }
+      })
 
       const results = await Promise.allSettled(healthChecks)
 
@@ -85,7 +84,7 @@ const service = createService<HonoApp["Bindings"]>({
     })
     app.get("/api/rate-limits", async (c) => {
       const location = await fetch(
-        `${envVars.LOCATION_API_URL}${API.LOCATION}/rate-limits`,
+        `${envVars.LOCATION_API_URL}${API.location}/rate-limits`,
         {
           method: "get",
         }

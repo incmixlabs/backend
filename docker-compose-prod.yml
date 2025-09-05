@@ -14,22 +14,56 @@
 # =============================================================================
 
 version: "3.8"
-name: "incmix"
+name: "incmix prod"
+
+# Common environment variables used across multiple services
+x-common-env: &common-env
+  # Database
+  DATABASE_URL: ${DATABASE_URL}
+  REDIS_URL: ${REDIS_URL}
+  # Service configuration
+  NODE_ENV: ${NODE_ENV}
+  COOKIE_NAME: ${COOKIE_NAME}
+  DOMAIN: ${DOMAIN}
+  # Frontend URL
+  FRONTEND_URL: ${FRONTEND_URL}
+  # Monitoring
+  SENTRY_DSN: ${SENTRY_DSN:-https://examplePublicKey@o0.ingest.sentry.io/0}
+  # Service configuration
+  MOCK_DATA: ${MOCK_DATA:-false}
+  TIMEOUT_MS: ${TIMEOUT_MS:-5000}
+  # Service URLs
+  AUTH_API_URL: ${AUTH_API_URL:-http://auth-api:8787/api/auth}
+  ORG_API_URL: ${ORG_API_URL:-http://org-api:9292/api/org}
+  INTL_API_URL: ${INTL_API_URL:-http://intl-api:9090/api/intl}
+  EMAIL_API_URL: ${EMAIL_API_URL:-http://email-api:8989/api/email}
+  FILES_API_URL: ${FILES_API_URL:-http://files-api:8282/api/files}
+  GENAI_API_URL: ${GENAI_API_URL:-http://genai-api:8383/api/genai}
+  PROJECTS_API_URL: ${PROJECTS_API_URL:-http://projects-api:8484/api/projects}
+  COMMENTS_API_URL: ${COMMENTS_API_URL:-http://comments-api:8585/api/comments}
+  LOCATION_API_URL: ${LOCATION_API_URL:-http://location-api:9494/api/location}
+  RXDB_API_URL: ${RXDB_API_URL:-http://rxdb-api:8686/api/rxdb-sync}
 
 services:
   postgres:
     image: registry.incmix.com/db:latest
     restart: always
     environment:
-      POSTGRES_DB: ${POSTGRES_DB}
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB:-incmix}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-password}
       # POSTGRES_EXTENSIONS: plv8, btree_gist, hstore, pgvector, pgcrypto, CITEXT, pg_trgm, pg_cron, plpython3u
     # Internal access only - no external ports
     volumes:
       - incmix-db-data:/var/lib/postgresql/data
     networks:
       - incmix-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
   redis:
     image: docker.dragonflydb.io/dragonflydb/dragonfly:latest
     restart: always
@@ -46,105 +80,82 @@ services:
       timeout: 5s
       retries: 5
       start_period: 5s
-  # backend:
-  #   image: electricsql/electric
-  #   environment:
-  #     DATABASE_URL: postgresql://postgres:password@postgres:5432/incmix?sslmode=disable
-  #     ELECTRIC_INSECURE: true
-  #   ports:
-  #     - 3000:3000
-  #   depends_on:
-  #     - postgres
 
   auth-api:
     image: registry.incmix.com/auth-service:latest
     environment:
-      # Database
-      DATABASE_URL: ${DATABASE_URL}
-      # Service configuration
-      NODE_ENV: ${NODE_ENV}
-      COOKIE_NAME: ${COOKIE_NAME}
-      DOMAIN: ${DOMAIN}
+      <<: *common-env
       PORT: 8787
       # OAuth and authentication
       GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
       GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
-      FRONTEND_URL: ${FRONTEND_URL}
-      EMAIL_API_URL: ${EMAIL_API_URL:-http://email-api:8989/api/email}
-      FILES_API_URL: ${FILES_API_URL:-http://files-api:8282/api/files}
       GOOGLE_REDIRECT_URL: ${GOOGLE_REDIRECT_URL}
-      # Service URLs
-      INTL_API_URL: ${INTL_API_URL:-http://intl-api:9090/api/intl}
     networks:
       - incmix-network
     depends_on:
       - postgres
-
+    healthcheck:
+      test: ["CMD", "sh", "-c", 'curl -fs http://localhost:8787/api/auth/healthcheck | grep -q "{\"status\":\"UP\"}"']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
   email-api:
     image: registry.incmix.com/email-service:latest
     environment:
-      # Database
-      DATABASE_URL: ${DATABASE_URL}
-      # Service configuration
-      NODE_ENV: ${NODE_ENV}
-      COOKIE_NAME: ${COOKIE_NAME}
-      DOMAIN: ${DOMAIN}
+      <<: *common-env
       PORT: 8989
+      EMAIL_FROM: ${EMAIL_FROM}
       # Email service
       RESEND_API_KEY: ${RESEND_API_KEY}
-      # Service URLs
-      INTL_API_URL: ${INTL_API_URL:-http://intl-api:9090/api/intl}
     networks:
       - incmix-network
     depends_on:
       - postgres
+    healthcheck:
+      test: ["CMD", "sh", "-c", 'curl -fs http://localhost:8989/api/email/healthcheck | grep -q "{\"status\":\"UP\"}"']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
 
   org-api:
     image: registry.incmix.com/org-api:latest
     environment:
-      # Database
-      DATABASE_URL: ${DATABASE_URL}
-      # Service configuration
-      NODE_ENV: ${NODE_ENV}
-      COOKIE_NAME: ${COOKIE_NAME}
-      DOMAIN: ${DOMAIN}
+      <<: *common-env
       PORT: 9292
-      # Service URLs
-      AUTH_API_URL: ${AUTH_API_URL:-http://auth-api:8787/api/auth}
-      INTL_API_URL: ${INTL_API_URL:-http://intl-api:9090/api/intl}
     networks:
       - incmix-network
     depends_on:
       - postgres
+    healthcheck:
+      test: ["CMD", "sh", "-c", 'curl -fs http://localhost:9292/api/org/healthcheck | grep -q "{\"status\":\"UP\"}"']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
 
   intl-api:
     image: registry.incmix.com/intl-api:latest
     environment:
-      # Database
-      DATABASE_URL: ${DATABASE_URL}
-      # Service configuration
-      NODE_ENV: ${NODE_ENV}
-      COOKIE_NAME: ${COOKIE_NAME}
-      DOMAIN: ${DOMAIN}
+      <<: *common-env
       PORT: 9090
-      # Service URLs
-      AUTH_API_URL: ${AUTH_API_URL:-http://auth-api:8787/api/auth}
     networks:
       - incmix-network
     depends_on:
       - postgres
+    healthcheck:
+      test: ["CMD", "sh", "-c", 'curl -fs http://localhost:9090/api/intl/healthcheck | grep -q "{\"status\":\"UP\"}"']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
 
   files-api:
     image: registry.incmix.com/files-api:latest
     environment:
-      # Service configuration
-      NODE_ENV: ${NODE_ENV}
-      COOKIE_NAME: ${COOKIE_NAME}
-      DOMAIN: ${DOMAIN}
+      <<: *common-env
       PORT: 8282
-      # Service URLs
-      AUTH_API_URL: ${AUTH_API_URL:-http://auth-api:8787/api/auth}
-      INTL_API_URL: ${INTL_API_URL:-http://intl-api:9090/api/intl}
       # AWS/S3 configuration
       AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
       AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
@@ -155,22 +166,19 @@ services:
       - incmix-network
     depends_on:
       - postgres
+    healthcheck:
+      test: ["CMD", "sh", "-c", 'curl -fs http://localhost:8282/api/files/healthcheck | grep -q "{\"status\":\"UP\"}"']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
 
   genai-api:
     image: registry.incmix.com/genai-api:latest
     environment:
-      # Database
-      DATABASE_URL: ${DATABASE_URL}
+      <<: *common-env
       REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379
-      # Service configuration
-      NODE_ENV: ${NODE_ENV}
-      COOKIE_NAME: ${COOKIE_NAME}
-      DOMAIN: ${DOMAIN}
       PORT: 8383
-      # Service URLs
-      AUTH_API_URL: ${AUTH_API_URL:-http://auth-api:8787/api/auth}
-      ORG_API_URL: ${ORG_API_URL:-http://org-api:9292/api/org}
-      INTL_API_URL: ${INTL_API_URL:-http://intl-api:9090/api/intl}
       # AI/ML services
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
       GOOGLE_AI_API_KEY: ${GOOGLE_AI_API_KEY}
@@ -180,36 +188,34 @@ services:
     depends_on:
       - postgres
       - redis
+    healthcheck:
+      test: ["CMD", "sh", "-c", 'curl -fs http://localhost:8383/api/genai/healthcheck | grep -q "{\"status\":\"UP\"}"']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
 
   projects-api:
     image: registry.incmix.com/projects-api:latest
     environment:
-      # Database
-      DATABASE_URL: ${DATABASE_URL}
-      # Service configuration
-      NODE_ENV: ${NODE_ENV}
-      COOKIE_NAME: ${COOKIE_NAME}
-      DOMAIN: ${DOMAIN}
+      <<: *common-env
       PORT: 8484
-      # Service URLs
-      AUTH_API_URL: ${AUTH_API_URL:-http://auth-api:8787/api/auth}
-      ORG_API_URL: ${ORG_API_URL:-http://org-api:9292/api/org}
-      INTL_API_URL: ${INTL_API_URL:-http://intl-api:9090/api/intl}
     networks:
       - incmix-network
     depends_on:
       - postgres
+    healthcheck:
+      test: ["CMD", "sh", "-c", 'curl -fs http://localhost:8484/api/projects/healthcheck | grep -q "{\"status\":\"UP\"}"']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
 
   location-api:
     image: registry.incmix.com/location-api:latest
     environment:
-      # Service configuration
-      NODE_ENV: ${NODE_ENV}
-      COOKIE_NAME: ${COOKIE_NAME}
-      DOMAIN: ${DOMAIN}
+      <<: *common-env
       PORT: 9494
-      # Service URLs
-      INTL_API_URL: ${INTL_API_URL:-http://intl-api:9090/api/intl}
       # Location and weather services
       WEATHER_URL: ${WEATHER_URL}
       LOCATION_URL: ${LOCATION_URL}
@@ -223,70 +229,63 @@ services:
     depends_on:
       - postgres
       - redis
+    healthcheck:
+      test: ["CMD", "sh", "-c", 'curl -fs http://localhost:9494/api/location/healthcheck | grep -q "{\"status\":\"UP\"}"']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
 
   comments-api:
     image: registry.incmix.com/comments-api:latest
     environment:
-      # Database
-      DATABASE_URL: ${DATABASE_URL}
-      # Service configuration
-      NODE_ENV: ${NODE_ENV}
-      COOKIE_NAME: ${COOKIE_NAME}
-      DOMAIN: ${DOMAIN}
+      <<: *common-env
       PORT: 8585
-      # Service URLs
-      AUTH_API_URL: ${AUTH_API_URL:-http://auth-api:8787/api/auth}
-      ORG_API_URL: ${ORG_API_URL:-http://org-api:9292/api/org}
-      INTL_API_URL: ${INTL_API_URL:-http://intl-api:9090/api/intl}
     networks:
       - incmix-network
     depends_on:
       - postgres
+    healthcheck:
+      test: ["CMD", "sh", "-c", 'curl -fs http://localhost:8585/api/comments/healthcheck | grep -q "{\"status\":\"UP\"}"']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
 
   rxdb-api:
     image: registry.incmix.com/rxdb-api:latest
     environment:
-      # Database
-      DATABASE_URL: ${DATABASE_URL}
-      # Service configuration
-      NODE_ENV: ${NODE_ENV}
-      COOKIE_NAME: ${COOKIE_NAME}
-      DOMAIN: ${DOMAIN}
+      <<: *common-env
       PORT: 8686
-      # Service URLs
-      AUTH_API_URL: ${AUTH_API_URL:-http://auth-api:8787/api/auth}
-      INTL_API_URL: ${INTL_API_URL:-http://intl-api:9090/api/intl}
 
     networks:
       - incmix-network
     depends_on:
       - postgres
+    healthcheck:
+      test: ["CMD", "sh", "-c", 'curl -fs http://localhost:8686/api/rxdb-sync/healthcheck | grep -q "{\"status\":\"UP\"}"']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
 
   bff-web:
     image: registry.incmix.com/bff-web:latest
     environment:
-      # Service configuration
-      NODE_ENV: ${NODE_ENV}
-      COOKIE_NAME: ${COOKIE_NAME}
-      DOMAIN: ${DOMAIN}
+      <<: *common-env
       PORT: 8080
-      # All API URLs (BFF needs access to all services)
-      AUTH_API_URL: ${AUTH_API_URL:-http://auth-api:8787/api/auth}
-      ORG_API_URL: ${ORG_API_URL:-http://org-api:9292/api/org}
-      INTL_API_URL: ${INTL_API_URL:-http://intl-api:9090/api/intl}
-      GENAI_API_URL: ${GENAI_API_URL:-http://genai-api:8383/api/genai}
-      PROJECTS_API_URL: ${PROJECTS_API_URL:-http://projects-api:8484/api/projects}
-      COMMENTS_API_URL: ${COMMENTS_API_URL:-http://comments-api:8585/api/comments}
-      FILES_API_URL: ${FILES_API_URL:-http://files-api:8282/api/files}
-      EMAIL_API_URL: ${EMAIL_API_URL:-http://email-api:8989/api/email}
-      LOCATION_API_URL: ${LOCATION_API_URL:-http://location-api:9494/api/location}
-      RXDB_SYNC_API_URL: ${RXDB_SYNC_API_URL:-http://rxdb-api:8686/api/rxdb-sync}
     ports:
       - 8081:8080  # Only public access point
     networks:
       - incmix-network
     depends_on:
       - postgres
+    healthcheck:
+      test: ["CMD", "sh", "-c", 'curl -fs http://localhost:8080/healthcheck | grep -q "{\"status\":\"UP\"}"']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
 
 volumes:
   incmix-db-data:

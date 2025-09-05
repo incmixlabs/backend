@@ -1,18 +1,17 @@
 import type {
-  Attachment,
-  ChecklistItem,
-  LabelTag,
-  LabelType,
-  RefUrl,
-} from "@incmix/utils/types"
-import type { Checklist } from "@incmix-api/utils/zod-schema"
-import type {
   ColumnType,
   Insertable,
   JSONColumnType,
   Selectable,
   Updateable,
 } from "kysely"
+import type {
+  Attachment,
+  Checklist,
+  LabelTag,
+  LabelType,
+  RefUrl,
+} from "../zod-schema"
 
 type TasksTable = {
   id: string
@@ -72,7 +71,7 @@ type ProjectsTable = {
   company: string | null
   logo: string | null
   checklist: JSONColumnType<Checklist[]>
-  acceptanceCriteria: JSONColumnType<ChecklistItem[]>
+  acceptanceCriteria: JSONColumnType<Checklist[]>
   createdAt: ColumnType<Date, string, never>
   updatedAt: ColumnType<Date, string, string>
   createdBy: ColumnType<string, string, never>
