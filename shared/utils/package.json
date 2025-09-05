@@ -36,6 +36,10 @@
       "types": "./dist/src/zod-schema/index.d.ts",
       "default": "./dist/src/zod-schema/index.js"
     },
+    "./ajv-schema": {
+      "types": "./dist/src/ajv-schema/index.d.ts",
+      "default": "./dist/src/ajv-schema/index.js"
+    },
     "./authorization": {
       "types": "./dist/src/authorization/index.d.ts",
       "default": "./dist/src/authorization/index.js"
@@ -55,6 +59,10 @@
     "./db-operations": {
       "types": "./dist/src/db-operations/index.d.ts",
       "default": "./dist/src/db-operations/index.js"
+    },
+    "./validation": {
+      "types": "./dist/src/validation/index.d.ts",
+      "default": "./dist/src/validation/index.js"
     }
   },
   "dependencies": {
@@ -75,7 +83,9 @@
     "kysely": "catalog:",
     "pg": "catalog:",
     "redis": "catalog:",
-    "zod": "catalog:"
+    "zod": "catalog:",
+    "ajv": "catalog:",
+    "ajv-formats": "catalog:"
   },
   "devDependencies": {
     "@casl/ability": "catalog:",
