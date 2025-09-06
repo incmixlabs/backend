@@ -76,7 +76,6 @@ describe("Environment Config", () => {
       const { createEnvConfig } = await import("./index")
       const env = createEnvConfig("rxdb")
 
-      // rxdb uses RXDB_SYNC_API_URL instead of RXDB_API_URL
       expect(env.RXDB_API_URL).toBeUndefined() // rxdb doesn't reference itself
       expect(env.AUTH_API_URL).toBe("http://localhost:8787/api/auth")
       expect(env.INTL_API_URL).toBe("http://localhost:9090/api/intl")
