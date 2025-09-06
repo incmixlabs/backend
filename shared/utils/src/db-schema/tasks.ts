@@ -1,18 +1,18 @@
 import type {
-  Attachment,
-  ChecklistItem,
-  LabelTag,
-  LabelType,
-  RefUrl,
-} from "@incmix/utils/types"
-import type { Checklist } from "@incmix-api/utils/zod-schema"
-import type {
   ColumnType,
   Insertable,
   JSONColumnType,
   Selectable,
   Updateable,
 } from "kysely"
+import type {
+  Attachment,
+  ChecklistItem,
+  LabelTag,
+  LabelType,
+  ProjectStatus,
+  RefUrl,
+} from "../zod-schema"
 
 type TasksTable = {
   id: string
@@ -24,8 +24,8 @@ type TasksTable = {
   startDate: ColumnType<Date, string, string> | null
   endDate: ColumnType<Date, string, string> | null
   description: string
-  acceptanceCriteria: JSONColumnType<Checklist[]>
-  checklist: JSONColumnType<Checklist[]>
+  acceptanceCriteria: JSONColumnType<ChecklistItem[]>
+  checklist: JSONColumnType<ChecklistItem[]>
   completed: boolean
   refUrls: JSONColumnType<RefUrl[]>
   labelsTags: JSONColumnType<LabelTag[]>
@@ -56,10 +56,6 @@ type LabelsTable = {
   updatedBy: string
 }
 
-export const projectStatus = ["all", "started", "on-hold", "completed"] as const
-
-export type ProjectStatus = (typeof projectStatus)[number]
-
 type ProjectsTable = {
   id: string
   name: string
@@ -71,7 +67,7 @@ type ProjectsTable = {
   description: string | null
   company: string | null
   logo: string | null
-  checklist: JSONColumnType<Checklist[]>
+  checklist: JSONColumnType<ChecklistItem[]>
   acceptanceCriteria: JSONColumnType<ChecklistItem[]>
   createdAt: ColumnType<Date, string, never>
   updatedAt: ColumnType<Date, string, string>

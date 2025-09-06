@@ -47,14 +47,6 @@ export const services = {
     port: 8484,
     dir: "projects-api",
   },
-  tasks: {
-    port: 8888,
-    dir: "tasks-api",
-  },
-  permissions: {
-    port: 9191,
-    dir: "permissions-api",
-  },
   rxdb: {
     port: 8686,
     dir: "rxdb-api",
@@ -144,7 +136,7 @@ const serviceSchemas = {
     FILES_API_URL: z.string().url().optional(),
     EMAIL_API_URL: z.string().url().optional(),
     LOCATION_API_URL: z.string().url().optional(),
-    RXDB_SYNC_API_URL: z.string().url().optional(),
+    RXDB_API_URL: z.string().url().optional(),
   }),
   comments: baseEnvSchema.extend({
     PORT: z.coerce.number().default(services.comments.port),
@@ -246,9 +238,9 @@ export function createEnvConfig<T extends ServiceName>(
     )
   }
 
-  // Load each file with override enabled
+  // Load each file without override to preserve explicitly set values
   for (const file of envFiles) {
-    dotenvConfig({ path: file.path, override: true })
+    dotenvConfig({ path: file.path, override: false })
   }
 
   if (process.env.DEBUG_ENV_LOADING) {
@@ -306,7 +298,7 @@ export function createEnvConfig<T extends ServiceName>(
   for (const [serviceName, serviceConfig] of Object.entries(services)) {
     // Convert service name to API URL field name (e.g., "auth" -> "AUTH_API_URL")
     const endpoint = (serviceConfig as any)?.endpoint || serviceName
-    const apiUrlFieldName = `${endpoint.toUpperCase()}_API_URL`
+    const apiUrlFieldName = `${serviceName.toUpperCase()}_API_URL`
     const fieldName = apiUrlFieldName.replaceAll("-", "_")
     const apiPath = `/api/${endpoint}`
 
@@ -315,7 +307,7 @@ export function createEnvConfig<T extends ServiceName>(
 
   // Special case for GOOGLE_REDIRECT_URL - only set if in schema
   if ("GOOGLE_REDIRECT_URL" in schemaShape && !env.GOOGLE_REDIRECT_URL) {
-    env.GOOGLE_REDIRECT_URL = `${env.FRONTEND_URL}/auth/google`
+    env.GOOGLE_REDIRECT_URL = `${env.FRONTEND_URL}/auth/google/callback`
   }
   return env
 }

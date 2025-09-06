@@ -11,7 +11,6 @@ import { setupSentryMiddleware } from "./sentry"
 export interface MiddlewareConfig {
   basePath: string
   serviceName: string
-  databaseUrl?: string
   customAuthMiddleware?: MiddlewareHandler
   mockMiddleware?: MiddlewareHandler
   mockData?: boolean
@@ -86,31 +85,6 @@ export function setupApiMiddleware<T extends { Bindings: any; Variables: any }>(
   if (corsFirst || (mockData && mockMiddleware)) {
     setupCors(app, basePath)
   }
-
-  // // Setup database middleware early so other middleware can access it
-  // if (databaseUrl) {
-  //   // Initialize database connection once
-  //   const db = initDb(databaseUrl)
-
-  //   app.use(`${basePath}/*`, async (c, next) => {
-  //     if (!db) {
-  //       console.error(`DATABASE_URL is not configured for ${serviceName}`)
-  //       return c.text("Server misconfigured: missing DATABASE_URL", 500)
-  //     }
-  //     c.set("db", db)
-  //     await next()
-  //   })
-
-  //   // Also apply database middleware to healthcheck route
-  //   app.use(`${basePath}/healthcheck/*`, async (c, next) => {
-  //     if (!db) {
-  //       console.error(`DATABASE_URL is not configured for ${serviceName}`)
-  //       return c.text("Server misconfigured: missing DATABASE_URL", 500)
-  //     }
-  //     c.set("db", db)
-  //     await next()
-  //   })
-  // }
 
   // Add mock middleware if enabled
   if (mockData && mockMiddleware) {

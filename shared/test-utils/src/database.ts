@@ -2,32 +2,22 @@ import fs from "node:fs/promises"
 import path from "node:path"
 import { findProjectRoot } from "@incmix-api/utils"
 import type { Database } from "@incmix-api/utils/db-schema"
-import {
-  PostgreSqlContainer,
-  type StartedPostgreSqlContainer,
-} from "@testcontainers/postgresql"
 import { CamelCasePlugin, Kysely, PostgresDialect } from "kysely"
 import { Pool } from "pg"
 
 export class TestDatabase {
   private db: Kysely<Database> | null = null
   private pool: Pool | null = null
-  private container: StartedPostgreSqlContainer | null = null
 
-  async setup(): Promise<Kysely<Database>> {
+  setup(): Kysely<Database> {
     if (this.db) {
       return this.db
     }
 
     try {
       // Try to use testcontainers for real database
-      this.container = await new PostgreSqlContainer("postgres:17")
-        .withDatabase("testdb")
-        .withUsername("testuser")
-        .withPassword("testpass")
-        .start()
 
-      const connectionString = this.container.getConnectionUri()
+      const connectionString = process.env.DATABASE_URL
 
       process.env.DATABASE_URL = connectionString
 
@@ -42,9 +32,6 @@ export class TestDatabase {
         }),
         plugins: [new CamelCasePlugin()],
       })
-
-      // Run migrations
-      await this.runMigrations(connectionString)
 
       console.log("✅ Test database connected successfully with testcontainers")
       return this.db
@@ -162,11 +149,6 @@ export class TestDatabase {
       this.pool = null
     }
 
-    if (this.container) {
-      await this.container.stop()
-      this.container = null
-    }
-
     this.db = null
   }
 
@@ -178,10 +160,12 @@ export class TestDatabase {
   }
 
   getConnectionString(): string {
-    if (!this.container) {
-      throw new Error("Database not initialized. Call setup() first.")
+    if (!process.env.DATABASE_URL) {
+      throw new Error(
+        "Database not found. Set DATABASE_URL environment variable."
+      )
     }
-    return this.container.getConnectionUri()
+    return process.env.DATABASE_URL
   }
 }
 

@@ -16,6 +16,9 @@ claude
 .env*
 .secrets
 
+# Test env files
+!.env.test
+
 # Testing
 coverage
 

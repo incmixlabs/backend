@@ -1,6 +1,6 @@
 import { API } from "@incmix/utils/env"
 
-export const BASE_PATH = API.COMMENTS
+export const BASE_PATH = API.comments
 
 export const ERROR_PRESIGNED_URL = {
   namespace: "errors",

@@ -1,5 +1,5 @@
 import { z } from "@hono/zod-openapi"
-import { ChecklistSchema, TaskSchema } from "@incmix-api/utils/zod-schema"
+import { ChecklistItemSchema, TaskSchema } from "@incmix-api/utils/zod-schema"
 
 export const TaskIdSchema = z
   .object({
@@ -70,11 +70,11 @@ export const UpdateTaskSchema = TaskSchema.pick({
   .partial()
 
 export const AddTaskChecklistSchema = z.object({
-  checklist: ChecklistSchema.omit({ id: true }),
+  checklist: ChecklistItemSchema.omit({ id: true }),
 })
 
 export const UpdateTaskChecklistSchema = z.object({
-  checklist: ChecklistSchema.omit({ id: true }).partial(),
+  checklist: ChecklistItemSchema.omit({ id: true }).partial(),
 })
 
 export const RemoveTaskChecklistSchema = z.object({

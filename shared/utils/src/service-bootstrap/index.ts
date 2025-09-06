@@ -1,18 +1,26 @@
 import { serve } from "@hono/node-server"
 import { OpenAPIHono } from "@hono/zod-openapi"
 import { setupRbac } from "@incmix-api/utils/authorization"
-import { initDb } from "@incmix-api/utils/db-schema"
 import type { Context } from "hono"
 import { logger } from "hono/logger"
+import type { Kysely } from "kysely"
+import { type Database, initDb } from "@/db-schema"
 import { setupKvStore } from "@/middleware"
 import { KVStore } from "../kv-store"
 import { shutdownRedis } from "../middleware/redis"
 import type { ServiceBindings, ServiceVariables } from "../types/service"
 import { setupOpenApi } from "./open-api"
 
+type BaseBindings = {
+  DATABASE_URL?: string
+}
+
+type BaseVariables = {
+  db?: Kysely<Database>
+}
 export interface ServiceConfig<
-  TBindings extends ServiceBindings = ServiceBindings,
-  TVariables extends ServiceVariables = ServiceVariables,
+  TBindings extends BaseBindings,
+  TVariables extends BaseVariables,
 > {
   name: string
   version?: string
@@ -25,32 +33,30 @@ export interface ServiceConfig<
     app: OpenAPIHono<{ Bindings: TBindings; Variables: TVariables }>
   ) => void
   needRBAC?: boolean
-  needDB?: boolean
-  databaseUrl?: string
+  needDb?: boolean
   onBeforeStart?: () => Promise<void>
   bindings?: TBindings
   variables?: TVariables
 }
 
 export function createService<
-  TBindings extends ServiceBindings = ServiceBindings,
-  TVariables extends ServiceVariables = ServiceVariables,
+  TBindings extends BaseBindings,
+  TVariables extends BaseVariables,
 >(config: ServiceConfig<TBindings, TVariables>) {
   const app = new OpenAPIHono<{
     Bindings: TBindings
     Variables: TVariables
   }>()
 
-  // Initialize DB once and attach per-request
-  let db: ReturnType<typeof initDb> | undefined
-  if (config.needDB !== false) {
-    if (!config.databaseUrl) {
-      throw new Error(`DATABASE_URL is required for ${config.name}`)
+  // Setup database if needed
+  if (config.needDb !== false) {
+    if (!config.bindings?.DATABASE_URL) {
+      throw new Error("DATABASE_URL is required")
     }
-    db = initDb(config.databaseUrl)
-    app.use((c, next) => {
-      if (db) c.set("db", db)
-      return next()
+    const db = initDb(config.bindings.DATABASE_URL)
+    app.use(`${config.basePath}/*`, async (c, next) => {
+      c.set("db", db)
+      await next()
     })
   }
 

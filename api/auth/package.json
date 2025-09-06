@@ -5,7 +5,8 @@
     "dev": "tsx watch src/index.ts",
     "build": "tsc && tsc-alias",
     "start": "node ./dist/index.js",
-    "test:integration": "vitest --run --config vitest.integration.config.mts",
+    "pretest": "docker compose -f ../../docker-compose-test.yml up -d",
+    "test": "vitest --run --config vitest.config.mts",
     "clean": "rm -rf dist"
   },
   "dependencies": {

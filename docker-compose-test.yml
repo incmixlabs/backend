@@ -1,0 +1,20 @@
+name: "incmix-test"
+services:
+  postgres:
+    build:
+      context: .
+      dockerfile: db/Dockerfile
+    restart: always
+    environment:
+      POSTGRES_DB: incmix
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      PGDATA: /var/lib/postgresql/data
+      # POSTGRES_EXTENSIONS: plv8, btree_gist, hstore, pgvector, pgcrypto, CITEXT, pg_trgm, pg_cron, plpython3u
+    ports:
+      - 54322:5432
+    networks:
+      - incmix-test-network
+
+networks:
+  incmix-test-network:

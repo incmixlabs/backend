@@ -1,5 +1,8 @@
 import { z } from "@hono/zod-openapi"
-import { ChecklistSchema, ProjectSchema } from "@incmix-api/utils/zod-schema"
+import {
+  ChecklistItemSchema,
+  ProjectSchema,
+} from "@incmix-api/utils/zod-schema"
 
 export const IdSchema = z.object({
   id: z.string().openapi({ example: "2hek2bkjh" }),
@@ -77,11 +80,11 @@ export const RemoveProjectMemberSchema = z.object({
 })
 
 export const AddProjectChecklistSchema = z.object({
-  checklist: ChecklistSchema.omit({ id: true }),
+  checklist: ChecklistItemSchema.omit({ id: true }),
 })
 
 export const UpdateProjectChecklistSchema = z.object({
-  checklist: ChecklistSchema.omit({ id: true }),
+  checklist: ChecklistItemSchema.omit({ id: true }),
 })
 
 export const RemoveProjectChecklistSchema = z.object({
