@@ -209,6 +209,8 @@ describe("Environment Config", () => {
 
   describe("Environment variable precedence", () => {
     it("should not override explicitly set API URLs", async () => {
+      // Set required env var
+      process.env.REDIS_URL = "redis://localhost:6379"
       // Set some API URLs explicitly
       process.env.AUTH_API_URL = "https://auth.production.com/api"
       process.env.EMAIL_API_URL = "https://email.production.com/api"

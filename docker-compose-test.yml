@@ -1,4 +1,4 @@
-name: "incmix test"
+name: "incmix-test"
 services:
   postgres:
     build:

@@ -896,13 +896,6 @@ importers:
         version: 3.1.2(@types/node@24.3.0)(jiti@2.5.1)(tsx@4.19.3)(yaml@2.8.1)
 
   shared/test-utils:
-    dependencies:
-      '@testcontainers/postgresql':
-        specifier: ^11.5.1
-        version: 11.5.1
-      testcontainers:
-        specifier: ^11.5.1
-        version: 11.5.1
     devDependencies:
       '@incmix-api/config':
         specifier: workspace:^

@@ -195,7 +195,7 @@ describe("Password Reset Integration Tests", () => {
       expect(response.status).toBe(401)
     })
 
-    it("should return 401 for weak new password", async () => {
+    it("should return 422 for weak new password", async () => {
       const response = await client.request("/reset-password/forget", {
         method: "POST",
         headers: {
@@ -208,7 +208,7 @@ describe("Password Reset Integration Tests", () => {
         }),
       })
 
-      expect(response.status).toBe(401)
+      expect(response.status).toBe(422)
     })
 
     it("should return 404 for non-existent user", async () => {
