@@ -1,6 +1,4 @@
 name: "incmix"
-
-
 services:
   postgres:
     build:
@@ -19,7 +17,6 @@ services:
       - incmix-db-data:/var/lib/postgresql/data
     networks:
       - incmix-network
-
   redis:
     image: docker.dragonflydb.io/dragonflydb/dragonfly:latest
     restart: always
@@ -38,7 +35,6 @@ services:
       timeout: 5s
       retries: 5
       start_period: 5s
-
   minio:
     image: quay.io/minio/minio:RELEASE.2025-04-22T22-12-26Z
     restart: always
@@ -53,11 +49,9 @@ services:
     environment:
       MINIO_ROOT_USER: minioadmin
       MINIO_ROOT_PASSWORD: minioadmin
-
 volumes:
   incmix-db-data:
   incmix-dragonfly-data:
   minio-data:
-
 networks:
   incmix-network:

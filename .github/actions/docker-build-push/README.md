@@ -34,14 +34,14 @@ A reusable GitHub Action that builds a Docker image from a Dockerfile and pushes
 - name: Build and push Docker image with caching
   uses: ./.github/actions/docker-build-push
   with:
-    dockerfile: 'api/users-api/Dockerfile'
-    context: 'api/users-api'
-    image-name: 'users-api'
+    dockerfile: 'api/auth/Dockerfile'
+    context: 'api/auth'
+    image-name: 'auth-api'
     image-tag: 'latest'
     registry-username: ${{ secrets.DOCKER_USERNAME }}
     registry-password: ${{ secrets.DOCKER_PASSWORD }}
-    cache-from: 'registry.incmix.com/users-api:cache'
-    cache-to: 'type=registry,ref=registry.incmix.com/users-api:cache,mode=max'
+    cache-from: 'registry.incmix.com/auth:cache'
+    cache-to: 'type=registry,ref=registry.incmix.com/auth:cache,mode=max'
     build-args: 'NODE_ENV=production,BUILD_VERSION=${{ github.sha }}'
     platforms: 'linux/amd64,linux/arm64'
 ```
@@ -122,9 +122,9 @@ The action automatically generates tags based on:
 - name: Build users API
   uses: ./.github/actions/docker-build-push
   with:
-    dockerfile: 'api/users-api/Dockerfile'
-    context: 'api/users-api'
-    image-name: 'users-api'
+    dockerfile: 'api/auth/Dockerfile'
+    context: 'api/auth'
+    image-name: 'auth'
     registry-username: ${{ secrets.DOCKER_USERNAME }}
     registry-password: ${{ secrets.DOCKER_PASSWORD }}
 ```

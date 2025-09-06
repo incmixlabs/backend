@@ -26,6 +26,8 @@ RUN pnpm build
 # Create a smaller production image
 FROM node:22-alpine AS runner
 
+RUN apk add --no-cache curl
+
 WORKDIR /app
 
 RUN npm install -g pnpm

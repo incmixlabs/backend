@@ -1,6 +1,6 @@
 import { API } from "@incmix/utils/env"
 
-export const BASE_PATH = API.PROJECTS
+export const BASE_PATH = API.projects
 
 export const ERROR_PRESIGNED_URL = {
   namespace: "errors",

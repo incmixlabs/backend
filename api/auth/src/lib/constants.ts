@@ -1,6 +1,6 @@
 import { API } from "@incmix/utils/env"
 
-export const BASE_PATH = API.AUTH
+export const BASE_PATH = API.auth
 
 export const ONLINE_USERS = "onlineUsers"
 

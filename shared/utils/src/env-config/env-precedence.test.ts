@@ -11,8 +11,8 @@ describe.sequential("Environment Variable Precedence", () => {
   const testFiles = [
     path.join(backendRoot, ".env"),
     path.join(backendRoot, ".env.test"),
-    path.join(backendRoot, "api/tasks-api/.env"),
-    path.join(backendRoot, "api/tasks-api/.env.test"),
+    path.join(backendRoot, "api/projects-api/.env"),
+    path.join(backendRoot, "api/projects-api/.env.test"),
   ]
 
   // Helper to backup a file if it exists
@@ -71,7 +71,9 @@ describe.sequential("Environment Variable Precedence", () => {
       testBackups.push([filePath, backup])
     }
     // Ensure service directory exists
-    await fs.mkdir(path.join(backendRoot, "api/tasks-api"), { recursive: true })
+    await fs.mkdir(path.join(backendRoot, "api/projects-api"), {
+      recursive: true,
+    })
     // Create test environment files
     await fs.writeFile(
       path.join(backendRoot, ".env"),
@@ -95,7 +97,7 @@ LEVEL_2_VAR=from_root_env_test
 `.trim()
     )
     await fs.writeFile(
-      path.join(backendRoot, "api/tasks-api/.env"),
+      path.join(backendRoot, "api/projects-api/.env"),
       `
 # Priority 30 - Service .env
 PRIORITY_TEST=priority_30_service_env
@@ -103,7 +105,7 @@ LEVEL_3_VAR=from_service_env
 `.trim()
     )
     await fs.writeFile(
-      path.join(backendRoot, "api/tasks-api/.env.test"),
+      path.join(backendRoot, "api/projects-api/.env.test"),
       `
 # Priority 40 - Service .env.test (highest priority)
 PRIORITY_TEST=priority_40_service_env_test
@@ -124,8 +126,8 @@ LEVEL_4_VAR=from_service_env_test
     const merged = await mergeEnvFilesInOrder([
       path.join(backendRoot, ".env"),
       path.join(backendRoot, ".env.test"),
-      path.join(backendRoot, "api/tasks-api/.env"),
-      path.join(backendRoot, "api/tasks-api/.env.test"),
+      path.join(backendRoot, "api/projects-api/.env"),
+      path.join(backendRoot, "api/projects-api/.env.test"),
     ])
     expect(merged.PRIORITY_TEST).toBe("priority_40_service_env_test")
   })

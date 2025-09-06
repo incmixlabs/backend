@@ -1,3 +1,3 @@
 import { API } from "@incmix/utils/env"
 
-export const BASE_PATH = API.INTL
+export const BASE_PATH = API.intl

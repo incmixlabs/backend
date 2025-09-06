@@ -1,5 +1,8 @@
 import { z } from "@hono/zod-openapi"
-import { projectStatus } from "@incmix-api/utils/db-schema"
+
+export const projectStatus = ["all", "started", "on-hold", "completed"] as const
+
+export type ProjectStatus = (typeof projectStatus)[number]
 
 export const taskStatusEnum = [
   "backlog",
@@ -93,14 +96,7 @@ export const ProjectMemberSchema = z
 
 export type ProjectMember = z.infer<typeof ProjectMemberSchema>
 
-export const ChecklistSchema = z.object({
-  id: z.string().openapi({ example: "2hek2bkjh" }),
-  text: z.string().openapi({ example: "Checklist item" }),
-  checked: z.boolean().openapi({ example: false }),
-  order: z.number().int().nonnegative().openapi({ example: 1 }),
-})
-
-export type Checklist = z.infer<typeof ChecklistSchema>
+export type ChecklistItem = z.infer<typeof ChecklistItemSchema>
 
 export const ProjectSchema = z.object({
   id: z.string().max(30).openapi({ example: "2hek2bkjh" }),
@@ -115,7 +111,7 @@ export const ProjectSchema = z.object({
   timeLeft: z.string().openapi({ example: "2 weeks" }),
   members: z.array(ProjectMemberSchema),
   orgId: z.string().openapi({ example: "org123" }),
-  checklist: z.array(ChecklistSchema).default([]),
+  checklist: z.array(ChecklistItemSchema).default([]),
   acceptanceCriteria: z.array(ChecklistItemSchema).default([]),
   status: z.enum(projectStatus).openapi({ example: "started" }),
   startDate: z
@@ -141,11 +137,7 @@ export type Project = z.infer<typeof ProjectSchema>
 export const RefUrlSchema = z
   .object({
     id: z.string().max(100).openapi({ example: "ref123" }),
-    url: z
-      .string()
-      .url()
-      .max(1000)
-      .openapi({ example: "https://example.com/figma" }),
+    url: z.url().max(1000).openapi({ example: "https://example.com/figma" }),
     title: z.string().max(255).optional().openapi({ example: "Figma Design" }),
     type: z.enum(["figma", "task", "external"]).openapi({ example: "figma" }),
     taskId: z.string().max(100).optional().openapi({ example: "task123" }),
@@ -171,6 +163,8 @@ export const RefUrlSchema = z
     },
   })
 
+export type RefUrl = z.infer<typeof RefUrlSchema>
+
 // Label tag schema
 export const LabelTagSchema = z
   .object({
@@ -185,6 +179,8 @@ export const LabelTagSchema = z
       color: "#ff0000",
     },
   })
+
+export type LabelTag = z.infer<typeof LabelTagSchema>
 
 // Attachment schema
 export const AttachmentSchema = z
@@ -211,6 +207,8 @@ export const AttachmentSchema = z
       type: "application/pdf",
     },
   })
+
+export type Attachment = z.infer<typeof AttachmentSchema>
 
 // Sub-task schema
 export const SubTaskSchema = z
@@ -271,6 +269,8 @@ export const LabelSchema = z
       },
     },
   })
+
+export type Label = z.infer<typeof LabelSchema>
 
 export const TaskSchema = z
   .object({

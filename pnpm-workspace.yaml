@@ -8,7 +8,7 @@ catalog:
   '@hono/node-server': 1.13.8
   '@hono/zod-openapi': 1.1.0
   '@hono/zod-validator': 0.7.2
-  '@incmix/utils': 0.36.3
+  '@incmix/utils': 0.51.0
   '@playwright/test': 1.49.0
   '@scalar/hono-api-reference': 0.5.163
   '@types/lodash': 4.17.1

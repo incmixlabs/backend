@@ -1,3 +1,3 @@
 import { API } from "@incmix/utils/env"
 
-export const BASE_PATH = API.EMAIL
+export const BASE_PATH = API.email

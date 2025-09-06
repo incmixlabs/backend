@@ -7,6 +7,7 @@ import {
 } from "kysely"
 import pg from "pg"
 import type { EmailTables } from "./email"
+import type { FeatureFlagsTables } from "./feature-flags"
 import type { GenAiTables } from "./gen-ai"
 import type { IntlTables } from "./intl"
 import type { OrgTables } from "./org"
@@ -19,7 +20,8 @@ export interface Database
     OrgTables,
     TasksTables,
     GenAiTables,
-    EmailTables {}
+    EmailTables,
+    FeatureFlagsTables {}
 
 export type KyselyDb = Kysely<Database>
 
@@ -42,6 +44,7 @@ export function initDb(connectionString: string) {
 }
 
 export * from "./email"
+export * from "./feature-flags"
 export * from "./gen-ai"
 export * from "./intl"
 export * from "./org"

@@ -26,6 +26,8 @@ RUN pnpm build
 # Create a smaller production image
 FROM node:22-alpine AS runner
 
+RUN apk add --no-cache curl
+
 WORKDIR /app
 
 # Install only runtime dependencies

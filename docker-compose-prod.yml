@@ -14,12 +14,13 @@
 # =============================================================================
 
 version: "3.8"
-name: "incmix"
+name: "incmix prod"
 
 # Common environment variables used across multiple services
 x-common-env: &common-env
   # Database
   DATABASE_URL: ${DATABASE_URL}
+  REDIS_URL: ${REDIS_URL}
   # Service configuration
   NODE_ENV: ${NODE_ENV}
   COOKIE_NAME: ${COOKIE_NAME}
@@ -41,22 +42,28 @@ x-common-env: &common-env
   PROJECTS_API_URL: ${PROJECTS_API_URL:-http://projects-api:8484/api/projects}
   COMMENTS_API_URL: ${COMMENTS_API_URL:-http://comments-api:8585/api/comments}
   LOCATION_API_URL: ${LOCATION_API_URL:-http://location-api:9494/api/location}
-  RXDB_SYNC_API_URL: ${RXDB_SYNC_API_URL:-http://rxdb-api:8686/api/rxdb-sync}
+  RXDB_API_URL: ${RXDB_API_URL:-http://rxdb-api:8686/api/rxdb-sync}
 
 services:
   postgres:
     image: registry.incmix.com/db:latest
     restart: always
     environment:
-      POSTGRES_DB: ${POSTGRES_DB}
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB:-incmix}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-password}
       # POSTGRES_EXTENSIONS: plv8, btree_gist, hstore, pgvector, pgcrypto, CITEXT, pg_trgm, pg_cron, plpython3u
     # Internal access only - no external ports
     volumes:
       - incmix-db-data:/var/lib/postgresql/data
     networks:
       - incmix-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
   redis:
     image: docker.dragonflydb.io/dragonflydb/dragonfly:latest
     restart: always
@@ -87,7 +94,12 @@ services:
       - incmix-network
     depends_on:
       - postgres
-
+    healthcheck:
+      test: ["CMD", "sh", "-c", 'curl -fs http://localhost:8787/api/auth/healthcheck | grep -q "{\"status\":\"UP\"}"']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
   email-api:
     image: registry.incmix.com/email-service:latest
     environment:
@@ -100,6 +112,12 @@ services:
       - incmix-network
     depends_on:
       - postgres
+    healthcheck:
+      test: ["CMD", "sh", "-c", 'curl -fs http://localhost:8989/api/email/healthcheck | grep -q "{\"status\":\"UP\"}"']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
 
   org-api:
     image: registry.incmix.com/org-api:latest
@@ -110,6 +128,12 @@ services:
       - incmix-network
     depends_on:
       - postgres
+    healthcheck:
+      test: ["CMD", "sh", "-c", 'curl -fs http://localhost:9292/api/org/healthcheck | grep -q "{\"status\":\"UP\"}"']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
 
   intl-api:
     image: registry.incmix.com/intl-api:latest
@@ -120,6 +144,12 @@ services:
       - incmix-network
     depends_on:
       - postgres
+    healthcheck:
+      test: ["CMD", "sh", "-c", 'curl -fs http://localhost:9090/api/intl/healthcheck | grep -q "{\"status\":\"UP\"}"']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
 
   files-api:
     image: registry.incmix.com/files-api:latest
@@ -136,6 +166,12 @@ services:
       - incmix-network
     depends_on:
       - postgres
+    healthcheck:
+      test: ["CMD", "sh", "-c", 'curl -fs http://localhost:8282/api/files/healthcheck | grep -q "{\"status\":\"UP\"}"']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
 
   genai-api:
     image: registry.incmix.com/genai-api:latest
@@ -152,6 +188,12 @@ services:
     depends_on:
       - postgres
       - redis
+    healthcheck:
+      test: ["CMD", "sh", "-c", 'curl -fs http://localhost:8383/api/genai/healthcheck | grep -q "{\"status\":\"UP\"}"']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
 
   projects-api:
     image: registry.incmix.com/projects-api:latest
@@ -162,6 +204,12 @@ services:
       - incmix-network
     depends_on:
       - postgres
+    healthcheck:
+      test: ["CMD", "sh", "-c", 'curl -fs http://localhost:8484/api/projects/healthcheck | grep -q "{\"status\":\"UP\"}"']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
 
   location-api:
     image: registry.incmix.com/location-api:latest
@@ -181,6 +229,12 @@ services:
     depends_on:
       - postgres
       - redis
+    healthcheck:
+      test: ["CMD", "sh", "-c", 'curl -fs http://localhost:9494/api/location/healthcheck | grep -q "{\"status\":\"UP\"}"']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
 
   comments-api:
     image: registry.incmix.com/comments-api:latest
@@ -191,6 +245,12 @@ services:
       - incmix-network
     depends_on:
       - postgres
+    healthcheck:
+      test: ["CMD", "sh", "-c", 'curl -fs http://localhost:8585/api/comments/healthcheck | grep -q "{\"status\":\"UP\"}"']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
 
   rxdb-api:
     image: registry.incmix.com/rxdb-api:latest
@@ -202,6 +262,12 @@ services:
       - incmix-network
     depends_on:
       - postgres
+    healthcheck:
+      test: ["CMD", "sh", "-c", 'curl -fs http://localhost:8686/api/rxdb-sync/healthcheck | grep -q "{\"status\":\"UP\"}"']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
 
   bff-web:
     image: registry.incmix.com/bff-web:latest
@@ -214,6 +280,12 @@ services:
       - incmix-network
     depends_on:
       - postgres
+    healthcheck:
+      test: ["CMD", "sh", "-c", 'curl -fs http://localhost:8080/healthcheck | grep -q "{\"status\":\"UP\"}"']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
 
 volumes:
   incmix-db-data:

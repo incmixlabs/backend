@@ -25,6 +25,7 @@ const healthcheckRoutes = createHealthCheckRoute<HonoApp>({
       name: "Database",
       check: async (c) => {
         try {
+          console.log("Database URL:", envVars.DATABASE_URL)
           // Simple query to check database connectivity
           await c.get("db").selectFrom("users").selectAll().limit(1).execute()
           return true
