@@ -6,8 +6,10 @@ packages:
 catalog:
   '@casl/ability': 6.7.3
   '@hono/node-server': 1.13.8
-  '@hono/zod-openapi': 1.1.0
-  '@hono/zod-validator': 0.7.2
+  '@types/json-schema': 7.0.15
+  'ajv': 8.17.1
+  'ajv-errors': 3.0.0
+  'ajv-formats': 3.0.1
   '@incmix/utils': 0.51.0
   '@playwright/test': 1.49.0
   '@scalar/hono-api-reference': 0.5.163
@@ -36,4 +38,3 @@ catalog:
   typescript: 5.7.3
   vite-tsconfig-paths: 5.1.4
   vitest: 3.1.2
-  zod: ^4.0

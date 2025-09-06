@@ -32,9 +32,13 @@
       "types": "./dist/src/db-schema/index.d.ts",
       "default": "./dist/src/db-schema/index.js"
     },
-    "./zod-schema": {
-      "types": "./dist/src/zod-schema/index.d.ts",
-      "default": "./dist/src/zod-schema/index.js"
+    "./ajv-schema": {
+      "types": "./dist/src/ajv-schema/index.d.ts",
+      "default": "./dist/src/ajv-schema/index.js"
+    },
+    "./ajv-hono": {
+      "types": "./dist/src/ajv-hono/index.d.ts",
+      "default": "./dist/src/ajv-hono/index.js"
     },
     "./authorization": {
       "types": "./dist/src/authorization/index.d.ts",
@@ -61,7 +65,6 @@
     "@casl/ability": "catalog:",
     "@hono/node-server": "catalog:",
     "@hono/sentry": "1.2.0",
-    "@hono/zod-openapi": "catalog:",
     "@incmix/utils": "catalog:",
     "@intlify/utils": "0.13.0",
     "@scalar/hono-api-reference": "catalog:",
@@ -75,7 +78,10 @@
     "kysely": "catalog:",
     "pg": "catalog:",
     "redis": "catalog:",
-    "zod": "catalog:"
+    "ajv": "catalog:",
+    "ajv-errors": "catalog:",
+    "ajv-formats": "catalog:",
+    "@types/json-schema": "catalog:"
   },
   "devDependencies": {
     "@casl/ability": "catalog:",

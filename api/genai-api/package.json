@@ -13,8 +13,8 @@
     "@ai-sdk/anthropic": "2.0.6",
     "@ai-sdk/google": "2.0.8",
 
-    "@hono/zod-openapi": "catalog:",
-    "@hono/zod-validator": "catalog:",
+    "@hono/swagger-ui": "catalog:",
+    "ajv": "catalog:",
     "@incmix-api/utils": "workspace:^",
     "@incmix/utils": "catalog:",
     "ai": "5.0.23",
@@ -24,7 +24,6 @@
     "luxon": "catalog:",
     "nanoid": "catalog:",
     "pg": "catalog:",
-    "zod": "catalog:"
   },
   "devDependencies": {
     "@figma/rest-api-spec": "^0.32.0",

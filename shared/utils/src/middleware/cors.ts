@@ -1,5 +1,3 @@
-import type { OpenAPIHono } from "@hono/zod-openapi"
-import type { Env } from "hono"
 import { cors } from "hono/cors"
 import { envVars } from "../env-config"
 
@@ -15,7 +13,7 @@ const frontendDomain = "turbo-mix.pages.dev"
 const storybookDomain = "turbo-mix-ui.pages.dev"
 
 export function setupCors<T extends Env>(
-  app: OpenAPIHono<T>,
+  app: Hono<T>,
   basePath: string
 ) {
   app.use(

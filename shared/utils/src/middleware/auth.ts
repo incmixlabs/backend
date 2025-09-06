@@ -1,4 +1,3 @@
-import type { AuthUser } from "@incmix/utils/types"
 import { generateSentryHeaders } from "@incmix-api/utils"
 import type { MiddlewareHandler } from "hono"
 import { getCookie } from "hono/cookie"

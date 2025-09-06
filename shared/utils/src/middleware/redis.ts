@@ -1,6 +1,3 @@
-import type { OpenAPIHono } from "@hono/zod-openapi"
-import type { Env as HonoEnv } from "hono"
-import { createClient, type RedisClientType } from "redis"
 import { envVars } from "../env-config"
 
 declare module "hono" {
@@ -144,7 +141,7 @@ async function checkRedisHealth(): Promise<boolean> {
  * Uses a shared Redis connection instead of creating per-request clients
  */
 export function setupRedisMiddleware<T extends Env>(
-  app: OpenAPIHono<T>,
+  app: Hono<T>,
   basePath: string
 ) {
   app.use(`${basePath}/*`, async (c, next) => {

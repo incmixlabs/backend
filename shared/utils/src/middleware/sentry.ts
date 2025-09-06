@@ -1,5 +1,3 @@
-import { getSentry, sentry as sentryMiddleware } from "@hono/sentry"
-import type { OpenAPIHono } from "@hono/zod-openapi"
 // import {
 //   generateSentryTraceHeader,
 //   propagationContextFromHeaders,
@@ -7,7 +5,7 @@ import type { OpenAPIHono } from "@hono/zod-openapi"
 import type { Context, Env } from "hono"
 
 export function setupSentryMiddleware<T extends Env>(
-  app: OpenAPIHono<T>,
+  app: Hono<T>,
   basePath: string,
   _service?: string
 ) {

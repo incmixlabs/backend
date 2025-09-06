@@ -53,5 +53,11 @@
   "trustedDependencies": [
     "@biomejs/biome",
     "core-js-pure"
-  ]
+  ],
+  "dependencies": {
+    "@types/json-schema": "^7.0.15",
+    "ajv": "^8.17.1",
+    "ajv-errors": "^3.0.0",
+    "ajv-formats": "^3.0.1"
+  }
 }

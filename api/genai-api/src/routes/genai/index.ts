@@ -1,11 +1,18 @@
-import { OpenAPIHono } from "@hono/zod-openapi"
+import { Hono } from "hono"
 import { ERROR_UNAUTHORIZED } from "@incmix-api/utils"
 import {
   processError,
   UnauthorizedError,
-  zodError,
 } from "@incmix-api/utils/errors"
 import { useTranslation } from "@incmix-api/utils/middleware"
+import { jsonValidator } from "@incmix-api/utils/ajv-hono"
+import {
+  GenerateUserStorySchema,
+  FigmaSchema,
+  GenerateCodeFromFigmaSchema,
+  GenerateMultipleUserStoriesSchema,
+  GenerateProjectHierarchySchema,
+} from "@incmix-api/utils/ajv-schema"
 import { streamSSE } from "hono/streaming"
 import { FigmaService } from "@/lib/figma"
 import {
@@ -15,22 +22,11 @@ import {
   generateUserStory as aiGenerateUserStory,
   generateUserStoryFromImage,
 } from "@/lib/services"
-import {
-  generateCodeFromFigma,
-  generateMultipleUserStories,
-  generateProject,
-  generateProjectHierarchy,
-  generateUserStory,
-  generateUserStoryFromFigma,
-  getFigmaImage,
-} from "@/routes/genai/openapi"
 import type { HonoApp } from "@/types"
 
-const genaiRoutes = new OpenAPIHono<HonoApp>({
-  defaultHook: zodError,
-})
+const genaiRoutes = new Hono<HonoApp>()
 
-genaiRoutes.openapi(generateProject, async (c) => {
+genaiRoutes.post("/generate-project", jsonValidator(GenerateUserStorySchema), async (c) => {
   try {
     const user = c.get("user")
     const t = await useTranslation(c)
@@ -39,7 +35,7 @@ genaiRoutes.openapi(generateProject, async (c) => {
       throw new UnauthorizedError(msg)
     }
 
-    const { prompt, userTier, templateId } = c.req.valid("json")
+    const { prompt, userTier, templateId } = c.get("validatedData")
 
     const template = await c
       .get("db")

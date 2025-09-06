@@ -1,9 +1,17 @@
-import { z } from "@hono/zod-openapi"
+import type { JSONSchemaType } from "ajv"
 
-export const ResponseSchema = z
-  .object({
-    message: z.string().openapi({
+export interface Response {
+  message: string
+}
+
+export const ResponseSchema: JSONSchemaType<Response> = {
+  type: "object",
+  properties: {
+    message: {
+      type: "string",
       example: "Successful",
-    }),
-  })
-  .openapi("Response")
+    },
+  },
+  required: ["message"],
+  additionalProperties: false,
+}

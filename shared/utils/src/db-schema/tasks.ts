@@ -12,7 +12,7 @@ import type {
   LabelType,
   ProjectStatus,
   RefUrl,
-} from "../zod-schema"
+} from "../ajv-schema"
 
 type TasksTable = {
   id: string

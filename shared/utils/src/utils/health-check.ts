@@ -1,15 +1,26 @@
-import { createRoute, OpenAPIHono, z } from "@hono/zod-openapi"
 import type { Context, Env } from "hono"
+import { Hono } from "hono"
+import { createValidator } from "../ajv-schema"
 import { envVars } from "../env-config"
 /**
  * Schema for the health check response
  */
-export const HealthCheckSchema = z
-  .object({
-    status: z.string().openapi({ example: "UP" }),
-    reason: z.string().optional().openapi({ example: "Service unavailable" }),
-  })
-  .openapi("Healthcheck")
+export interface HealthCheckResponse {
+  status: string
+  reason?: string
+}
+
+export const HealthCheckSchema = {
+  type: "object",
+  properties: {
+    status: { type: "string" },
+    reason: { type: "string" },
+  },
+  required: ["status"],
+  additionalProperties: false,
+}
+
+export const HealthCheckValidator = createValidator(HealthCheckSchema)
 
 /**
  * Create a health check function for the /reference endpoint
@@ -100,29 +111,10 @@ export function createHealthCheckRoute<T extends Env>({
     })
   }
 
-  // Create the OpenAPI route schema
-  const healthCheckRoute = createRoute({
-    path: "/",
-    method: "get",
-    security,
-    tags,
-    summary: "Check Service Health",
-    responses: {
-      200: {
-        content: {
-          "application/json": {
-            schema: HealthCheckSchema,
-          },
-        },
-        description: "Returns Service Status",
-      },
-    },
-  })
-
   // Create the Hono route handler
-  const healthCheckRoutes = new OpenAPIHono<T>()
+  const healthCheckRoutes = new Hono<T>()
 
-  healthCheckRoutes.openapi(healthCheckRoute, async (c) => {
+  healthCheckRoutes.get("/", async (c) => {
     try {
       let status = "UP"
       const missing: string[] = []

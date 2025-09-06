@@ -1,5 +1,5 @@
 import { serve } from "@hono/node-server"
-import { OpenAPIHono } from "@hono/zod-openapi"
+import { Hono } from "hono"
 import { setupRbac } from "@incmix-api/utils/authorization"
 import type { Context } from "hono"
 import { logger } from "hono/logger"
@@ -27,10 +27,10 @@ export interface ServiceConfig<
   port: number
   basePath: string
   setupMiddleware?: (
-    app: OpenAPIHono<{ Bindings: TBindings; Variables: TVariables }>
+    app: Hono<{ Bindings: TBindings; Variables: TVariables }>
   ) => void
   setupRoutes?: (
-    app: OpenAPIHono<{ Bindings: TBindings; Variables: TVariables }>
+    app: Hono<{ Bindings: TBindings; Variables: TVariables }>
   ) => void
   needRBAC?: boolean
   needDb?: boolean
@@ -43,7 +43,7 @@ export function createService<
   TBindings extends BaseBindings,
   TVariables extends BaseVariables,
 >(config: ServiceConfig<TBindings, TVariables>) {
-  const app = new OpenAPIHono<{
+  const app = new Hono<{
     Bindings: TBindings
     Variables: TVariables
   }>()
@@ -76,12 +76,8 @@ export function createService<
     setupRbac(app, config.basePath)
   }
 
-  setupOpenApi(
-    app,
-    config.basePath,
-    config.name,
-    `This is OpenAPI Docs for ${config.name}`
-  )
+  // OpenAPI setup is handled differently with AJV
+  // Routes can add their own documentation endpoints
   // Setup routes if provided
   if (config.setupRoutes) {
     config.setupRoutes(app)
@@ -132,7 +128,7 @@ export function createService<
 export type ServiceApp<
   TBindings extends ServiceBindings = ServiceBindings,
   TVariables extends ServiceVariables = ServiceVariables,
-> = OpenAPIHono<{
+> = Hono<{
   Bindings: TBindings
   Variables: TVariables
 }>

@@ -1,5 +1,4 @@
-import type { OpenAPIHono } from "@hono/zod-openapi"
-import { createRoute, z } from "@hono/zod-openapi"
+import { createValidator } from "../ajv-schema"
 
 export interface SimplifiedHealthCheckConfig {
   serviceName: string
@@ -11,45 +10,37 @@ export interface SimplifiedHealthCheckConfig {
   }
 }
 
-const healthCheckSchema = z.object({
-  status: z.enum(["healthy", "unhealthy"]),
-  service: z.string(),
-  version: z.string().optional(),
-  timestamp: z.number(),
-  checks: z.record(z.string(), z.boolean()).optional(),
-})
+interface HealthCheckResponse {
+  status: "healthy" | "unhealthy"
+  service: string
+  version?: string
+  timestamp: number
+  checks?: Record<string, boolean>
+}
 
-export function setupHealthCheck<T extends OpenAPIHono<any, any, any>>(
+const healthCheckSchema = {
+  type: "object",
+  properties: {
+    status: { type: "string", enum: ["healthy", "unhealthy"] },
+    service: { type: "string" },
+    version: { type: "string" },
+    timestamp: { type: "number" },
+    checks: {
+      type: "object",
+      additionalProperties: { type: "boolean" },
+    },
+  },
+  required: ["status", "service", "timestamp"],
+  additionalProperties: false,
+}
+
+const healthCheckValidator = createValidator(healthCheckSchema)
+
+export function setupHealthCheck<T extends Hono<any, any, any>>(
   app: T,
   config: SimplifiedHealthCheckConfig
 ): T {
-  const route = createRoute({
-    method: "get",
-    path: "/",
-    tags: ["Health"],
-    summary: `${config.serviceName} health check`,
-    description: `Check the health status of the ${config.serviceName} service`,
-    responses: {
-      200: {
-        description: "Service is healthy",
-        content: {
-          "application/json": {
-            schema: healthCheckSchema,
-          },
-        },
-      },
-      503: {
-        description: "Service is unhealthy",
-        content: {
-          "application/json": {
-            schema: healthCheckSchema,
-          },
-        },
-      },
-    },
-  })
-
-  app.openapi(route, async (c) => {
+  app.get("/", async (c) => {
     const response: {
       status: "healthy" | "unhealthy"
       service: string

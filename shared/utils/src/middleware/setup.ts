@@ -1,5 +1,3 @@
-import type { OpenAPIHono } from "@hono/zod-openapi"
-import type { Context, MiddlewareHandler } from "hono"
 import { compress } from "hono/compress"
 import { envVars } from "../env-config"
 import { createAuthMiddleware } from "./auth"
@@ -57,7 +55,7 @@ export function createReferenceEndpointCheck(basePath: string) {
 }
 
 export function setupApiMiddleware<T extends { Bindings: any; Variables: any }>(
-  app: OpenAPIHono<T>,
+  app: Hono<T>,
   config: MiddlewareConfig
 ) {
   const {
