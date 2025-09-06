@@ -4,8 +4,9 @@ import { type RedisClientType, createClient } from "redis"
 
 declare module "fastify" {
   interface FastifyRequest {
-    redis: RedisClientType
+    redis?: RedisClientType
   }
+}
 }
 
 // Singleton Redis client instance
