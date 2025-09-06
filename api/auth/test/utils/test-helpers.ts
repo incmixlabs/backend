@@ -1,5 +1,5 @@
 import { createi18nMockMiddleware } from "@incmix-api/test-utils"
-import { createService } from "@incmix-api/utils"
+import { type AuthEnv, createService } from "@incmix-api/utils"
 import type {
   Database,
   NewSession,
@@ -11,10 +11,10 @@ import type { Kysely } from "kysely"
 import { expect } from "vitest"
 import { authMiddleware } from "@/auth/middleware"
 import type { Session } from "@/auth/types"
+import { envVars } from "@/env-vars"
 import { BASE_PATH } from "../../src/lib/constants"
 import { routes } from "../../src/routes"
 import type { HonoApp } from "../../src/types"
-import { envVars } from "./test-env"
 
 type Credentials = {
   email: string
@@ -34,6 +34,8 @@ export function createTestClient() {
     name: "auth-api-test",
     port: (envVars.PORT as number) || 0, // Use test environment port or 0 to avoid conflicts
     basePath: BASE_PATH,
+    needDb: true,
+    bindings: { ...envVars, DATABASE_URL: process.env.DATABASE_URL } as AuthEnv,
     setupMiddleware: (app) => {
       setupApiMiddleware(app, {
         basePath: BASE_PATH,
