@@ -9,7 +9,9 @@ export async function setupKvStore(
 ) {
   await app.register(
     fp(async (fastify) => {
-      fastify.decorateRequest("kv", null)
+      if (!fastify.hasRequestDecorator("kv")) {
+        fastify.decorateRequest("kv", null as unknown as KVStore | null)
+      }
 
       fastify.addHook("onRequest", async (request, _reply) => {
         if (!globalStore) {
