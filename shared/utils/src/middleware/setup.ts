@@ -45,8 +45,11 @@ export function createReferenceEndpointCheck(basePath: string) {
     return normalizedPath
   }
   return async (request: FastifyRequest): Promise<boolean> => {
-    const origin = new URL(request.url).origin
-    const referenceUrl = `${origin}${normalize(basePath)}/reference`
+    const proto = request.protocol ?? "http"
+    const host = request.headers.host
+    if (!host) return false
+    const base = `${proto}://${host}`
+    const referenceUrl = new URL(`${normalize(basePath)}/reference`, base).toString()
     const controller = new AbortController()
     const timer = setTimeout(() => controller.abort(), envVars.TIMEOUT_MS)
     try {
