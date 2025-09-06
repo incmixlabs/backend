@@ -17,7 +17,7 @@ import { setupSentryMiddleware } from "./sentry"
 
 declare module "fastify" {
   interface FastifyRequest {
-    db: KyselyDb
+    db: KyselyDb | null
   }
 }
 
