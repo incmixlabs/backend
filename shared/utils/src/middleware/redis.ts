@@ -145,7 +145,7 @@ export async function setupRedisMiddleware(
 ) {
   await app.register(
     fp(async (fastify) => {
-      fastify.decorateRequest("redis", null)
+      fastify.decorateRequest("redis", undefined)
 
       fastify.addHook("onRequest", async (request, _reply) => {
         try {
