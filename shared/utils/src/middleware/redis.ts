@@ -157,34 +157,7 @@ export async function setupRedisMiddleware(
 
           // Get the singleton Redis client
           const redis = await getRedisClient(redisUrl)
-
-          // Verify client health before proceeding
-          if (!(await checkRedisHealth())) {
-            console.warn(
-              "Redis client unhealthy, attempting to recreate connection"
-            )
-            // Gracefully shutdown existing client before recreating
-            if (redisClient) {
-              try {
-                await redisClient.quit()
-                console.log("Existing Redis client shutdown successfully")
-              } catch (error) {
-                console.warn(
-                  "Error shutting down existing Redis client:",
-                  error
-                )
-                // Continue with recreation even if shutdown fails
-              } finally {
-                redisClient = null
-              }
-            }
-
-            // Create new healthy connection after old client is closed
-            const healthyRedis = await getRedisClient(redisUrl)
-            request.redis = healthyRedis
-          } else {
-            request.redis = redis
-          }
+          request.redis = redis
         } catch (error) {
           console.error("Failed to setup Redis middleware:", error)
           // Continue without Redis - the application can handle missing Redis gracefully
