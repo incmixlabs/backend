@@ -12,8 +12,8 @@
     "lint:fix": "NODE_NO_WARNINGS=1 biome check --fix --unsafe",
     "lint:packages": "pnpx sherif@latest",
     "typecheck": "turbo typecheck",
-    "pretest": "docker compose -f docker-compose-test.yml up -d",
-    "posttest": "docker compose -f docker-compose-test.yml down",
+    "pretest": "docker compose -f docker-compose-test.yml up -d --wait",
+    "posttest": "docker compose -f docker-compose-test.yml down --remove-orphans",
     "test": "turbo test --ui tui",
     "test:e2e": "turbo test:e2e"
   },
