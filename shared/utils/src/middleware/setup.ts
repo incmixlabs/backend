@@ -110,13 +110,16 @@ export async function setupApiMiddleware(
       fp(async (fastify) => {
         fastify.decorateRequest("db", null)
 
-        fastify.addHook("onRequest", async (request, reply) => {
-          if (!db) {
-            console.error(`DATABASE_URL is not configured for ${serviceName}`)
-            reply.code(500).send("Server misconfigured: missing DATABASE_URL")
-            return
-          }
+        fastify.addHook("onRequest", async (request, _reply) => {
           request.db = db
+        })
+
+        fastify.addHook("onClose", async () => {
+          try {
+            await db.destroy()
+          } catch (e) {
+            // best-effort shutdown
+          }
         })
       })
     )
