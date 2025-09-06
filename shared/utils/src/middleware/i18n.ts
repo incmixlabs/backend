@@ -36,7 +36,9 @@ const defaultOptions: I18NMiddlwareOptions = {
  */
 export function createI18nMiddleware({ localeHeaderName } = defaultOptions) {
   return fp(async (fastify: FastifyInstance) => {
-    fastify.decorateRequest("locale", "")
+    if (!fastify.hasRequestDecorator("locale")) {
+      fastify.decorateRequest("locale", "")
+    }
 
     fastify.addHook("onRequest", async (request, reply) => {
       const kv = request.kv
