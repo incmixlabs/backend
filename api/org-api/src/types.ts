@@ -1,35 +1,12 @@
-import { z } from "@hono/zod-openapi"
-import type { PermissionService } from "@incmix-api/utils/authorization"
-import type { KyselyDb } from "@incmix-api/utils/db-schema"
-import type { Context as HonoContext } from "hono"
-import type { Env } from "./env-vars"
+import type { FastifyApp, FastifyContext } from "@incmix-api/utils"
+import type { FastifyReply, FastifyRequest } from "fastify"
+import { z } from "zod"
 
-interface User {
-  id: string
-  email: string
-  isSuperAdmin: boolean
-  emailVerified: boolean
-  [key: string]: any
-}
+export type AppRequest = FastifyRequest
+export type AppReply = FastifyReply
+export type HonoApp = FastifyApp
+export type Context = FastifyContext
 
-type Variables = {
-  user?: User
-  db: KyselyDb
-  rbac: PermissionService
-  redis?: any
-  requestId?: string
-  locale?: string
-  i18n?: any
-  kvStore?: any
-}
-
-export type HonoApp = { Bindings: Env; Variables: Variables }
-export type Context = HonoContext<HonoApp>
-
-export const MessageResponseSchema = z
-  .object({
-    message: z.string().openapi({
-      example: "Successful",
-    }),
-  })
-  .openapi("Response")
+export const MessageResponseSchema = z.object({
+  message: z.string(),
+})
