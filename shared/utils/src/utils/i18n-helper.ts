@@ -21,8 +21,14 @@ export async function getDefaultLocale() {
   if (!res.ok) throw new ServerError((data as { message: string }).message)
   return data as Locale
 }
-export async function getAllMessages(request: FastifyRequest) {
-  const locale = (request as any).locale
+export async function getAllMessages(
+  request: FastifyRequest & { locale: string }
+) {
+  const { locale } = request
+  if (!locale) {
+    // choose: return default messages or throw
+    throw new ServerError("Locale not resolved on request")
+  }
   const res = await fetch(`${envVars["INTL_API_URL"]}/messages/${locale}`, {
     method: "get",
   })

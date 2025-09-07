@@ -1,6 +1,6 @@
 import { z } from "zod"
 
-export const projectStatus = ["all", "started", "on-hold", "completed"] as const
+export const projectStatus = ["started", "on-hold", "completed"] as const
 
 export type ProjectStatus = (typeof projectStatus)[number]
 
@@ -114,7 +114,7 @@ export type LabelTag = z.infer<typeof LabelTagSchema>
 export const AttachmentSchema = z.object({
   id: z.string().max(100),
   name: z.string().max(255),
-  url: z.string().max(1000),
+  url: z.string().url().max(1000),
   size: z.string().max(50),
   type: z.string().max(100).optional(),
 })
