@@ -48,8 +48,12 @@ export class TestDatabase {
       return this.db
     } catch (error) {
       // Ensure any partially opened resources are closed before fallback
-      try { await (this as any).db?.destroy?.() } catch {}
-      try { await this.pool?.end() } catch {}
+      try {
+        await (this as any).db?.destroy?.()
+      } catch {}
+      try {
+        await this.pool?.end()
+      } catch {}
       this.pool = null
 
       console.warn(

@@ -1,3 +1,4 @@
+import type { SerializeOptions } from "cookie"
 import type { FastifyReply, FastifyRequest } from "fastify"
 import { envVars } from "@/env-vars"
 
@@ -12,6 +13,10 @@ const COOKIE_NAME = envVars.COOKIE_NAME
 const COOKIE_PATH = "/"
 const MAX_AGE = 30 * 24 * 60 * 60 // 30 days in seconds
 const SAME_SITE = "None" as const
+const DEFAULT_SAMESITE: SerializeOptions["sameSite"] = isProduction()
+  ? "none"
+  : "lax"
+
 function isProduction(): boolean {
   return envVars.NODE_ENV === "production"
 }
@@ -34,20 +39,19 @@ export function setSessionCookie(
 }
 
 export function deleteSessionCookie(
-   _request: FastifyRequest,
-   reply: FastifyReply
- ): void {
-
+  _request: FastifyRequest,
+  reply: FastifyReply
+): void {
   const domain = envVars.DOMAIN
   const isIp = domain ? /^\d{1,3}(\.\d{1,3}){3}$/.test(domain) : false
   const domainConfig =
-     domain && !/localhost/i.test(domain) && !isIp ? envVars.DOMAIN : undefined
+    domain && !/localhost/i.test(domain) && !isIp ? envVars.DOMAIN : undefined
 
   reply.clearCookie(COOKIE_NAME, {
     domain: domainConfig,
     path: COOKIE_PATH,
     httpOnly: true,
-    sameSite: SAME_SITE,
+    sameSite: DEFAULT_SAMESITE,
     secure: isProduction(),
   })
 }

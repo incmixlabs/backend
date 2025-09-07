@@ -1,6 +1,8 @@
 import type { FastifyRequest } from "fastify"
 
-export function generateSentryHeaders(request: FastifyRequest): Record<string, string> {
+export function generateSentryHeaders(
+  request: FastifyRequest
+): Record<string, string> {
   // Pass through Sentry propagation headers if present; otherwise omit.
   const headers: Record<string, string> = {}
   const trace = request.headers["sentry-trace"]
