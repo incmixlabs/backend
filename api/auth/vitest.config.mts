@@ -29,10 +29,10 @@ export default defineConfig({
     testTimeout: 60000, // 60 seconds for integration tests
     hookTimeout: 120000, // 2 minutes for setup (testcontainers)
     teardownTimeout: 30000,
-    pool: "forks", // Use separate processes for each test file
+    pool: "forks",
     poolOptions: {
       forks: {
-        singleFork: true, // Use single fork to avoid port conflicts
+        singleFork: true, // Run all tests in a single fork to share setup
       },
     },
   },

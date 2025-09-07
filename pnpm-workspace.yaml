@@ -5,16 +5,16 @@ packages:
 
 catalog:
   '@casl/ability': 6.7.3
-  "@fastify/compress": 8.1.0
-  "@fastify/cookie": 11.0.2
-  "@fastify/cors": 11.1.0
-  "@fastify/helmet": 13.0.1
-  "@fastify/oas": 11.3.0x
+  '@fastify/compress': 8.1.0
+  '@fastify/cookie': 11.0.2
+  '@fastify/cors': 11.1.0
+  '@fastify/helmet': 13.0.1
+  '@fastify/oas': 11.3.0x
   '@fastify/rate-limit': 10.3.0
   '@fastify/sensible': 6.0.3
+  '@fastify/static': 8.2.0
   '@fastify/swagger': 9.5.1
   '@fastify/swagger-ui': 5.2.3
-  '@fastify/static': 8.2.0
   '@fastify/websocket': 11.2.0
   '@incmix/utils': 0.51.0
   '@playwright/test': 1.49.0

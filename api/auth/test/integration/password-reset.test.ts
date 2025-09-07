@@ -1,4 +1,4 @@
-import { beforeAll, beforeEach, describe, expect, it } from "vitest"
+import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest"
 import { testDb } from "../utils/setup"
 import { createSignupData, createTestClient } from "../utils/test-helpers"
 
@@ -7,6 +7,10 @@ describe("Password Reset Integration Tests", () => {
 
   beforeAll(async () => {
     client = await createTestClient()
+  })
+
+  afterAll(async () => {
+    await client.close()
   })
 
   beforeEach(async () => {

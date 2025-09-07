@@ -4,9 +4,6 @@ import type {
   NewUser,
   User,
 } from "@incmix-api/utils/db-schema"
-import { setupApiMiddleware } from "@incmix-api/utils/middleware"
-import { createService } from "@incmix-api/utils/service-bootstrap"
-import type { FastifyInstance } from "fastify"
 import type { Kysely } from "kysely"
 import { expect } from "vitest"
 import type { Session } from "@/auth/types"
@@ -26,45 +23,39 @@ type SignupData = {
 
 // Create a test client using Fastify's inject method
 export async function createTestClient() {
-  // Create the service without starting the server
-  const service = await createService({
-    name: `auth-api-test-${Date.now()}-${Math.random()}`, // Unique name to avoid conflicts
-    port: 0, // Use 0 to avoid conflicts in tests
-    basePath: BASE_PATH,
-    setupMiddleware: async (app: FastifyInstance) => {
-      // Re-enable minimal middleware setup to test with KV store
-      await setupApiMiddleware(app, {
-        basePath: BASE_PATH,
-        serviceName: "auth-api-test",
-        skipAuth: true, // Skip auth middleware
-        skipI18n: true, // Skip i18n middleware
-        corsFirst: true,
-        databaseUrl: process.env.DATABASE_URL, // Ensure database URL is passed
-      })
-    },
-    setupRoutes: async (app: FastifyInstance) => {
-      await routes(app)
-    },
-    fastifyOptions: {
-      logger: false, // Disable logging in tests
-    },
+  // Try a simpler approach - create Fastify directly
+  const Fastify = (await import("fastify")).default
+  const fastifyCookie = (await import("@fastify/cookie")).default
+
+  const testApp = Fastify({
+    logger: false,
   })
 
-  const { app: testApp } = service
+  // Register cookie plugin first (required for auth routes)
+  await testApp.register(fastifyCookie)
+
+  // Register routes directly
+  await routes(testApp)
 
   // Wait for ready state to ensure all plugins are loaded
   await testApp.ready()
+
+  // List registered routes for debugging
+  console.log("Registered routes:")
+  testApp.printRoutes()
 
   // Add a request method that works with Fastify's inject
   const client = {
     request: async (path: string, options: RequestInit = {}) => {
       const fullPath = `${BASE_PATH}${path}`
+      console.log(`Injecting request to: ${fullPath}`)
       const response = await testApp.inject({
         method: (options.method as any) || "GET",
         url: fullPath,
         headers: options.headers as Record<string, string>,
         payload: options.body as any,
       })
+      console.log(`Response received from inject: ${response.statusCode}`)
 
       // Convert Fastify response to fetch-like response
       return {
