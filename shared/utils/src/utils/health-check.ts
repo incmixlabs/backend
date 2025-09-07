@@ -1,15 +1,13 @@
-import { createRoute, OpenAPIHono, z } from "@hono/zod-openapi"
-import type { Context, Env } from "hono"
+import type { FastifyInstance, FastifyRequest } from "fastify"
+import { z } from "zod"
 import { envVars } from "../env-config"
 /**
  * Schema for the health check response
  */
-export const HealthCheckSchema = z
-  .object({
-    status: z.string().openapi({ example: "UP" }),
-    reason: z.string().optional().openapi({ example: "Service unavailable" }),
-  })
-  .openapi("Healthcheck")
+export const HealthCheckSchema = z.object({
+  status: z.string(),
+  reason: z.string().optional(),
+})
 
 /**
  * Create a health check function for the /reference endpoint
@@ -17,8 +15,11 @@ export const HealthCheckSchema = z
 export function createReferenceEndpointCheck(basePath: string) {
   const normalize = (p: string) =>
     p.startsWith("/") ? p.replace(/\/$/, "") : `/${p.replace(/\/$/, "")}`
-  return async (c: Context): Promise<boolean> => {
-    const origin = new URL(c.req.url).origin
+  return async (request: FastifyRequest): Promise<boolean> => {
+    const origin = new URL(
+      request.url,
+      `${request.protocol}://${request.hostname}`
+    ).origin
     const referenceUrl = `${origin}${normalize(basePath)}/reference`
     const controller = new AbortController()
     const timer = setTimeout(
@@ -46,7 +47,7 @@ export function createReferenceEndpointCheck(basePath: string) {
 /**
  * Type for the health check configuration
  */
-export type HealthCheckConfig<T extends Env> = {
+export type HealthCheckConfig = {
   /**
    * Environment variables to check
    * Key is the environment variable name, value is the actual value
@@ -60,7 +61,7 @@ export type HealthCheckConfig<T extends Env> = {
    */
   checks?: Array<{
     name: string
-    check: (c: Context<T>) => Promise<boolean>
+    check: (request: FastifyRequest) => Promise<boolean>
   }>
 
   /**
@@ -69,125 +70,104 @@ export type HealthCheckConfig<T extends Env> = {
   tags?: string[]
 
   /**
-   * Whether to require authentication for the health check endpoint
-   */
-  requireAuth?: boolean
-
-  /**
    * Base path of the current service (for checking /reference endpoint)
    */
   basePath?: string
 }
 
 /**
- * Create a health check route
+ * Create a health check route plugin for Fastify
  */
-export function createHealthCheckRoute<T extends Env>({
+export function createHealthCheckRoute({
   envVars,
   checks = [],
   tags = ["Health Check"],
-  requireAuth = false,
   basePath,
-}: HealthCheckConfig<T>) {
-  const security = requireAuth ? [{ cookieAuth: [] }] : undefined
+}: HealthCheckConfig) {
+  // biome-ignore lint/suspicious/useAwait: async is needed for nested async route handler
+  return async (fastify: FastifyInstance) => {
+    // Add reference endpoint check if basePath is provided
+    const allChecks = [...checks]
+    if (basePath) {
+      allChecks.push({
+        name: "Reference Endpoint",
+        check: createReferenceEndpointCheck(basePath),
+      })
+    }
 
-  // Add reference endpoint check if basePath is provided
-  const allChecks = [...checks]
-  if (basePath) {
-    allChecks.push({
-      name: "Reference Endpoint",
-      check: async (c) => createReferenceEndpointCheck(basePath)(c),
-    })
-  }
-
-  // Create the OpenAPI route schema
-  const healthCheckRoute = createRoute({
-    path: "/",
-    method: "get",
-    security,
-    tags,
-    summary: "Check Service Health",
-    responses: {
-      200: {
-        content: {
-          "application/json": {
-            schema: HealthCheckSchema,
+    const schema = {
+      tags,
+      summary: "Check Service Health",
+      response: {
+        200: {
+          type: "object",
+          properties: {
+            status: { type: "string", example: "UP" },
+            reason: { type: "string", example: "Service unavailable" },
           },
         },
-        description: "Returns Service Status",
       },
-    },
-  })
+    }
 
-  // Create the Hono route handler
-  const healthCheckRoutes = new OpenAPIHono<T>()
+    fastify.get("/", { schema }, async (request, reply) => {
+      try {
+        let status = "UP"
+        const missing: string[] = []
+        const checkFailures: string[] = []
 
-  healthCheckRoutes.openapi(healthCheckRoute, async (c) => {
-    try {
-      let status = "UP"
-      const missing: string[] = []
-      const checkFailures: string[] = []
-
-      // Check environment variables
-      if (envVars) {
-        for (const [name, value] of Object.entries(envVars)) {
-          if (!value) {
-            status = "DOWN"
-            missing.push(name)
-          }
-        }
-      }
-
-      // Run additional health checks
-      if (allChecks.length > 0) {
-        for (const { name, check } of allChecks) {
-          try {
-            const isHealthy = await check(c)
-            if (!isHealthy) {
+        // Check environment variables
+        if (envVars) {
+          for (const [name, value] of Object.entries(envVars)) {
+            if (!value) {
               status = "DOWN"
-              checkFailures.push(name)
+              missing.push(name)
             }
-          } catch (error) {
-            status = "DOWN"
-            checkFailures.push(
-              `${name}: ${error instanceof Error ? error.message : String(error)}`
-            )
           }
         }
-      }
 
-      // Combine all failure reasons
-      let reason: string | undefined
+        // Run additional health checks
+        if (allChecks.length > 0) {
+          for (const { name, check } of allChecks) {
+            try {
+              const isHealthy = await check(request)
+              if (!isHealthy) {
+                status = "DOWN"
+                checkFailures.push(name)
+              }
+            } catch (error) {
+              status = "DOWN"
+              checkFailures.push(
+                `${name}: ${error instanceof Error ? error.message : String(error)}`
+              )
+            }
+          }
+        }
 
-      if (missing.length > 0) {
-        reason = `Env variables missing: [${missing.join(", ")}]`
-      }
+        // Combine all failure reasons
+        let reason: string | undefined
 
-      if (checkFailures.length > 0) {
-        const checkFailureStr = `Check failures: [${checkFailures.join(", ")}]`
-        reason = reason ? `${reason}, ${checkFailureStr}` : checkFailureStr
-      }
+        if (missing.length > 0) {
+          reason = `Env variables missing: [${missing.join(", ")}]`
+        }
 
-      return c.json(
-        {
+        if (checkFailures.length > 0) {
+          const checkFailureStr = `Check failures: [${checkFailures.join(", ")}]`
+          reason = reason ? `${reason}, ${checkFailureStr}` : checkFailureStr
+        }
+
+        return reply.send({
           status,
           reason,
-        },
-        200
-      )
-    } catch (error) {
-      let reason = "Service error"
-      if (error instanceof Error) reason = error.message
+        })
+      } catch (error) {
+        let reason = "Service error"
+        if (error instanceof Error) reason = error.message
 
-      return c.json(
-        {
+        return reply.send({
           status: "DOWN",
           reason,
-        },
-        200
-      )
-    }
-  })
-
-  return healthCheckRoutes
+        })
+      }
+    })
+  }
 }

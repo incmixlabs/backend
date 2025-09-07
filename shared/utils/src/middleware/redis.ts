@@ -1,17 +1,12 @@
-import type { OpenAPIHono } from "@hono/zod-openapi"
-import type { Env as HonoEnv } from "hono"
+import type { FastifyInstance } from "fastify"
+import fp from "fastify-plugin"
 import { createClient, type RedisClientType } from "redis"
-import { envVars } from "../env-config"
 
-declare module "hono" {
-  interface ContextVariableMap {
-    redis: RedisClientType
+declare module "fastify" {
+  interface FastifyRequest {
+    redis?: RedisClientType
   }
 }
-
-type Env = {
-  Bindings: { REDIS_URL: string }
-} & HonoEnv
 
 // Singleton Redis client instance
 let redisClient: RedisClientType | null = null
@@ -84,7 +79,7 @@ async function createRedisConnection(redisUrl: string): Promise<void> {
     redisClient = createClient({
       url: redisUrl,
       socket: {
-        reconnectStrategy: (retries = 3) => {
+        reconnectStrategy: (retries) => {
           if (retries > 10) {
             console.error("Redis max reconnection attempts reached")
             return new Error("Redis max reconnection attempts reached")
@@ -96,7 +91,7 @@ async function createRedisConnection(redisUrl: string): Promise<void> {
     })
 
     // Set up error handling
-    redisClient.on("error", (error: unknown) => {
+    redisClient.on("error", (error) => {
       console.error("Redis client error:", error)
     })
 
@@ -124,7 +119,7 @@ async function createRedisConnection(redisUrl: string): Promise<void> {
 /**
  * Health check for Redis client
  */
-async function checkRedisHealth(): Promise<boolean> {
+export async function checkRedisHealth(): Promise<boolean> {
   try {
     if (!redisClient || !redisClient.isOpen) {
       return false
@@ -143,49 +138,33 @@ async function checkRedisHealth(): Promise<boolean> {
  * Setup Redis middleware with singleton client
  * Uses a shared Redis connection instead of creating per-request clients
  */
-export function setupRedisMiddleware<T extends Env>(
-  app: OpenAPIHono<T>,
-  basePath: string
+export async function setupRedisMiddleware(
+  app: FastifyInstance,
+  _basePath: string
 ) {
-  app.use(`${basePath}/*`, async (c, next) => {
-    try {
-      const redisUrl = envVars.REDIS_URL
+  await app.register(
+    fp((fastify) => {
+      fastify.decorateRequest("redis", undefined)
 
-      // Get the singleton Redis client
-      const redis = await getRedisClient(redisUrl as string)
+      fastify.addHook("onRequest", async (request, _reply) => {
+        try {
+          const redisUrl = process.env.REDIS_URL
 
-      // Verify client health before proceeding
-      if (!(await checkRedisHealth())) {
-        console.warn(
-          "Redis client unhealthy, attempting to recreate connection"
-        )
-        // Gracefully shutdown existing client before recreating
-        if (redisClient) {
-          try {
-            await redisClient.quit()
-            console.log("Existing Redis client shutdown successfully")
-          } catch (error) {
-            console.warn("Error shutting down existing Redis client:", error)
-            // Continue with recreation even if shutdown fails
-          } finally {
-            redisClient = null
+          if (!redisUrl) {
+            console.warn("REDIS_URL not configured")
+            return
           }
+
+          // Get the singleton Redis client
+          const redis = await getRedisClient(redisUrl)
+          request.redis = redis
+        } catch (error) {
+          console.error("Failed to setup Redis middleware:", error)
+          // Continue without Redis - the application can handle missing Redis gracefully
         }
-
-        // Create new healthy connection after old client is closed
-        const healthyRedis = await getRedisClient(redisUrl as string)
-        c.set("redis", healthyRedis)
-      } else {
-        c.set("redis", redis)
-      }
-
-      return next()
-    } catch (error) {
-      console.error("Failed to setup Redis middleware:", error)
-      // Continue without Redis - the application can handle missing Redis gracefully
-      return next()
-    }
-  })
+      })
+    })
+  )
 }
 
 /**

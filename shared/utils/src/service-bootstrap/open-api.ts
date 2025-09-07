@@ -1,34 +1,45 @@
-import type { OpenAPIHono } from "@hono/zod-openapi"
-import { apiReference } from "@scalar/hono-api-reference"
-import type { Env } from "hono"
+import fastifySwagger from "@fastify/swagger"
+import fastifySwaggerUi from "@fastify/swagger-ui"
+import type { FastifyInstance } from "fastify"
 
-export function setupOpenApi<T extends Env>(
-  app: OpenAPIHono<T>,
+export async function setupOpenApi(
+  app: FastifyInstance,
   basePath: string,
-  title?: string,
-  description?: string
+  title?: string
 ) {
-  app.doc(`${basePath}/openapi.json`, {
-    openapi: "3.0.0",
-    info: {
-      version: "1.0.0",
-      title: title ?? "Open Api Docs",
-      ...(description ? { description } : {}),
+  await app.register(fastifySwagger, {
+    openapi: {
+      openapi: "3.0.0",
+      info: {
+        title: title ?? "Open Api Docs",
+        version: "1.0.0",
+      },
+      servers: [
+        {
+          url: basePath,
+        },
+      ],
+      components: {
+        securitySchemes: {
+          cookieAuth: {
+            type: "apiKey",
+            in: "cookie",
+            name: "session",
+          },
+        },
+      },
     },
   })
 
-  app.get(
-    `${basePath}/reference`,
-    apiReference({
-      spec: {
-        url: `${basePath}/openapi.json`,
-      },
-    })
-  )
-
-  app.openAPIRegistry.registerComponent("securitySchemes", "cookieAuth", {
-    type: "apiKey",
-    in: "cookie",
-    name: "session",
+  await app.register(fastifySwaggerUi, {
+    routePrefix: `${basePath}/reference`,
+    uiConfig: {
+      docExpansion: "list",
+      deepLinking: false,
+    },
+    staticCSP: true,
+    transformStaticCSP: (header) => header,
+    transformSpecification: (swaggerObject) => swaggerObject,
+    transformSpecificationClone: true,
   })
 }

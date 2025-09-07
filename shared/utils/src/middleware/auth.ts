@@ -1,51 +1,55 @@
 import type { AuthUser } from "@incmix/utils/types"
-import { generateSentryHeaders } from "@incmix-api/utils"
-import type { MiddlewareHandler } from "hono"
-import { getCookie } from "hono/cookie"
+import type { FastifyInstance, FastifyRequest } from "fastify"
+import fp from "fastify-plugin"
 import { envVars } from "../env-config"
 
-declare module "hono" {
-  interface ContextVariableMap {
+declare module "fastify" {
+  interface FastifyRequest {
+    cookies: Record<string, string>
+  }
+}
+
+declare module "fastify" {
+  interface FastifyRequest {
     user: AuthUser | null
   }
 }
 
-export function createAuthMiddleware(): MiddlewareHandler {
-  return async (c, next) => {
-    const cookieName = (envVars.COOKIE_NAME ?? "session") as string
-    const sessionId = getCookie(c, cookieName) ?? null
+export function createAuthMiddleware() {
+  return fp(async (fastify: FastifyInstance) => {
+    await fastify.register(require("@fastify/cookie"))
 
-    if (!sessionId) {
-      c.set("user", null)
-      return next()
+    if (!fastify.hasRequestDecorator("user")) {
+      fastify.decorateRequest("user", null)
     }
+    fastify.addHook("onRequest", async (request: FastifyRequest, _reply) => {
+      const cookieName = envVars["COOKIE_NAME"] ?? "session"
+      const sessionId = request.cookies?.[cookieName] ?? null
 
-    const authApiUrl = envVars.AUTH_API_URL
-    if (!authApiUrl) {
-      console.error("AUTH_API_URL is not configured")
-      c.set("user", null)
-      return next()
-    }
+      if (!sessionId) {
+        request.user = null
+        return
+      }
 
-    const authUrl = `${authApiUrl}/validate-session`
-    const sentryHeaders = generateSentryHeaders(c)
-    const res = await fetch(authUrl, {
-      method: "get",
-      headers: {
-        "Content-Type": "application/json",
-        cookie: `${cookieName}=${sessionId}`,
-        ...sentryHeaders,
-      },
+      const authUrl = `${envVars["AUTH_API_URL"]}/validate-session`
+      const sentryHeaders = {}
+      const res = await fetch(authUrl, {
+        method: "get",
+        headers: {
+          "Content-Type": "application/json",
+          cookie: `${cookieName}=${sessionId}`,
+          ...sentryHeaders,
+        },
+      })
+      if (!res.ok) {
+        request.user = null
+        return
+      }
+      const user = (await res.json()) as AuthUser
+
+      if (user) {
+        request.user = user
+      }
     })
-    if (!res.ok) {
-      c.set("user", null)
-      return next()
-    }
-    const user = (await res.json()) as AuthUser
-
-    if (user) {
-      c.set("user", user)
-    }
-    return next()
-  }
+  })
 }

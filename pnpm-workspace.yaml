@@ -5,12 +5,19 @@ packages:
 
 catalog:
   '@casl/ability': 6.7.3
-  '@hono/node-server': 1.13.8
-  '@hono/zod-openapi': 1.1.0
-  '@hono/zod-validator': 0.7.2
+  '@fastify/compress': 8.1.0
+  '@fastify/cookie': 11.0.2
+  '@fastify/cors': 11.1.0
+  '@fastify/helmet': 13.0.1
+  '@fastify/oas': 11.3.0x
+  '@fastify/rate-limit': 10.3.0
+  '@fastify/sensible': 6.0.3
+  '@fastify/static': 8.2.0
+  '@fastify/swagger': 9.5.1
+  '@fastify/swagger-ui': 5.2.3
+  '@fastify/websocket': 11.2.0
   '@incmix/utils': 0.51.0
   '@playwright/test': 1.49.0
-  '@scalar/hono-api-reference': 0.5.163
   '@types/lodash': 4.17.1
   '@types/luxon': 3.4.2
   '@types/node': 22.10.1
@@ -20,7 +27,10 @@ catalog:
   dotenv: 16.5.0
   dotenv-expand: 12.0.2
   dotenv-mono: 1.5.0
-  hono: 4.6.16
+  fastify: 5.6.0
+  fastify-openapi-glue: 4.9.2
+  fastify-plugin: 5.0.1
+  fastify-type-provider-zod: 6.0.0
   kysely: 0.27.5
   kysely-ctl: 0.12.1
   lodash: 4.17.21

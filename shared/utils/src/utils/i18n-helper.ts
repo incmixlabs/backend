@@ -1,6 +1,6 @@
 import { createEnvConfig } from "@incmix-api/utils/env-config"
 import { ServerError } from "@incmix-api/utils/errors"
-import type { Context } from "hono"
+import type { FastifyRequest } from "fastify"
 import type { IntlMessage, Locale } from "../types"
 
 // Use the new env-config system with dotenv-mono
@@ -11,9 +11,6 @@ import type { IntlMessage, Locale } from "../types"
 // 4. Service-specific .env.{NODE_ENV} file (if exists)
 const envVars = createEnvConfig("intl")
 
-type Env = {
-  Bindings: { INTL_API_URL: string; COOKIE_NAME: string }
-}
 export async function getDefaultLocale() {
   const res = await fetch(`${envVars["INTL_API_URL"]}/locales/default`, {
     method: "get",
@@ -24,8 +21,8 @@ export async function getDefaultLocale() {
   if (!res.ok) throw new ServerError((data as { message: string }).message)
   return data as Locale
 }
-export async function getAllMessages(c: Context<Env>) {
-  const locale = c.get("locale")
+export async function getAllMessages(request: FastifyRequest) {
+  const locale = (request as any).locale
   const res = await fetch(`${envVars["INTL_API_URL"]}/messages/${locale}`, {
     method: "get",
   })

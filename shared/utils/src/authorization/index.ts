@@ -1,40 +1,31 @@
 export * from "./casl"
 
-import type { OpenAPIHono } from "@hono/zod-openapi"
-import type { Env } from "hono"
+import type { FastifyInstance, FastifyRequest } from "fastify"
+import fp from "fastify-plugin"
 import { PermissionService } from "./casl"
 
-export function setupRbac<T extends Env>(
-  app: OpenAPIHono<T>,
-  basePath: string,
-  rbac?: PermissionService
+declare module "fastify" {
+  interface FastifyRequest {
+    rbac: PermissionService
+  }
+}
+
+export async function setupRbac(
+  app: FastifyInstance,
+  _basePath: string,
+  rbacFactory?: (
+    req: FastifyRequest
+  ) => PermissionService | Promise<PermissionService>
 ) {
-  app.use(`${basePath}/*`, (c, next) => {
-    // Skip RBAC for documentation routes
-    const path = c.req.path
-    const publicPaths = [
-      "/openapi.json",
-      "/reference",
-      "/tasks/openapi.json",
-      "/tasks/reference",
-    ]
+  await app.register(
+    fp((fastify) => {
+      fastify.decorateRequest("rbac", null as any)
 
-    const isPublicPath = publicPaths.some((publicPath) =>
-      path.endsWith(publicPath)
-    )
-
-    if (isPublicPath) {
-      // Set a dummy RBAC that won't be used
-      c.set("rbac", {} as PermissionService)
-      return next()
-    }
-
-    if (!rbac) {
-      c.set("rbac", new PermissionService(c))
-      return next()
-    }
-
-    c.set("rbac", rbac)
-    return next()
-  })
+      fastify.addHook("onRequest", async (request: FastifyRequest, _reply) => {
+        request.rbac = rbacFactory
+          ? await rbacFactory(request)
+          : new PermissionService(request)
+      })
+    })
+  )
 }

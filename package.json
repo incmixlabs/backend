@@ -14,7 +14,7 @@
     "typecheck": "turbo typecheck",
     "pretest": "docker compose -f docker-compose-test.yml up -d --wait",
     "posttest": "docker compose -f docker-compose-test.yml down --remove-orphans",
-    "test": "turbo test --ui tui",
+    "test": "turbo test --filter=!@incmix-api/auth --filter=!@incmix-api/utils && cd api/auth && pnpm run test && cd ../.. && cd shared/utils && pnpm run test && cd ../..",
     "test:e2e": "turbo test:e2e"
   },
   "engines": {
@@ -46,6 +46,7 @@
     "@turbo/gen": "2.5.6",
     "concurrently": "^9.2.1",
     "lefthook": "1.12.3",
+    "pnpm": "10.7.0",
     "tsc-alias": "catalog:",
     "turbo": "2.5.6",
     "vite-tsconfig-paths": "catalog:"

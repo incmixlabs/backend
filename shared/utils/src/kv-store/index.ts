@@ -1,5 +1,5 @@
-declare module "hono" {
-  interface ContextVariableMap {
+declare module "fastify" {
+  interface FastifyRequest {
     kv: KVStore
   }
 }

@@ -1,19 +1,29 @@
-import type { OpenAPIHono } from "@hono/zod-openapi"
 import { KVStore } from "@incmix-api/utils/kv-store"
-import type { Env } from "hono"
+import type { FastifyInstance } from "fastify"
+import fp from "fastify-plugin"
+import { envVars } from "../env-config"
 
-export function setupKvStore<T extends Env>(
-  app: OpenAPIHono<T>,
-  basePath: string,
+export async function setupKvStore(
+  app: FastifyInstance,
+  _basePath: string,
   globalStore: KVStore
 ) {
-  app.use(`${basePath}/*`, (c, next) => {
-    if (!globalStore) {
-      c.set("kv", new KVStore({}, 900))
-      return next()
-    }
+  const ttl = Number(envVars.KV_DEFAULT_TTL ?? 900)
+  await app.register(
+    fp((fastify) => {
+      if (!fastify.hasRequestDecorator("kv")) {
+        fastify.decorateRequest("kv", null as any)
+      }
 
-    c.set("kv", globalStore)
-    return next()
-  })
+      fastify.addHook("onRequest", (request, _reply) => {
+        request.kv = globalStore ?? new KVStore({}, ttl)
+      })
+    })
+  )
+}
+
+declare module "fastify" {
+  interface FastifyRequest {
+    kv: KVStore
+  }
 }

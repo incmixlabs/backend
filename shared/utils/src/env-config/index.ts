@@ -79,6 +79,7 @@ const baseEnvSchema = z.object({
   TIMEOUT_MS: z.coerce.number().default(5000),
   AUTH_API_URL: z.string().url().optional(),
   REDIS_URL: z.string().url(),
+  KV_DEFAULT_TTL: z.coerce.number().default(900),
 })
 
 // Service-specific schema extensions

@@ -1,7 +1,5 @@
-import type { OpenAPIHono } from "@hono/zod-openapi"
-import type { Env } from "hono"
-import { cors } from "hono/cors"
-import { envVars } from "../env-config"
+import fastifyCors from "@fastify/cors"
+import type { FastifyInstance } from "fastify"
 
 const allowedOrigins = [
   "http://localhost:1420",
@@ -14,41 +12,47 @@ const allowedOrigins = [
 const frontendDomain = "turbo-mix.pages.dev"
 const storybookDomain = "turbo-mix-ui.pages.dev"
 
-export function setupCors<T extends Env>(
-  app: OpenAPIHono<T>,
-  basePath: string
-) {
-  app.use(
-    `${basePath}/*`,
-    cors({
-      origin: (origin) => {
-        const DOMAIN = envVars.DOMAIN
-        if (!DOMAIN) {
-          return null
-        }
-        if (DOMAIN === "localhost") {
-          return origin
-        }
+export async function setupCors(app: FastifyInstance, _basePath: string) {
+  await app.register(fastifyCors, {
+    origin: (origin, callback) => {
+      const DOMAIN = process.env.DOMAIN
+      if (!origin) return callback(null, false)
+      if (allowedOrigins.includes(origin)) return callback(null, true)
+      let host: string
+      try {
+        host = new URL(origin).hostname
+      } catch {
+        return callback(null, false)
+      }
+      if (DOMAIN) {
         if (
-          allowedOrigins.includes(origin) ||
-          origin.endsWith(DOMAIN) ||
-          origin.endsWith(frontendDomain) ||
-          origin.endsWith(storybookDomain)
-        )
-          return origin
-
-        return null
-      },
-      allowMethods: ["POST", "GET", "OPTIONS", "DELETE", "PUT", "PATCH"],
-      credentials: true,
-      allowHeaders: [
-        "content-type",
-        "accept-language",
-        "sentry-trace",
-        "baggage",
-        "x-client-type",
-      ],
-      exposeHeaders: ["set-cookie", "content-language"],
-    })
-  )
+          host === DOMAIN ||
+          host.endsWith(`.${DOMAIN}`) ||
+          host === frontendDomain ||
+          host.endsWith(`.${frontendDomain}`) ||
+          host === storybookDomain ||
+          host.endsWith(`.${storybookDomain}`)
+        ) {
+          return callback(null, true)
+        }
+        return callback(null, false)
+      }
+      if (host === "localhost" || host === "127.0.0.1") {
+        return callback(null, true)
+      }
+      return callback(null, false)
+    },
+    methods: ["POST", "GET", "OPTIONS", "DELETE", "PUT", "PATCH"],
+    credentials: true,
+    allowedHeaders: [
+      "content-type",
+      "accept-language",
+      "sentry-trace",
+      "baggage",
+      "x-client-type",
+      "authorization",
+      "x-requested-with",
+    ],
+    exposedHeaders: ["set-cookie", "content-language"],
+  })
 }

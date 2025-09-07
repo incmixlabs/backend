@@ -1,6 +1,12 @@
-import type { OpenAPIHono } from "@hono/zod-openapi"
-import type { Context, MiddlewareHandler } from "hono"
-import { compress } from "hono/compress"
+import fastifyCompress from "@fastify/compress"
+import type { KyselyDb } from "@incmix-api/utils/db-schema"
+import { initDb } from "@incmix-api/utils/db-schema"
+import type {
+  FastifyInstance,
+  FastifyPluginCallback,
+  FastifyRequest,
+} from "fastify"
+import fp from "fastify-plugin"
 import { envVars } from "../env-config"
 import { createAuthMiddleware } from "./auth"
 import { setupCors } from "./cors"
@@ -8,17 +14,25 @@ import { createI18nMiddleware } from "./i18n"
 import { setupRedisMiddleware } from "./redis"
 import { setupSentryMiddleware } from "./sentry"
 
+declare module "fastify" {
+  interface FastifyRequest {
+    db: KyselyDb | null
+  }
+}
+
 export interface MiddlewareConfig {
   basePath: string
   serviceName: string
-  customAuthMiddleware?: MiddlewareHandler
-  mockMiddleware?: MiddlewareHandler
+  databaseUrl?: string
+  customAuthMiddleware?: FastifyPluginCallback
+  mockMiddleware?: FastifyPluginCallback
   mockData?: boolean
   corsFirst?: boolean
   skipAuth?: boolean
+  skipI18n?: boolean
   useRedis?: boolean
   useCompression?: boolean
-  customI18nMiddleware?: () => MiddlewareHandler
+  customI18nMiddleware?: () => FastifyPluginCallback
 }
 
 export function createReferenceEndpointCheck(basePath: string) {
@@ -30,14 +44,17 @@ export function createReferenceEndpointCheck(basePath: string) {
     }
     return normalizedPath
   }
-  return async (c: Context): Promise<boolean> => {
-    const origin = new URL(c.req.url).origin
-    const referenceUrl = `${origin}${normalize(basePath)}/reference`
+  return async (request: FastifyRequest): Promise<boolean> => {
+    const proto = request.protocol ?? "http"
+    const host = request.headers.host
+    if (!host) return false
+    const base = `${proto}://${host}`
+    const referenceUrl = new URL(
+      `${normalize(basePath)}/reference`,
+      base
+    ).toString()
     const controller = new AbortController()
-    const timer = setTimeout(
-      () => controller.abort(),
-      envVars.TIMEOUT_MS as number
-    )
+    const timer = setTimeout(() => controller.abort(), envVars.TIMEOUT_MS)
     try {
       const response = await fetch(referenceUrl, {
         method: "GET",
@@ -56,18 +73,20 @@ export function createReferenceEndpointCheck(basePath: string) {
   }
 }
 
-export function setupApiMiddleware<T extends { Bindings: any; Variables: any }>(
-  app: OpenAPIHono<T>,
+export async function setupApiMiddleware(
+  app: FastifyInstance,
   config: MiddlewareConfig
 ) {
   const {
     basePath,
     serviceName,
+    databaseUrl,
     customAuthMiddleware,
     mockMiddleware,
     mockData,
     corsFirst = true,
     skipAuth = false,
+    skipI18n = false,
     useRedis = false,
     useCompression = false,
     customI18nMiddleware,
@@ -75,15 +94,44 @@ export function setupApiMiddleware<T extends { Bindings: any; Variables: any }>(
 
   // Setup compression if enabled
   if (useCompression) {
-    app.use("*", compress({ encoding: "gzip" }))
+    await app.register(fastifyCompress, { global: true })
   }
 
   // Setup Sentry middleware first for error tracking
-  setupSentryMiddleware(app, basePath, serviceName)
+  await app.register(setupSentryMiddleware, {
+    dsn: envVars.SENTRY_DSN,
+    serviceName: serviceName,
+    environment: envVars.NODE_ENV,
+  })
 
   // Setup CORS based on preference, or always if mock middleware is enabled
   if (corsFirst || (mockData && mockMiddleware)) {
-    setupCors(app, basePath)
+    await setupCors(app, basePath)
+  }
+
+  // Setup database middleware early so other middleware can access it
+  if (databaseUrl) {
+    // Initialize database connection once
+    const db = initDb(databaseUrl)
+
+    await app.register(
+      fp((fastify) => {
+        fastify.decorateRequest("db", null)
+
+        // IMPORTANT: Make onRequest hook async to ensure proper execution order with other async hooks
+        fastify.addHook("onRequest", (request, _reply) => {
+          request.db = db
+        })
+
+        fastify.addHook("onClose", async () => {
+          try {
+            await db.destroy()
+          } catch (_e) {
+            // best-effort shutdown
+          }
+        })
+      })
+    )
   }
 
   // Add mock middleware if enabled
@@ -92,32 +140,34 @@ export function setupApiMiddleware<T extends { Bindings: any; Variables: any }>(
     console.log(
       "🎭 MOCK MODE ENABLED - Using mock data instead of real database"
     )
-    app.use(`${basePath}/*`, mockMiddleware)
+    await app.register(mockMiddleware)
   }
 
-  // Setup i18n middleware (custom or default)
-  if (customI18nMiddleware) {
-    app.use(`${basePath}/*`, customI18nMiddleware())
-  } else {
-    app.use(`${basePath}/*`, createI18nMiddleware())
+  // Setup i18n middleware (custom or default) unless explicitly skipped
+  if (!skipI18n) {
+    if (customI18nMiddleware) {
+      await app.register(customI18nMiddleware())
+    } else {
+      await app.register(createI18nMiddleware())
+    }
   }
 
   // Setup auth middleware (custom or default) unless explicitly skipped
   if (!skipAuth) {
     if (customAuthMiddleware) {
-      app.use(`${basePath}/*`, customAuthMiddleware)
+      await app.register(customAuthMiddleware)
     } else {
-      app.use(`${basePath}/*`, createAuthMiddleware())
+      await app.register(createAuthMiddleware())
     }
   }
 
   // Setup CORS after auth if not done before (and mock middleware isn't short-circuiting)
   if (!corsFirst && !(mockData && mockMiddleware)) {
-    setupCors(app, basePath)
+    await setupCors(app, basePath)
   }
 
   // Setup Redis middleware if needed
   if (useRedis) {
-    setupRedisMiddleware(app, basePath)
+    await setupRedisMiddleware(app, basePath)
   }
 }

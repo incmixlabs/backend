@@ -1,5 +1,4 @@
-import type { OpenAPIHono } from "@hono/zod-openapi"
-import type { Context } from "hono"
+import type { FastifyInstance, FastifyRequest } from "fastify"
 import type { Kysely } from "kysely"
 // Redis client type - define as any to avoid redis package dependency
 export type RedisClientType = any
@@ -54,21 +53,15 @@ export interface ServiceUser {
 
 // Standard service app type
 export type StandardServiceApp<
-  TBindings extends ServiceBindings = ServiceBindings,
-  TVariables extends ServiceVariables = ServiceVariables,
-> = OpenAPIHono<{
-  Bindings: TBindings
-  Variables: TVariables
-}>
+  _TBindings extends ServiceBindings = ServiceBindings,
+  _TVariables extends ServiceVariables = ServiceVariables,
+> = FastifyInstance
 
 // Standard service context type
 export type StandardServiceContext<
-  TBindings extends ServiceBindings = ServiceBindings,
-  TVariables extends ServiceVariables = ServiceVariables,
-> = Context<{
-  Bindings: TBindings
-  Variables: TVariables
-}>
+  _TBindings extends ServiceBindings = ServiceBindings,
+  _TVariables extends ServiceVariables = ServiceVariables,
+> = FastifyRequest
 
 // Pagination response type
 export interface PaginatedResponse<T> {

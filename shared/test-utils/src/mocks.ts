@@ -1,15 +1,14 @@
 import { DEFAULT_LOCALE, DEFAULT_MESSAGES } from "@incmix-api/utils"
 import type { Locale } from "@incmix-api/utils/db-schema"
 import type { KVStore } from "@incmix-api/utils/kv-store"
-import type { MiddlewareHandler } from "hono"
-import { getCookie } from "hono/cookie"
+import type { FastifyReply, FastifyRequest } from "fastify"
 import { vi } from "vitest"
 
 // Mock fetch for external API calls
 export const mockFetch = vi.fn()
 
 // Mock internationalization service responses
-export function createi18nMockMiddleware(): MiddlewareHandler {
+export function createi18nMockPlugin() {
   const mockLocale: Locale = {
     id: 1,
     code: "en",
@@ -19,19 +18,24 @@ export function createi18nMockMiddleware(): MiddlewareHandler {
     updatedAt: new Date(),
   }
 
-  return async (c, next) => {
-    const kv = c.get("kv") as KVStore
-    c.set("locale", mockLocale.code)
-    await kv.getItem(DEFAULT_LOCALE, { fn: () => Promise.resolve(mockLocale) })
+  return (fastify: any) => {
+    fastify.addHook(
+      "onRequest",
+      async (request: FastifyRequest, reply: FastifyReply) => {
+        const kv = (request as any).kv as KVStore
+        ;(request as any).locale = mockLocale.code
+        await kv.getItem(DEFAULT_LOCALE, {
+          fn: () => Promise.resolve(mockLocale),
+        })
 
-    const locale = "en"
+        const locale = "en"
+        ;(request as any).locale = locale
+        await kv.getItem(locale, { fn: () => Promise.resolve([]) })
+        await kv.getItem(DEFAULT_MESSAGES, { fn: () => Promise.resolve([]) })
 
-    c.set("locale", locale)
-    await kv.getItem(locale, { fn: () => Promise.resolve([]) })
-    await kv.getItem(DEFAULT_MESSAGES, { fn: () => Promise.resolve([]) })
-
-    c.header("content-language", locale, { append: true })
-    return await next()
+        reply.header("content-language", locale)
+      }
+    )
   }
 }
 
@@ -88,23 +92,39 @@ export const mockApi = () => {
   )
 }
 
-export function createAuthMockMiddleware(): MiddlewareHandler {
-  return async (c, next) => {
-    const cookieName = "incmix_session_dev"
-    const sessionId = getCookie(c, cookieName) ?? null
+export function createAuthMockPlugin() {
+  return (fastify: any) => {
+    fastify.addHook(
+      "onRequest",
+      (request: FastifyRequest, _reply: FastifyReply) => {
+        const cookieName = "incmix_session_dev"
+        // For testing, we'll get cookies from headers since @fastify/cookie might not be registered
+        const cookieHeader = request.headers.cookie || ""
+        const cookies = cookieHeader
+          .split(";")
+          .reduce((acc: Record<string, string>, cookie) => {
+            const [key, value] = cookie.trim().split("=")
+            if (key && value) {
+              acc[key] = value
+            }
+            return acc
+          }, {})
 
-    if (!sessionId) {
-      c.set("user", null)
-      return await next()
-    }
+        const sessionId = cookies[cookieName] ?? null
 
-    let user = MockUser
-    if (sessionId === "test-admin-session") {
-      user = mockAdminUser
-    }
+        if (!sessionId) {
+          ;(request as any).user = null
+          return
+        }
 
-    c.set("user", user)
-    return await next()
+        let user = MockUser
+        if (sessionId === "test-admin-session") {
+          user = mockAdminUser
+        }
+
+        ;(request as any).user = user
+      }
+    )
   }
 }
 
@@ -123,31 +143,26 @@ export function setupTestEnv() {
   }
 }
 
-// Mock Hono context utilities
-export function createMockContext(overrides: any = {}) {
+// Mock Fastify request and reply utilities
+export function createMockRequest(overrides: any = {}) {
   return {
-    req: {
-      header: vi.fn((name: string) => {
-        const headers = {
-          "content-type": "application/json",
-          "user-agent": "test-agent",
-          ...overrides.headers,
-        }
-        return headers[name.toLowerCase()]
-      }),
-      url: "http://localhost:8787/api/auth/test",
-      method: "GET",
-      ...overrides.req,
+    headers: {
+      "content-type": "application/json",
+      "user-agent": "test-agent",
+      ...overrides.headers,
     },
-    res: {
-      header: vi.fn(),
-      status: vi.fn().mockReturnThis(),
-      json: vi.fn().mockReturnThis(),
-      text: vi.fn().mockReturnThis(),
-      ...overrides.res,
-    },
-    set: vi.fn(),
-    get: vi.fn(),
+    url: "/api/auth/test",
+    method: "GET",
+    ...overrides,
+  }
+}
+
+export function createMockReply(overrides: any = {}) {
+  return {
+    status: vi.fn().mockReturnThis(),
+    send: vi.fn().mockReturnThis(),
+    header: vi.fn().mockReturnThis(),
+    cookie: vi.fn().mockReturnThis(),
     ...overrides,
   }
 }

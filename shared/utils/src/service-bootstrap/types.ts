@@ -1,6 +1,6 @@
-import type { OpenAPIHono } from "@hono/zod-openapi"
-import type { Context } from "hono"
+import type { FastifyInstance, FastifyRequest } from "fastify"
 import type { Kysely } from "kysely"
+
 // Redis client type - define as any to avoid redis package dependency
 export type RedisClientType = any
 
@@ -23,18 +23,12 @@ export interface CommonVariables {
   locale?: string
 }
 
-export type HonoApp<
-  TBindings extends CommonBindings = CommonBindings,
-  TVariables extends CommonVariables = CommonVariables,
-> = OpenAPIHono<{
-  Bindings: TBindings
-  Variables: TVariables
-}>
+export type FastifyApp<
+  _TBindings extends CommonBindings = CommonBindings,
+  _TVariables extends CommonVariables = CommonVariables,
+> = FastifyInstance
 
-export type HonoContext<
-  TBindings extends CommonBindings = CommonBindings,
-  TVariables extends CommonVariables = CommonVariables,
-> = Context<{
-  Bindings: TBindings
-  Variables: TVariables
-}>
+export type FastifyContext<
+  _TBindings extends CommonBindings = CommonBindings,
+  _TVariables extends CommonVariables = CommonVariables,
+> = FastifyRequest
