@@ -47,6 +47,11 @@ export class TestDatabase {
       console.log("✅ Test database connected successfully with testcontainers")
       return this.db
     } catch (error) {
+      // Ensure any partially opened resources are closed before fallback
+      try { await (this as any).db?.destroy?.() } catch {}
+      try { await this.pool?.end() } catch {}
+      this.pool = null
+
       console.warn(
         "⚠️  Real database not available, using mock database:",
         error
