@@ -23,17 +23,12 @@ export class TestDatabase {
       this.pool = new Pool({
         connectionString,
         max: 1, // Single connection for tests
+        connectionTimeoutMillis: 10_000,
       })
 
-      // Test the connection with timeout
-      const client = (await Promise.race([
-        this.pool.connect(),
-        new Promise((_, reject) =>
-          setTimeout(() => reject(new Error("Connection timeout")), 10000)
-        ),
-      ])) as any
+      // Test the connection
+      const client = await this.pool.connect()
       client.release()
-
       this.db = new Kysely<Database>({
         dialect: new PostgresDialect({
           pool: this.pool,
