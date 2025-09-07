@@ -159,6 +159,7 @@ export function createMockRequest(overrides: any = {}) {
 
 export function createMockReply(overrides: any = {}) {
   return {
+    code: vi.fn().mockReturnThis(),
     status: vi.fn().mockReturnThis(),
     send: vi.fn().mockReturnThis(),
     header: vi.fn().mockReturnThis(),
