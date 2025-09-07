@@ -14,9 +14,8 @@ export async function verifyVerificationCode(
   code: string,
   type: TokenType
 ) {
-  const databaseCode = await c
-    .get("db")
-    .selectFrom("verificationCodes")
+  const databaseCode = await c.db
+    ?.selectFrom("verificationCodes")
     .selectAll()
     .where((eb) =>
       eb.and([
@@ -33,9 +32,8 @@ export async function verifyVerificationCode(
   }
 
   if (!isWithinExpirationDate(new Date(databaseCode.expiresAt))) {
-    await c
-      .get("db")
-      .deleteFrom("verificationCodes")
+    await c.db
+      ?.deleteFrom("verificationCodes")
       .where((eb) =>
         eb.and([
           eb("userId", "=", user.id),
@@ -47,9 +45,8 @@ export async function verifyVerificationCode(
     return false
   }
 
-  await c
-    .get("db")
-    .deleteFrom("verificationCodes")
+  await c.db
+    ?.deleteFrom("verificationCodes")
     .where((eb) =>
       eb.and([
         eb("userId", "=", user.id),
@@ -68,16 +65,14 @@ export async function insertOAuthUser(
   accountId: string,
   c: Context
 ) {
-  const existingUser = await c
-    .get("db")
-    .selectFrom("users")
+  const existingUser = await c.db
+    ?.selectFrom("users")
     .selectAll()
     .where("email", "=", user.email)
     .executeTakeFirst()
 
-  const existingAccount = await c
-    .get("db")
-    .selectFrom("accounts")
+  const existingAccount = await c.db
+    ?.selectFrom("accounts")
     .selectAll()
     .where((eb) =>
       eb.and([eb("accountId", "=", accountId), eb("provider", "=", provider)])
@@ -87,9 +82,8 @@ export async function insertOAuthUser(
   if (existingAccount && existingUser) return existingUser
 
   if (existingUser && !existingAccount) {
-    await c
-      .get("db")
-      .insertInto("accounts")
+    await c.db
+      ?.insertInto("accounts")
       .values({ accountId, provider, userId: existingUser.id })
       .execute()
 
@@ -112,9 +106,8 @@ export async function insertOAuthUser(
 
   if (!newUser) throw new Error("Failed to insert User")
 
-  await c
-    .get("db")
-    .insertInto("accounts")
+  await c.db
+    ?.insertInto("accounts")
     .values({ accountId, provider, userId: newUser.id })
     .execute()
 
@@ -128,10 +121,10 @@ export async function generateVerificationCode(
   type: TokenType,
   dbInstance?: KyselyDb
 ) {
-  const db = dbInstance ?? c.get("db")
+  const db = dbInstance ?? (c as any).db
   await db
     .deleteFrom("verificationCodes")
-    .where((eb) =>
+    .where((eb: any) =>
       eb.and([
         eb("userId", "=", userId),
         eb("email", "=", email),

@@ -1,30 +1,54 @@
+import type { FastifyReply, FastifyRequest } from "fastify"
 import { envVars } from "@/env-vars"
-import type { Context } from "@/types"
+
+declare module "fastify" {
+  interface FastifyReply {
+    setCookie(name: string, value: string, options?: any): this
+    clearCookie(name: string, options?: any): this
+  }
+}
 
 const COOKIE_NAME = envVars.COOKIE_NAME
 const COOKIE_PATH = "/"
 const MAX_AGE = 30 * 24 * 60 * 60 // 30 days in seconds
-const SAME_SITE = "None"
+const SAME_SITE = "None" as const
 function isProduction(): boolean {
   return envVars.NODE_ENV === "production"
 }
 
 export function setSessionCookie(
-  c: Context,
+  _request: FastifyRequest,
+  reply: FastifyReply,
   sessionId: string,
   expiresAt: Date
 ): void {
-  c.header(
-    "Set-Cookie",
-    `${COOKIE_NAME}=${sessionId}; Domain=${envVars.DOMAIN}; Path=${COOKIE_PATH}; HttpOnly; SameSite=${SAME_SITE}; Max-Age=${MAX_AGE}; Secure=${isProduction()}; Expires=${expiresAt.toUTCString()}`
-  )
+  reply.setCookie(COOKIE_NAME, sessionId, {
+    domain: envVars.DOMAIN,
+    path: COOKIE_PATH,
+    httpOnly: true,
+    sameSite: SAME_SITE,
+    maxAge: MAX_AGE,
+    secure: isProduction(),
+    expires: expiresAt,
+  })
 }
 
-export function deleteSessionCookie(c: Context): void {
+export function deleteSessionCookie(
+  _request: FastifyRequest,
+  reply: FastifyReply
+): void {
   const domain = envVars.DOMAIN
   const isIp = domain ? /^\d{1,3}(\.\d{1,3}){3}$/.test(domain) : false
-  const domainPart =
-    domain && !/localhost/i.test(domain) && !isIp ? `; Domain=${domain}` : ""
-  const cookie = `${COOKIE_NAME}=; Path=${COOKIE_PATH}; HttpOnly; SameSite=${SAME_SITE}; Max-Age=0; Expires=Thu, 01 Jan 1970 00:00:00 GMT; Secure${domainPart}`
-  c.header("Set-Cookie", cookie, { append: true })
+  const domainConfig =
+    domain && !/localhost/i.test(domain) && !isIp ? envVars.DOMAIN : undefined
+
+  reply.setCookie(COOKIE_NAME, "", {
+    domain: domainConfig,
+    path: COOKIE_PATH,
+    httpOnly: true,
+    sameSite: SAME_SITE,
+    maxAge: 0,
+    expires: new Date(0),
+    secure: isProduction(),
+  })
 }

@@ -1,40 +1,18 @@
-import { createHealthCheckRoute } from "@incmix-api/utils"
-import { envVars } from "@/env-vars"
-import type { HonoApp } from "@/types"
+import type { FastifyInstance, FastifyPluginCallback } from "fastify"
 
-const healthcheckRoutes = createHealthCheckRoute<HonoApp>({
-  // Pass all environment variables to check
-  envVars: {
-    COOKIE_NAME: envVars.COOKIE_NAME,
-    DOMAIN: envVars.DOMAIN,
-    EMAIL_API_URL: envVars.EMAIL_API_URL,
-    FRONTEND_URL: envVars.FRONTEND_URL,
-    GOOGLE_CLIENT_ID: envVars.GOOGLE_CLIENT_ID,
-    GOOGLE_CLIENT_SECRET: envVars.GOOGLE_CLIENT_SECRET,
-    GOOGLE_REDIRECT_URL: envVars.GOOGLE_REDIRECT_URL,
-    INTL_API_URL: envVars.INTL_API_URL,
-    DATABASE_URL: envVars.DATABASE_URL,
-  },
-
-  // Disable reference endpoint check for now
-  basePath: undefined,
-
-  // Add service-specific checks
-  checks: [
-    {
-      name: "Database",
-      check: async (c) => {
-        try {
-          console.log("Database URL:", envVars.DATABASE_URL)
-          // Simple query to check database connectivity
-          await c.get("db").selectFrom("users").selectAll().limit(1).execute()
-          return true
-        } catch (_error) {
-          return false
-        }
-      },
-    },
-  ],
-})
+const healthcheckRoutes: FastifyPluginCallback = (
+  fastify: FastifyInstance,
+  _options,
+  done
+) => {
+  fastify.get("/", (_request, reply) => {
+    return reply.send({
+      status: "ok",
+      service: "auth-api",
+      timestamp: new Date().toISOString(),
+    })
+  })
+  done()
+}
 
 export default healthcheckRoutes

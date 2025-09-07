@@ -1,27 +1,28 @@
 import type { KyselyDb } from "@incmix-api/utils/db-schema"
-import type { Context as HonoContext } from "hono"
+import type { FastifyReply, FastifyRequest } from "fastify"
 import type { Session } from "@/auth/types"
 import type { Env } from "@/env-vars"
+
+declare module "fastify" {
+  interface FastifyRequest {
+    user: AuthUser | null
+    session?: Session | null
+  }
+}
 
 export type Bindings = Env
 
 export type AuthUser = {
   id: string
-  fullName: string
   email: string
   isSuperAdmin: boolean
   emailVerified: boolean
 }
 
 export type Variables = {
-  user?: AuthUser
-  session?: Session
+  user: AuthUser | null
+  session: Session | null
   db: KyselyDb
-  redis?: any
-  requestId?: string
-  locale?: string
-  i18n?: any
-  kvStore?: any
 }
 
 export type GoogleUser = {
@@ -34,5 +35,6 @@ export type GoogleUser = {
   email_verified: boolean
 }
 
-export type HonoApp = { Bindings: Bindings; Variables: Variables }
-export type Context = HonoContext<HonoApp>
+export type Context = FastifyRequest
+export type AppRequest = FastifyRequest
+export type AppReply = FastifyReply

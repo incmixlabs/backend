@@ -1,12 +1,19 @@
 import { mockApi, mockFetch, resetMocks, testDb } from "@incmix-api/test-utils"
 import { afterAll, afterEach, beforeAll, beforeEach, vi } from "vitest"
 
+// Initialize mocks immediately
+mockApi()
+global.fetch = mockFetch
+
 // Global test setup
 beforeAll(async () => {
-  mockApi()
-  await testDb.setup()
-  global.fetch = mockFetch
-  console.log("🚀 Test environment initialized")
+  try {
+    await testDb.setup()
+    console.log("🚀 Test environment initialized")
+  } catch (error) {
+    console.error("❌ Failed to setup test environment:", error)
+    throw error
+  }
 })
 
 beforeEach(() => {

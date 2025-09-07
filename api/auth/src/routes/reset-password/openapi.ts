@@ -1,4 +1,4 @@
-import { createRoute } from "@hono/zod-openapi"
+import { createRoute } from "@incmix-api/utils/zod-schema"
 import {
   ForgetPassowrdSchema,
   ResetPasswordSchema,

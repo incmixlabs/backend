@@ -1,5 +1,4 @@
-import { createRoute } from "@hono/zod-openapi"
-
+import { createRoute } from "@incmix-api/utils/zod-schema"
 import { HealthCheckSchema } from "@/routes/healthcheck/types"
 
 export const healthCheck = createRoute({

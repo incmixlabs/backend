@@ -1,20 +1,14 @@
-import { createi18nMockMiddleware } from "@incmix-api/test-utils"
-import { type AuthEnv, createService } from "@incmix-api/utils"
 import type {
   Database,
   NewSession,
   NewUser,
   User,
 } from "@incmix-api/utils/db-schema"
-import { setupApiMiddleware } from "@incmix-api/utils/middleware"
 import type { Kysely } from "kysely"
 import { expect } from "vitest"
-import { authMiddleware } from "@/auth/middleware"
 import type { Session } from "@/auth/types"
-import { envVars } from "@/env-vars"
 import { BASE_PATH } from "../../src/lib/constants"
 import { routes } from "../../src/routes"
-import type { HonoApp } from "../../src/types"
 
 type Credentials = {
   email: string
@@ -27,40 +21,63 @@ type SignupData = {
   fullName: string
 }
 
-// Create a test client using Hono's testClient
-export function createTestClient() {
-  // Create the service without starting the server
-  const service = createService<HonoApp["Bindings"], HonoApp["Variables"]>({
-    name: "auth-api-test",
-    port: (envVars.PORT as number) || 0, // Use test environment port or 0 to avoid conflicts
-    basePath: BASE_PATH,
-    needDb: true,
-    bindings: { ...envVars, DATABASE_URL: process.env.DATABASE_URL } as AuthEnv,
-    setupMiddleware: (app) => {
-      setupApiMiddleware(app, {
-        basePath: BASE_PATH,
-        serviceName: "auth-api-test",
-        customAuthMiddleware: authMiddleware,
-        customI18nMiddleware: createi18nMockMiddleware,
-        corsFirst: true,
-      })
-    },
-    setupRoutes: (app) => routes(app),
+// Create a test client using Fastify's inject method
+export async function createTestClient() {
+  // Try a simpler approach - create Fastify directly
+  const Fastify = (await import("fastify")).default
+  const fastifyCookie = (await import("@fastify/cookie")).default
+
+  const testApp = Fastify({
+    logger: false,
   })
 
-  const { app: testApp } = service
-  // Add a request method that works with the BASE_PATH
+  // Register cookie plugin first (required for auth routes)
+  await testApp.register(fastifyCookie)
+
+  // Register routes directly
+  await routes(testApp)
+
+  // Wait for ready state to ensure all plugins are loaded
+  await testApp.ready()
+
+  // List registered routes for debugging
+  console.log("Registered routes:")
+  testApp.printRoutes()
+
+  // Add a request method that works with Fastify's inject
   const client = {
     request: async (path: string, options: RequestInit = {}) => {
       const fullPath = `${BASE_PATH}${path}`
-      return await testApp.request(fullPath, options)
+      console.log(`Injecting request to: ${fullPath}`)
+      const response = await testApp.inject({
+        method: (options.method as any) || "GET",
+        url: fullPath,
+        headers: options.headers as Record<string, string>,
+        payload: options.body as any,
+      })
+      console.log(`Response received from inject: ${response.statusCode}`)
+
+      // Convert Fastify response to fetch-like response
+      return {
+        status: response.statusCode,
+        ok: response.statusCode >= 200 && response.statusCode < 300,
+        json: async () => JSON.parse(response.body),
+        text: async () => response.body,
+        headers: {
+          get: (name: string) =>
+            response.headers[name.toLowerCase()] as string | null,
+        },
+      } as any
+    },
+    close: async () => {
+      await testApp.close()
     },
   }
 
   return client
 }
 
-export type TestAgent = ReturnType<typeof createTestClient>
+export type TestAgent = Awaited<ReturnType<typeof createTestClient>>
 
 export function createUser(overrides: Partial<User> = {}) {
   return {
