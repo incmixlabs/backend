@@ -1,6 +1,6 @@
 import { z } from "zod"
 
-export const projectStatus = ["all", "started", "on-hold", "completed"] as const
+export const projectStatus = ["started", "on-hold", "completed"] as const
 
 export type ProjectStatus = (typeof projectStatus)[number]
 
