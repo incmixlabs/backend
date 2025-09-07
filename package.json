@@ -46,6 +46,7 @@
     "@turbo/gen": "2.5.6",
     "concurrently": "^9.2.1",
     "lefthook": "1.12.3",
+    "pnpm": "10.7.0",
     "tsc-alias": "catalog:",
     "turbo": "2.5.6",
     "vite-tsconfig-paths": "catalog:"

@@ -1,8 +1,6 @@
-import { z } from "@hono/zod-openapi"
+import { z } from "zod"
 
-export const HealthCheckSchema = z
-  .object({
-    status: z.string().openapi({ example: "UP" }),
-    reason: z.string().optional().openapi({ example: "Bucket Missing" }),
-  })
-  .openapi("Healthcheck")
+export const HealthCheckSchema = z.object({
+  status: z.string(),
+  reason: z.string().optional(),
+})

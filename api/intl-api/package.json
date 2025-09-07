@@ -8,12 +8,11 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
-    "@hono/zod-openapi": "catalog:",
-    "@hono/zod-validator": "catalog:",
+    "fastify": "catalog:",
+    "fastify-type-provider-zod": "catalog:",
     "@incmix-api/utils": "workspace:^",
     "@incmix/utils": "catalog:",
     "@intlify/utils": "0.13.0",
-    "hono": "catalog:",
     "kysely": "catalog:",
     "kysely-ctl": "catalog:",
     "pg": "catalog:",

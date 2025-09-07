@@ -17,9 +17,8 @@ export async function getUserProfile(
   _cookie: string
 ): Promise<ProfileDTO> {
   // User profile is now handled directly in the auth service
-  const user = await c
-    .get("db")
-    .selectFrom("users")
+  const user = await c.db
+    ?.selectFrom("users")
     .innerJoin("userProfiles", "users.id", "userProfiles.id")
     .select([
       "users.id",
@@ -55,9 +54,8 @@ export async function createUserProfile(
 ): Promise<ProfileDTO> {
   // Ensure user profile exists
   try {
-    await c
-      .get("db")
-      .insertInto("userProfiles")
+    await c.db
+      ?.insertInto("userProfiles")
       .values({
         id,
         email,
@@ -72,9 +70,8 @@ export async function createUserProfile(
   }
 
   // Fetch the user profile
-  const user = await c
-    .get("db")
-    .selectFrom("users")
+  const user = await c.db
+    ?.selectFrom("users")
     .innerJoin("userProfiles", "users.id", "userProfiles.id")
     .select([
       "users.id",
@@ -106,18 +103,17 @@ export async function deleteUserProfile(
   id: string
 ): Promise<MessageResponse> {
   // Delete user profile
-  const result = await c
-    .get("db")
-    .deleteFrom("userProfiles")
+  const result = await c.db
+    ?.deleteFrom("userProfiles")
     .where("id", "=", id)
     .execute()
 
-  if (result.length === 0) {
+  if (!result || result.length === 0) {
     throw new BadRequestError("User profile not found")
   }
 
   // Delete user
-  await c.get("db").deleteFrom("users").where("id", "=", id).execute()
+  await c.db?.deleteFrom("users").where("id", "=", id).execute()
 
   return {
     message: "User profile deleted successfully",

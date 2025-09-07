@@ -1,20 +1,20 @@
-import { z } from "@hono/zod-openapi"
 import {
   ChecklistItemSchema,
   ProjectSchema,
 } from "@incmix-api/utils/zod-schema"
+import { z } from "zod"
 
 export const IdSchema = z.object({
-  id: z.string().openapi({ example: "2hek2bkjh" }),
+  id: z.string(),
 })
 
 export const OrgIdSchema = z.object({
-  orgId: z.string().openapi({ example: "org123" }),
+  orgId: z.string(),
 })
 
 export const ChecklistIdSchema = z.object({
-  projectId: z.string().openapi({ example: "2hek2bkjh" }),
-  checklistId: z.string().openapi({ example: "2hek2bkjh" }),
+  projectId: z.string(),
+  checklistId: z.string(),
 })
 
 export const ProjectListSchema = ProjectSchema.omit({
@@ -38,16 +38,12 @@ export const CreateProjectSchema = ProjectSchema.pick({
   endDate: true,
   company: true,
 }).extend({
-  id: z.string().optional().openapi({ example: "2hek2bkjh" }),
-  logo: z.instanceof(File).optional().openapi({
-    type: "string",
-    format: "binary",
-    description: "Project logo file",
-  }),
-  budget: z.coerce.number().int().nullish().openapi({ example: 10000 }),
+  id: z.string().optional(),
+  logo: z.instanceof(File).optional(),
+  budget: z.coerce.number().int().nullish(),
   acceptanceCriteria: z.string().optional(),
   checklist: z.string().optional(),
-  members: z.string().optional().openapi({ example: "user1,user2,user3" }),
+  members: z.string().optional(),
 })
 
 export const UpdateProjectSchema = ProjectSchema.pick({
@@ -61,22 +57,16 @@ export const UpdateProjectSchema = ProjectSchema.pick({
 }).partial()
 
 export const AddProjectMemberSchema = z.object({
-  members: z
-    .array(
-      z.object({
-        id: z.string().openapi({ example: "user123" }),
-        role: z
-          .string()
-          .optional()
-          .default("project_member")
-          .openapi({ example: "project_member" }),
-      })
-    )
-    .openapi({ example: [{ id: "user123", role: "member" }] }),
+  members: z.array(
+    z.object({
+      id: z.string(),
+      role: z.string().optional().default("project_member"),
+    })
+  ),
 })
 
 export const RemoveProjectMemberSchema = z.object({
-  memberIds: z.array(z.string()).openapi({ example: ["2hek2bkjh"] }),
+  memberIds: z.array(z.string()),
 })
 
 export const AddProjectChecklistSchema = z.object({
@@ -88,5 +78,5 @@ export const UpdateProjectChecklistSchema = z.object({
 })
 
 export const RemoveProjectChecklistSchema = z.object({
-  checklistIds: z.array(z.string()).openapi({ example: ["2hek2bkjh"] }),
+  checklistIds: z.array(z.string()),
 })

@@ -1,5 +1,5 @@
 import type { KyselyDb } from "@incmix-api/utils/db-schema"
-import type { Context as HonoContext } from "hono"
+import type { FastifyReply, FastifyRequest } from "fastify"
 import VerificationEmail from "./emails/email-verification"
 import ResetPasswordEmail from "./emails/reset-password"
 import type { Env } from "./env-vars"
@@ -10,8 +10,8 @@ export type Variables = {
   db: KyselyDb
 }
 
-export type HonoApp = { Bindings: Bindings; Variables: Variables }
-export type Context = HonoContext<HonoApp>
+export type AppRequest = FastifyRequest
+export type AppReply = FastifyReply
 
 export const emailTemplateMap = {
   VerificationEmail: VerificationEmail,

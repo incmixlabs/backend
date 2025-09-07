@@ -15,12 +15,12 @@
     "@aws-sdk/lib-storage": "3.758.0",
     "@aws-sdk/s3-request-presigner": "3.758.0",
 
-    "@hono/zod-openapi": "catalog:",
-    "@hono/zod-validator": "catalog:",
+    "fastify": "catalog:",
+    "fastify-plugin": "catalog:",
+    "fastify-type-provider-zod": "catalog:",
     "@incmix-api/utils": "workspace:^",
     "@incmix/utils": "catalog:",
     "@playwright/test": "catalog:",
-    "hono": "catalog:",
     "pkg-types": "catalog:",
     "prettier": "catalog:",
     "zod": "catalog:"

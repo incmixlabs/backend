@@ -10,12 +10,11 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
-    "@hono/zod-openapi": "catalog:",
-    "@hono/zod-validator": "0.4.1",
     "@incmix-api/utils": "workspace:^",
     "@incmix/utils": "catalog:",
     "arctic": "2.3.0",
-    "hono": "catalog:",
+    "fastify": "catalog:",
+    "fastify-type-provider-zod": "catalog:",
     "kysely": "catalog:",
     "kysely-ctl": "0.12.1",
     "mailslurp-client": "15.20.2",

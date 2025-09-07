@@ -1,5 +1,4 @@
 import { render } from "@react-email/render"
-import type { StatusCode } from "hono/utils/http-status"
 import type { z } from "zod"
 import type { RequestSchema } from "@/routes/email/types"
 import { emailTemplateMap } from "@/types"
@@ -7,7 +6,7 @@ import { emailSender } from "./utils"
 export type SendEmailReponse = {
   message: string
   id?: string
-  status: StatusCode
+  status: number
   title?: string
   type?: string
 }

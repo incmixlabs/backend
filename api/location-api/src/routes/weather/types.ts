@@ -1,29 +1,23 @@
-import { z } from "@hono/zod-openapi"
-export const LocationSchema = z
-  .object({
-    lat: z.string().optional().openapi({ example: "35.4757" }),
-    lon: z.string().optional().openapi({ example: "80.5901" }),
-  })
-  .openapi("Location Schema")
+import { z } from "zod"
+export const LocationSchema = z.object({
+  lat: z.string().optional(),
+  lon: z.string().optional(),
+})
 
-export const WeatherSchema = z
-  .object({
-    time: z.string().openapi({ example: "2023-01-25T21:00:00Z" }),
-    temperatureMax: z.number().openapi({ example: 7.63 }),
-    temperatureMin: z.number().openapi({ example: -5.19 }),
-    temperatureAvg: z.number().openapi({ example: 2.55 }),
-    weatherType: z.string().openapi({ example: "Clear" }),
-    weatherCode: z.number().openapi({ example: 1000 }),
-  })
-  .openapi("Weather Schema")
+export const WeatherSchema = z.object({
+  time: z.string(),
+  temperatureMax: z.number(),
+  temperatureMin: z.number(),
+  temperatureAvg: z.number(),
+  weatherType: z.string(),
+  weatherCode: z.number(),
+})
 
-export const WeatherForecastSchema = z
-  .object({
-    temperatureUnit: z.string().default("c").openapi({ example: "c" }),
-    days: z.array(WeatherSchema),
-    location: z.string().optional().openapi({ example: "NEWYORK" }),
-  })
-  .openapi("Weather Forecast Schema")
+export const WeatherForecastSchema = z.object({
+  temperatureUnit: z.string().default("c"),
+  days: z.array(WeatherSchema),
+  location: z.string().optional(),
+})
 
 export type WeatherForecast = z.infer<typeof WeatherForecastSchema>
 

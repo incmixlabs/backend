@@ -1,9 +1,8 @@
 import { createHealthCheckRoute } from "@incmix-api/utils"
 import { envVars } from "@/env-vars"
 import { BASE_PATH } from "@/lib/constants"
-import type { HonoApp } from "@/types"
 
-const healthcheckRoutes = createHealthCheckRoute<HonoApp>({
+const healthcheckRoutes = createHealthCheckRoute({
   // Pass all environment variables to check
   envVars: {
     AUTH_API_URL: envVars.AUTH_API_URL,
@@ -19,15 +18,14 @@ const healthcheckRoutes = createHealthCheckRoute<HonoApp>({
   checks: [
     {
       name: "Database",
-      check: async (c) => {
+      check: async (request) => {
         try {
+          // Get database from request context
+          const db = (request as any).db
+          if (!db) return false
+
           // Simple query to check database connectivity
-          await c
-            .get("db")
-            .selectFrom("storyTemplates")
-            .selectAll()
-            .limit(1)
-            .execute()
+          await db.selectFrom("storyTemplates").selectAll().limit(1).execute()
           return true
         } catch (_error) {
           return false

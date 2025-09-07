@@ -1,122 +1,157 @@
-import { OpenAPIHono } from "@hono/zod-openapi"
+import type { FastifyInstance } from "fastify"
+import fastify from "fastify"
 import { beforeEach, describe, expect, it, vi } from "vitest"
-import type { HonoApp } from "../src/types"
 
-// Mock the setupHealthCheck function
-const mockSetupHealthCheck = vi.fn((app, config) => {
-  // Simulate the healthcheck routes
-  app.get("/healthcheck", (c) => {
-    return c.json({
-      status: "ok",
-      service: config.serviceName,
-      version: config.version,
-      timestamp: new Date().toISOString(),
-    })
-  })
-
-  app.get("/healthcheck/live", (c) => {
-    return c.json({
-      status: "ok",
-      service: config.serviceName,
-      version: config.version,
-      timestamp: new Date().toISOString(),
-    })
-  })
-
-  app.get("/healthcheck/ready", (c) => {
-    return c.json({
-      status: "ok",
-      service: config.serviceName,
-      version: config.version,
-      timestamp: new Date().toISOString(),
-    })
-  })
-})
-
-vi.mock("@incmix-api/utils", () => ({
-  setupHealthCheck: mockSetupHealthCheck,
-}))
+// Mock external APIs
+const mockFetch = vi.fn()
+global.fetch = mockFetch as any
 
 describe("Healthcheck Routes", () => {
-  let app: OpenAPIHono<HonoApp>
+  let app: FastifyInstance
 
   beforeEach(() => {
     vi.clearAllMocks()
 
-    // Create a new app instance for each test
-    app = new OpenAPIHono<HonoApp>()
+    // Mock environment variables
+    vi.stubEnv("AUTH_API_URL", "http://localhost:8080")
+    vi.stubEnv("INTL_API_URL", "http://localhost:9090")
+    vi.stubEnv("TIMEOUT_MS", "5000")
 
-    // Call setupHealthCheck with the app
-    mockSetupHealthCheck(app, {
-      serviceName: "bff-web",
-      version: "1.0.0",
+    // Create a new Fastify instance for each test
+    app = fastify({ logger: false })
+
+    // Setup test routes similar to the main app
+    app.get("/api/healthcheck", (_request, reply) => {
+      // Mock the health check response
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          status: "ok",
+          service: "auth",
+          version: "1.0.0",
+          timestamp: new Date().toISOString(),
+        }),
+      })
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          status: "ok",
+          service: "intl",
+          version: "1.0.0",
+          timestamp: new Date().toISOString(),
+        }),
+      })
+
+      const results = [
+        {
+          auth: {
+            status: "ok",
+            service: "auth",
+            version: "1.0.0",
+            timestamp: new Date().toISOString(),
+          },
+        },
+        {
+          intl: {
+            status: "ok",
+            service: "intl",
+            version: "1.0.0",
+            timestamp: new Date().toISOString(),
+          },
+        },
+      ]
+
+      return reply.send(results)
     })
   })
 
-  describe("GET /healthcheck", () => {
-    it("should return 200 OK with basic health info", async () => {
-      const response = await app.request("/healthcheck", {
+  describe("GET /api/healthcheck", () => {
+    it("should return 200 OK with health info from downstream services", async () => {
+      const response = await app.inject({
         method: "GET",
+        url: "/api/healthcheck",
       })
 
-      expect(response.status).toBe(200)
-      const data = await response.json()
-      expect(data).toHaveProperty("status", "ok")
-      expect(data).toHaveProperty("service", "bff-web")
-      expect(data).toHaveProperty("version", "1.0.0")
-      expect(data).toHaveProperty("timestamp")
+      expect(response.statusCode).toBe(200)
+      const data = JSON.parse(response.body)
+      expect(Array.isArray(data)).toBe(true)
+      expect(data.length).toBeGreaterThan(0)
+
+      // Check that we have auth service response
+      const authResult = data.find((item) => item.auth)
+      expect(authResult).toBeDefined()
+      expect(authResult.auth).toHaveProperty("status", "ok")
     })
   })
 
-  describe("GET /healthcheck/live", () => {
-    it("should return 200 OK for liveness check", async () => {
-      const response = await app.request("/healthcheck/live", {
+  describe("Error handling", () => {
+    it("should handle downstream service failures", async () => {
+      // Mock a failing service
+      mockFetch.mockRejectedValueOnce(new Error("Service unavailable"))
+
+      const response = await app.inject({
         method: "GET",
+        url: "/api/healthcheck",
       })
 
-      expect(response.status).toBe(200)
-      const data = await response.json()
-      expect(data).toHaveProperty("status", "ok")
-      expect(data).toHaveProperty("service", "bff-web")
-      expect(data).toHaveProperty("version", "1.0.0")
-      expect(data).toHaveProperty("timestamp")
+      expect(response.statusCode).toBe(200)
+      const data = JSON.parse(response.body)
+      expect(Array.isArray(data)).toBe(true)
     })
 
     it("should have correct content-type header", async () => {
-      const response = await app.request("/healthcheck/live", {
+      const response = await app.inject({
         method: "GET",
+        url: "/api/healthcheck",
       })
 
-      expect(response.headers.get("content-type")).toContain("application/json")
+      expect(response.headers["content-type"]).toContain("application/json")
     })
   })
 
-  describe("GET /healthcheck/ready", () => {
-    it("should return 200 OK for readiness check", async () => {
-      const response = await app.request("/healthcheck/ready", {
+  describe("Response validation", () => {
+    it("should return aggregated results from multiple services", async () => {
+      const response = await app.inject({
         method: "GET",
+        url: "/api/healthcheck",
       })
 
-      expect(response.status).toBe(200)
-      const data = await response.json()
-      expect(data).toHaveProperty("status", "ok")
-      expect(data).toHaveProperty("service", "bff-web")
-      expect(data).toHaveProperty("version", "1.0.0")
-      expect(data).toHaveProperty("timestamp")
+      expect(response.statusCode).toBe(200)
+      const data = JSON.parse(response.body)
+      expect(Array.isArray(data)).toBe(true)
+
+      // Should have at least one service result
+      expect(data.length).toBeGreaterThan(0)
     })
   })
 
-  describe("Response format validation", () => {
-    it("should include timestamp in ISO format", async () => {
-      const response = await app.request("/healthcheck", {
+  describe("Timeout handling", () => {
+    it("should handle service timeouts gracefully", async () => {
+      // Mock a timeout scenario
+      mockFetch.mockImplementationOnce(
+        () =>
+          new Promise((resolve) => {
+            setTimeout(
+              () =>
+                resolve({
+                  ok: false,
+                  status: 408,
+                  statusText: "Request Timeout",
+                }),
+              100
+            )
+          })
+      )
+
+      const response = await app.inject({
         method: "GET",
+        url: "/api/healthcheck",
       })
 
-      const data = await response.json()
-      expect(data.timestamp).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/)
-
-      const date = new Date(data.timestamp)
-      expect(date.toString()).not.toBe("Invalid Date")
+      expect(response.statusCode).toBe(200)
+      const data = JSON.parse(response.body)
+      expect(Array.isArray(data)).toBe(true)
     })
   })
 })

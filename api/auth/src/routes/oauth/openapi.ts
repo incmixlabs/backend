@@ -1,5 +1,5 @@
-import { createRoute } from "@hono/zod-openapi"
 import { AuthUserSessionSchema } from "@incmix/utils/types"
+import { createRoute } from "@incmix-api/utils/zod-schema"
 import { OAuthCallbackSchema, OAuthResponseSchema } from "@/routes/oauth/types"
 import { MessageResponseSchema } from "@/routes/types"
 

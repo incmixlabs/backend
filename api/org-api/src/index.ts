@@ -2,11 +2,10 @@ import { createService } from "@incmix-api/utils"
 import { BASE_PATH } from "@/lib/constants"
 import { middlewares } from "@/middleware"
 import { routes } from "@/routes"
-import type { HonoApp } from "@/types"
 
 import { envVars } from "./env-vars"
 
-const service = createService<HonoApp["Bindings"], HonoApp["Variables"]>({
+const service = createService({
   name: "org-api",
   port: envVars.PORT,
   basePath: BASE_PATH,
@@ -20,8 +19,11 @@ const service = createService<HonoApp["Bindings"], HonoApp["Variables"]>({
   },
 })
 
-const { app, startServer } = service
+let _appInstance: any
 
-startServer()
+service.then(({ app, startServer }) => {
+  _appInstance = app
+  startServer()
+})
 
-export default app
+export default service

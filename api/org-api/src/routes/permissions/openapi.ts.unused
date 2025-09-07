@@ -1,4 +1,4 @@
-import { createRoute, z } from "@hono/zod-openapi"
+import { z } from "zod"
 import { MessageResponseSchema } from "@/types"
 import { PermissionRolesResponseSchema, UpdatePermissionSchema } from "./types"
 
@@ -14,10 +14,7 @@ export const getRolesPermissions = createRoute({
   security: [{ cookieAuth: [] }],
   request: {
     query: z.object({
-      orgId: z.string().optional().openapi({
-        description: "The ID of the organization",
-        example: "123",
-      }),
+      orgId: z.string().optional(),
     }),
   },
   responses: {
@@ -68,10 +65,7 @@ export const updatePermissions = createRoute({
   security: [{ cookieAuth: [] }],
   request: {
     params: z.object({
-      orgId: z.string().openapi({
-        description: "The ID of the organization",
-        example: "123",
-      }),
+      orgId: z.string(),
     }),
     body: {
       content: {

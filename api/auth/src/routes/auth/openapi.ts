@@ -1,9 +1,9 @@
-import { createRoute } from "@hono/zod-openapi"
 import {
   AuthUserSchema,
   AuthUserSessionSchema,
   UserProfileSchema,
 } from "@incmix/utils/types"
+import { createRoute } from "@incmix-api/utils/zod-schema"
 import {
   AuthSchema,
   EmailSchema,

@@ -7,7 +7,6 @@ import { nanoid } from "nanoid"
 import { BASE_PATH } from "@/lib/constants"
 import { middlewares } from "@/middleware"
 import { routes } from "@/routes"
-import type { HonoApp } from "@/types"
 import { envVars } from "./env-vars"
 import { generateUserStory } from "./lib/services"
 
@@ -130,36 +129,42 @@ const worker = startUserStoryWorker(envVars, async (job) => {
 
 worker.run()
 
-const service = createService<HonoApp["Bindings"], HonoApp["Variables"]>({
-  name: "genai-api",
-  port: envVars.PORT,
-  basePath: BASE_PATH,
-  setupMiddleware: (app) => {
-    middlewares(app)
-  },
-  setupRoutes: (app) => routes(app),
-  bindings: envVars,
-})
+async function startApp() {
+  const service = await createService({
+    name: "genai-api",
+    port: envVars.PORT,
+    basePath: BASE_PATH,
+    setupMiddleware: (app) => {
+      middlewares(app)
+    },
+    setupRoutes: async (app) => await routes(app),
+    bindings: envVars,
+  })
 
-const { app, startServer } = service
+  const { app, startServer } = service
 
-startServer()
-
-const shutdown = async (signal: NodeJS.Signals) => {
-  console.log(`Received ${signal}. Shutting down gracefully...`)
-  try {
-    await worker.close()
-  } catch (e) {
-    console.error("Error closing worker:", e)
+  const shutdown = async (signal: NodeJS.Signals) => {
+    console.log(`Received ${signal}. Shutting down gracefully...`)
+    try {
+      await worker.close()
+    } catch (e) {
+      console.error("Error closing worker:", e)
+    }
+    try {
+      await globalDb.destroy()
+    } catch (e) {
+      console.error("Error closing DB:", e)
+    }
   }
-  try {
-    await globalDb.destroy()
-  } catch (e) {
-    console.error("Error closing DB:", e)
-  }
+
+  process.on("SIGINT", shutdown)
+  process.on("SIGTERM", shutdown)
+
+  await startServer()
+
+  return app
 }
 
-process.on("SIGINT", shutdown)
-process.on("SIGTERM", shutdown)
+const app = await startApp()
 
 export default app

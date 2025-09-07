@@ -5,30 +5,44 @@ import type {
 } from "@incmix-api/utils/db-schema"
 import { NotFoundError, ServerError } from "@incmix-api/utils/errors"
 import { useTranslation } from "@incmix-api/utils/middleware"
+import type { FastifyRequest } from "fastify"
 import { hashPassword } from "@/auth/utils"
 import { ERROR_USER_NOT_FOUND } from "@/lib/constants"
-import type { Context } from "@/types"
 
-export async function findUserByEmail(c: Context, email: string) {
-  const user = await c
-    .get("db")
+export async function findUserByEmail(request: FastifyRequest, email: string) {
+  const db = request.db
+  if (!db) {
+    throw new ServerError("Database not available")
+  }
+
+  const user = await db
     .selectFrom("users")
     .selectAll()
     .where("email", "=", email)
     .executeTakeFirst()
-  const t = await useTranslation(c)
-
   if (!user) {
-    const msg = await t.text(ERROR_USER_NOT_FOUND)
+    // Use fallback message if translation system is not available (e.g., in tests)
+    let msg = "User not found"
+    try {
+      const t = await useTranslation(request)
+      msg = await t.text(ERROR_USER_NOT_FOUND)
+    } catch (_error) {
+      // Fall back to default message if i18n is not available
+      console.warn("Translation system not available, using fallback message")
+    }
     throw new NotFoundError(msg)
   }
 
   return user
 }
 
-export async function findUserById(c: Context, id: string) {
-  const user = await c
-    .get("db")
+export async function findUserById(request: FastifyRequest, id: string) {
+  const db = request.db
+  if (!db) {
+    throw new ServerError("Database not available")
+  }
+
+  const user = await db
     .selectFrom("users")
     .innerJoin("userProfiles", "users.id", "userProfiles.id")
     .select([
@@ -45,9 +59,16 @@ export async function findUserById(c: Context, id: string) {
     ])
     .where("users.id", "=", id)
     .executeTakeFirst()
-  const t = await useTranslation(c)
   if (!user) {
-    const msg = await t.text(ERROR_USER_NOT_FOUND)
+    // Use fallback message if translation system is not available (e.g., in tests)
+    let msg = "User not found"
+    try {
+      const t = await useTranslation(request)
+      msg = await t.text(ERROR_USER_NOT_FOUND)
+    } catch (_error) {
+      // Fall back to default message if i18n is not available
+      console.warn("Translation system not available, using fallback message")
+    }
     throw new NotFoundError(msg)
   }
 
@@ -55,11 +76,15 @@ export async function findUserById(c: Context, id: string) {
 }
 
 async function createUserProfile(
-  c: Context,
+  request: FastifyRequest,
   newUserProfile: NewUserProfile,
   dbInstance?: KyselyDb
 ) {
-  const db = dbInstance ?? c.get("db")
+  const db = dbInstance ?? request.db
+  if (!db) {
+    throw new ServerError("Database not available")
+  }
+
   const userProfile = await db
     .insertInto("userProfiles")
     .values(newUserProfile)
@@ -70,13 +95,16 @@ async function createUserProfile(
 }
 
 export async function insertUser(
-  c: Context,
+  request: FastifyRequest,
   newUser: NewUser,
   fullName: string,
   password?: string,
   dbInstance?: KyselyDb
 ) {
-  const db = dbInstance ?? c.get("db")
+  const db = dbInstance ?? request.db
+  if (!db) {
+    throw new ServerError("Database not available")
+  }
 
   const locale = await db
     .selectFrom("locales")
@@ -95,7 +123,7 @@ export async function insertUser(
   if (!user) throw new ServerError()
 
   const profile = await createUserProfile(
-    c,
+    request,
     {
       id: newUser.id,
       fullName,
@@ -109,18 +137,20 @@ export async function insertUser(
   return { ...user, profile }
 }
 
-export async function deleteUserById(c: Context, id: string) {
-  const deletedUser = await c
-    .get("db")
-    .transaction()
-    .execute(async (tx) => {
-      await tx.deleteFrom("userProfiles").where("id", "=", id).execute()
-      return await tx
-        .deleteFrom("users")
-        .where("id", "=", id)
-        .returningAll()
-        .executeTakeFirst()
-    })
+export async function deleteUserById(request: FastifyRequest, id: string) {
+  const db = request.db
+  if (!db) {
+    throw new ServerError("Database not available")
+  }
+
+  const deletedUser = await db.transaction().execute(async (tx) => {
+    await tx.deleteFrom("userProfiles").where("id", "=", id).execute()
+    return await tx
+      .deleteFrom("users")
+      .where("id", "=", id)
+      .returningAll()
+      .executeTakeFirst()
+  })
   if (!deletedUser) throw new ServerError()
 
   return deletedUser

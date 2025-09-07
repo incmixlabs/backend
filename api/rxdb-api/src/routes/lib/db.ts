@@ -1,7 +1,12 @@
-import type { Context } from "@/types"
+import type { FastifyRequest } from "fastify"
 
-export const getUserProjectIds = async (c: Context, userId: string) => {
-  const db = c.get("db")
+export const getUserProjectIds = async (
+  request: FastifyRequest,
+  userId: string
+) => {
+  const db = request.db
+  if (!db) throw new Error("Database not available")
+
   const projects = await db
     .selectFrom("projectMembers")
     .select("projectId")

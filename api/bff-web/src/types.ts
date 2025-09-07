@@ -1,7 +1,8 @@
-import type { Context as HonoContext } from "hono"
+import type { FastifyReply, FastifyRequest } from "fastify"
 import type { Env } from "./env-vars"
 
 export type Bindings = Env
+export type Variables = {}
 
-export type HonoApp = { Bindings: Bindings; Variables: {} }
-export type Context = HonoContext<HonoApp>
+export type AppRequest = FastifyRequest
+export type AppReply = FastifyReply

@@ -1,4 +1,4 @@
-import { createRoute } from "@hono/zod-openapi"
+import { createRoute } from "@incmix-api/utils/zod-schema"
 import { EmailVerificationSchema } from "@/routes/email-verification/types"
 import { EmailSchema, MessageResponseSchema } from "@/routes/types"
 

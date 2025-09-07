@@ -1,30 +1,30 @@
-import { z } from "@hono/zod-openapi"
+import { z } from "zod"
 
 export const ProjectIdSchema = z.object({
-  projectId: z.string().openapi({ example: "2hek2bkjh" }),
+  projectId: z.string(),
 })
 
 export const TaskIdSchema = z.object({
-  taskId: z.string().openapi({ example: "2hek2bkjh" }),
+  taskId: z.string(),
 })
 
 export const IdSchema = z.object({
-  id: z.string().openapi({ example: "2hek2bkjh" }),
+  id: z.string(),
 })
 
 export const CommentIdSchema = z.object({
-  commentId: z.string().openapi({ example: "2hek2bkjh" }),
+  commentId: z.string(),
 })
 
 export const AddCommentSchema = z.object({
   comment: z.object({
-    content: z.string().openapi({ example: "This is a comment" }),
+    content: z.string(),
   }),
-  type: z.enum(["task", "project"]).openapi({ example: "task" }),
+  type: z.enum(["task", "project"]),
 })
 
 export const UpdateCommentSchema = z.object({
   comment: z.object({
-    content: z.string().openapi({ example: "Updated comment content" }),
+    content: z.string(),
   }),
 })

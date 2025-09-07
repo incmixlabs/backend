@@ -6,7 +6,6 @@ export * from "../service-bootstrap/types"
 export * from "./constants"
 export * from "./data-table"
 export * from "./health-check"
-export * from "./health-check-simplified"
 export * from "./i18n-helper"
 export * from "./sentry"
 

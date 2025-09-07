@@ -1,8 +1,4 @@
-import { z } from "@hono/zod-openapi"
-export const MessageResponseSchema = z
-  .object({
-    message: z.string().openapi({
-      example: "Successful",
-    }),
-  })
-  .openapi("Response")
+import { z } from "zod"
+export const MessageResponseSchema = z.object({
+  message: z.string(),
+})

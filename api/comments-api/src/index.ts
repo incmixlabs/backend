@@ -5,19 +5,19 @@ import { routes } from "@/routes"
 import type { HonoApp } from "@/types"
 import { envVars } from "./env-vars"
 
-const service = createService<HonoApp["Bindings"], HonoApp["Variables"]>({
+const service = await createService<HonoApp["Bindings"], HonoApp["Variables"]>({
   name: "comments-api",
   port: envVars.PORT,
   basePath: BASE_PATH,
-  setupMiddleware: (app) => {
-    middlewares(app)
+  setupMiddleware: async (app) => {
+    await middlewares(app)
   },
-  setupRoutes: (app) => routes(app),
+  setupRoutes: async (app) => await routes(app),
   bindings: envVars,
 })
 
 const { app, startServer } = service
 
-startServer()
+await startServer()
 
 export default app

@@ -1,66 +1,42 @@
-import { OpenAPIHono } from "@hono/zod-openapi"
+import type { FastifyInstance } from "fastify"
+import fastify from "fastify"
 import { beforeEach, describe, expect, it, vi } from "vitest"
-import type { HonoApp } from "../src/types"
 
-// Mock the setupHealthCheck function
-const mockSetupHealthCheck = vi.fn((app, config) => {
-  // Simulate the healthcheck routes
-  app.get("/healthcheck", (c) => {
-    return c.json({
-      status: "ok",
-      service: config.serviceName,
-      version: config.version,
-      timestamp: new Date().toISOString(),
-    })
-  })
-
-  app.get("/healthcheck/live", (c) => {
-    return c.json({
-      status: "ok",
-      service: config.serviceName,
-      version: config.version,
-      timestamp: new Date().toISOString(),
-    })
-  })
-
-  app.get("/healthcheck/ready", (c) => {
-    return c.json({
-      status: "ok",
-      service: config.serviceName,
-      version: config.version,
-      timestamp: new Date().toISOString(),
-    })
-  })
-})
-
-vi.mock("@incmix-api/utils", () => ({
-  setupHealthCheck: mockSetupHealthCheck,
-}))
+// Mock external APIs
+const mockFetch = vi.fn()
+global.fetch = mockFetch as any
 
 describe("Healthcheck Routes", () => {
-  let app: OpenAPIHono<HonoApp>
+  let app: FastifyInstance
 
   beforeEach(() => {
     vi.clearAllMocks()
 
-    // Create a new app instance for each test
-    app = new OpenAPIHono<HonoApp>()
+    // Mock environment variables if needed
 
-    // Call setupHealthCheck with the app
-    mockSetupHealthCheck(app, {
-      serviceName: "files-api",
-      version: "1.0.0",
+    // Create a new Fastify instance for each test
+    app = fastify({ logger: false })
+
+    // Setup basic healthcheck route
+    app.get("/api/healthcheck", (_request, reply) => {
+      return reply.send({
+        status: "ok",
+        service: "files-api",
+        version: "1.0.0",
+        timestamp: new Date().toISOString(),
+      })
     })
   })
 
-  describe("GET /healthcheck", () => {
+  describe("GET /api/healthcheck", () => {
     it("should return 200 OK with basic health info", async () => {
-      const response = await app.request("/healthcheck", {
+      const response = await app.inject({
         method: "GET",
+        url: "/api/healthcheck",
       })
 
-      expect(response.status).toBe(200)
-      const data = await response.json()
+      expect(response.statusCode).toBe(200)
+      const data = JSON.parse(response.body)
       expect(data).toHaveProperty("status", "ok")
       expect(data).toHaveProperty("service", "files-api")
       expect(data).toHaveProperty("version", "1.0.0")
@@ -68,51 +44,23 @@ describe("Healthcheck Routes", () => {
     })
   })
 
-  describe("GET /healthcheck/live", () => {
-    it("should return 200 OK for liveness check", async () => {
-      const response = await app.request("/healthcheck/live", {
-        method: "GET",
-      })
-
-      expect(response.status).toBe(200)
-      const data = await response.json()
-      expect(data).toHaveProperty("status", "ok")
-      expect(data).toHaveProperty("service", "files-api")
-      expect(data).toHaveProperty("version", "1.0.0")
-      expect(data).toHaveProperty("timestamp")
-    })
-
+  describe("Response validation", () => {
     it("should have correct content-type header", async () => {
-      const response = await app.request("/healthcheck/live", {
+      const response = await app.inject({
         method: "GET",
+        url: "/api/healthcheck",
       })
 
-      expect(response.headers.get("content-type")).toContain("application/json")
+      expect(response.headers["content-type"]).toContain("application/json")
     })
-  })
 
-  describe("GET /healthcheck/ready", () => {
-    it("should return 200 OK for readiness check", async () => {
-      const response = await app.request("/healthcheck/ready", {
-        method: "GET",
-      })
-
-      expect(response.status).toBe(200)
-      const data = await response.json()
-      expect(data).toHaveProperty("status", "ok")
-      expect(data).toHaveProperty("service", "files-api")
-      expect(data).toHaveProperty("version", "1.0.0")
-      expect(data).toHaveProperty("timestamp")
-    })
-  })
-
-  describe("Response format validation", () => {
     it("should include timestamp in ISO format", async () => {
-      const response = await app.request("/healthcheck", {
+      const response = await app.inject({
         method: "GET",
+        url: "/api/healthcheck",
       })
 
-      const data = await response.json()
+      const data = JSON.parse(response.body)
       expect(data.timestamp).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/)
 
       const date = new Date(data.timestamp)

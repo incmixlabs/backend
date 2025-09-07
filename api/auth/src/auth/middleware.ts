@@ -1,37 +1,50 @@
-import { getCookie } from "hono/cookie"
+import type {
+  FastifyInstance,
+  FastifyPluginCallback,
+  FastifyReply,
+  FastifyRequest,
+} from "fastify"
+import fp from "fastify-plugin"
 import { findUserById } from "@/lib/db"
 import { envVars } from "../env-vars"
-import type { Context } from "../types"
 import { deleteSessionCookie, setSessionCookie } from "./cookies"
 import { validateSession } from "./session"
 
-export async function authMiddleware(c: Context, next: () => Promise<void>) {
-  const db = c.get("db")
+async function authMiddlewareHandler(
+  request: FastifyRequest,
+  reply: FastifyReply
+) {
+  const db = request.db
+  if (!db) {
+    reply.code(500).send({ error: "Database not available" })
+    return
+  }
+
   const cookieName = envVars.COOKIE_NAME as string
-  const sessionId = getCookie(c, cookieName)
+  const sessionId = request.cookies?.[cookieName]
 
   if (!sessionId) {
-    c.set("user", undefined)
-    c.set("session", undefined)
-    return await next()
+    request.user = null
+    request.session = null
+    return
   }
 
   const session = await validateSession(db, sessionId)
   if (!session) {
-    deleteSessionCookie(c)
-    c.set("user", undefined)
-    c.set("session", undefined)
-    return await next()
+    deleteSessionCookie(request, reply)
+    request.user = null
+    request.session = null
+    return
   }
 
   // Fetch user by session.userId
-  const user = await findUserById(c, session.userId)
+  const user = await findUserById(request, session.userId)
 
   if (!user) {
-    deleteSessionCookie(c)
-    c.set("user", undefined)
-    c.set("session", undefined)
-    return await next()
+    deleteSessionCookie(request, reply)
+    request.user = null
+    request.session = null
+    return
   }
 
   // If session was renewed, update cookie
@@ -39,16 +52,25 @@ export async function authMiddleware(c: Context, next: () => Promise<void>) {
   const expiresAt = new Date(session.expiresAt)
   // Renew if less than 15 days left (halfway)
   if (expiresAt.getTime() - now.getTime() < 15 * 24 * 60 * 60 * 1000) {
-    setSessionCookie(c, session.id, expiresAt)
+    setSessionCookie(request, reply, session.id, expiresAt)
   }
 
-  c.set("user", {
-    fullName: user.fullName,
+  request.user = {
     email: user.email,
     isSuperAdmin: user.isSuperAdmin,
     emailVerified: user.emailVerifiedAt !== null,
     id: user.id,
-  })
-  c.set("session", session)
-  return await next()
+  }
+  request.session = session
 }
+
+const authMiddleware: FastifyPluginCallback = (
+  fastify: FastifyInstance,
+  _options,
+  done
+) => {
+  fastify.addHook("onRequest", authMiddlewareHandler)
+  done()
+}
+
+export default fp(authMiddleware)

@@ -1,9 +1,10 @@
 import { createHealthCheckRoute } from "@incmix-api/utils"
+import type { FastifyRequest } from "fastify"
+import fp from "fastify-plugin"
 import { envVars } from "@/env-vars"
 import { BASE_PATH } from "@/lib/constants"
-import type { HonoApp } from "@/types"
 
-const healthcheckRoutes = createHealthCheckRoute<HonoApp>({
+const healthcheckRoutes = createHealthCheckRoute({
   envVars: {
     DOMAIN: envVars.DOMAIN,
     INTL_API_URL: envVars.INTL_API_URL,
@@ -18,9 +19,12 @@ const healthcheckRoutes = createHealthCheckRoute<HonoApp>({
   checks: [
     {
       name: "Redis",
-      check: async (c) => {
+      check: async (request: FastifyRequest) => {
         try {
-          const result = await c.get("redis").ping()
+          // Access redis from the app context - this will need to be updated based on how redis is made available in fastify
+          const redis = (request.server as any).redis
+          if (!redis) return false
+          const result = await redis.ping()
           return result === "PONG"
         } catch (_error) {
           return false
@@ -30,4 +34,4 @@ const healthcheckRoutes = createHealthCheckRoute<HonoApp>({
   ],
 })
 
-export default healthcheckRoutes
+export default fp(healthcheckRoutes)

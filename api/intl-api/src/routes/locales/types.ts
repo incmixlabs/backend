@@ -1,11 +1,9 @@
-import { z } from "@hono/zod-openapi"
+import { z } from "zod"
 
-export const LocaleSchema = z
-  .object({
-    code: z
-      .string({ message: "Code is required" })
-      .openapi({ example: "en" })
-      .min(2, "Code must be at least 2 characters long"),
-    isDefault: z.boolean().default(false).openapi({ example: true }),
-  })
-  .openapi("Locale Schema")
+export const LocaleSchema = z.object({
+  code: z
+    .string({ message: "Code is required" })
+
+    .min(2, "Code must be at least 2 characters long"),
+  isDefault: z.boolean().default(false),
+})

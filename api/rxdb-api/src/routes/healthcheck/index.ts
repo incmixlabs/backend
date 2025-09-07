@@ -1,9 +1,9 @@
 import { createHealthCheckRoute } from "@incmix-api/utils"
+import type { FastifyRequest } from "fastify"
 import { envVars } from "@/env-vars"
 import { BASE_PATH } from "@/lib/constants"
-import type { HonoApp } from "@/types"
 
-const healthcheckRoutes = createHealthCheckRoute<HonoApp>({
+const healthcheckRoutes = createHealthCheckRoute({
   // Pass all environment variables to check
   envVars: {
     AUTH_API_URL: envVars.AUTH_API_URL,
@@ -19,10 +19,10 @@ const healthcheckRoutes = createHealthCheckRoute<HonoApp>({
   checks: [
     {
       name: "Database",
-      check: async (c) => {
+      check: async (request: FastifyRequest) => {
         try {
           // Simple query to check database connectivity
-          await c.get("db").selectFrom("tasks").selectAll().limit(1).execute()
+          await request.db?.selectFrom("tasks").selectAll().limit(1).execute()
           return true
         } catch (_error) {
           return false

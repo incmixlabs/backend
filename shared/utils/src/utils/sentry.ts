@@ -1,15 +1,10 @@
-import { getSentry } from "@hono/sentry"
-import { generateSentryTraceHeader } from "@sentry/utils"
-import type { Context } from "hono"
+import type { FastifyRequest } from "fastify"
 
-export function generateSentryHeaders(c: Context) {
-  const sentry = getSentry(c)
-  const context = sentry.getPropagationContext()
+export function generateSentryHeaders(_request: FastifyRequest) {
+  // TODO: Implement proper Sentry trace header generation for Fastify
+  // For now, return empty headers
+
   return {
-    "sentry-trace": generateSentryTraceHeader(
-      context.traceId,
-      context.spanId,
-      context.sampled
-    ),
+    "sentry-trace": "",
   }
 }

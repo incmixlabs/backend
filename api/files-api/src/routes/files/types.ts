@@ -1,52 +1,32 @@
-import { z } from "@hono/zod-openapi"
+import { z } from "zod"
 
-export const UploadFileSchema = z
-  .object({
-    file: z.instanceof(ArrayBuffer).openapi({
-      type: "string",
-      format: "binary",
-    }),
-  })
-  .openapi("Upload File")
+export const UploadFileSchema = z.object({
+  file: z.any(), // File upload will be handled by multipart
+})
 
-export const ListFilesSchema = z
-  .object({
-    files: z
-      .array(
-        z.object({
-          name: z.string().openapi({ example: "example.txt" }),
-          size: z.number().openapi({ example: 100 }),
-          uploaded: z.string().openapi({ example: new Date().toISOString() }),
-        })
-      )
-      .openapi({
-        example: [
-          {
-            name: "example.txt",
-            size: 100,
-            uploaded: new Date().toISOString(),
-          },
-        ],
-      }),
-  })
-  .openapi("List Files")
+export const ListFilesSchema = z.object({
+  files: z.array(
+    z.object({
+      name: z.string(),
+      size: z.number(),
+      uploaded: z.string(),
+    })
+  ),
+})
 
-export const QueryFileName = z
-  .object({
-    fileName: z.string().openapi({ example: "example.txt" }),
-    // The date is optional, and is used to invalidate the cache after the file has been updated.
-    date: z.string().optional().openapi({ example: new Date().toISOString() }),
-  })
-  .openapi("Query file name")
+export const QueryFileNameSchema = z.object({
+  fileName: z.string(),
+  date: z.string().optional(),
+})
 
-export const ResponseSchema = z
-  .object({
-    message: z.string().openapi({
-      example: "Successful",
-    }),
-  })
-  .openapi("Response")
+export const ResponseSchema = z.object({
+  message: z.string(),
+})
 
-export const presignedUrlSchema = z.object({
-  url: z.string().openapi({ example: "https://example.com/presigned-url" }),
+export const PresignedUrlSchema = z.object({
+  url: z.string(),
+})
+
+export const FileNameParamSchema = z.object({
+  fileName: z.string(),
 })

@@ -1,33 +1,30 @@
-import { stream } from "hono/streaming"
-import type { ContentfulStatusCode } from "hono/utils/http-status"
-import type { Context } from "./types"
+import type { FastifyReply } from "fastify"
 
-export async function returnResponse(res: Response, c: Context) {
+export async function returnResponse(res: Response, reply: FastifyReply) {
   const contentType = res.headers.get("content-type")
   const cookies = res.headers.getSetCookie()
-  const status = res.status as ContentfulStatusCode
+  const status = res.status
 
   cookies.forEach((cookie) => {
-    c.res.headers.append("set-cookie", cookie)
+    reply.header("set-cookie", cookie)
   })
 
   if (contentType?.includes("application/json")) {
-    return c.json(await res.json(), status)
+    return reply.status(status).send(await res.json())
   }
 
   if (contentType?.includes("text/html")) {
-    return c.html(await res.text(), status)
+    reply.type("text/html")
+    return reply.status(status).send(await res.text())
   }
 
   if (contentType?.includes("application/octet-stream")) {
-    return stream(c, async (stream) => {
-      stream.onAbort(() => {
-        console.log("Stream aborted")
-      })
+    reply.type("application/octet-stream")
+    const blob = await res.blob()
+    const stream = blob.stream()
 
-      return stream.pipe((await res.blob()).stream())
-    })
+    return reply.status(status).send(stream)
   }
 
-  return c.text(await res.text(), status)
+  return reply.status(status).send(await res.text())
 }

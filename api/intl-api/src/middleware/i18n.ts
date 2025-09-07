@@ -1,7 +1,7 @@
 import { DEFAULT_LOCALE, DEFAULT_MESSAGES } from "@incmix-api/utils"
 import type { IntlMessage, Locale } from "@incmix-api/utils/types"
 import { getHeaderLocale } from "@intlify/utils"
-import type { Context, MiddlewareHandler } from "hono"
+import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify"
 import {
   getAllMessages,
   getDefaultLocale,
@@ -18,30 +18,38 @@ const defaultOptions: I18NMiddlwareOptions = {
 }
 
 /**
- * Creates a middleware handler for internationalization (i18n) support.
- * This middleware sets the locale, default locale, and messages in the context based on the provided options.
+ * Creates a Fastify plugin for internationalization (i18n) support.
+ * This plugin sets the locale, default locale, and messages in the request based on the provided options.
  * It also adds the 'content-language' header to the response.
  *
- * @param localeHeader The header key to extract the locale from the request headers.
+ * @param localeHeaderName The header key to extract the locale from the request headers.
  *
- * @returns A middleware handler function that sets the locale, default locale, and messages in the context.
+ * @returns A Fastify plugin that sets the locale, default locale, and messages in the request.
  */
-export function createI18nMiddleware({
-  localeHeaderName,
-} = defaultOptions): MiddlewareHandler {
-  return async (c, next) => {
-    const kv = c.get("kv")
+export function createI18nPlugin({ localeHeaderName } = defaultOptions) {
+  return function i18nPlugin(fastify: FastifyInstance) {
+    fastify.addHook(
+      "onRequest",
+      async (request: FastifyRequest, reply: FastifyReply) => {
+        const kv = (request as any).kv
 
-    await kv.getItem(DEFAULT_LOCALE, { fn: () => getDefaultLocale(c) })
+        await kv.getItem(DEFAULT_LOCALE, {
+          fn: () => getDefaultLocale(request),
+        })
 
-    const localeHeader = getHeaderLocale(c.req.raw, { name: localeHeaderName })
-    const locale = localeHeader.language
-    c.set("locale", locale)
-    await kv.getItem(locale, { fn: () => getAllMessages(c) })
-    await kv.getItem(DEFAULT_MESSAGES, { fn: () => getDefaultMessages(c) })
+        const localeHeader = getHeaderLocale(request.raw as any, {
+          name: localeHeaderName,
+        })
+        const locale = localeHeader.language
+        ;(request as any).locale = locale
+        await kv.getItem(locale, { fn: () => getAllMessages(request) })
+        await kv.getItem(DEFAULT_MESSAGES, {
+          fn: () => getDefaultMessages(request),
+        })
 
-    c.header("content-language", locale, { append: true })
-    return await next()
+        reply.header("content-language", locale)
+      }
+    )
   }
 }
 
@@ -56,31 +64,31 @@ export type UseTranslationReturn = {
 }
 
 /**
- * Translates a given token into a message based on the provided context.
+ * Translates a given token into a message based on the provided request.
  *
- * @param {Context} context - The context object containing locale, defaultLocale, and messages.
+ * @param {FastifyRequest} request - The Fastify request object containing locale, defaultLocale, and messages.
  * @param {string} fallback - The fallback behavior if the translation is missing. Can be 'defaultLocale', 'token', or 'error'.
  *
  * @returns {UseTranslationReturn} An object with a 'text' function that translates a token into a message.
  *
- * @throws {I18NError} Throws an error if the middleware is not initialized or if the token is missing in translations.
+ * @throws {I18NError} Throws an error if the plugin is not initialized or if the token is missing in translations.
  */
 export async function useTranslation(
-  context: Context,
+  request: FastifyRequest,
   fallback: "defaultLocale" | "key" | "error" = "key"
 ): Promise<UseTranslationReturn> {
-  const kv = context.get("kv")
-  const locale = context.get("locale")
-  const defaultLocale = (await kv.getItem<Locale>(DEFAULT_LOCALE)).code
-  const messages = await kv.getItem<IntlMessage[]>(locale)
+  const kv = (request as any).kv
+  const locale = (request as any).locale
+  const defaultLocale = ((await kv.getItem(DEFAULT_LOCALE)) as Locale).code
+  const messages = (await kv.getItem(locale)) as IntlMessage[]
   if (!locale || !defaultLocale || !messages)
     throw new I18NError(
-      "middleware not initialized, please setup `app.use` with the middleware obtained with `createI18nMiddleware`'"
+      "plugin not initialized, please setup fastify with the plugin obtained with `createI18nPlugin`'"
     )
   return {
     text: async ({ key, namespace }, values) => {
       let message = messages.find(
-        (m) => m.key === key && m.namespace === namespace
+        (m: IntlMessage) => m.key === key && m.namespace === namespace
       )
       if (!message) {
         if (fallback === "error")
@@ -96,10 +104,11 @@ export async function useTranslation(
             namespace,
           }
         else {
-          const defaultMessages =
-            await kv.getItem<IntlMessage[]>(DEFAULT_MESSAGES)
+          const defaultMessages = (await kv.getItem(
+            DEFAULT_MESSAGES
+          )) as IntlMessage[]
           const defaultMessage = defaultMessages.find(
-            (dm) => dm.key === key && dm.namespace === namespace
+            (dm: IntlMessage) => dm.key === key && dm.namespace === namespace
           )
 
           if (!defaultMessage)
@@ -123,3 +132,6 @@ export async function useTranslation(
     },
   }
 }
+
+// Export the function with the expected name for compatibility
+export const createI18nMiddleware = createI18nPlugin

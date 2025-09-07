@@ -1,50 +1,32 @@
-import { z } from "@hono/zod-openapi"
+import { z } from "zod"
 
 export const MessageSchema = z.object({
-  message: z
-    .string()
-    .openapi({ example: "Feature flag retrieved successfully" }),
+  message: z.string(),
 })
 
-export const FeatureFlagIdSchema = z
-  .object({
-    featureFlagId: z.string().openapi({
-      example: "uuid-example",
-      param: { name: "featureFlagId", in: "path" },
-    }),
-  })
-  .openapi("Feature Flag Params")
+export const FeatureFlagIdSchema = z.object({
+  featureFlagId: z.string(),
+})
 
 export const FeatureFlagSchema = z.object({
-  id: z.string().openapi({ example: "uuid-example" }),
-  name: z.string().openapi({ example: "new-feature" }),
-  description: z
-    .string()
-    .nullish()
-    .openapi({ example: "A new feature description" }),
-  enabled: z.boolean().default(true).openapi({ example: true }),
+  id: z.string(),
+  name: z.string(),
+  description: z.string().nullish(),
+  enabled: z.boolean().default(true),
   allowedEnv: z
     .array(z.enum(["all", "development", "staging", "production"]))
-    .default(["all"])
-    .openapi({ example: ["all", "development"] }),
+    .default(["all"]),
   allowedUsers: z
     .union([z.literal("all"), z.literal("superusers"), z.string()])
     .array()
-    .default(["all"])
-    .openapi({
-      example: ["all"],
-      description: "Can be 'all', 'superusers', or an array of user IDs",
-    }),
-  createdAt: z.iso.datetime().openapi({ example: "2024-01-01T00:00:00.000Z" }),
-  updatedAt: z.iso.datetime().openapi({ example: "2024-01-01T00:00:00.000Z" }),
-  createdBy: z.string().openapi({ example: "user-uuid" }),
-  updatedBy: z.string().openapi({ example: "user-uuid" }),
+    .default(["all"]),
+  createdAt: z.iso.datetime(),
+  updatedAt: z.iso.datetime(),
+  createdBy: z.string(),
+  updatedBy: z.string(),
 })
 
-export const FeatureFlagListSchema = z.array(z.string()).openapi({
-  example: ["example-feature-flag-1", "example-feature-flag-2"],
-  description: "List of enabled feature flag names",
-})
+export const FeatureFlagListSchema = z.array(z.string())
 
 export const CreateFeatureFlagSchema = FeatureFlagSchema.omit({
   id: true,
@@ -57,13 +39,7 @@ export const CreateFeatureFlagSchema = FeatureFlagSchema.omit({
 export const UpdateFeatureFlagSchema = CreateFeatureFlagSchema.partial()
 
 export const FeatureFlagQuerySchema = z.object({
-  env: z
-    .enum(["all", "development", "staging", "production"])
-    .optional()
-    .openapi({
-      example: "development",
-      description: "Environment to filter feature flags by",
-    }),
+  env: z.enum(["all", "development", "staging", "production"]).optional(),
 })
 
 export const FeatureFlagListResponseSchema = z.array(FeatureFlagSchema)

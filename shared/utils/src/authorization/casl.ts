@@ -11,13 +11,7 @@ import type {
   RoleScope,
 } from "@incmix-api/utils/db-schema"
 import { UnauthorizedError } from "@incmix-api/utils/errors"
-import type { Context } from "hono"
-
-declare module "hono" {
-  interface ContextVariableMap {
-    rbac: PermissionService
-  }
-}
+import type { FastifyRequest } from "fastify"
 
 export type MemberPermissions = {
   orgPermissions: {
@@ -41,13 +35,16 @@ export class PermissionService {
   private user: User
   private memberPermissions: Promise<MemberPermissions>
 
-  constructor(context: Context) {
-    const user = context.get("user")
-
+  constructor(request: FastifyRequest) {
+    const user = request.user
     if (!user) {
       throw new UnauthorizedError()
     }
-    this.db = context.get("db")
+    const db = request.db
+    if (!db) {
+      throw new Error("Database connection not available")
+    }
+    this.db = db
     this.user = user
     this.memberPermissions = this.getUserPermissionsFromDb()
   }

@@ -1,17 +1,13 @@
-import { z } from "@hono/zod-openapi"
 import { ChecklistItemSchema, TaskSchema } from "@incmix-api/utils/zod-schema"
+import { z } from "zod"
 
-export const TaskIdSchema = z
-  .object({
-    taskId: z
-      .string()
-      .openapi({ example: "1", param: { name: "taskId", in: "path" } }),
-  })
-  .openapi("Task Params")
+export const TaskIdSchema = z.object({
+  taskId: z.string(),
+})
 
 export const ChecklistIdSchema = z.object({
-  taskId: z.string().openapi({ example: "2hek2bkjh" }),
-  checklistId: z.string().openapi({ example: "2hek2bkjh" }),
+  taskId: z.string(),
+  checklistId: z.string(),
 })
 
 export const TaskListSchema = z.array(TaskSchema)
@@ -30,14 +26,8 @@ export const CreateTaskSchema = TaskSchema.pick({
   acceptanceCriteria: true,
 }).extend({
   parentTaskId: z.string().optional(),
-  startDate: z
-    .string()
-    .datetime()
-    .openapi({ example: new Date("2025-01-01").toISOString() }),
-  endDate: z
-    .string()
-    .datetime()
-    .openapi({ example: new Date("2025-01-01").toISOString() }),
+  startDate: z.string().datetime(),
+  endDate: z.string().datetime(),
   assignedTo: z.array(z.string()).optional(),
 })
 
@@ -57,14 +47,8 @@ export const UpdateTaskSchema = TaskSchema.pick({
 })
   .extend({
     parentTaskId: z.string().optional(),
-    startDate: z
-      .string()
-      .datetime()
-      .openapi({ example: new Date("2025-01-01").toISOString() }),
-    endDate: z
-      .string()
-      .datetime()
-      .openapi({ example: new Date("2025-01-01").toISOString() }),
+    startDate: z.string().datetime(),
+    endDate: z.string().datetime(),
     assignedTo: z.array(z.string()).optional(),
   })
   .partial()
@@ -78,18 +62,14 @@ export const UpdateTaskChecklistSchema = z.object({
 })
 
 export const RemoveTaskChecklistSchema = z.object({
-  checklistIds: z.array(z.string()).openapi({ example: ["2hek2bkjh"] }),
+  checklistIds: z.array(z.string()),
 })
 
 export const JobSchema = z.object({
-  taskId: z.string().openapi({ example: "2hek2bkjh" }),
-  jobTitle: z.string().openapi({ example: "Task Title" }),
-  jobId: z.string().optional().openapi({ example: "2hek2bkjh" }),
-  status: z
-    .enum(["pending", "in_progress", "completed", "failed", "unknown"])
-    .openapi({
-      example: "pending",
-    }),
+  taskId: z.string(),
+  jobTitle: z.string(),
+  jobId: z.string().optional(),
+  status: z.enum(["pending", "in_progress", "completed", "failed", "unknown"]),
 })
 
 export const TaskJobsSchema = z.object({
@@ -101,8 +81,5 @@ export type JobSchema = z.infer<typeof JobSchema>
 
 export const BulkAiGenTaskSchema = z.object({
   type: z.enum(["user-story", "codegen"]),
-  taskIds: z
-    .array(z.string())
-    .min(1)
-    .openapi({ example: ["2hek2bkjh"] }),
+  taskIds: z.array(z.string()).min(1),
 })

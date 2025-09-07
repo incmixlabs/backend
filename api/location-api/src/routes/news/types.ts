@@ -1,55 +1,42 @@
-import { z } from "@hono/zod-openapi"
+import { z } from "zod"
 
 export const NewsQuerySchema = z.object({
-  topicToken: z.string().openapi({
-    example: "CAAqJggKIiBDQkFTRWdvSUwyMHZNRGRqTVhZU0FtVnVHZ0pWVXlnQVAB",
-  }),
-  country: z.string().optional().openapi({ example: "us" }),
+  topicToken: z.string(),
+  country: z.string().optional(),
 })
 
 export const TopicQuerySchema = z.object({
-  country: z.string().optional().openapi({ example: "us" }),
+  country: z.string().optional(),
 })
 
 export const TopicSchema = z.object({
-  title: z.string().openapi({ example: "Technology" }),
-  topic_toke: z.string().openapi({
-    example: "CAAqJggKIiBDQkFTRWdvSUwyMHZNRGRqTVhZU0FtVnVHZ0pWVXlnQVAB",
-  }),
+  title: z.string(),
+  topic_toke: z.string(),
 })
 
 export type TopicApiResponse = z.infer<typeof TopicSchema>
 
 export const TopicResponseSchema = z.object({
   topics: z.array(TopicSchema),
-  country: z.string().openapi({ example: "us" }),
+  country: z.string(),
 })
 
 export const NewsStorySchema = z.object({
-  title: z.string().openapi({ example: "Article Title" }),
+  title: z.string(),
   source: z.object({
-    name: z.string().openapi({ example: "Fox news" }),
-    icon: z.string().url().openapi({ example: "https://example.com/icon.png" }),
-    authors: z
-      .array(z.string())
-      .optional()
-      .openapi({ example: ["author1", "author2"] }),
+    name: z.string(),
+    icon: z.string().url(),
+    authors: z.array(z.string()).optional(),
   }),
-  link: z.string().url().openapi({ example: "https://example.com" }),
-  date: z.string().openapi({ example: "1 Day ago" }),
-  thumbnail: z
-    .string()
-    .openapi({ example: "https://example.com/thumbnail.jpg" }),
+  link: z.string().url(),
+  date: z.string(),
+  thumbnail: z.string(),
 })
 
 export const NewsSchema = z.object({
-  position: z.number().openapi({ example: 1 }),
+  position: z.number(),
   highlight: NewsStorySchema,
-  stories: z.array(
-    NewsStorySchema.and(
-      z.object({ position: z.number().openapi({ example: 1 }) })
-    )
-  ),
+  stories: z.array(NewsStorySchema.and(z.object({ position: z.number() }))),
 })
 
 export const NewsResponseSchema = z.array(NewsSchema)

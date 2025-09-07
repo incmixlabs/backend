@@ -1,6 +1,4 @@
-import { API } from "@incmix/utils/env"
-
-export const BASE_PATH = API.genai
+export const BASE_PATH = "/api/genai"
 
 export const ERROR_PRESIGNED_URL = {
   namespace: "errors",

@@ -1,24 +1,23 @@
 import { createService } from "@incmix-api/utils"
+import type { FastifyInstance } from "fastify"
 import { envVars } from "./env-vars"
 import { BASE_PATH } from "./lib/constants"
 import { middlewares } from "./middleware"
 import { routes } from "./routes"
-import type { HonoApp } from "./types"
 
-const service = createService<HonoApp["Bindings"], HonoApp["Variables"]>({
+const service = await createService({
   name: "location-api",
   port: envVars.PORT,
   basePath: BASE_PATH,
-  setupMiddleware: (app) => {
-    middlewares(app)
+  setupMiddleware: async (app: FastifyInstance) => {
+    await middlewares(app)
   },
-  needDb: false,
-  setupRoutes: (app) => routes(app),
+  setupRoutes: async (app: FastifyInstance) => await routes(app),
   bindings: envVars,
 })
 
 const { app, startServer } = service
 
-startServer()
+await startServer()
 
 export default app

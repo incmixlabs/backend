@@ -9,5 +9,5 @@ export interface Session {
 // Optionally, define a type for the DB pool (PostgreSQL)
 export type DBPool = import("pg").Pool
 
-// Optionally, define a type for the HTTP response (Hono context)
-export type HTTPResponse = import("hono").Context
+// HTTP response type for Fastify
+export type HTTPResponse = import("fastify").FastifyReply

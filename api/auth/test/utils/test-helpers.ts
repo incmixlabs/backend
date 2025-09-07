@@ -1,5 +1,3 @@
-import { createi18nMockMiddleware } from "@incmix-api/test-utils"
-import { type AuthEnv, createService } from "@incmix-api/utils"
 import type {
   Database,
   NewSession,
@@ -7,14 +5,13 @@ import type {
   User,
 } from "@incmix-api/utils/db-schema"
 import { setupApiMiddleware } from "@incmix-api/utils/middleware"
+import { createService } from "@incmix-api/utils/service-bootstrap"
+import type { FastifyInstance } from "fastify"
 import type { Kysely } from "kysely"
 import { expect } from "vitest"
-import { authMiddleware } from "@/auth/middleware"
 import type { Session } from "@/auth/types"
-import { envVars } from "@/env-vars"
 import { BASE_PATH } from "../../src/lib/constants"
 import { routes } from "../../src/routes"
-import type { HonoApp } from "../../src/types"
 
 type Credentials = {
   email: string
@@ -27,40 +24,69 @@ type SignupData = {
   fullName: string
 }
 
-// Create a test client using Hono's testClient
-export function createTestClient() {
+// Create a test client using Fastify's inject method
+export async function createTestClient() {
   // Create the service without starting the server
-  const service = createService<HonoApp["Bindings"], HonoApp["Variables"]>({
-    name: "auth-api-test",
-    port: (envVars.PORT as number) || 0, // Use test environment port or 0 to avoid conflicts
+  const service = await createService({
+    name: `auth-api-test-${Date.now()}-${Math.random()}`, // Unique name to avoid conflicts
+    port: 0, // Use 0 to avoid conflicts in tests
     basePath: BASE_PATH,
-    needDb: true,
-    bindings: { ...envVars, DATABASE_URL: process.env.DATABASE_URL } as AuthEnv,
-    setupMiddleware: (app) => {
-      setupApiMiddleware(app, {
+    setupMiddleware: async (app: FastifyInstance) => {
+      // Re-enable minimal middleware setup to test with KV store
+      await setupApiMiddleware(app, {
         basePath: BASE_PATH,
         serviceName: "auth-api-test",
-        customAuthMiddleware: authMiddleware,
-        customI18nMiddleware: createi18nMockMiddleware,
+        skipAuth: true, // Skip auth middleware
+        skipI18n: true, // Skip i18n middleware
         corsFirst: true,
+        databaseUrl: process.env.DATABASE_URL, // Ensure database URL is passed
       })
     },
-    setupRoutes: (app) => routes(app),
+    setupRoutes: async (app: FastifyInstance) => {
+      await routes(app)
+    },
+    fastifyOptions: {
+      logger: false, // Disable logging in tests
+    },
   })
 
   const { app: testApp } = service
-  // Add a request method that works with the BASE_PATH
+
+  // Wait for ready state to ensure all plugins are loaded
+  await testApp.ready()
+
+  // Add a request method that works with Fastify's inject
   const client = {
     request: async (path: string, options: RequestInit = {}) => {
       const fullPath = `${BASE_PATH}${path}`
-      return await testApp.request(fullPath, options)
+      const response = await testApp.inject({
+        method: (options.method as any) || "GET",
+        url: fullPath,
+        headers: options.headers as Record<string, string>,
+        payload: options.body as any,
+      })
+
+      // Convert Fastify response to fetch-like response
+      return {
+        status: response.statusCode,
+        ok: response.statusCode >= 200 && response.statusCode < 300,
+        json: async () => JSON.parse(response.body),
+        text: async () => response.body,
+        headers: {
+          get: (name: string) =>
+            response.headers[name.toLowerCase()] as string | null,
+        },
+      } as any
+    },
+    close: async () => {
+      await testApp.close()
     },
   }
 
   return client
 }
 
-export type TestAgent = ReturnType<typeof createTestClient>
+export type TestAgent = Awaited<ReturnType<typeof createTestClient>>
 
 export function createUser(overrides: Partial<User> = {}) {
   return {

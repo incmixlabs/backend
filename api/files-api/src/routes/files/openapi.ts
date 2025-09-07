@@ -1,341 +1,85 @@
-import { createRoute } from "@hono/zod-openapi"
+import { z } from "zod"
 import {
   ListFilesSchema,
-  QueryFileName,
+  PresignedUrlSchema,
+  QueryFileNameSchema,
   ResponseSchema,
   UploadFileSchema,
-} from "@/routes/files/types"
-import { presignedUrlSchema } from "./types"
+} from "./types"
 
-export const uploadFile = createRoute({
-  method: "put",
-  path: "/upload",
-  summary: "Upload File (Local Development Only)",
-  request: {
-    query: QueryFileName,
-    body: {
-      content: {
-        "application/octet-stream": {
-          schema: UploadFileSchema,
-        },
-      },
-    },
-  },
-  responses: {
-    200: {
-      content: {
-        "application/json": {
-          schema: ResponseSchema,
-        },
-      },
-      description: "File Upload successful",
-    },
-    400: {
-      content: {
-        "application/json": {
-          schema: ResponseSchema,
-        },
-      },
-      description: "Invalid Request Error",
-    },
-    500: {
-      content: {
-        "application/json": {
-          schema: ResponseSchema,
-        },
-      },
-      description: "Internal Server Error",
-    },
-    501: {
-      content: {
-        "application/json": {
-          schema: ResponseSchema,
-        },
-      },
-      description: "Not implemented",
-    },
-  },
+const ErrorSchema = z.object({
+  error: z.string(),
 })
 
-export const downloadFile = createRoute({
-  method: "get",
-  path: "/download",
-  summary: "Download File (Local Development Only)",
-  security: [{ cookieAuth: [] }],
-  request: {
-    query: QueryFileName,
+export const uploadFileSchema = {
+  querystring: QueryFileNameSchema,
+  body: UploadFileSchema,
+  response: {
+    200: ResponseSchema,
+    400: ErrorSchema,
+    500: ErrorSchema,
+    501: ErrorSchema,
   },
-  responses: {
-    200: {
-      // NOTE: 'content' unfortunately doesn't work with streaming responses,
-      // so the response will have no type.
-      // See [https://github.com/orgs/honojs/discussions/1803].
-      description: "File Download Successful",
-    },
-    400: {
-      content: {
-        "application/json": {
-          schema: ResponseSchema,
-        },
-      },
-      description: "Invalid Request Error",
-    },
-    404: {
-      content: {
-        "application/json": {
-          schema: ResponseSchema,
-        },
-      },
-      description: "File Not Found",
-    },
-    500: {
-      content: {
-        "application/json": {
-          schema: ResponseSchema,
-        },
-      },
-      description: "Internal Server Error",
-    },
-    501: {
-      content: {
-        "application/json": {
-          schema: ResponseSchema,
-        },
-      },
-      description: "Not implemented",
-    },
-  },
-})
+}
 
-export const deleteFile = createRoute({
-  method: "delete",
-  path: "/delete",
-  summary: "Delete File (Local Development Only)",
-  security: [{ cookieAuth: [] }],
-  request: {
-    query: QueryFileName,
+export const downloadFileSchema = {
+  querystring: QueryFileNameSchema,
+  response: {
+    200: z.any(), // Binary file response
+    400: ErrorSchema,
+    404: ErrorSchema,
+    500: ErrorSchema,
+    501: ErrorSchema,
   },
-  responses: {
-    200: {
-      content: {
-        "application/json": {
-          schema: ResponseSchema,
-        },
-      },
-      description: "File Deleted Successfully",
-    },
-    400: {
-      content: {
-        "application/json": {
-          schema: ResponseSchema,
-        },
-      },
-      description: "Invalid Request Error",
-    },
-    401: {
-      content: {
-        "application/json": {
-          schema: ResponseSchema,
-        },
-      },
-      description: "Unauthorized User",
-    },
-    404: {
-      content: {
-        "application/json": {
-          schema: ResponseSchema,
-        },
-      },
-      description: "File Not Found",
-    },
-    500: {
-      content: {
-        "application/json": {
-          schema: ResponseSchema,
-        },
-      },
-      description: "Internal Server Error",
-    },
-    501: {
-      content: {
-        "application/json": {
-          schema: ResponseSchema,
-        },
-      },
-      description: "Not implemented",
-    },
-  },
-})
+}
 
-export const listFiles = createRoute({
-  method: "get",
-  path: "/list",
-  summary: "List Files (Local Development Only)",
-  security: [{ cookieAuth: [] }],
-  responses: {
-    200: {
-      content: {
-        "application/json": {
-          schema: ListFilesSchema,
-        },
-      },
-      description: "File Listing Successful",
-    },
-    401: {
-      content: {
-        "application/json": {
-          schema: ResponseSchema,
-        },
-      },
-      description: "Unauthorized User",
-    },
-    500: {
-      content: {
-        "application/json": {
-          schema: ResponseSchema,
-        },
-      },
-      description: "Internal Server Error",
-    },
-    501: {
-      content: {
-        "application/json": {
-          schema: ResponseSchema,
-        },
-      },
-      description: "Not implemented",
-    },
+export const deleteFileSchema = {
+  querystring: QueryFileNameSchema,
+  response: {
+    200: ResponseSchema,
+    400: ErrorSchema,
+    401: ErrorSchema,
+    404: ErrorSchema,
+    500: ErrorSchema,
+    501: ErrorSchema,
   },
-})
+}
 
-export const presignedUpload = createRoute({
-  method: "get",
-  path: "/presigned-upload",
-  summary: "Get Presigned URL for Upload",
-  security: [{ cookieAuth: [] }],
-  request: {
-    query: QueryFileName,
+export const listFilesSchema = {
+  response: {
+    200: ListFilesSchema,
+    401: ErrorSchema,
+    500: ErrorSchema,
+    501: ErrorSchema,
   },
-  responses: {
-    200: {
-      content: {
-        "application/json": {
-          schema: presignedUrlSchema,
-        },
-      },
-      description: "Presigned URL Generated Successfully",
-    },
-    400: {
-      content: {
-        "application/json": {
-          schema: ResponseSchema,
-        },
-      },
-      description: "Invalid Request Error",
-    },
-    401: {
-      content: {
-        "application/json": {
-          schema: ResponseSchema,
-        },
-      },
-      description: "Unauthorized User",
-    },
-    500: {
-      content: {
-        "application/json": {
-          schema: ResponseSchema,
-        },
-      },
-      description: "Internal Server Error",
-    },
-  },
-})
+}
 
-export const presignedDownload = createRoute({
-  method: "get",
-  path: "/presigned-download",
-  summary: "Get Presigned URL for Download",
-  security: [{ cookieAuth: [] }],
-  request: {
-    query: QueryFileName,
+export const presignedUploadSchema = {
+  querystring: QueryFileNameSchema,
+  response: {
+    200: PresignedUrlSchema,
+    400: ErrorSchema,
+    401: ErrorSchema,
+    500: ErrorSchema,
   },
-  responses: {
-    200: {
-      content: {
-        "application/json": {
-          schema: presignedUrlSchema,
-        },
-      },
-      description: "Presigned URL Generated Successfully",
-    },
-    400: {
-      content: {
-        "application/json": {
-          schema: ResponseSchema,
-        },
-      },
-      description: "Invalid Request Error",
-    },
-    401: {
-      content: {
-        "application/json": {
-          schema: ResponseSchema,
-        },
-      },
-      description: "Unauthorized User",
-    },
-    500: {
-      content: {
-        "application/json": {
-          schema: ResponseSchema,
-        },
-      },
-      description: "Internal Server Error",
-    },
-  },
-})
+}
 
-export const presignedDelete = createRoute({
-  method: "get",
-  path: "/presigned-delete",
-  summary: "Get Presigned URL for Delete",
-  security: [{ cookieAuth: [] }],
-  request: {
-    query: QueryFileName,
+export const presignedDownloadSchema = {
+  querystring: QueryFileNameSchema,
+  response: {
+    200: PresignedUrlSchema,
+    400: ErrorSchema,
+    401: ErrorSchema,
+    500: ErrorSchema,
   },
-  responses: {
-    200: {
-      content: {
-        "application/json": {
-          schema: presignedUrlSchema,
-        },
-      },
-      description: "Presigned URL Generated Successfully",
-    },
-    400: {
-      content: {
-        "application/json": {
-          schema: ResponseSchema,
-        },
-      },
-      description: "Invalid Request Error",
-    },
-    401: {
-      content: {
-        "application/json": {
-          schema: ResponseSchema,
-        },
-      },
-      description: "Unauthorized User",
-    },
-    500: {
-      content: {
-        "application/json": {
-          schema: ResponseSchema,
-        },
-      },
-      description: "Internal Server Error",
-    },
+}
+
+export const presignedDeleteSchema = {
+  querystring: QueryFileNameSchema,
+  response: {
+    200: PresignedUrlSchema,
+    400: ErrorSchema,
+    401: ErrorSchema,
+    500: ErrorSchema,
   },
-})
+}

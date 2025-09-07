@@ -1,6 +1,6 @@
-import { getConnInfo } from "@hono/node-server/conninfo"
+import type { FastifyRequest } from "fastify"
 import { envVars } from "@/env-vars"
-import type { Address, Context } from "@/types"
+import type { Address } from "@/types"
 
 type Location = {
   location: { latitude: string; longitude: string }
@@ -15,9 +15,9 @@ type Location = {
     name: string
   }
 }
-export const getLocationFromIp = async (c: Context) => {
-  const connInfo = getConnInfo(c)
-  const userIp = connInfo.remote.address
+export const getLocationFromIp = async (request: FastifyRequest) => {
+  // Get client IP from Fastify request
+  const userIp = request.ip
 
   const res = await fetch(
     `${envVars.LOCATION_URL}/ipinfo?ip=${userIp}&apiKey=${envVars.LOCATION_API_KEY}`,

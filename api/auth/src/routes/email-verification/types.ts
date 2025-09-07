@@ -1,8 +1,6 @@
-import { z } from "@hono/zod-openapi"
+import { z } from "zod"
 
-export const EmailVerificationSchema = z
-  .object({
-    code: z.string().min(1).openapi({ example: "12345678" }),
-    email: z.string().email().openapi({ example: "john.doe@example.com" }),
-  })
-  .openapi("Email Verification")
+export const EmailVerificationSchema = z.object({
+  code: z.string().min(1),
+  email: z.string().email(),
+})

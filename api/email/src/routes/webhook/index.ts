@@ -1,6 +1,5 @@
 // import { EmailQueue } from "@/dbSchema"
 // import type { HonoApp } from "@/types"
-// import { OpenAPIHono } from "@hono/zod-openapi"
 // import { verifyResendWebhookSignature } from "@/lib/webhook-verification"
 
 // const webhookRoutes = new OpenAPIHono<HonoApp>()

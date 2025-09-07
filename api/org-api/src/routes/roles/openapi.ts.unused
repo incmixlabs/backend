@@ -1,4 +1,4 @@
-import { createRoute, z } from "@hono/zod-openapi"
+import { z } from "zod"
 import { MessageResponseSchema } from "@/types"
 import {
   AddNewRoleSchema,
@@ -165,23 +165,14 @@ export const updateMemberRole = createRoute({
   security: [{ cookieAuth: [] }],
   request: {
     params: z.object({
-      handle: z.string().openapi({
-        example: "test-organisation",
-        description: "Organisation handle",
-      }),
+      handle: z.string(),
     }),
     body: {
       content: {
         "application/json": {
           schema: z.object({
-            userId: z.string().openapi({
-              example: "93jpbulpkkavxnz",
-              description: "User ID",
-            }),
-            role: z.string().openapi({
-              example: "Owner",
-              description: "New role for the user",
-            }),
+            userId: z.string(),
+            role: z.string(),
           }),
         },
       },

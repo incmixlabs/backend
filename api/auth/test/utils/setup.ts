@@ -4,10 +4,15 @@ import { afterAll, afterEach, beforeAll, beforeEach, vi } from "vitest"
 // Global test setup
 beforeAll(async () => {
   mockApi()
-  await testDb.setup()
-  global.fetch = mockFetch
-  console.log("🚀 Test environment initialized")
-})
+  try {
+    await testDb.setup()
+    global.fetch = mockFetch
+    console.log("🚀 Test environment initialized")
+  } catch (error) {
+    console.error("❌ Failed to setup test environment:", error)
+    throw error
+  }
+}, 120000) // 2 minute timeout for setup
 
 beforeEach(() => {
   // Reset mocks before each test

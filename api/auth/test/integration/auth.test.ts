@@ -1,9 +1,13 @@
-import { beforeEach, describe, expect, it } from "vitest"
+import { beforeAll, beforeEach, describe, expect, it } from "vitest"
 import { testDb } from "../utils/setup"
 import { createSignupData, createTestClient } from "../utils/test-helpers"
 
 describe("Auth Integration Tests", () => {
-  const client = createTestClient()
+  let client: Awaited<ReturnType<typeof createTestClient>>
+
+  beforeAll(async () => {
+    client = await createTestClient()
+  })
 
   beforeEach(async () => {
     // Clean up database before each test

@@ -1,26 +1,13 @@
-import type { KyselyDb } from "@incmix-api/utils/db-schema"
-import type { Context as HonoContext } from "hono"
+import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify"
+import type { ZodTypeProvider } from "fastify-type-provider-zod"
 import type { Env } from "./env-vars"
 
-type Bindings = Env
+export type Bindings = Env
 
-interface User {
-  id: string
-  email: string
-  isSuperAdmin: boolean
-  emailVerified: boolean
-  [key: string]: any
-}
+export type AppRequest = FastifyRequest
+export type AppReply = FastifyReply
 
-type Variables = {
-  user?: User
-  db: KyselyDb
-  redis?: any
-  requestId?: string
-  locale?: string
-  i18n?: any
-  kvStore?: any
-}
+// Fastify app type with proper type providers
+export type HonoApp = FastifyInstance<any, any, any, any, ZodTypeProvider>
 
-export type HonoApp = { Bindings: Bindings; Variables: Variables }
-export type Context = HonoContext<HonoApp>
+export type Context = FastifyRequest
