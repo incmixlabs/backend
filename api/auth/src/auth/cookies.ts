@@ -34,21 +34,20 @@ export function setSessionCookie(
 }
 
 export function deleteSessionCookie(
-  _request: FastifyRequest,
-  reply: FastifyReply
-): void {
+   _request: FastifyRequest,
+   reply: FastifyReply
+ ): void {
+
   const domain = envVars.DOMAIN
   const isIp = domain ? /^\d{1,3}(\.\d{1,3}){3}$/.test(domain) : false
   const domainConfig =
-    domain && !/localhost/i.test(domain) && !isIp ? envVars.DOMAIN : undefined
+     domain && !/localhost/i.test(domain) && !isIp ? envVars.DOMAIN : undefined
 
-  reply.setCookie(COOKIE_NAME, "", {
+  reply.clearCookie(COOKIE_NAME, {
     domain: domainConfig,
     path: COOKIE_PATH,
     httpOnly: true,
     sameSite: SAME_SITE,
-    maxAge: 0,
-    expires: new Date(0),
     secure: isProduction(),
   })
 }
