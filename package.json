@@ -14,7 +14,7 @@
     "typecheck": "turbo typecheck",
     "pretest": "docker compose -f docker-compose-test.yml up -d --wait",
     "posttest": "docker compose -f docker-compose-test.yml down --remove-orphans",
-    "test": "turbo test --filter=!@incmix-api/auth --filter=!@incmix-api/utils",
+    "test": "turbo test --filter=!@incmix-api/auth --filter=!@incmix-api/utils && cd api/auth && pnpm run test && cd ../.. && cd shared/utils && pnpm run test && cd ../..",
     "test:e2e": "turbo test:e2e"
   },
   "engines": {
