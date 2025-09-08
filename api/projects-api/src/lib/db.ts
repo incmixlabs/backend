@@ -1,10 +1,12 @@
 import type { Project, Task } from "@incmix-api/utils/zod-schema"
+import type { FastifyRequest } from "fastify"
 import { jsonArrayFrom, jsonObjectFrom } from "kysely/helpers/postgres"
-import type { Context } from "@/types"
+
+type Context = FastifyRequest
 
 export async function findRoleByName(c: Context, name: string, orgId: string) {
-  const role = await c
-    .get("db")
+  if (!c.db) return null
+  const role = await c.db
     .selectFrom("roles")
     .selectAll()
     .where((eb) =>
@@ -13,9 +15,8 @@ export async function findRoleByName(c: Context, name: string, orgId: string) {
     .executeTakeFirst()
 
   if (!role) {
-    const systemRole = await c
-      .get("db")
-      .selectFrom("roles")
+    const systemRole = await c.db
+      ?.selectFrom("roles")
       .selectAll()
       .where((eb) =>
         eb.and([eb("isSystemRole", "=", true), eb("name", "=", name)])
@@ -29,9 +30,8 @@ export async function findRoleByName(c: Context, name: string, orgId: string) {
 }
 
 export function buildProjectQuery(c: Context) {
-  return c
-    .get("db")
-    .selectFrom("projects")
+  return c.db
+    ?.selectFrom("projects")
     .select((eb) => [
       "id",
       "name",
@@ -84,9 +84,8 @@ export async function getProjectById(
   projectId: string
 ): Promise<Project | undefined> {
   // const query = buildProjectQuery(c)
-  const project = await c
-    .get("db")
-    .selectFrom("projects")
+  const project = await c.db
+    ?.selectFrom("projects")
     .select((eb) => [
       "id",
       "name",
@@ -186,9 +185,8 @@ export async function getUserProjects(
   memberId: string,
   orgId: string
 ) {
-  const projects = await c
-    .get("db")
-    .selectFrom("projects")
+  const projects = await c.db
+    ?.selectFrom("projects")
     .select((eb) => [
       "projects.id",
       "projects.name",
@@ -230,7 +228,7 @@ export async function getUserProjects(
     )
     .execute()
 
-  return projects.map((project) => ({
+  return projects?.map((project) => ({
     ...project,
     progress:
       project.checklist.length > 0
@@ -245,9 +243,8 @@ export async function getUserProjects(
 }
 
 export async function isOrgMember(c: Context, orgId: string, userId: string) {
-  const member = await c
-    .get("db")
-    .selectFrom("members")
+  const member = await c.db
+    ?.selectFrom("members")
     .selectAll()
     .where((eb) => eb.and([eb("orgId", "=", orgId), eb("userId", "=", userId)]))
     .executeTakeFirst()
@@ -256,9 +253,8 @@ export async function isOrgMember(c: Context, orgId: string, userId: string) {
 }
 
 export async function getProjectMembers(c: Context, projectId: string) {
-  const members = await c
-    .get("db")
-    .selectFrom("projectMembers")
+  const members = await c.db
+    ?.selectFrom("projectMembers")
     .innerJoin("userProfiles as users", "projectMembers.userId", "users.id")
     .select([
       "projectMembers.userId as id",
@@ -271,7 +267,7 @@ export async function getProjectMembers(c: Context, projectId: string) {
     .where("projectMembers.projectId", "=", projectId)
     .execute()
 
-  return members.map((member) => ({
+  return members?.map((member) => ({
     id: member.id,
     role: member.role ?? "member",
     isOwner: member.isOwner,
@@ -286,9 +282,8 @@ export async function isProjectMember(
   projectId: string,
   userId: string
 ) {
-  const member = await c
-    .get("db")
-    .selectFrom("projectMembers")
+  const member = await c.db
+    ?.selectFrom("projectMembers")
     .selectAll()
     .where((eb) =>
       eb.and([eb("projectId", "=", projectId), eb("userId", "=", userId)])
@@ -300,7 +295,7 @@ export async function isProjectMember(
 
 export async function getTaskById(c: Context, taskId: string) {
   const task = await buildTaskQuery(c)
-    .where("tasks.id", "=", taskId)
+    ?.where("tasks.id", "=", taskId)
     .executeTakeFirst()
 
   if (!task) return null
@@ -346,7 +341,7 @@ export async function getTasks(c: Context, userId: string): Promise<Task[]> {
   const tasksQuery = buildTaskQuery(c)
 
   const _tasks = await buildTaskQuery(c)
-    .where((eb) =>
+    ?.where((eb) =>
       eb.exists(
         eb
           .selectFrom("taskAssignments")
@@ -356,7 +351,7 @@ export async function getTasks(c: Context, userId: string): Promise<Task[]> {
       )
     )
     .execute()
-  const tasks = await tasksQuery.execute()
+  const tasks = (await tasksQuery?.execute()) ?? []
 
   return tasks.flatMap((task) => {
     const createdBy = task.createdBy
@@ -394,9 +389,8 @@ export async function getTasks(c: Context, userId: string): Promise<Task[]> {
 }
 
 function buildTaskQuery(c: Context) {
-  return c
-    .get("db")
-    .selectFrom("tasks")
+  return c.db
+    ?.selectFrom("tasks")
     .select((eb) => [
       "tasks.id",
       "tasks.name",

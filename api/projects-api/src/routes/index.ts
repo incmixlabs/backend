@@ -1,12 +1,11 @@
-import type { OpenAPIHono } from "@hono/zod-openapi"
+import type { FastifyInstance } from "fastify"
 import { BASE_PATH } from "@/lib/constants"
 import healthcheckRoutes from "@/routes/healthcheck"
-import type { HonoApp } from "@/types"
 import projectRoutes from "./projects"
 import tasksRoutes from "./tasks"
 
-export const routes = (app: OpenAPIHono<HonoApp>) => {
-  app.route(`${BASE_PATH}/healthcheck`, healthcheckRoutes)
-  app.route(`${BASE_PATH}/tasks`, tasksRoutes)
-  app.route(BASE_PATH, projectRoutes)
+export const routes = async (app: FastifyInstance) => {
+  await app.register(healthcheckRoutes, { prefix: `${BASE_PATH}/healthcheck` })
+  await app.register(tasksRoutes, { prefix: `${BASE_PATH}/tasks` })
+  await app.register(projectRoutes, { prefix: BASE_PATH })
 }

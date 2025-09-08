@@ -1,9 +1,8 @@
-import type { Context } from "@/types"
+import type { FastifyRequest } from "fastify"
 
-export function getOrganizationById(c: Context, id: string) {
-  return c
-    .get("db")
-    .selectFrom("organisations")
+export function getOrganizationById(c: FastifyRequest, id: string) {
+  return c.db
+    ?.selectFrom("organisations")
     .selectAll()
     .where("id", "=", id)
     .executeTakeFirst()
