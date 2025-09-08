@@ -77,3 +77,4 @@ export const PermissionsResponseSchema = z.array(
     conditions: z.any().optional(),
   })
 )
+

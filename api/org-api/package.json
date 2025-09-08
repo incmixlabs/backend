@@ -15,7 +15,6 @@
     "@incmix-api/utils": "workspace:^",
     "@incmix/utils": "catalog:",
     "kysely": "catalog:",
-    "kysely-ctl": "catalog:",
     "lodash": "catalog:",
     "nanoid": "catalog:",
     "pg": "catalog:",

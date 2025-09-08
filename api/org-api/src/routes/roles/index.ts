@@ -1,7 +1,9 @@
-import type { FastifyInstance, FastifyPlugin } from "fastify"
+import type {  FastifyInstance,
+FastifyPluginAsync,
+FastifyPluginOptions, } from "fastify"
 import fp from "fastify-plugin"
 
-const rolesRoutes: FastifyPlugin = (fastify: FastifyInstance) => {
+const rolesRoutes: FastifyPluginAsync = async (  fastify: FastifyInstance,  _opts: FastifyPluginOptions, ) => {
   // Add new role
   fastify.post("/", (_request, reply) => {
     return reply
