@@ -1,7 +1,8 @@
-import type { FastifyInstance, FastifyPlugin } from "fastify"
-import fp from "fastify-plugin"
+import type { FastifyInstance, FastifyPluginAsync } from "fastify"
 
-const featureFlagsRoutes: FastifyPlugin = (fastify: FastifyInstance) => {
+const featureFlagsRoutes: FastifyPluginAsync = async (
+  fastify: FastifyInstance
+) => {
   // List feature flags
   fastify.get("/", (_request, reply) => {
     return reply
@@ -38,4 +39,4 @@ const featureFlagsRoutes: FastifyPlugin = (fastify: FastifyInstance) => {
   })
 }
 
-export default fp(featureFlagsRoutes)
+export default featureFlagsRoutes

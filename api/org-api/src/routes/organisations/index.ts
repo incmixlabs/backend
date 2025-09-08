@@ -1,7 +1,13 @@
-import type { FastifyInstance, FastifyPlugin } from "fastify"
-import fp from "fastify-plugin"
+import type {
+  FastifyInstance,
+  FastifyPluginAsync,
+  FastifyPluginOptions,
+} from "fastify"
 
-const orgRoutes: FastifyPlugin = (fastify: FastifyInstance) => {
+const orgRoutes: FastifyPluginAsync = async (
+  fastify: FastifyInstance,
+  _opts: FastifyPluginOptions
+) => {
   // Get organisation by handle
   fastify.get("/:handle", (_request, reply) => {
     return reply
@@ -78,4 +84,4 @@ const orgRoutes: FastifyPlugin = (fastify: FastifyInstance) => {
   })
 }
 
-export default fp(orgRoutes)
+export default orgRoutes

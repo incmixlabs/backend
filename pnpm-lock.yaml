@@ -702,9 +702,6 @@ importers:
       kysely:
         specifier: 'catalog:'
         version: 0.27.5
-      kysely-ctl:
-        specifier: 'catalog:'
-        version: 0.12.1(kysely@0.27.5)
       lodash:
         specifier: 'catalog:'
         version: 4.17.21
@@ -730,6 +727,9 @@ importers:
       '@types/pg':
         specifier: 'catalog:'
         version: 8.11.11
+      kysely-ctl:
+        specifier: 'catalog:'
+        version: 0.12.1(kysely@0.27.5)
       tsc-alias:
         specifier: 'catalog:'
         version: 1.8.16

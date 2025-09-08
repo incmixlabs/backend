@@ -18,7 +18,12 @@ const healthcheckRoutes = createHealthCheckRoute({
       check: async (request) => {
         try {
           const db = (request as any).db
-          const roles = await db.selectFrom("roles").selectAll().execute()
+          if (!db) return false
+          const roles = await db
+            .selectFrom("roles")
+            .select("id")
+            .limit(1)
+            .execute()
           return roles.length > 0
         } catch (_error) {
           return false

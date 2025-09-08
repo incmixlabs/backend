@@ -1,10 +1,15 @@
 import { actions, subjects } from "@incmix/utils/types"
 import { z } from "zod"
 
-export const PermissionsWithRoleSchema = z.record(
-  z.string(),
-  z.union([z.enum(subjects), z.enum(actions), z.boolean()])
+const PermissionMatrixSchema = z.record(
+  z.enum(subjects),
+  z.record(z.enum(actions), z.boolean())
 )
+
+export const PermissionsWithRoleSchema = z.object({
+  roleId: z.number().int().positive(),
+  permissions: PermissionMatrixSchema,
+})
 
 export const PermissionRolesResponseSchema = z.object({
   roles: z.array(

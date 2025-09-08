@@ -1,7 +1,8 @@
-import type { FastifyInstance, FastifyPlugin } from "fastify"
-import fp from "fastify-plugin"
+import type { FastifyInstance, FastifyPluginAsync } from "fastify"
 
-const permissionRoutes: FastifyPlugin = (fastify: FastifyInstance) => {
+const permissionRoutes: FastifyPluginAsync = async (
+  fastify: FastifyInstance
+) => {
   // Get roles permissions
   fastify.get("/roles", (_request, reply) => {
     return reply
@@ -45,4 +46,4 @@ const permissionRoutes: FastifyPlugin = (fastify: FastifyInstance) => {
   })
 }
 
-export default fp(permissionRoutes)
+export default permissionRoutes
