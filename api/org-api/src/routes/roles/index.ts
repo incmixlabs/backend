@@ -9,21 +9,21 @@ const rolesRoutes: FastifyPluginAsync = async (
   _opts: FastifyPluginOptions
 ) => {
   fastify.post("/", async (_request, reply) => {
-    return reply
+    return await reply
       .code(501)
       .send({ message: "Add new role - Not implemented yet" })
   })
 
   // Update role
   fastify.put("/:id", async (_request, reply) => {
-    return reply
+    return await reply
       .code(501)
       .send({ message: "Update role - Not implemented yet" })
   })
 
   // Delete role
   fastify.delete("/:id", async (_request, reply) => {
-    return reply
+    return await reply
       .code(501)
       .send({ message: "Delete role - Not implemented yet" })
   })
