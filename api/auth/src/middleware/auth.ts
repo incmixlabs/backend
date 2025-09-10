@@ -86,7 +86,7 @@ export function setSessionCookie(
   const COOKIE_PATH = "/"
   const MAX_AGE = 30 * 24 * 60 * 60 // 30 days in seconds
   const SAME_SITE = "None"
-  const isProduction = envVars.NODE_ENV === "production"
+  const isProduction = envVars.NODE_ENV === "prod"
 
   const cookieValue = `${envVars.COOKIE_NAME}=${sessionId}; Domain=${envVars.DOMAIN}; Path=${COOKIE_PATH}; HttpOnly; SameSite=${SAME_SITE}; Max-Age=${MAX_AGE}; Secure=${isProduction}; Expires=${expiresAt.toUTCString()}`
   reply.header("Set-Cookie", cookieValue)
@@ -97,7 +97,7 @@ function deleteSessionCookie(reply: FastifyReply): void {
   const isIp = domain ? /^\d{1,3}(\.\d{1,3}){3}$/.test(domain) : false
   const domainPart =
     domain && !/localhost/i.test(domain) && !isIp ? `; Domain=${domain}` : ""
-  const secure = envVars.NODE_ENV === "production" ? "; Secure" : ""
+  const secure = envVars.NODE_ENV === "prod" ? "; Secure" : ""
 
   const cookieValue = `${envVars.COOKIE_NAME}=; Path=/; HttpOnly; SameSite=None; Max-Age=0; Expires=Thu, 01 Jan 1970 00:00:00 GMT${secure}${domainPart}`
   reply.header("Set-Cookie", cookieValue)

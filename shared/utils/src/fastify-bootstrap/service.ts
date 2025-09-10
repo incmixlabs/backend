@@ -6,7 +6,7 @@ import type { FastifyServiceConfig } from "./types"
 export function createFastifyService(config: FastifyServiceConfig) {
   const app: FastifyInstance = fastify({
     logger: {
-      level: process.env.NODE_ENV === "production" ? "info" : "debug",
+      level: process.env.NODE_ENV === "prod" ? "info" : "debug",
     },
     ajv: {
       customOptions: {
@@ -132,10 +132,26 @@ export function createFastifyService(config: FastifyServiceConfig) {
                   description: "Error message",
                   example: "An error occurred",
                 },
-                error: { type: "string", description: "Error name", example: "ValidationError" },
-                statusCode: { type: "integer", description: "HTTP status code", example: 422 },
-                timestamp: { type: "string", format: "date-time", description: "Error timestamp" },
-                path: { type: "string", description: "Request path", example: "/api/auth/login" },
+                error: {
+                  type: "string",
+                  description: "Error name",
+                  example: "ValidationError",
+                },
+                statusCode: {
+                  type: "integer",
+                  description: "HTTP status code",
+                  example: 422,
+                },
+                timestamp: {
+                  type: "string",
+                  format: "date-time",
+                  description: "Error timestamp",
+                },
+                path: {
+                  type: "string",
+                  description: "Request path",
+                  example: "/api/auth/login",
+                },
               },
               required: ["message", "statusCode"],
             },
@@ -200,7 +216,7 @@ export function createFastifyService(config: FastifyServiceConfig) {
         searchHotKey: "k",
         darkMode: true,
         spec: {
-          url: `${config.basePath}/docs/json`
+          url: `${config.basePath}/docs/json`,
         },
       },
     })
@@ -238,7 +254,6 @@ export function createFastifyService(config: FastifyServiceConfig) {
 
       await setupMiddleware()
       await setupRoutes()
-
 
       await app.listen({
         port: config.port,

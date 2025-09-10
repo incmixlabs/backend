@@ -468,13 +468,19 @@ export const setupAuthRoutes = async (app: FastifyInstance) => {
             },
             password: {
               type: "string",
-              minLength: 1,
+              minLength: 8,
               maxLength: 128,
-              description: "User's password",
+              description: "User's password (minimum 8 characters)",
             },
           },
           required: ["email", "password"],
           additionalProperties: false,
+          examples: [
+            {
+              email: "john.doe@example.com",
+              password: "StrongP@ssw0rd123",
+            },
+          ],
         },
         response: {
           200: {
@@ -489,6 +495,10 @@ export const setupAuthRoutes = async (app: FastifyInstance) => {
                 type: "string",
                 format: "email",
                 description: "User's email address",
+              },
+              name: {
+                type: "string",
+                description: "User's full name",
               },
               emailVerified: {
                 type: "boolean",
@@ -517,6 +527,14 @@ export const setupAuthRoutes = async (app: FastifyInstance) => {
               },
             },
           },
+          422: {
+            description: "Invalid request body",
+            type: "object",
+            properties: {
+              message: { type: "string" },
+              validation: { type: "array" },
+            },
+          },
         },
       },
     },
@@ -530,12 +548,21 @@ export const setupAuthRoutes = async (app: FastifyInstance) => {
 
         const db = request.context.db
 
-        // Find user by email
+        // Find user by email with profile
         const user = await db
           .selectFrom("users")
-          .selectAll()
-          .where("email", "=", email)
-          .where("isActive", "=", true)
+          .innerJoin("userProfiles", "users.id", "userProfiles.id")
+          .select([
+            "users.id",
+            "users.email",
+            "users.hashedPassword",
+            "users.emailVerifiedAt",
+            "users.isSuperAdmin",
+            "users.isActive",
+            "userProfiles.fullName",
+          ])
+          .where("users.email", "=", email)
+          .where("users.isActive", "=", true)
           .executeTakeFirst()
 
         if (!user) {
@@ -579,12 +606,13 @@ export const setupAuthRoutes = async (app: FastifyInstance) => {
 
         // Set session cookie
         const cookieName = envVars.COOKIE_NAME
-        const cookieValue = `${cookieName}=${sessionId}; Domain=${envVars.DOMAIN}; Path=/; HttpOnly; SameSite=None; Max-Age=${30 * 24 * 60 * 60}; Secure=${envVars.NODE_ENV === "production"}; Expires=${expiresAt.toUTCString()}`
+        const cookieValue = `${cookieName}=${sessionId}; Domain=${envVars.DOMAIN}; Path=/; HttpOnly; SameSite=None; Max-Age=${30 * 24 * 60 * 60}; Secure=${envVars.NODE_ENV === "prod"}; Expires=${expiresAt.toUTCString()}`
         reply.header("Set-Cookie", cookieValue)
 
         return reply.code(200).send({
           id: user.id,
           email: user.email,
+          name: user.fullName,
           emailVerified: Boolean(user.emailVerifiedAt),
           isSuperAdmin: user.isSuperAdmin,
           session: {

@@ -24,10 +24,25 @@ export const setupHealthcheckRoutes = async (app: FastifyInstance) => {
               },
             },
           },
+          503: {
+            type: "object",
+            properties: {
+              status: { type: "string", enum: ["UP", "DOWN"] },
+              service: { type: "string" },
+              timestamp: { type: "string" },
+              checks: {
+                type: "object",
+                properties: {
+                  database: { type: "boolean" },
+                  envVars: { type: "boolean" },
+                },
+              },
+            },
+          },
         },
       },
     },
-    async (request, _reply) => {
+    async (request, reply) => {
       const checks = {
         database: false,
         envVars: false,
@@ -67,12 +82,14 @@ export const setupHealthcheckRoutes = async (app: FastifyInstance) => {
 
       const allChecksPass = Object.values(checks).every(Boolean)
 
-      return {
-        status: allChecksPass ? "UP" : "DOWN",
+      const status = allChecksPass ? "UP" : "DOWN"
+      const body = {
+        status,
         service: "auth-api",
         timestamp: new Date().toISOString(),
         checks,
       }
+      return reply.code(allChecksPass ? 200 : 503).send(body)
     }
   )
 }

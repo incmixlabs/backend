@@ -24,9 +24,9 @@ export const FeatureFlagSchema = z.object({
     .openapi({ example: "A new feature description" }),
   enabled: z.boolean().default(true).openapi({ example: true }),
   allowedEnv: z
-    .array(z.enum(["all", "development", "staging", "production"]))
+    .array(z.enum(["all", "dev", "qa", "uat", "test","prod"]))
     .default(["all"])
-    .openapi({ example: ["all", "development"] }),
+    .openapi({ example: ["all", "dev"] }),
   allowedUsers: z
     .union([z.literal("all"), z.literal("superusers"), z.string()])
     .array()
@@ -58,10 +58,10 @@ export const UpdateFeatureFlagSchema = CreateFeatureFlagSchema.partial()
 
 export const FeatureFlagQuerySchema = z.object({
   env: z
-    .enum(["all", "development", "staging", "production"])
+    .enum(["all", "dev", "qa", "uat", "prod", "test"])
     .optional()
     .openapi({
-      example: "development",
+      example: "dev",
       description: "Environment to filter feature flags by",
     }),
 })

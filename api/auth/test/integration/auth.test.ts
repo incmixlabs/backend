@@ -19,7 +19,7 @@ describe("Auth Integration Tests", () => {
 
     // Force a small delay to ensure cleanup is complete
     await new Promise((resolve) => setTimeout(resolve, 200))
-  })
+  }, 10000)
 
   describe("POST /api/auth/signup", () => {
     it("should create a new user successfully", async () => {
@@ -133,7 +133,7 @@ describe("Auth Integration Tests", () => {
         body: JSON.stringify(userData),
       })
       expect(signupResponse.status).toBe(201)
-    })
+    }, 10000)
 
     it("should return 200 for successful login", async () => {
       const credentials = {

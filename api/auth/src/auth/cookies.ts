@@ -6,7 +6,7 @@ const COOKIE_PATH = "/"
 const MAX_AGE = 30 * 24 * 60 * 60 // 30 days in seconds
 const SAME_SITE = "None"
 function isProduction(): boolean {
-  return envVars.NODE_ENV === "production"
+  return envVars.NODE_ENV === "prod"
 }
 
 export function setSessionCookie(

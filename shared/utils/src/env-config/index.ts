@@ -67,8 +67,8 @@ function buildApiUrl(port: number, path: string, domain?: string): string {
 // Base environment schema shared across all services
 const baseEnvSchema = z.object({
   NODE_ENV: z
-    .enum(["development", "production", "test"])
-    .default("development"),
+    .enum(["dev", "qa", "uat", "prod", "test"])
+    .default("test"),
   DATABASE_URL: z.string().url(),
   SENTRY_DSN: z.string().url().optional(),
   FRONTEND_URL: z.string().url(),
@@ -165,11 +165,11 @@ export type ServiceName = keyof typeof serviceSchemas
 export function createEnvConfig<T extends ServiceName>(
   serviceName?: T,
   customSchema?: z.ZodObject<any>,
-  envOverride?: "test" | "development" | "production"
+  envOverride?: "dev" | "qa" | "uat" | "prod" | "test"
 ) {
   // Load environment variables using dotenv-mono
   // This will merge root .env with service-specific .env and NODE_ENV specific files
-  const nodeEnv = envOverride || process.env.NODE_ENV || "development"
+  const nodeEnv = envOverride || process.env.NODE_ENV || "test"
 
   // Get the directory of the current module
   const __dirname = path.dirname(fileURLToPath(import.meta.url))
@@ -268,9 +268,10 @@ export function createEnvConfig<T extends ServiceName>(
   }
 
   process.env.NODE_ENV = nodeEnv
+  console.log("Using NODE_ENV=",process.env)
   // Parse and validate environment variables
   const result = schema.safeParse(process.env)
-
+  console.log('result', result)
   if (!result.success) {
     console.error("Environment validation failed:", result.error.format())
     throw new Error("Environment validation failed")

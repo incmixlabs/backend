@@ -78,7 +78,7 @@ export type Env = YourServiceEnv
 ```
 
 **Environment File Priority (highest to lowest):**
-1. Service-specific `.env.{NODE_ENV}` (e.g., `.env.development`)
+1. Service-specific `.env.{NODE_ENV}` (e.g., `.env.dev`)
 2. Service-specific `.env`
 3. Backend root `.env.{NODE_ENV}`
 4. Backend root `.env`
