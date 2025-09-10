@@ -45,10 +45,8 @@ export function createCorsMiddleware(options: CorsOptions = {}) {
       } else if (origin === true) {
         if (credentials) {
           // When credentials are enabled, we cannot use wildcard origin
-          // Only set origin if one is provided in the request
-          if (requestOrigin) {
-            reply.header("Access-Control-Allow-Origin", requestOrigin)
-          }
+          // Reject the request since no specific origins are configured
+          return reply.status(403).send({ error: "CORS: credentials enabled but no specific origins configured" })
         } else {
           reply.header("Access-Control-Allow-Origin", requestOrigin || "*")
         }
@@ -67,10 +65,8 @@ export function createCorsMiddleware(options: CorsOptions = {}) {
     } else if (origin === true) {
       if (credentials) {
         // When credentials are enabled, we cannot use wildcard origin
-        // Only set origin if one is provided in the request
-        if (requestOrigin) {
-          reply.header("Access-Control-Allow-Origin", requestOrigin)
-        }
+        // Reject the request since no specific origins are configured
+        return reply.status(403).send({ error: "CORS: credentials enabled but no specific origins configured" })
       } else {
         reply.header("Access-Control-Allow-Origin", requestOrigin || "*")
       }

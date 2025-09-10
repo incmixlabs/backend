@@ -266,7 +266,6 @@ export function createEnvConfig<T extends ServiceName>(
   }
 
   process.env.NODE_ENV = nodeEnv
-  console.log("Using NODE_ENV=", process.env)
   // Parse and validate environment variables
   const result = schema.safeParse(process.env)
   console.log("result", result)
