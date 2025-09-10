@@ -6,6 +6,7 @@ import newsRoutes from "./news"
 import rateLimitRoutes from "./rate-limits"
 import weatherRoutes from "./weather"
 
+console.log("BASE_PATH", BASE_PATH)
 export const routes = (app: OpenAPIHono<HonoApp>) => {
   app.route(`${BASE_PATH}/weather`, weatherRoutes)
   app.route(`${BASE_PATH}/news`, newsRoutes)

@@ -42,7 +42,7 @@ A reusable GitHub Action that builds a Docker image from a Dockerfile and pushes
     registry-password: ${{ secrets.DOCKER_PASSWORD }}
     cache-from: 'registry.incmix.com/auth:cache'
     cache-to: 'type=registry,ref=registry.incmix.com/auth:cache,mode=max'
-    build-args: 'NODE_ENV=production,BUILD_VERSION=${{ github.sha }}'
+    build-args: 'NODE_ENV=prod,BUILD_VERSION=${{ github.sha }}'
     platforms: 'linux/amd64,linux/arm64'
 ```
 

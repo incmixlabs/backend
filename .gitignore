@@ -9,9 +9,9 @@ claude
 # Local env files
 .env
 .env.local
-.env.development.local
+.env.dev.local
 .env.test.local
-.env.production.local
+.env.prodlocal
 .dev.vars
 .env*
 .secrets

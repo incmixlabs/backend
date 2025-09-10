@@ -6,7 +6,7 @@ import type {
   Updateable,
 } from "kysely"
 
-const envs = ["all", "development", "staging", "production"] as const
+const envs = ["all", "dev", "qa", "uat", "prod", "test"] as const
 export type Env = (typeof envs)[number]
 type FeatureFlagsTable = {
   id: Generated<string>

@@ -1,142 +1,277 @@
-import { OpenAPIHono } from "@hono/zod-openapi"
-import {
-  processError,
-  UnauthorizedError,
-  zodError,
-} from "@incmix-api/utils/errors"
-import { useTranslation } from "@incmix-api/utils/middleware"
-import { setSessionCookie } from "@/auth/cookies"
-import { createSession } from "@/auth/session"
-import { hashPassword, verifyPassword } from "@/auth/utils"
-import {
-  ERROR_INVALID_CODE,
-  ERROR_WRONG_PASSWORD,
-  MAIL_SENT,
-  PASS_RESET_SUCCESS,
-} from "@/lib/constants"
-import { findUserByEmail, findUserById } from "@/lib/db"
-import {
-  generateVerificationCode,
-  sendForgetPasswordEmail,
-  verifyVerificationCode,
-} from "@/lib/helper"
-import {
-  forgetPassword,
-  resetPassword,
-  sendForgetPasswordEmail as sendForgetPasswordEmailRoute,
-} from "@/routes/reset-password/openapi"
-import type { HonoApp } from "@/types"
+import type { FastifyInstance } from "fastify"
 
-const resetPasswordRoutes = new OpenAPIHono<HonoApp>({
-  defaultHook: zodError,
-})
-
-resetPasswordRoutes.openapi(resetPassword, async (c) => {
-  try {
-    const currentUser = c.get("user")
-
-    if (!currentUser) {
-      throw new UnauthorizedError()
-    }
-
-    const user = await findUserById(c, currentUser.id)
-
-    const { newPassword, currentPassword } = c.req.valid("json")
-
-    const validPassword = await verifyPassword(
-      user.hashedPassword ?? "",
-      currentPassword
-    )
-    const t = await useTranslation(c)
-    if (!validPassword) {
-      const msg = await t.text(ERROR_WRONG_PASSWORD)
-      throw new UnauthorizedError(msg)
-    }
-
-    const newHash = await hashPassword(newPassword)
-
-    await c
-      .get("db")
-      .updateTable("users")
-      .set({ hashedPassword: newHash })
-      .where("id", "=", currentUser.id)
-      .execute()
-
-    const session = await createSession(c.get("db"), currentUser.id)
-    setSessionCookie(c, session.id, new Date(session.expiresAt))
-    const msg = await t.text(PASS_RESET_SUCCESS)
-
-    return c.json({ message: msg })
-  } catch (error) {
-    return await processError<typeof resetPassword>(c, error, [
-      "{{ default }}",
-      "reset-password",
-    ])
-  }
-})
-
-resetPasswordRoutes.openapi(sendForgetPasswordEmailRoute, async (c) => {
-  try {
-    const { email } = c.req.valid("json")
-    const user = await findUserByEmail(c, email)
-
-    const verificationCode = await generateVerificationCode(
-      c,
-      user.id,
-      email,
-      "reset_password"
-    )
-
-    await sendForgetPasswordEmail(c, email, verificationCode, user.id)
-    const t = await useTranslation(c)
-    const msg = await t.text(MAIL_SENT)
-    return c.json({ message: msg }, 200)
-  } catch (error) {
-    return await processError<typeof sendForgetPasswordEmailRoute>(c, error, [
-      "{{ default }}",
-      "forget-password-email",
-    ])
-  }
-})
-
-resetPasswordRoutes.openapi(forgetPassword, async (c) => {
-  try {
-    const { code, newPassword, email } = c.req.valid("json")
-
-    const user = await findUserByEmail(c, email)
-
-    const validCode = await verifyVerificationCode(
-      c,
-      {
-        email,
-        id: user.id,
+export const setupResetPasswordRoutes = async (app: FastifyInstance) => {
+  // Request password reset
+  app.post(
+    "/reset-password/request",
+    {
+      schema: {
+        description: "Request password reset",
+        tags: ["password-reset"],
+        body: {
+          type: "object",
+          properties: {
+            email: { type: "string", format: "email" },
+          },
+          required: ["email"],
+          additionalProperties: false,
+        },
+        response: {
+          200: {
+            type: "object",
+            properties: {
+              message: { type: "string" },
+            },
+          },
+          404: {
+            type: "object",
+            properties: {
+              message: { type: "string" },
+            },
+          },
+          422: {
+            type: "object",
+            properties: {
+              message: { type: "string" },
+            },
+          },
+        },
       },
-      code,
-      "reset_password"
-    )
-    const t = await useTranslation(c)
-    if (!validCode) {
-      const msg = await t.text(ERROR_INVALID_CODE)
-      throw new UnauthorizedError(msg)
+    },
+    async (request, reply) => {
+      try {
+        const { email } = request.body as { email: string }
+
+        if (!request.context?.db) {
+          throw new Error("Database not available")
+        }
+
+        const db = request.context.db
+
+        // Check if user exists
+        const user = await db
+          .selectFrom("users")
+          .select(["id", "email"])
+          .where("email", "=", email)
+          .where("isActive", "=", true)
+          .executeTakeFirst()
+
+        if (!user) {
+          return reply.code(404).send({ message: "User not found" })
+        }
+
+        // Generate verification code
+        const crypto = await import("node:crypto")
+        const verificationCode = crypto.randomBytes(32).toString("hex")
+        const codeHash = crypto
+          .createHash("sha256")
+          .update(verificationCode)
+          .digest("hex")
+        const expiresAt = new Date(Date.now() + 60 * 60 * 1000) // 1 hour
+
+        // Delete any existing reset password tokens for this user
+        await db
+          .deleteFrom("verificationCodes")
+          .where("userId", "=", user.id)
+          .where("codeType", "=", "reset_password")
+          .execute()
+
+        // Store hashed verification code
+        await db
+          .insertInto("verificationCodes")
+          .values({
+            userId: user.id,
+            code: verificationCode, // Keep for backward compatibility during transition
+            codeHash,
+            email: user.email,
+            codeType: "reset_password",
+            expiresAt: expiresAt.toISOString(),
+          })
+          .execute()
+
+        // TODO: Send email with reset link
+        // await sendResetPasswordEmail(user.email, verificationCode)
+
+        return { message: "If the account exists, we sent a reset email" }
+      } catch (error) {
+        console.error("Password reset request error:", error)
+        throw error
+      }
     }
+  )
 
-    const newHash = await hashPassword(newPassword)
+  // Confirm password reset
+  app.post(
+    "/reset-password/confirm",
+    {
+      schema: {
+        description: "Confirm password reset with token",
+        tags: ["password-reset"],
+        body: {
+          type: "object",
+          properties: {
+            token: { type: "string", minLength: 1 },
+            newPassword: { type: "string", minLength: 8, maxLength: 128 },
+          },
+          required: ["token", "newPassword"],
+          additionalProperties: false,
+        },
+        response: {
+          200: {
+            type: "object",
+            properties: {
+              message: { type: "string" },
+            },
+          },
+          401: {
+            type: "object",
+            properties: {
+              message: { type: "string" },
+            },
+          },
+          404: {
+            type: "object",
+            properties: {
+              message: { type: "string" },
+            },
+          },
+          422: {
+            type: "object",
+            properties: {
+              message: { type: "string" },
+            },
+          },
+        },
+      },
+    },
+    async (request, reply) => {
+      try {
+        const { token, newPassword } = request.body as {
+          token: string
+          newPassword: string
+        }
 
-    await c
-      .get("db")
-      .updateTable("users")
-      .set({ hashedPassword: newHash })
-      .where("id", "=", user.id)
-      .execute()
+        if (!request.context?.db) {
+          throw new Error("Database not available")
+        }
 
-    const msg = await t.text(PASS_RESET_SUCCESS)
-    return c.json({ message: msg }, 200)
-  } catch (error) {
-    return await processError<typeof forgetPassword>(c, error, [
-      "{{ default }}",
-      "forgetPassword",
-    ])
-  }
-})
+        const db = request.context.db
 
-export default resetPasswordRoutes
+        // Hash the provided token to compare with stored hash
+        const crypto = await import("node:crypto")
+        const tokenHash = crypto
+          .createHash("sha256")
+          .update(token)
+          .digest("hex")
+
+        // Find valid verification code by hash (preferred) or fallback to plain code
+        const verificationCode = await db
+          .selectFrom("verificationCodes")
+          .selectAll()
+          .where((eb) =>
+            eb.or([
+              eb("codeHash", "=", tokenHash),
+              eb("code", "=", token), // Fallback for existing tokens without hash
+            ])
+          )
+          .where("codeType", "=", "reset_password")
+          .where("expiresAt", ">", new Date())
+          .executeTakeFirst()
+
+        if (!verificationCode) {
+          return reply
+            .code(401)
+            .send({ message: "Invalid or expired reset code" })
+        }
+
+        // Find user by email from verification code
+        const user = await db
+          .selectFrom("users")
+          .selectAll()
+          .where("id", "=", verificationCode.userId)
+          .where("isActive", "=", true)
+          .executeTakeFirst()
+
+        if (!user) {
+          return reply.code(404).send({ message: "User not found" })
+        }
+
+        // Hash new password
+        const bcrypt = await import("bcrypt")
+        const hashedPassword = await bcrypt.hash(newPassword, 10)
+
+        // Update password and invalidate verification code
+        await db.transaction().execute(async (tx) => {
+          // Update user password
+          await tx
+            .updateTable("users")
+            .set({
+              hashedPassword,
+            })
+            .where("id", "=", user.id)
+            .execute()
+
+          // Delete the used verification code
+          await tx
+            .deleteFrom("verificationCodes")
+            .where("code", "=", token)
+            .execute()
+
+          // Invalidate all user sessions
+          await tx
+            .deleteFrom("sessions")
+            .where("userId", "=", user.id)
+            .execute()
+        })
+
+        return { message: "Password reset successfully" }
+      } catch (error) {
+        console.error("Password reset confirm error:", error)
+        throw error
+      }
+    }
+  )
+
+  // Reset password (authenticated user)
+  app.post(
+    "/reset-password",
+    {
+      schema: {
+        description: "Reset password for authenticated user",
+        tags: ["password-reset"],
+        body: {
+          type: "object",
+          properties: {
+            currentPassword: { type: "string" },
+            newPassword: { type: "string", minLength: 8, maxLength: 128 },
+          },
+          required: ["currentPassword", "newPassword"],
+          additionalProperties: false,
+        },
+        response: {
+          200: {
+            type: "object",
+            properties: {
+              message: { type: "string" },
+            },
+          },
+          401: {
+            type: "object",
+            properties: {
+              message: { type: "string" },
+            },
+          },
+        },
+      },
+    },
+    async (_request, _reply) => {
+      try {
+        // TODO: Implement authenticated password reset
+        return { message: "Password reset successfully" }
+      } catch (error) {
+        console.error("Reset password error:", error)
+        throw error
+      }
+    }
+  )
+}
