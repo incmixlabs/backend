@@ -57,7 +57,7 @@ export function createCorsMiddleware(options: CorsOptions = {}) {
             reply.header("Access-Control-Allow-Origin", requestOrigin)
           }
         } else {
-          reply.header("Access-Control-Allow-Origin", requestOrigin || "*")
+          reply.header("Access-Control-Allow-Origin", "*")
         }
       }
 
@@ -84,7 +84,7 @@ export function createCorsMiddleware(options: CorsOptions = {}) {
           reply.header("Access-Control-Allow-Origin", requestOrigin)
         }
       } else {
-        reply.header("Access-Control-Allow-Origin", requestOrigin || "*")
+        reply.header("Access-Control-Allow-Origin", "*")
       }
     }
 

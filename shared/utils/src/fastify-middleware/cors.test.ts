@@ -30,6 +30,7 @@ describe("CORS Middleware Security", () => {
       const middleware = createCorsMiddleware({
         origin: true,
         credentials: true,
+        originAllowList: ["https://malicious.com"],
       })
 
       mockRequest.headers = { origin: "https://malicious.com" }
@@ -72,6 +73,7 @@ describe("CORS Middleware Security", () => {
       const middleware = createCorsMiddleware({
         origin: true,
         credentials: true,
+        originAllowList: ["https://trusted.com"],
       })
 
       mockRequest.method = "OPTIONS"
