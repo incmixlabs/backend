@@ -13,7 +13,7 @@ export function createValidationMiddleware(options: ValidationOptions) {
   return async (request: FastifyRequest, reply: FastifyReply) => {
     const errors: Array<{ location: string; errors: any[] }> = []
 
-    if (options.body && request.body) {
+    if (options.body) {
       const result = validator.validate(options.body, request.body)
       if (!result.success) {
         errors.push({ location: "body", errors: result.errors || [] })
@@ -22,7 +22,7 @@ export function createValidationMiddleware(options: ValidationOptions) {
       }
     }
 
-    if (options.query && request.query) {
+    if (options.query) {
       const result = validator.validate(options.query, request.query)
       if (!result.success) {
         errors.push({ location: "query", errors: result.errors || [] })
@@ -31,7 +31,7 @@ export function createValidationMiddleware(options: ValidationOptions) {
       }
     }
 
-    if (options.params && request.params) {
+    if (options.params) {
       const result = validator.validate(options.params, request.params)
       if (!result.success) {
         errors.push({ location: "params", errors: result.errors || [] })
@@ -40,7 +40,7 @@ export function createValidationMiddleware(options: ValidationOptions) {
       }
     }
 
-    if (options.headers && request.headers) {
+    if (options.headers) {
       const result = validator.validate(options.headers, request.headers)
       if (!result.success) {
         errors.push({ location: "headers", errors: result.errors || [] })
@@ -48,7 +48,7 @@ export function createValidationMiddleware(options: ValidationOptions) {
     }
 
     if (errors.length > 0) {
-      return reply.status(400).send({
+      return reply.status(422).send({
         error: "Validation Error",
         details: errors,
       })

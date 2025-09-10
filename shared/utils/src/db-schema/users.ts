@@ -31,6 +31,7 @@ type VerificationCodesTable = {
   id: Generated<number>
   userId: string
   code: string
+  codeHash: string | null
   email: string
   expiresAt: ColumnType<Date, string, null>
   codeType: TokenType

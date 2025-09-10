@@ -40,6 +40,11 @@ export function createFastifyService(config: FastifyServiceConfig) {
       }
       request.context.db = db
     })
+
+    // Close DB pool gracefully
+    app.addHook("onClose", async () => {
+      await db.destroy()
+    })
   }
 
   // Setup Swagger documentation if enabled
@@ -127,7 +132,12 @@ export function createFastifyService(config: FastifyServiceConfig) {
                   description: "Error message",
                   example: "An error occurred",
                 },
+                error: { type: "string", description: "Error name", example: "ValidationError" },
+                statusCode: { type: "integer", description: "HTTP status code", example: 422 },
+                timestamp: { type: "string", format: "date-time", description: "Error timestamp" },
+                path: { type: "string", description: "Request path", example: "/api/auth/login" },
               },
+              required: ["message", "statusCode"],
             },
           },
         },
@@ -189,6 +199,9 @@ export function createFastifyService(config: FastifyServiceConfig) {
         showSidebar: true,
         searchHotKey: "k",
         darkMode: true,
+        spec: {
+          url: `${config.basePath}/docs/json`
+        },
       },
     })
   }
@@ -226,18 +239,6 @@ export function createFastifyService(config: FastifyServiceConfig) {
       await setupMiddleware()
       await setupRoutes()
 
-      // Reference endpoint with enhanced UI
-      if (config.needSwagger !== false) {
-        // @ts-expect-error
-        app.register(import("@scalar/fastify-api-reference"), {
-          routePrefix: `${config.basePath}/reference`,
-          configuration: {
-            spec: {
-              url: `${config.basePath}/docs/json`,
-            },
-          },
-        })
-      }
 
       await app.listen({
         port: config.port,
@@ -255,15 +256,13 @@ export function createFastifyService(config: FastifyServiceConfig) {
 
       // Setup graceful shutdown
       const gracefulShutdown = async (signal: string) => {
-        console.log(`\nReceived ${signal}. Starting graceful shutdown...`)
-
+        app.log.info({ signal }, "Starting graceful shutdown")
         try {
           await app.close()
-          console.log("Server shutdown completed")
+          app.log.info("Server shutdown completed")
           process.exit(0)
         } catch (error) {
-          console.error("Error during graceful shutdown:", error)
-          process.exit(1)
+          app.log.error({ err: error }, "Error during graceful shutdown")
         }
       }
 
@@ -271,8 +270,7 @@ export function createFastifyService(config: FastifyServiceConfig) {
       process.on("SIGTERM", () => gracefulShutdown("SIGTERM"))
       process.on("SIGINT", () => gracefulShutdown("SIGINT"))
     } catch (error) {
-      console.error("Failed to start server:", error)
-      process.exit(1)
+      app.log.error({ err: error }, "Error starting server")
     }
   }
 

@@ -18,7 +18,11 @@ export function createCorsMiddleware(options: CorsOptions = {}) {
     exposedHeaders = [],
     maxAge = 86400,
   } = options
-
+  if (credentials && origin === "*") {
+    throw new Error(
+      'CORS: credentials=true cannot be used with wildcard origin "*". Use a specific origin or an allowlist.'
+    )
+  }
   return async (request: FastifyRequest, reply: FastifyReply) => {
     const requestOrigin = request.headers.origin
 
