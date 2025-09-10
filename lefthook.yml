@@ -3,8 +3,15 @@
 #   https://github.com/evilmartians/lefthook/blob/master/docs/configuration.md
 
 pre-commit:
-  parallel: true
+  parallel: false
   commands:
+    lint:
+      run: pnpm run lint:fix
+      stage_fixed: true
+    build:
+      run: pnpm run build
+    test:
+      run: CI=true pnpm run test
     codeql-scan:
       run: |
         echo "Running CodeQL security analysis..."
