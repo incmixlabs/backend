@@ -12,6 +12,22 @@ declare module "fastify" {
     session?: Session
   }
 }
+async function _findUserByIdDb(db: KyselyDb, id: string) {
+  const user = await db
+    .selectFrom("users")
+    .innerJoin("userProfiles", "users.id", "userProfiles.id")
+    .select([
+      "users.id",
+      "users.email",
+      "users.isSuperAdmin",
+      "users.emailVerifiedAt",
+      "userProfiles.fullName",
+    ])
+    .where("users.id", "=", id)
+    .executeTakeFirst()
+
+  return user
+}
 
 export async function authMiddleware(
   request: FastifyRequest,
@@ -23,7 +39,6 @@ export async function authMiddleware(
   }
   const cookieName = envVars.COOKIE_NAME as string
   const sessionId = getCookieFromHeader(request, cookieName)
-
   if (!sessionId) {
     request.user = undefined
     request.session = undefined
@@ -39,8 +54,7 @@ export async function authMiddleware(
   }
 
   // Fetch user by session.userId
-  const user = await findUserByIdDb(db, session.userId)
-
+  const user = await _findUserByIdDb(db, session.userId)
   if (!user) {
     deleteSessionCookie(reply)
     request.user = undefined
@@ -48,25 +62,23 @@ export async function authMiddleware(
     return
   }
 
-  // If session was renewed, update cookie
-  const now = new Date()
-  const expiresAt = new Date(session.expiresAt)
-  // Renew if less than 15 days left (halfway)
-  if (expiresAt.getTime() - now.getTime() < 15 * 24 * 60 * 60 * 1000) {
-    setSessionCookie(reply, session.id, expiresAt)
+  // If session was renewed by validateSession, update the cookie
+  if (session.fresh) {
+    setSessionCookie(reply, session.id, new Date(session.expiresAt))
   }
 
+  // Set the authenticated user and session
   request.user = {
+    id: user.id,
     fullName: user.fullName,
     email: user.email,
     isSuperAdmin: user.isSuperAdmin,
-    emailVerified: user.emailVerifiedAt !== null,
-    id: user.id,
+    emailVerified: !!user.emailVerifiedAt,
   }
   request.session = session
 }
 
-function setSessionCookie(
+export function setSessionCookie(
   reply: FastifyReply,
   sessionId: string,
   expiresAt: Date
@@ -89,23 +101,6 @@ function deleteSessionCookie(reply: FastifyReply): void {
 
   const cookieValue = `${envVars.COOKIE_NAME}=; Path=/; HttpOnly; SameSite=None; Max-Age=0; Expires=Thu, 01 Jan 1970 00:00:00 GMT${secure}${domainPart}`
   reply.header("Set-Cookie", cookieValue)
-}
-
-async function findUserByIdDb(db: KyselyDb, id: string) {
-  const user = await db
-    .selectFrom("users")
-    .innerJoin("userProfiles", "users.id", "userProfiles.id")
-    .select([
-      "users.id",
-      "users.email",
-      "users.isSuperAdmin",
-      "users.emailVerifiedAt",
-      "userProfiles.fullName",
-    ])
-    .where("users.id", "=", id)
-    .executeTakeFirst()
-
-  return user
 }
 
 function getCookieFromHeader(

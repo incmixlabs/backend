@@ -20,6 +20,8 @@ export function createCorsMiddleware(options: CorsOptions = {}) {
   } = options
 
   return async (request: FastifyRequest, reply: FastifyReply) => {
+    const requestOrigin = request.headers.origin
+
     // Handle preflight requests
     if (request.method === "OPTIONS") {
       reply.header("Access-Control-Allow-Methods", methods.join(", "))
@@ -33,20 +35,18 @@ export function createCorsMiddleware(options: CorsOptions = {}) {
       if (typeof origin === "string") {
         reply.header("Access-Control-Allow-Origin", origin)
       } else if (Array.isArray(origin)) {
-        const requestOrigin = request.headers.origin
         if (requestOrigin && origin.includes(requestOrigin)) {
           reply.header("Access-Control-Allow-Origin", requestOrigin)
         }
       } else if (origin === true) {
-        // When credentials are enabled, we cannot use wildcard origin
-        // Must use the actual request origin or reject the request
-        if (credentials && request.headers.origin) {
-          reply.header("Access-Control-Allow-Origin", request.headers.origin)
-        } else if (!credentials) {
-          reply.header(
-            "Access-Control-Allow-Origin",
-            request.headers.origin || "*"
-          )
+        if (credentials) {
+          // When credentials are enabled, we cannot use wildcard origin
+          // Only set origin if one is provided in the request
+          if (requestOrigin) {
+            reply.header("Access-Control-Allow-Origin", requestOrigin)
+          }
+        } else {
+          reply.header("Access-Control-Allow-Origin", requestOrigin || "*")
         }
       }
 
@@ -57,20 +57,18 @@ export function createCorsMiddleware(options: CorsOptions = {}) {
     if (typeof origin === "string") {
       reply.header("Access-Control-Allow-Origin", origin)
     } else if (Array.isArray(origin)) {
-      const requestOrigin = request.headers.origin
       if (requestOrigin && origin.includes(requestOrigin)) {
         reply.header("Access-Control-Allow-Origin", requestOrigin)
       }
     } else if (origin === true) {
-      // When credentials are enabled, we cannot use wildcard origin
-      // Must use the actual request origin or reject the request
-      if (credentials && request.headers.origin) {
-        reply.header("Access-Control-Allow-Origin", request.headers.origin)
-      } else if (!credentials) {
-        reply.header(
-          "Access-Control-Allow-Origin",
-          request.headers.origin || "*"
-        )
+      if (credentials) {
+        // When credentials are enabled, we cannot use wildcard origin
+        // Only set origin if one is provided in the request
+        if (requestOrigin) {
+          reply.header("Access-Control-Allow-Origin", requestOrigin)
+        }
+      } else {
+        reply.header("Access-Control-Allow-Origin", requestOrigin || "*")
       }
     }
 

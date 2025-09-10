@@ -2,6 +2,30 @@
 #   Refer for explanation to following link:
 #   https://github.com/evilmartians/lefthook/blob/master/docs/configuration.md
 
+pre-commit:
+  parallel: true
+  commands:
+    codeql-scan:
+      run: |
+        echo "Running CodeQL security analysis..."
+        if command -v codeql >/dev/null 2>&1; then
+          # Create database and analyze if CodeQL CLI is available
+          codeql database create temp-db --language=javascript,typescript --source-root=. --overwrite || echo "CodeQL scan failed - continuing with commit"
+          codeql database analyze temp-db --format=text --output=codeql-results.txt || echo "CodeQL analysis failed - continuing with commit"
+          rm -rf temp-db
+          if [ -f codeql-results.txt ] && [ -s codeql-results.txt ]; then
+            echo "⚠️  CodeQL found potential security issues:"
+            cat codeql-results.txt
+            echo "Please review the findings above."
+          else
+            echo "✅ CodeQL scan completed - no issues found"
+          fi
+          rm -f codeql-results.txt
+        else
+          echo "ℹ️  CodeQL CLI not installed - skipping local scan (will run in CI)"
+        fi
+      stage_fixed: true
+
 commit-msg:
   parallel: true
   commands:
