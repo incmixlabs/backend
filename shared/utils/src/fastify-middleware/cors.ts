@@ -2,6 +2,7 @@ import type { FastifyReply, FastifyRequest } from "fastify"
 
 export interface CorsOptions {
   origin?: string | string[] | boolean
+  originAllowList?: string[]
   credentials?: boolean
   methods?: string[]
   allowedHeaders?: string[]
@@ -12,6 +13,7 @@ export interface CorsOptions {
 export function createCorsMiddleware(options: CorsOptions = {}) {
   const {
     origin = "*",
+    originAllowList = [],
     credentials = false,
     methods = ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowedHeaders = ["Content-Type", "Authorization"],
@@ -44,9 +46,14 @@ export function createCorsMiddleware(options: CorsOptions = {}) {
         }
       } else if (origin === true) {
         if (credentials) {
-          // When credentials are enabled, we cannot use wildcard origin
-          // Only set the origin if there's a request origin
-          if (requestOrigin) {
+          // When credentials are enabled, we cannot use wildcard origin.
+          // Only set the origin if there's a request origin, and that origin is on an allowlist.
+          // Never allow "null" origin.
+          if (
+            requestOrigin &&
+            requestOrigin !== "null" &&
+            originAllowList.includes(requestOrigin)
+          ) {
             reply.header("Access-Control-Allow-Origin", requestOrigin)
           }
         } else {
@@ -66,9 +73,14 @@ export function createCorsMiddleware(options: CorsOptions = {}) {
       }
     } else if (origin === true) {
       if (credentials) {
-        // When credentials are enabled, we cannot use wildcard origin
-        // Only set the origin if there's a request origin
-        if (requestOrigin) {
+        // When credentials are enabled, we cannot use wildcard origin.
+        // Only set the origin if there's a request origin, and that origin is on an allowlist.
+        // Never allow "null" origin.
+        if (
+          requestOrigin &&
+          requestOrigin !== "null" &&
+          originAllowList.includes(requestOrigin)
+        ) {
           reply.header("Access-Control-Allow-Origin", requestOrigin)
         }
       } else {
