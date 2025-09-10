@@ -29,6 +29,12 @@ export const setupResetPasswordRoutes = async (app: FastifyInstance) => {
               message: { type: "string" },
             },
           },
+          422: {
+            type: "object",
+            properties: {
+              message: { type: "string" },
+            },
+          },
         },
       },
     },
@@ -51,20 +57,34 @@ export const setupResetPasswordRoutes = async (app: FastifyInstance) => {
           .executeTakeFirst()
 
         if (!user) {
-          return reply.code(404).send({ message: "User not found" })
+          return reply
+            .code(404)
+            .send({ message: "User not found" })
         }
 
         // Generate verification code
         const crypto = await import("node:crypto")
         const verificationCode = crypto.randomBytes(32).toString("hex")
+        const codeHash = crypto
+          .createHash("sha256")
+          .update(verificationCode)
+          .digest("hex")
         const expiresAt = new Date(Date.now() + 60 * 60 * 1000) // 1 hour
 
-        // Store verification code
+        // Delete any existing reset password tokens for this user
+        await db
+          .deleteFrom("verificationCodes")
+          .where("userId", "=", user.id)
+          .where("codeType", "=", "reset_password")
+          .execute()
+
+        // Store hashed verification code
         await db
           .insertInto("verificationCodes")
           .values({
             userId: user.id,
-            code: verificationCode,
+            code: verificationCode, // Keep for backward compatibility during transition
+            codeHash,
             email: user.email,
             codeType: "reset_password",
             expiresAt: expiresAt.toISOString(),
@@ -74,7 +94,7 @@ export const setupResetPasswordRoutes = async (app: FastifyInstance) => {
         // TODO: Send email with reset link
         // await sendResetPasswordEmail(user.email, verificationCode)
 
-        return { message: "Password reset email sent" }
+        return { message: "If the account exists, we sent a reset email" }
       } catch (error) {
         console.error("Password reset request error:", error)
         throw error
@@ -117,6 +137,12 @@ export const setupResetPasswordRoutes = async (app: FastifyInstance) => {
               message: { type: "string" },
             },
           },
+          422: {
+            type: "object",
+            properties: {
+              message: { type: "string" },
+            },
+          },
         },
       },
     },
@@ -133,11 +159,23 @@ export const setupResetPasswordRoutes = async (app: FastifyInstance) => {
 
         const db = request.context.db
 
-        // Find valid verification code
+        // Hash the provided token to compare with stored hash
+        const crypto = await import("node:crypto")
+        const tokenHash = crypto
+          .createHash("sha256")
+          .update(token)
+          .digest("hex")
+
+        // Find valid verification code by hash (preferred) or fallback to plain code
         const verificationCode = await db
           .selectFrom("verificationCodes")
           .selectAll()
-          .where("code", "=", token)
+          .where((eb) =>
+            eb.or([
+              eb("codeHash", "=", tokenHash),
+              eb("code", "=", token), // Fallback for existing tokens without hash
+            ])
+          )
           .where("codeType", "=", "reset_password")
           .where("expiresAt", ">", new Date())
           .executeTakeFirst()
@@ -152,7 +190,7 @@ export const setupResetPasswordRoutes = async (app: FastifyInstance) => {
         const user = await db
           .selectFrom("users")
           .selectAll()
-          .where("email", "=", verificationCode.email)
+          .where("id", "=", verificationCode.userId)
           .where("isActive", "=", true)
           .executeTakeFirst()
 
