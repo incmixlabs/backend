@@ -1,548 +1,429 @@
-import { OpenAPIHono } from "@hono/zod-openapi"
-import type { UserRole } from "@incmix/utils/types"
-import { UserRoles } from "@incmix/utils/types"
-import { ERROR_UNAUTHORIZED } from "@incmix-api/utils"
-import {
-  ConflictError,
-  processError,
-  ServerError,
-  UnauthorizedError,
-  UnprocessableEntityError,
-  zodError,
-} from "@incmix-api/utils/errors"
-import { useTranslation } from "@incmix-api/utils/middleware"
-import { nanoid } from "nanoid"
-import {
-  ERROR_INVALID_USER,
-  ERROR_MEMBER_EXIST,
-  ERROR_MEMBER_INSERT_FAIL,
-  ERROR_NO_ROLES,
-  ERROR_ORG_CREATE_FAIL,
-  ERROR_ORG_DELETE_FAIL,
-  ERROR_ORG_EXIST,
-  ERROR_ORG_UPDATE_FAIL,
-  ORG_DELETE_SUCCESS,
-} from "@/lib/constants"
-import {
-  checkHandleAvailability,
-  doesOrganisationExist,
-  ensureAtLeastOneOwner,
-  findAllRoles,
-  findOrganisationByHandle,
-  findOrganisationById,
-  findOrganisationByUserId,
-  findOrgMembers,
-  findRoleByName,
-  getUserByEmail,
-  getUserById,
-  insertMembers,
-  insertOrganisation,
-  isValidUser,
-} from "@/lib/db"
-import { throwUnlessUserCan } from "@/lib/helper"
-import {
-  addMember,
-  createOrganisation,
-  deleteOrganisation,
-  getOrganisation,
-  getOrganisationById,
-  getOrganizationMembers,
-  getOrganizationPermissions,
-  getUserOrganisations,
-  removeMembers,
-  updateOrganisation,
-  validateHandle,
-} from "@/routes/organisations/openapi"
-import type { HonoApp } from "@/types"
+import type { FastifyInstance } from "fastify"
 
-const orgRoutes = new OpenAPIHono<HonoApp>({
-  defaultHook: zodError,
-})
-
-orgRoutes.openapi(getOrganisation, async (c) => {
-  try {
-    const user = c.get("user")
-    const t = await useTranslation(c)
-    if (!user) {
-      const msg = await t.text(ERROR_UNAUTHORIZED)
-      throw new UnauthorizedError(msg)
-    }
-
-    const { handle } = c.req.valid("param")
-    const org = await findOrganisationByHandle(c, handle)
-
-    await throwUnlessUserCan(c, "read", "Organisation", org.id)
-
-    return c.json(
-      {
-        id: org.id,
-        name: org.name,
-        handle: org.handle,
-        createdAt: org.createdAt,
-        updatedAt: org.updatedAt,
-        members: org.members,
+export const setupOrganisationRoutes = async (app: FastifyInstance) => {
+  // Get user's organizations
+  app.get(
+    "/",
+    {
+      schema: {
+        description: "Get user's organizations",
+        tags: ["organizations"],
+        response: {
+          200: {
+            type: "array",
+            items: {
+              type: "object",
+              properties: {
+                id: { type: "string" },
+                name: { type: "string" },
+                handle: { type: "string" },
+                description: { type: "string" },
+                logo: { type: "string" },
+                website: { type: "string" },
+                role: { type: "string" },
+              },
+            },
+          },
+        },
       },
-      200
-    )
-  } catch (error) {
-    return await processError<typeof getOrganisation>(c, error, [
-      "{{ default }}",
-      "get-organisation",
-    ])
-  }
-})
-orgRoutes.openapi(getOrganisationById, async (c) => {
-  try {
-    const user = c.get("user")
-    const t = await useTranslation(c)
-    if (!user) {
-      const msg = await t.text(ERROR_UNAUTHORIZED)
-      throw new UnauthorizedError(msg)
+    },
+    async (_request, _reply) => {
+      // TODO: Implement get user organizations logic
+      return []
     }
+  )
 
-    const { id } = c.req.valid("param")
-    const org = await findOrganisationById(c, id)
-
-    await throwUnlessUserCan(c, "read", "Organisation", org.id)
-
-    return c.json(
-      {
-        id: org.id,
-        name: org.name,
-        handle: org.handle,
-        members: org.members,
+  // Create organization
+  app.post(
+    "/",
+    {
+      schema: {
+        description: "Create a new organization",
+        tags: ["organizations"],
+        body: {
+          type: "object",
+          properties: {
+            name: { type: "string", minLength: 1 },
+            handle: { type: "string", minLength: 1 },
+            description: { type: "string" },
+            website: { type: "string" },
+            logo: { type: "string" },
+          },
+          required: ["name", "handle"],
+          additionalProperties: false,
+        },
+        response: {
+          201: {
+            type: "object",
+            properties: {
+              id: { type: "string" },
+              name: { type: "string" },
+              handle: { type: "string" },
+              message: { type: "string" },
+            },
+          },
+        },
       },
-      200
-    )
-  } catch (error) {
-    return await processError<typeof getOrganisation>(c, error, [
-      "{{ default }}",
-      "get-organisation-by-id",
-    ])
-  }
-})
-
-orgRoutes.openapi(getUserOrganisations, async (c) => {
-  try {
-    const user = c.get("user")
-    const t = await useTranslation(c)
-    if (!user) {
-      const msg = await t.text(ERROR_UNAUTHORIZED)
-      throw new UnauthorizedError(msg)
+    },
+    async (_request, _reply) => {
+      // TODO: Implement organization creation logic
+      return {
+        id: "temp-id",
+        name: "temp-name",
+        handle: "temp-handle",
+        message: "Organization created successfully",
+      }
     }
+  )
 
-    const userOrgs = await findOrganisationByUserId(c, user.id)
-
-    return c.json(userOrgs, 200)
-  } catch (error) {
-    return await processError<typeof getUserOrganisations>(c, error, [
-      "{{ default }}",
-      "get-user-organisations",
-    ])
-  }
-})
-
-orgRoutes.openapi(validateHandle, async (c) => {
-  try {
-    const user = c.get("user")
-    const t = await useTranslation(c)
-    if (!user) {
-      const msg = await t.text(ERROR_UNAUTHORIZED)
-      throw new UnauthorizedError(msg)
-    }
-
-    const { handle } = c.req.valid("json")
-    const handleExists = await checkHandleAvailability(c, handle)
-
-    return c.json(
-      {
-        success: handleExists,
+  // Get organization by ID
+  app.get(
+    "/:id",
+    {
+      schema: {
+        description: "Get organization by ID",
+        tags: ["organizations"],
+        params: {
+          type: "object",
+          properties: {
+            id: { type: "string" },
+          },
+          required: ["id"],
+        },
+        response: {
+          200: {
+            type: "object",
+            properties: {
+              id: { type: "string" },
+              name: { type: "string" },
+              handle: { type: "string" },
+              description: { type: "string" },
+              logo: { type: "string" },
+              website: { type: "string" },
+              members: {
+                type: "array",
+                items: {
+                  type: "object",
+                  properties: {
+                    id: { type: "string" },
+                    name: { type: "string" },
+                    email: { type: "string" },
+                    role: { type: "string" },
+                  },
+                },
+              },
+            },
+          },
+        },
       },
-      200
-    )
-  } catch (error) {
-    return await processError<typeof validateHandle>(c, error, [
-      "{{ default }}",
-      "validate-handle",
-    ])
-  }
-})
-
-orgRoutes.openapi(createOrganisation, async (c) => {
-  try {
-    const user = c.get("user")
-    const t = await useTranslation(c)
-    if (!user) {
-      const msg = await t.text(ERROR_UNAUTHORIZED)
-      throw new UnauthorizedError(msg)
+    },
+    async (_request, _reply) => {
+      // TODO: Implement get organization by ID logic
+      return {
+        id: "temp-id",
+        name: "temp-name",
+        handle: "temp-handle",
+        description: "temp-description",
+        logo: "",
+        website: "",
+        members: [],
+      }
     }
+  )
 
-    const { members, name, handle } = c.req.valid("json")
-
-    const handleAvailable = await checkHandleAvailability(c, handle)
-    if (!handleAvailable) {
-      const msg = await t.text(ERROR_ORG_EXIST)
-      throw new ConflictError(msg)
-    }
-
-    const orgExists = await doesOrganisationExist(c, name, user.id)
-
-    if (orgExists) {
-      const msg = await t.text(ERROR_ORG_EXIST)
-      throw new ConflictError(msg)
-    }
-
-    const invalidMembers = (
-      await Promise.all(members.map((m) => isValidUser(c, m.userId as string)))
-    ).some((r) => !r)
-
-    if (invalidMembers) {
-      const msg = await t.text(ERROR_INVALID_USER)
-      throw new UnprocessableEntityError(msg)
-    }
-
-    const orgId = nanoid(15)
-    const dbRoles = await findAllRoles(c)
-
-    if (!dbRoles.length) {
-      const msg = await t.text(ERROR_NO_ROLES)
-      throw new ServerError(msg)
-    }
-
-    const newOrg = await insertOrganisation(c, {
-      id: orgId,
-      name,
-      handle,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    })
-
-    if (!newOrg) {
-      const msg = await t.text(ERROR_ORG_CREATE_FAIL)
-      throw new ServerError(msg)
-    }
-
-    const ownerRole = await findRoleByName(c, UserRoles.ROLE_OWNER)
-    if (!ownerRole) {
-      const msg = await t.text(ERROR_NO_ROLES)
-      throw new ServerError(msg)
-    }
-
-    const orgMembers = await Promise.all(
-      members.map(async (m) => ({
-        userId: m.userId as string,
-        orgId: newOrg.id,
-        roleId: (await findRoleByName(c, m.role as UserRole))?.id ?? 3,
-      }))
-    )
-
-    await insertMembers(c, [
-      {
-        userId: user.id,
-        orgId: orgId,
-        roleId: ownerRole.id,
+  // Update organization
+  app.put(
+    "/:id",
+    {
+      schema: {
+        description: "Update an organization",
+        tags: ["organizations"],
+        params: {
+          type: "object",
+          properties: {
+            id: { type: "string" },
+          },
+          required: ["id"],
+        },
+        body: {
+          type: "object",
+          properties: {
+            name: { type: "string" },
+            description: { type: "string" },
+            website: { type: "string" },
+            logo: { type: "string" },
+          },
+          additionalProperties: false,
+        },
+        response: {
+          200: {
+            type: "object",
+            properties: {
+              message: { type: "string" },
+            },
+          },
+        },
       },
-      ...orgMembers,
-    ])
+    },
+    async (_request, _reply) => {
+      // TODO: Implement organization update logic
+      return { message: "Organization updated successfully" }
+    }
+  )
 
-    return c.json(
-      {
-        id: newOrg.id,
-        name: newOrg.name,
-        handle: newOrg.handle,
-        members: [
-          { userId: user.id, role: UserRoles.ROLE_OWNER },
-          ...members.map((m) => ({ userId: m.userId, role: m.role })),
-        ],
+  // Delete organization
+  app.delete(
+    "/:id",
+    {
+      schema: {
+        description: "Delete an organization",
+        tags: ["organizations"],
+        params: {
+          type: "object",
+          properties: {
+            id: { type: "string" },
+          },
+          required: ["id"],
+        },
+        response: {
+          200: {
+            type: "object",
+            properties: {
+              message: { type: "string" },
+            },
+          },
+        },
       },
-      201
-    )
-  } catch (error) {
-    return await processError<typeof createOrganisation>(c, error, [
-      "{{ default }}",
-      "create-organisation",
-    ])
-  }
-})
-
-orgRoutes.openapi(addMember, async (c) => {
-  try {
-    const user = c.get("user")
-    const t = await useTranslation(c)
-    if (!user) {
-      const msg = await t.text(ERROR_UNAUTHORIZED)
-      throw new UnauthorizedError(msg)
+    },
+    async (_request, _reply) => {
+      // TODO: Implement organization deletion logic
+      return { message: "Organization deleted successfully" }
     }
+  )
 
-    const { handle } = c.req.valid("param")
-    const { role, email } = c.req.valid("json")
-
-    const org = await findOrganisationById(c, handle)
-
-    await throwUnlessUserCan(c, "create", "Member", org.id)
-
-    const existingUser = await getUserByEmail(c, email)
-    if (!existingUser) {
-      const msg = await t.text(ERROR_INVALID_USER)
-      throw new UnprocessableEntityError(msg)
-    }
-    const userId = existingUser.id
-
-    const isMember = await c.get("rbac").isOrgMember(org.id)
-    if (isMember) {
-      const msg = await t.text(ERROR_MEMBER_EXIST)
-      throw new ConflictError(msg)
-    }
-
-    const dbRole = await findRoleByName(c, role)
-    if (!dbRole) {
-      const msg = await t.text(ERROR_NO_ROLES)
-      throw new ServerError(msg)
-    }
-
-    const [newMember] = await insertMembers(c, [
-      { userId, orgId: org.id, roleId: dbRole.id },
-    ])
-
-    if (!newMember) {
-      const msg = await t.text(ERROR_MEMBER_INSERT_FAIL)
-      throw new ServerError(msg)
-    }
-
-    const members = await findOrgMembers(c, org.id)
-
-    return c.json(
-      {
-        id: org.id,
-        name: org.name,
-        handle: org.handle,
-        members: members.map((m) => ({ userId: m.userId, role: m.role })),
+  // Add member to organization
+  app.post(
+    "/:id/members",
+    {
+      schema: {
+        description: "Add member to organization",
+        tags: ["organizations"],
+        params: {
+          type: "object",
+          properties: {
+            id: { type: "string" },
+          },
+          required: ["id"],
+        },
+        body: {
+          type: "object",
+          properties: {
+            email: { type: "string", format: "email" },
+            role: { type: "string" },
+          },
+          required: ["email", "role"],
+          additionalProperties: false,
+        },
+        response: {
+          200: {
+            type: "object",
+            properties: {
+              message: { type: "string" },
+            },
+          },
+        },
       },
-      200
-    )
-  } catch (error) {
-    return await processError<typeof addMember>(c, error, [
-      "{{ default }}",
-      "add-member",
-    ])
-  }
-})
-
-orgRoutes.openapi(updateOrganisation, async (c) => {
-  try {
-    const user = c.get("user")
-    const t = await useTranslation(c)
-    if (!user) {
-      const msg = await t.text(ERROR_UNAUTHORIZED)
-      throw new UnauthorizedError(msg)
+    },
+    async (_request, _reply) => {
+      // TODO: Implement add member logic
+      return { message: "Member added successfully" }
     }
+  )
 
-    const { handle } = c.req.valid("param")
-
-    const { name } = c.req.valid("json")
-    const org = await findOrganisationById(c, handle)
-
-    await throwUnlessUserCan(c, "update", "Organisation", org.id)
-
-    const orgExists = await doesOrganisationExist(c, name, user.id)
-
-    if (orgExists) {
-      const msg = await t.text(ERROR_ORG_EXIST)
-      throw new ConflictError(msg)
-    }
-
-    const updatedOrg = await c
-      .get("db")
-      .updateTable("organisations")
-      .set({ name: name })
-      .where("id", "=", org.id)
-      .returningAll()
-      .executeTakeFirst()
-
-    if (!updatedOrg) {
-      const msg = await t.text(ERROR_ORG_UPDATE_FAIL)
-      throw new ServerError(msg)
-    }
-
-    const members = await findOrgMembers(c, org.id)
-
-    const responseData = {
-      id: org.id,
-      name: name,
-      handle: org.handle,
-      members: members.map((m) => ({ userId: m.userId, role: m.role })),
-    }
-    return c.json(responseData, 200)
-  } catch (error) {
-    return await processError<typeof updateOrganisation>(c, error, [
-      "{{ default }}",
-      "update-organisation",
-    ])
-  }
-})
-
-orgRoutes.openapi(deleteOrganisation, async (c) => {
-  try {
-    const user = c.get("user")
-    const t = await useTranslation(c)
-    if (!user) {
-      const msg = await t.text(ERROR_UNAUTHORIZED)
-      throw new UnauthorizedError(msg)
-    }
-
-    const { handle } = c.req.valid("param")
-
-    const org = await findOrganisationByHandle(c, handle)
-
-    await throwUnlessUserCan(c, "delete", "Organisation", org.id)
-
-    const deletedMembers = await c
-      .get("db")
-      .deleteFrom("members")
-      .where("orgId", "=", org.id)
-      .returningAll()
-      .execute()
-
-    if (!deletedMembers.length) {
-      const msg = await t.text(ERROR_ORG_DELETE_FAIL)
-      throw new ServerError(msg)
-    }
-
-    const deletedOrg = await c
-      .get("db")
-      .deleteFrom("organisations")
-      .where("id", "=", org.id)
-      .returningAll()
-      .executeTakeFirst()
-
-    if (!deletedOrg) {
-      const msg = await t.text(ERROR_ORG_DELETE_FAIL)
-      throw new ServerError(msg)
-    }
-
-    const msg = await t.text(ORG_DELETE_SUCCESS)
-    return c.json(
-      {
-        message: msg,
+  // Remove member from organization
+  app.delete(
+    "/:orgId/members/:memberId",
+    {
+      schema: {
+        description: "Remove member from organization",
+        tags: ["organizations"],
+        params: {
+          type: "object",
+          properties: {
+            orgId: { type: "string" },
+            memberId: { type: "string" },
+          },
+          required: ["orgId", "memberId"],
+        },
+        response: {
+          200: {
+            type: "object",
+            properties: {
+              message: { type: "string" },
+            },
+          },
+        },
       },
-      200
-    )
-  } catch (error) {
-    return await processError<typeof deleteOrganisation>(c, error, [
-      "{{ default }}",
-      "delete-organisation",
-    ])
-  }
-})
-
-orgRoutes.openapi(removeMembers, async (c) => {
-  try {
-    const user = c.get("user")
-    const t = await useTranslation(c)
-    if (!user) {
-      const msg = await t.text(ERROR_UNAUTHORIZED)
-      throw new UnauthorizedError(msg)
+    },
+    async (_request, _reply) => {
+      // TODO: Implement remove member logic
+      return { message: "Member removed successfully" }
     }
+  )
 
-    const { handle } = c.req.valid("param")
-    const { userIds } = c.req.valid("json")
-
-    const org = await findOrganisationById(c, handle)
-
-    await throwUnlessUserCan(c, "delete", "Member", org.id)
-    await ensureAtLeastOneOwner(c, org.id, userIds, "remove")
-
-    await c
-      .get("db")
-      .deleteFrom("members")
-      .where((eb) =>
-        eb.and([eb("orgId", "=", org.id), eb("userId", "in", userIds)])
-      )
-      .returningAll()
-      .execute()
-
-    const members = await findOrgMembers(c, org.id)
-
-    return c.json(
-      {
-        id: org.id,
-        name: org.name,
-        handle: org.handle,
-        members: members.map((m) => ({ userId: m.userId, role: m.role })),
+  // Get organization members
+  app.get(
+    "/:id/members",
+    {
+      schema: {
+        description: "Get organization members",
+        tags: ["organizations"],
+        params: {
+          type: "object",
+          properties: {
+            id: { type: "string" },
+          },
+          required: ["id"],
+        },
+        response: {
+          200: {
+            type: "array",
+            items: {
+              type: "object",
+              properties: {
+                id: { type: "string" },
+                name: { type: "string" },
+                email: { type: "string" },
+                role: { type: "string" },
+                joinedAt: { type: "string" },
+              },
+            },
+          },
+        },
       },
-      200
-    )
-  } catch (error) {
-    return await processError<typeof removeMembers>(c, error, [
-      "{{ default }}",
-      "remove-members",
-    ])
-  }
-})
-
-orgRoutes.openapi(getOrganizationMembers, async (c) => {
-  try {
-    const user = c.get("user")
-    const t = await useTranslation(c)
-    if (!user) {
-      const msg = await t.text(ERROR_UNAUTHORIZED)
-      throw new UnauthorizedError(msg)
+    },
+    async (_request, _reply) => {
+      // TODO: Implement get organization members logic
+      return []
     }
+  )
 
-    const { handle } = c.req.valid("param")
-    const org = await findOrganisationByHandle(c, handle)
-
-    await throwUnlessUserCan(c, "read", "Member", org.id)
-
-    const members = await findOrgMembers(c, org.id)
-    const memberDetails = await Promise.all(
-      members.map(async (member) => {
-        const userDetails = await getUserById(c, member.userId)
-        if (!userDetails) {
-          const msg = await t.text(ERROR_INVALID_USER)
-          throw new UnprocessableEntityError(msg)
-        }
-        return {
-          userId: member.userId,
-          fullName: userDetails.fullName,
-          email: userDetails.email,
-          profileImage: userDetails.profileImage ?? null,
-          avatar: userDetails.avatar ?? null,
-          role: member.role,
-        }
-      })
-    )
-
-    return c.json(memberDetails, 200)
-  } catch (error) {
-    return await processError<typeof getOrganizationMembers>(c, error, [
-      "{{ default }}",
-      "get-organization-members",
-    ])
-  }
-})
-
-orgRoutes.openapi(getOrganizationPermissions, async (c) => {
-  try {
-    const user = c.get("user")
-    const t = await useTranslation(c)
-    if (!user) {
-      const msg = await t.text(ERROR_UNAUTHORIZED)
-      throw new UnauthorizedError(msg)
+  // Get organization permissions
+  app.get(
+    "/:id/permissions",
+    {
+      schema: {
+        description: "Get organization permissions",
+        tags: ["organizations"],
+        params: {
+          type: "object",
+          properties: {
+            id: { type: "string" },
+          },
+          required: ["id"],
+        },
+        response: {
+          200: {
+            type: "object",
+            properties: {
+              permissions: {
+                type: "array",
+                items: { type: "string" },
+              },
+              roles: {
+                type: "array",
+                items: {
+                  type: "object",
+                  properties: {
+                    id: { type: "string" },
+                    name: { type: "string" },
+                    permissions: {
+                      type: "array",
+                      items: { type: "string" },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+    async (_request, _reply) => {
+      // TODO: Implement get organization permissions logic
+      return {
+        permissions: [],
+        roles: [],
+      }
     }
+  )
 
-    const { handle } = c.req.valid("param")
-    const org = await findOrganisationByHandle(c, handle)
+  // Update member role
+  app.put(
+    "/:orgId/members/:memberId/role",
+    {
+      schema: {
+        description: "Update member role in organization",
+        tags: ["organizations"],
+        params: {
+          type: "object",
+          properties: {
+            orgId: { type: "string" },
+            memberId: { type: "string" },
+          },
+          required: ["orgId", "memberId"],
+        },
+        body: {
+          type: "object",
+          properties: {
+            role: { type: "string" },
+          },
+          required: ["role"],
+          additionalProperties: false,
+        },
+        response: {
+          200: {
+            type: "object",
+            properties: {
+              message: { type: "string" },
+            },
+          },
+        },
+      },
+    },
+    async (_request, _reply) => {
+      // TODO: Implement update member role logic
+      return { message: "Member role updated successfully" }
+    }
+  )
 
-    const orgPermissions = await c.get("rbac").getOrgPermissions(org.id)
-
-    return c.json(orgPermissions?.permissions ?? [], 200)
-  } catch (error) {
-    return await processError<typeof getOrganizationPermissions>(c, error, [
-      "{{ default }}",
-      "get-organization-permissions",
-    ])
-  }
-})
-
-export default orgRoutes
+  // Check handle availability
+  app.get(
+    "/check-handle/:handle",
+    {
+      schema: {
+        description: "Check if organization handle is available",
+        tags: ["organizations"],
+        params: {
+          type: "object",
+          properties: {
+            handle: { type: "string" },
+          },
+          required: ["handle"],
+        },
+        response: {
+          200: {
+            type: "object",
+            properties: {
+              available: { type: "boolean" },
+            },
+          },
+        },
+      },
+    },
+    async (_request, _reply) => {
+      // TODO: Implement handle availability check logic
+      return { available: true }
+    }
+  )
+}

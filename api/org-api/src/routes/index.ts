@@ -1,12 +1,30 @@
-import type { OpenAPIHono } from "@hono/zod-openapi"
-import { BASE_PATH } from "@/lib/constants"
-import orgRoutes from "@/routes/organisations"
-import type { HonoApp } from "@/types"
-import healthcheckRoutes from "./health-check"
-import permissionRoutes from "./permissions"
+import type { FastifyInstance } from "fastify"
+import { envVars } from "@/env-vars"
+import { setupHealthcheckRoutes } from "@/routes/health-check"
+import { setupOrganisationRoutes } from "./organisations"
+import { setupPermissionRoutes } from "./permissions"
 
-export const routes = (app: OpenAPIHono<HonoApp>) => {
-  app.route(`${BASE_PATH}/healthcheck`, healthcheckRoutes)
-  app.route(`${BASE_PATH}/permissions`, permissionRoutes)
-  app.route(BASE_PATH, orgRoutes)
+export const setupRoutes = async (app: FastifyInstance) => {
+  // Add a direct test route to verify routing works at all
+  if (envVars.NODE_ENV === "test") {
+    app.get("/api/organizations/test-direct", async (_request, _reply) => {
+      return { message: "Direct route works!" }
+    })
+  }
+  // Register all routes with the base path prefix
+  await app.register(
+    async (fastify) => {
+      // Add a simple test route to verify routing works
+      if (envVars.NODE_ENV === "test") {
+        fastify.get("/test", async (_request, _reply) => {
+          return { message: "Test route works!" }
+        })
+      }
+
+      await setupHealthcheckRoutes(fastify)
+      await setupPermissionRoutes(fastify)
+      await setupOrganisationRoutes(fastify)
+    },
+    { prefix: "/api/organizations" }
+  )
 }

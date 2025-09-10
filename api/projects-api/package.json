@@ -10,18 +10,20 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
-    "@hono/zod-openapi": "catalog:",
-    "@hono/zod-validator": "catalog:",
+    "@fastify/swagger": "^9.5.1",
+    "@fastify/swagger-ui": "^5.0.1",
     "@incmix-api/utils": "workspace:^",
     "@incmix/utils": "catalog:",
+    "@scalar/fastify-api-reference": "^1.35.2",
+    "ajv": "^8.17.1",
+    "ajv-formats": "^3.0.1",
     "bullmq": "catalog:",
-    "hono": "catalog:",
+    "fastify": "^5.6.0",
     "kysely": "catalog:",
     "kysely-ctl": "catalog:",
     "luxon": "catalog:",
     "nanoid": "catalog:",
-    "pg": "catalog:",
-    "zod": "catalog:"
+    "pg": "catalog:"
   },
   "devDependencies": {
     "@incmix-api/config": "workspace:^",

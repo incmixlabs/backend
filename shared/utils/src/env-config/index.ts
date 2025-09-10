@@ -268,7 +268,6 @@ export function createEnvConfig<T extends ServiceName>(
   process.env.NODE_ENV = nodeEnv
   // Parse and validate environment variables
   const result = schema.safeParse(process.env)
-  console.log("result", result)
   if (!result.success) {
     console.error("Environment validation failed:", result.error.format())
     throw new Error("Environment validation failed")

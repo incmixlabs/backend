@@ -1,22 +1,21 @@
-import { createService } from "@incmix-api/utils"
+import { createFastifyService } from "@incmix-api/utils/fastify-bootstrap"
+import { envVars } from "@/env-vars"
 import { BASE_PATH } from "@/lib/constants"
-import { middlewares } from "@/middleware"
-import { routes } from "@/routes"
-import type { HonoApp } from "@/types"
+import { setupMiddleware } from "@/middleware"
+import { setupRoutes } from "@/routes"
 
-import { envVars } from "./env-vars"
-
-const service = createService<HonoApp["Bindings"], HonoApp["Variables"]>({
+const service = createFastifyService({
   name: "org-api",
   port: envVars.PORT,
   basePath: BASE_PATH,
-  setupMiddleware: (app) => {
-    middlewares(app)
-  },
+  setupMiddleware,
+  setupRoutes,
+  needDb: true,
+  needSwagger: true,
   bindings: envVars,
-  needRBAC: true,
-  setupRoutes: (app) => {
-    routes(app)
+  cors: {
+    origin: true,
+    credentials: true,
   },
 })
 
