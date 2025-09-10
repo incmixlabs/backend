@@ -3,9 +3,10 @@ import { testDb } from "../utils/setup"
 import { createSignupData, createTestClient } from "../utils/test-helpers"
 
 describe("Password Reset Integration Tests", () => {
-  const client = createTestClient()
+  let client: Awaited<ReturnType<typeof createTestClient>>
 
   beforeEach(async () => {
+    client = await createTestClient()
     // Clean up database before each test
     const db = testDb.getDb()
     await db.deleteFrom("sessions").execute()
@@ -15,7 +16,7 @@ describe("Password Reset Integration Tests", () => {
     await db.deleteFrom("users").execute()
   })
 
-  describe("POST /api/auth/reset-password/send", () => {
+  describe("POST /api/auth/reset-password/request", () => {
     it("should send reset password email for existing user", async () => {
       // Create a test user with unique email
       const userData = createSignupData({
@@ -32,7 +33,7 @@ describe("Password Reset Integration Tests", () => {
         body: JSON.stringify(userData),
       })
 
-      const response = await client.request("/reset-password/send", {
+      const response = await client.request("/reset-password/request", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -49,7 +50,7 @@ describe("Password Reset Integration Tests", () => {
     })
 
     it("should return 404 for non-existent user (security)", async () => {
-      const response = await client.request("/reset-password/send", {
+      const response = await client.request("/reset-password/request", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -65,7 +66,7 @@ describe("Password Reset Integration Tests", () => {
     })
 
     it("should return 422 for invalid email format", async () => {
-      const response = await client.request("/reset-password/send", {
+      const response = await client.request("/reset-password/request", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -79,7 +80,7 @@ describe("Password Reset Integration Tests", () => {
     })
   })
 
-  describe("POST /api/auth/reset-password/forget", () => {
+  describe("POST /api/auth/reset-password/confirm", () => {
     let resetCode: string
     let userEmail: string
 
@@ -101,7 +102,7 @@ describe("Password Reset Integration Tests", () => {
       })
 
       // Request password reset
-      const resetResponse = await client.request("/reset-password/send", {
+      const resetResponse = await client.request("/reset-password/request", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -147,14 +148,13 @@ describe("Password Reset Integration Tests", () => {
         return
       }
 
-      const response = await client.request("/reset-password/forget", {
+      const response = await client.request("/reset-password/confirm", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          email: userEmail,
-          code: verificationCode?.code,
+          token: verificationCode?.code,
           newPassword: "newpassword123",
         }),
       })
@@ -180,14 +180,13 @@ describe("Password Reset Integration Tests", () => {
     })
 
     it("should return 401 for invalid reset code", async () => {
-      const response = await client.request("/reset-password/forget", {
+      const response = await client.request("/reset-password/confirm", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          email: userEmail,
-          code: "invalid-code",
+          token: "invalid-code",
           newPassword: "newpassword123",
         }),
       })
@@ -196,14 +195,13 @@ describe("Password Reset Integration Tests", () => {
     })
 
     it("should return 422 for weak new password", async () => {
-      const response = await client.request("/reset-password/forget", {
+      const response = await client.request("/reset-password/confirm", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          email: userEmail,
-          code: resetCode,
+          token: resetCode,
           newPassword: "123",
         }),
       })
@@ -212,14 +210,21 @@ describe("Password Reset Integration Tests", () => {
     })
 
     it("should return 404 for non-existent user", async () => {
-      const response = await client.request("/reset-password/forget", {
+      // Deactivate the user instead of deleting to preserve verification code
+      const db = testDb.getDb()
+      await db
+        .updateTable("users")
+        .set({ isActive: false })
+        .where("email", "=", userEmail)
+        .execute()
+
+      const response = await client.request("/reset-password/confirm", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          email: "nonexistent@example.com",
-          code: resetCode,
+          token: resetCode,
           newPassword: "newpassword123",
         }),
       })

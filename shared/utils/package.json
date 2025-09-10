@@ -52,6 +52,18 @@
       "types": "./dist/src/service-bootstrap/index.d.ts",
       "default": "./dist/src/service-bootstrap/index.js"
     },
+    "./ajv-schema": {
+      "types": "./dist/src/ajv-schema/index.d.ts",
+      "default": "./dist/src/ajv-schema/index.js"
+    },
+    "./fastify-middleware": {
+      "types": "./dist/src/fastify-middleware/index.d.ts",
+      "default": "./dist/src/fastify-middleware/index.js"
+    },
+    "./fastify-bootstrap": {
+      "types": "./dist/src/fastify-bootstrap/index.d.ts",
+      "default": "./dist/src/fastify-bootstrap/index.js"
+    },
     "./db-operations": {
       "types": "./dist/src/db-operations/index.d.ts",
       "default": "./dist/src/db-operations/index.js"
@@ -59,6 +71,8 @@
   },
   "dependencies": {
     "@casl/ability": "catalog:",
+    "@fastify/swagger": "^8.15.0",
+    "@fastify/swagger-ui": "^5.0.1",
     "@hono/node-server": "catalog:",
     "@hono/sentry": "1.2.0",
     "@hono/zod-openapi": "catalog:",
@@ -67,10 +81,13 @@
     "@scalar/hono-api-reference": "catalog:",
     "@sentry/utils": "8.42.0",
     "add": "2.0.6",
+    "ajv": "^8.17.1",
+    "ajv-formats": "^3.0.1",
     "bullmq": "catalog:",
     "dotenv": "catalog:",
     "dotenv-expand": "catalog:",
     "dotenv-mono": "catalog:",
+    "fastify": "^5.1.0",
     "hono": "catalog:",
     "kysely": "catalog:",
     "pg": "catalog:",
@@ -82,6 +99,7 @@
     "@incmix-api/config": "workspace:^",
     "@types/node": "catalog:",
     "@types/pg": "catalog:",
+    "fastify": "^5.1.0",
     "tsc-alias": "catalog:",
     "tsx": "catalog:",
     "typescript": "catalog:",

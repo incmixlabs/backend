@@ -3,9 +3,10 @@ import { testDb } from "../utils/setup"
 import { createSignupData, createTestClient } from "../utils/test-helpers"
 
 describe("Auth Integration Tests", () => {
-  const client = createTestClient()
+  let client: Awaited<ReturnType<typeof createTestClient>>
 
   beforeEach(async () => {
+    client = await createTestClient()
     // Clean up database before each test
     const db = testDb.getDb()
 
@@ -226,10 +227,11 @@ describe("Auth Integration Tests", () => {
       })
       expect(loginResponse.status).toBe(200)
       const setCookie = loginResponse.headers.get("set-cookie")
-      const sessionCookie = setCookie?.split(";")[0] || ""
+      const sessionCookie =
+        (typeof setCookie === "string" ? setCookie.split(";")[0] : "") || ""
       console.log("🚀 sessionCookie", sessionCookie)
       // Now test the /me endpoint
-      const response = await client.request("", {
+      const response = await client.request("/me", {
         method: "GET",
         headers: {
           Cookie: sessionCookie,
@@ -243,7 +245,7 @@ describe("Auth Integration Tests", () => {
     })
 
     it("should return 401 for unauthenticated request", async () => {
-      const response = await client.request("", {
+      const response = await client.request("/me", {
         method: "GET",
       })
 
@@ -251,7 +253,7 @@ describe("Auth Integration Tests", () => {
     })
 
     it("should return 401 for invalid session", async () => {
-      const response = await client.request("", {
+      const response = await client.request("/me", {
         method: "GET",
         headers: {
           Cookie: "incmix_session_dev=invalid-session-id",
@@ -294,7 +296,8 @@ describe("Auth Integration Tests", () => {
       })
       expect(loginResponse.status).toBe(200)
       const setCookie = loginResponse.headers.get("set-cookie")
-      sessionCookie = setCookie?.split(";")[0] || ""
+      sessionCookie =
+        (typeof setCookie === "string" ? setCookie.split(";")[0] : "") || ""
     })
 
     it("should return 200 for authenticated logout", async () => {
@@ -352,7 +355,8 @@ describe("Auth Integration Tests", () => {
       })
       expect(loginResponse.status).toBe(200)
       const setCookie = loginResponse.headers.get("set-cookie")
-      sessionCookie = setCookie?.split(";")[0] || ""
+      sessionCookie =
+        (typeof setCookie === "string" ? setCookie.split(";")[0] : "") || ""
     })
 
     it("should return 401 for unauthenticated delete", async () => {

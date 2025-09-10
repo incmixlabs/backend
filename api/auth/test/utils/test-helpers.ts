@@ -1,20 +1,17 @@
-import { createi18nMockMiddleware } from "@incmix-api/test-utils"
-import { type AuthEnv, createService } from "@incmix-api/utils"
 import type {
   Database,
   NewSession,
   NewUser,
   User,
 } from "@incmix-api/utils/db-schema"
-import { setupApiMiddleware } from "@incmix-api/utils/middleware"
+import { createFastifyService } from "@incmix-api/utils/fastify-bootstrap"
 import type { Kysely } from "kysely"
 import { expect } from "vitest"
-import { authMiddleware } from "@/auth/middleware"
 import type { Session } from "@/auth/types"
 import { envVars } from "@/env-vars"
 import { BASE_PATH } from "../../src/lib/constants"
-import { routes } from "../../src/routes"
-import type { HonoApp } from "../../src/types"
+import { setupMiddleware } from "../../src/middleware"
+import { setupRoutes } from "../../src/routes"
 
 type Credentials = {
   email: string
@@ -24,43 +21,56 @@ type Credentials = {
 type SignupData = {
   email: string
   password: string
+  firstName: string
+  lastName: string
   fullName: string
 }
 
-// Create a test client using Hono's testClient
-export function createTestClient() {
-  // Create the service without starting the server
-  const service = createService<HonoApp["Bindings"], HonoApp["Variables"]>({
+export async function createTestClient() {
+  const service = createFastifyService({
     name: "auth-api-test",
-    port: (envVars.PORT as number) || 0, // Use test environment port or 0 to avoid conflicts
+    port: 0, // Use random available port for testing
     basePath: BASE_PATH,
+    setupMiddleware,
+    setupRoutes,
     needDb: true,
-    bindings: { ...envVars, DATABASE_URL: process.env.DATABASE_URL } as AuthEnv,
-    setupMiddleware: (app) => {
-      setupApiMiddleware(app, {
-        basePath: BASE_PATH,
-        serviceName: "auth-api-test",
-        customAuthMiddleware: authMiddleware,
-        customI18nMiddleware: createi18nMockMiddleware,
-        corsFirst: true,
-      })
+    needSwagger: false, // Disable swagger for tests
+    bindings: envVars,
+    cors: {
+      origin: true,
+      credentials: true,
     },
-    setupRoutes: (app) => routes(app),
   })
 
-  const { app: testApp } = service
-  // Add a request method that works with the BASE_PATH
-  const client = {
-    request: async (path: string, options: RequestInit = {}) => {
-      const fullPath = `${BASE_PATH}${path}`
-      return await testApp.request(fullPath, options)
+  const { app } = service
+
+  // Manually set up middleware and routes for testing since we're not calling startServer
+  await setupMiddleware(app)
+  await setupRoutes(app)
+
+  return {
+    request: async (url: string, options: RequestInit = {}) => {
+      const response = await app.inject({
+        method: (options.method as any) || "GET",
+        url: `${BASE_PATH}${url}`,
+        headers: options.headers as any,
+        payload: options.body as string | object | undefined,
+      })
+
+      return {
+        status: response.statusCode,
+        ok: response.statusCode >= 200 && response.statusCode < 300,
+        headers: {
+          get: (name: string) => response.headers[name.toLowerCase()],
+        },
+        json: async () => JSON.parse(response.payload),
+        text: async () => response.payload,
+      }
     },
   }
-
-  return client
 }
 
-export type TestAgent = ReturnType<typeof createTestClient>
+export type TestAgent = Awaited<ReturnType<typeof createTestClient>>
 
 export function createUser(overrides: Partial<User> = {}) {
   return {
@@ -96,6 +106,8 @@ export function createSignupData(overrides: Partial<SignupData> = {}) {
   return {
     email: `test-${Date.now()}@example.com`,
     password: "TestPassword123!",
+    firstName: "Test",
+    lastName: "User",
     fullName: "Test User",
     ...overrides,
   }
@@ -123,7 +135,7 @@ export async function loginUser(client: TestAgent, credentials: Credentials) {
   }
 
   const sessionCookie = response.headers.get("set-cookie")
-  if (!sessionCookie) {
+  if (!sessionCookie || typeof sessionCookie !== "string") {
     throw new Error("No session cookie received")
   }
 

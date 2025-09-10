@@ -10,22 +10,25 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
-    "@hono/zod-openapi": "catalog:",
-    "@hono/zod-validator": "0.4.1",
+    "@fastify/swagger": "^8.15.0",
+    "@fastify/swagger-ui": "^5.0.1",
+    "ajv": "^8.17.1",
+    "ajv-formats": "^3.0.1",
     "@incmix-api/utils": "workspace:^",
     "@incmix/utils": "catalog:",
     "arctic": "2.3.0",
-    "hono": "catalog:",
+    "bcrypt": "^5.1.1",
+    "fastify": "^5.1.0",
     "kysely": "catalog:",
     "kysely-ctl": "0.12.1",
     "mailslurp-client": "15.20.2",
     "oslo": "1.2.1",
-    "pg": "catalog:",
-    "zod": "catalog:"
+    "pg": "catalog:"
   },
   "devDependencies": {
     "@incmix-api/config": "workspace:^",
     "@testcontainers/postgresql": "^11.5.1",
+    "@types/bcrypt": "^5.0.2",
     "@types/node": "catalog:",
     "@types/pg": "catalog:",
     "dotenv": "catalog:",
