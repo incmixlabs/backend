@@ -178,6 +178,19 @@ export function createFastifyService(config: FastifyServiceConfig) {
       staticCSP: true,
       transformStaticCSP: (header) => header,
     })
+
+    // Register Scalar API Reference for better documentation UI with sidebar
+    // @ts-expect-error
+    app.register(import("@scalar/fastify-api-reference"), {
+      routePrefix: `${config.basePath}/reference`,
+      configuration: {
+        theme: "default",
+        layout: "modern",
+        showSidebar: true,
+        searchHotKey: "k",
+        darkMode: true,
+      },
+    })
   }
 
   // Setup custom middleware if provided
