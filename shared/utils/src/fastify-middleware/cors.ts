@@ -38,10 +38,16 @@ export function createCorsMiddleware(options: CorsOptions = {}) {
           reply.header("Access-Control-Allow-Origin", requestOrigin)
         }
       } else if (origin === true) {
-        reply.header(
-          "Access-Control-Allow-Origin",
-          request.headers.origin || "*"
-        )
+        // When credentials are enabled, we cannot use wildcard origin
+        // Must use the actual request origin or reject the request
+        if (credentials && request.headers.origin) {
+          reply.header("Access-Control-Allow-Origin", request.headers.origin)
+        } else if (!credentials) {
+          reply.header(
+            "Access-Control-Allow-Origin",
+            request.headers.origin || "*"
+          )
+        }
       }
 
       return reply.status(204).send()
@@ -56,7 +62,16 @@ export function createCorsMiddleware(options: CorsOptions = {}) {
         reply.header("Access-Control-Allow-Origin", requestOrigin)
       }
     } else if (origin === true) {
-      reply.header("Access-Control-Allow-Origin", request.headers.origin || "*")
+      // When credentials are enabled, we cannot use wildcard origin
+      // Must use the actual request origin or reject the request
+      if (credentials && request.headers.origin) {
+        reply.header("Access-Control-Allow-Origin", request.headers.origin)
+      } else if (!credentials) {
+        reply.header(
+          "Access-Control-Allow-Origin",
+          request.headers.origin || "*"
+        )
+      }
     }
 
     if (credentials) {
