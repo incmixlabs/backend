@@ -8,6 +8,14 @@ export function createFastifyService(config: FastifyServiceConfig) {
     logger: {
       level: process.env.NODE_ENV === "production" ? "info" : "debug",
     },
+    ajv: {
+      customOptions: {
+        strict: false,
+        removeAdditional: false,
+        coerceTypes: true,
+        allErrors: true,
+      },
+    },
   })
 
   // Setup error handler
@@ -37,26 +45,138 @@ export function createFastifyService(config: FastifyServiceConfig) {
   // Setup Swagger documentation if enabled
   if (config.needSwagger !== false) {
     app.register(import("@fastify/swagger"), {
-      swagger: {
+      openapi: {
+        openapi: "3.0.0",
         info: {
-          title: config.name,
-          description: `API documentation for ${config.name}`,
+          title: `${config.name.replace("-", " ").toUpperCase()} API`,
+          description: `Comprehensive API documentation for ${config.name}. This API provides authentication and user management services with detailed request/response schemas and examples.`,
           version: config.version || "1.0.0",
+          contact: {
+            name: "API Support",
+            email: "support@incmix.com",
+          },
         },
-        host: `localhost:${config.port}`,
-        schemes: ["http", "https"],
-        consumes: ["application/json"],
-        produces: ["application/json"],
-        basePath: config.basePath,
+        servers: [
+          {
+            url: `http://localhost:${config.port}`,
+            description: "Development server",
+          },
+        ],
+        components: {
+          securitySchemes: {
+            cookieAuth: {
+              type: "apiKey",
+              in: "cookie",
+              name: "incmix_session_dev",
+              description: "Session cookie for authenticated requests",
+            },
+          },
+          schemas: {
+            User: {
+              type: "object",
+              properties: {
+                id: {
+                  type: "string",
+                  description: "User's unique identifier",
+                  example: "user123abc",
+                },
+                email: {
+                  type: "string",
+                  format: "email",
+                  description: "User's email address",
+                  example: "john.doe@example.com",
+                },
+                fullName: {
+                  type: "string",
+                  description: "User's full name",
+                  example: "John Doe",
+                },
+                emailVerified: {
+                  type: "boolean",
+                  description: "Whether the user's email has been verified",
+                  example: true,
+                },
+                isSuperAdmin: {
+                  type: "boolean",
+                  description: "Whether the user has super admin privileges",
+                  example: false,
+                },
+              },
+            },
+            Session: {
+              type: "object",
+              properties: {
+                id: {
+                  type: "string",
+                  description: "Session identifier",
+                  example: "session123abc",
+                },
+                expiresAt: {
+                  type: "string",
+                  format: "date-time",
+                  description: "Session expiration timestamp",
+                  example: "2024-12-31T23:59:59.000Z",
+                },
+              },
+            },
+            ErrorResponse: {
+              type: "object",
+              properties: {
+                message: {
+                  type: "string",
+                  description: "Error message",
+                  example: "An error occurred",
+                },
+              },
+            },
+          },
+        },
+        tags: [
+          {
+            name: "Authentication",
+            description:
+              "User authentication endpoints including login, logout, and session management",
+          },
+          {
+            name: "Users",
+            description: "User management and information endpoints",
+          },
+        ],
       },
     })
 
+    // @ts-expect-error
     app.register(import("@fastify/swagger-ui"), {
       routePrefix: `${config.basePath}/docs`,
       uiConfig: {
-        docExpansion: "full",
-        deepLinking: false,
+        docExpansion: "list",
+        deepLinking: true,
+        defaultModelsExpandDepth: 3,
+        defaultModelExpandDepth: 3,
+        displayOperationId: true,
+        displayRequestDuration: true,
+        filter: true,
+        showExtensions: true,
+        showCommonExtensions: true,
+        tryItOutEnabled: true,
+        requestInterceptor:
+          "(req) => { req.headers['Content-Type'] = 'application/json'; return req; }",
+        responseInterceptor:
+          "(res) => { console.log('API Response:', res); return res; }",
+        supportedSubmitMethods: ["get", "post", "put", "delete", "patch"],
+        validatorUrl: null,
+        oauth2RedirectUrl: `http://localhost:${config.port}${config.basePath}/docs/oauth2-redirect.html`,
       },
+      uiHooks: {
+        onRequest: (_request, _reply, next) => {
+          next()
+        },
+        preHandler: (_request, _reply, next) => {
+          next()
+        },
+      },
+      staticCSP: true,
+      transformStaticCSP: (header) => header,
     })
   }
 
@@ -92,6 +212,19 @@ export function createFastifyService(config: FastifyServiceConfig) {
 
       await setupMiddleware()
       await setupRoutes()
+
+      // Reference endpoint with enhanced UI
+      if (config.needSwagger !== false) {
+        // @ts-expect-error
+        app.register(import("@scalar/fastify-api-reference"), {
+          routePrefix: `${config.basePath}/reference`,
+          configuration: {
+            spec: {
+              url: `${config.basePath}/docs/json`,
+            },
+          },
+        })
+      }
 
       await app.listen({
         port: config.port,

@@ -20,14 +20,47 @@ interface LoginRequest {
 const ExtendedRegisterRequestSchema = {
   type: "object",
   properties: {
-    email: { type: "string", format: "email" },
-    password: { type: "string", minLength: 1, maxLength: 128 },
-    firstName: { type: "string", minLength: 1, maxLength: 50 },
-    lastName: { type: "string", minLength: 1, maxLength: 50 },
-    fullName: { type: "string", minLength: 1, maxLength: 100 },
+    email: {
+      type: "string",
+      format: "email",
+      description: "User's email address",
+    },
+    password: {
+      type: "string",
+      minLength: 8,
+      maxLength: 128,
+      description: "User's password (minimum 8 characters)",
+    },
+    firstName: {
+      type: "string",
+      minLength: 1,
+      maxLength: 50,
+      description: "User's first name",
+    },
+    lastName: {
+      type: "string",
+      minLength: 1,
+      maxLength: 50,
+      description: "User's last name",
+    },
+    fullName: {
+      type: "string",
+      minLength: 1,
+      maxLength: 100,
+      description: "User's full name (first and last name combined)",
+    },
   },
   required: ["email", "password", "firstName", "lastName", "fullName"],
   additionalProperties: false,
+  examples: [
+    {
+      email: "john.doe@example.com",
+      password: "StrongP@ssw0rd123",
+      firstName: "John",
+      lastName: "Doe",
+      fullName: "John Doe",
+    },
+  ],
 }
 
 export const setupAuthRoutes = async (app: FastifyInstance) => {
@@ -36,23 +69,43 @@ export const setupAuthRoutes = async (app: FastifyInstance) => {
     "/me",
     {
       schema: {
-        description: "Get current authenticated user",
-        tags: ["auth"],
+        description: "Get current authenticated user information",
+        tags: ["Authentication"],
         response: {
           200: {
+            description: "Successfully retrieved user information",
             type: "object",
             properties: {
-              id: { type: "string" },
-              email: { type: "string" },
-              fullName: { type: "string" },
-              emailVerified: { type: "boolean" },
-              isSuperAdmin: { type: "boolean" },
+              id: {
+                type: "string",
+                description: "User's unique identifier",
+              },
+              email: {
+                type: "string",
+                format: "email",
+                description: "User's email address",
+              },
+              fullName: {
+                type: "string",
+                description: "User's full name",
+              },
+              emailVerified: {
+                type: "boolean",
+                description: "Whether the user's email has been verified",
+              },
+              isSuperAdmin: {
+                type: "boolean",
+                description: "Whether the user has super admin privileges",
+              },
             },
           },
           401: {
+            description: "User is not authenticated",
             type: "object",
             properties: {
-              message: { type: "string" },
+              message: {
+                type: "string",
+              },
             },
           },
         },
@@ -79,21 +132,39 @@ export const setupAuthRoutes = async (app: FastifyInstance) => {
     "/validate",
     {
       schema: {
-        description: "Validate current session",
-        tags: ["auth"],
+        description: "Validate current user session",
+        tags: ["Authentication"],
         response: {
           200: {
+            description: "Session is valid",
             type: "object",
             properties: {
-              id: { type: "string" },
-              email: { type: "string" },
-              session: { type: "object" },
+              id: {
+                type: "string",
+                description: "User's unique identifier",
+              },
+              email: {
+                type: "string",
+                format: "email",
+                description: "User's email address",
+              },
+              session: {
+                type: "object",
+                description: "Session information",
+                properties: {
+                  id: { type: "string" },
+                  expiresAt: { type: "string", format: "date-time" },
+                },
+              },
             },
           },
           401: {
+            description: "Invalid or expired session",
             type: "object",
             properties: {
-              message: { type: "string" },
+              message: {
+                type: "string",
+              },
             },
           },
         },
@@ -111,35 +182,65 @@ export const setupAuthRoutes = async (app: FastifyInstance) => {
     {
       schema: {
         description: "Get user by ID or email",
-        tags: ["auth"],
+        tags: ["Users"],
         querystring: {
           type: "object",
           properties: {
-            id: { type: "string" },
-            email: { type: "string", format: "email" },
+            id: {
+              type: "string",
+              description: "User's unique identifier",
+            },
+            email: {
+              type: "string",
+              format: "email",
+              description: "User's email address",
+            },
           },
         },
         response: {
           200: {
+            description: "Successfully retrieved user information",
             type: "object",
             properties: {
-              id: { type: "string" },
-              fullName: { type: "string" },
-              email: { type: "string" },
-              emailVerified: { type: "boolean" },
-              isSuperAdmin: { type: "boolean" },
+              id: {
+                type: "string",
+                description: "User's unique identifier",
+              },
+              fullName: {
+                type: "string",
+                description: "User's full name",
+              },
+              email: {
+                type: "string",
+                format: "email",
+                description: "User's email address",
+              },
+              emailVerified: {
+                type: "boolean",
+                description: "Whether the user's email has been verified",
+              },
+              isSuperAdmin: {
+                type: "boolean",
+                description: "Whether the user has super admin privileges",
+              },
             },
           },
           400: {
+            description: "Bad request - Missing required query parameter",
             type: "object",
             properties: {
-              message: { type: "string" },
+              message: {
+                type: "string",
+              },
             },
           },
           404: {
+            description: "User not found",
             type: "object",
             properties: {
-              message: { type: "string" },
+              message: {
+                type: "string",
+              },
             },
           },
         },
@@ -209,24 +310,52 @@ export const setupAuthRoutes = async (app: FastifyInstance) => {
     "/signup",
     {
       schema: {
-        description: "Register a new user",
-        tags: ["auth"],
+        description: "Register a new user account",
+        tags: ["Authentication"],
         body: ExtendedRegisterRequestSchema,
         response: {
           201: {
+            description: "User successfully registered",
             type: "object",
             properties: {
-              id: { type: "string" },
-              email: { type: "string" },
-              name: { type: "string" },
-              emailVerified: { type: "boolean" },
-              isSuperAdmin: { type: "boolean" },
+              id: {
+                type: "string",
+                description: "User's unique identifier",
+              },
+              email: {
+                type: "string",
+                format: "email",
+                description: "User's email address",
+              },
+              name: {
+                type: "string",
+                description: "User's full name",
+              },
+              emailVerified: {
+                type: "boolean",
+                description: "Whether the user's email has been verified",
+              },
+              isSuperAdmin: {
+                type: "boolean",
+                description: "Whether the user has super admin privileges",
+              },
             },
           },
           409: {
+            description: "User already exists with this email",
+            type: "object",
+            properties: {
+              message: {
+                type: "string",
+              },
+            },
+          },
+          422: {
+            description: "Invalid request body",
             type: "object",
             properties: {
               message: { type: "string" },
+              validation: { type: "array" },
             },
           },
         },
@@ -327,32 +456,65 @@ export const setupAuthRoutes = async (app: FastifyInstance) => {
     "/login",
     {
       schema: {
-        description: "Login with email and password",
-        tags: ["auth"],
+        description: "Authenticate user with email and password",
+        tags: ["Authentication"],
         body: {
           type: "object",
           properties: {
-            email: { type: "string", format: "email" },
-            password: { type: "string", minLength: 1, maxLength: 128 },
+            email: {
+              type: "string",
+              format: "email",
+              description: "User's email address",
+            },
+            password: {
+              type: "string",
+              minLength: 1,
+              maxLength: 128,
+              description: "User's password",
+            },
           },
           required: ["email", "password"],
           additionalProperties: false,
         },
         response: {
           200: {
+            description: "Successfully authenticated",
             type: "object",
             properties: {
-              id: { type: "string" },
-              email: { type: "string" },
-              emailVerified: { type: "boolean" },
-              isSuperAdmin: { type: "boolean" },
-              session: { type: "object" },
+              id: {
+                type: "string",
+                description: "User's unique identifier",
+              },
+              email: {
+                type: "string",
+                format: "email",
+                description: "User's email address",
+              },
+              emailVerified: {
+                type: "boolean",
+                description: "Whether the user's email has been verified",
+              },
+              isSuperAdmin: {
+                type: "boolean",
+                description: "Whether the user has super admin privileges",
+              },
+              session: {
+                type: "object",
+                description: "Session information",
+                properties: {
+                  id: { type: "string" },
+                  expiresAt: { type: "string", format: "date-time" },
+                },
+              },
             },
           },
           401: {
+            description: "Invalid credentials provided",
             type: "object",
             properties: {
-              message: { type: "string" },
+              message: {
+                type: "string",
+              },
             },
           },
         },
@@ -442,19 +604,25 @@ export const setupAuthRoutes = async (app: FastifyInstance) => {
     "/logout",
     {
       schema: {
-        description: "Logout current user",
-        tags: ["auth"],
+        description: "Logout current authenticated user",
+        tags: ["Authentication"],
         response: {
           200: {
+            description: "Successfully logged out",
             type: "object",
             properties: {
-              message: { type: "string" },
+              message: {
+                type: "string",
+              },
             },
           },
           401: {
+            description: "User not authenticated",
             type: "object",
             properties: {
-              message: { type: "string" },
+              message: {
+                type: "string",
+              },
             },
           },
         },
@@ -483,19 +651,25 @@ export const setupAuthRoutes = async (app: FastifyInstance) => {
     "/delete",
     {
       schema: {
-        description: "Delete current user account",
-        tags: ["auth"],
+        description: "Delete current user account permanently",
+        tags: ["Authentication"],
         response: {
           200: {
+            description: "User account successfully deleted",
             type: "object",
             properties: {
-              message: { type: "string" },
+              message: {
+                type: "string",
+              },
             },
           },
           401: {
+            description: "User not authenticated",
             type: "object",
             properties: {
-              message: { type: "string" },
+              message: {
+                type: "string",
+              },
             },
           },
         },
@@ -523,27 +697,38 @@ export const setupAuthRoutes = async (app: FastifyInstance) => {
     "/check-email-verification",
     {
       schema: {
-        description: "Check if email is verified",
-        tags: ["auth"],
+        description: "Check if user email is verified",
+        tags: ["Users"],
         body: {
           type: "object",
           properties: {
-            email: { type: "string", format: "email" },
+            email: {
+              type: "string",
+              format: "email",
+              description: "User's email address to check verification status",
+            },
           },
           required: ["email"],
           additionalProperties: false,
         },
         response: {
           200: {
+            description: "Email verification status retrieved",
             type: "object",
             properties: {
-              isEmailVerified: { type: "boolean" },
+              isEmailVerified: {
+                type: "boolean",
+                description: "Whether the user's email has been verified",
+              },
             },
           },
           404: {
+            description: "User not found",
             type: "object",
             properties: {
-              message: { type: "string" },
+              message: {
+                type: "string",
+              },
             },
           },
         },
