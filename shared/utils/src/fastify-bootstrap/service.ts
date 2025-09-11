@@ -1,7 +1,12 @@
 import { randomUUID } from "node:crypto"
 import { type FastifyInstance, fastify } from "fastify"
 import { initDb } from "../db-schema"
-import { NodeEnvs, type Service, services } from "../env-config"
+import {
+  createEnvConfig,
+  NodeEnvs,
+  type Service,
+  services,
+} from "../env-config"
 import { createCorsMiddleware, createErrorHandler } from "../fastify-middleware"
 import type { FastifyServiceConfig } from "./types"
 import { defaults } from "./types"
@@ -27,16 +32,26 @@ export function createAPIService({
   setupMiddleware,
 }: APIServices) {
   const service = services[name]
+  const envVars = createEnvConfig(name)
+  const params = {
+    name: service.dir,
+    port: service.port,
+    basePath: `/api/${service.dir}`,
+    bindings: envVars,
+  }
+  console.log("params", params)
   return createFastifyService({
     name: service.dir,
     port: service.port,
     setupRoutes,
     setupMiddleware: setupMiddleware ?? defaultSetupMiddleware,
     basePath: `/api/${service.dir}`,
+    bindings: envVars,
   })
 }
 export function createFastifyService(conf: FastifyServiceConfig) {
   const config: FastifyServiceConfig = { ...defaults, ...conf }
+  console.log("config ", config)
   const app: FastifyInstance = fastify({
     logger: {
       level: process.env.NODE_ENV === NodeEnvs.prod ? "info" : "debug",
