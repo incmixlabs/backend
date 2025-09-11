@@ -83,13 +83,14 @@ export const setupTasksRoutes = async (app: FastifyInstance) => {
         },
       },
     },
-    async (_request, _reply) => {
+    async (_request, reply) => {
       // TODO: Implement task creation logic
-      return {
+      const payload = {
         id: "temp-id",
         name: "temp-name",
         message: "Task created successfully",
       }
+      return reply.code(201).send(payload)
     }
   )
 
@@ -273,9 +274,11 @@ export const setupTasksRoutes = async (app: FastifyInstance) => {
         },
       },
     },
-    async (_request, _reply) => {
+    async (_request, reply) => {
       // TODO: Implement add checklist item logic
-      return { message: "Checklist item added successfully" }
+      return reply
+        .code(201)
+        .send({ message: "Checklist item added successfully" })
     }
   )
 

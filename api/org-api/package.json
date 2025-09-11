@@ -19,7 +19,6 @@
     "ajv-formats": "catalog:",
     "fastify": "catalog:",
     "kysely": "catalog:",
-    "kysely-ctl": "catalog:",
     "lodash": "catalog:",
     "nanoid": "catalog:",
     "pg": "catalog:"

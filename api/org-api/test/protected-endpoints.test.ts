@@ -122,7 +122,7 @@ describe("Protected Endpoints", () => {
         method: "POST",
         url: "/orgs/123/members",
         payload: {
-          email: "test@example.com",
+          userId: "test-user-id",
           role: "member",
         },
       })
@@ -144,7 +144,7 @@ describe("Protected Endpoints", () => {
     it("should require authentication for PUT /orgs/:orgId/members/:memberId/role", async () => {
       const response = await app.inject({
         method: "PUT",
-        url: "/orgs/123/members/456/role",
+        url: "/orgs/123/members/456",
         payload: {
           role: "admin",
         },

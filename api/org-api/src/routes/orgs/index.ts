@@ -83,7 +83,7 @@ export const setupOrgRoutes = async (app: FastifyInstance) => {
         id: orgId,
         name: "Example Org",
         handle: "example-org",
-        description: "An example org",
+        description: "Example organization",
         logo: "",
         website: "",
         isPublic: true,
@@ -464,6 +464,38 @@ export const setupOrgRoutes = async (app: FastifyInstance) => {
 
       // TODO: Implement actual update member role logic in database
       return { message: "Member role updated successfully" }
+    }
+  )
+
+  // Check if org handle is available (public endpoint)
+  app.get(
+    "/check-handle/:handle",
+    {
+      schema: {
+        description: "Check if org handle is available",
+        tags: ["orgs"],
+        params: {
+          type: "object",
+          properties: {
+            handle: { type: "string" },
+          },
+          required: ["handle"],
+        },
+        response: {
+          200: {
+            type: "object",
+            properties: {
+              available: { type: "boolean" },
+            },
+          },
+        },
+      },
+    },
+    async (request, _reply) => {
+      const { handle } = request.params as { handle: string }
+
+      // TODO: Implement actual handle availability check logic
+      return { available: true }
     }
   )
 }
