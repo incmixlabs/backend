@@ -1,7 +1,7 @@
 BEGIN;
 
 -- Create enum types
-CREATE TYPE role_scope AS ENUM ('organization', 'project', 'both');
+CREATE TYPE role_scope AS ENUM ('org', 'project', 'both');
 
 CREATE TYPE permission_action AS ENUM ('create', 'read', 'update', 'delete', 'manage');
 
@@ -19,17 +19,17 @@ CREATE TABLE roles (
   id SERIAL PRIMARY KEY,
   name TEXT NOT NULL,
   description TEXT,
-  organization_id TEXT,
+  org_id TEXT,
   is_system_role BOOLEAN NOT NULL DEFAULT false,
-  scope role_scope NOT NULL DEFAULT 'organization',
+  scope role_scope NOT NULL DEFAULT 'org',
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  CONSTRAINT roles_name_organization_id_key UNIQUE (name, organization_id),
-  CONSTRAINT fk_roles_organization_id FOREIGN KEY (organization_id) REFERENCES organisations(id) ON DELETE CASCADE
+  CONSTRAINT roles_name_org_id_key UNIQUE (name, org_id),
+  CONSTRAINT fk_roles_org_id FOREIGN KEY (org_id) REFERENCES organisations(id) ON DELETE CASCADE
 );
 
 -- Create indexes for roles
-CREATE INDEX idx_roles_organization_id ON roles(organization_id);
+CREATE INDEX idx_roles_org_id ON roles(org_id);
 
 CREATE INDEX idx_roles_is_system_role ON roles(is_system_role);
 

@@ -1,3 +1,5 @@
+import type { AuthUser } from "@incmix/utils/types"
+import { envVars } from "@incmix-api/utils/env-config"
 import type { FastifyReply, FastifyRequest } from "fastify"
 
 export interface AuthContext {
@@ -10,25 +12,45 @@ export interface AuthContext {
 declare module "fastify" {
   interface FastifyRequest {
     auth?: AuthContext
+    user?: AuthUser | null
   }
 }
 
 export function createAuthMiddleware() {
   return async (request: FastifyRequest, reply: FastifyReply) => {
+    // Check for session cookie first
+    const cookieName = (envVars.COOKIE_NAME ?? "session") as string
+    const sessionId = (request as any).cookies?.[cookieName]
+
+    if (sessionId) {
+      try {
+        const user = await validateSession(sessionId)
+        if (user) {
+          request.user = user
+          request.auth = {
+            userId: user.id,
+            sessionId,
+          }
+          return
+        }
+      } catch (_error) {
+        // Session validation failed, try other auth methods
+      }
+    }
+
+    // Fall back to Bearer token
     const authHeader = request.headers.authorization
 
     if (!authHeader || !authHeader.startsWith("Bearer ")) {
       return reply.status(401).send({
         error: "Unauthorized",
-        message: "Missing or invalid authorization header",
+        message: "Missing or invalid authorization",
       })
     }
 
     const token = authHeader.substring(7)
 
     try {
-      // TODO: Implement actual token validation logic
-      // This is a placeholder that should be replaced with your actual auth logic
       const authContext = await validateToken(token)
       request.auth = authContext
     } catch (_error) {
@@ -42,6 +64,27 @@ export function createAuthMiddleware() {
 
 export function createOptionalAuthMiddleware() {
   return async (request: FastifyRequest, _reply: FastifyReply) => {
+    // Check for session cookie first
+    const cookieName = (envVars.COOKIE_NAME ?? "session") as string
+    const sessionId = (request as any).cookies?.[cookieName]
+
+    if (sessionId) {
+      try {
+        const user = await validateSession(sessionId)
+        if (user) {
+          request.user = user
+          request.auth = {
+            userId: user.id,
+            sessionId,
+          }
+          return
+        }
+      } catch (_error) {
+        // Session validation failed, continue without auth
+      }
+    }
+
+    // Try Bearer token
     const authHeader = request.headers.authorization
 
     if (authHeader?.startsWith("Bearer ")) {
@@ -54,6 +97,43 @@ export function createOptionalAuthMiddleware() {
         // For optional auth, we don't return an error, just skip setting auth
       }
     }
+
+    // If no auth found, set user to null
+    if (!request.user && !request.auth) {
+      request.user = null
+    }
+  }
+}
+
+// Validate session with auth service
+async function validateSession(sessionId: string): Promise<AuthUser | null> {
+  const authApiUrl = envVars.AUTH_API_URL
+  if (!authApiUrl) {
+    console.error("AUTH_API_URL is not configured")
+    return null
+  }
+
+  const cookieName = (envVars.COOKIE_NAME ?? "session") as string
+  const authUrl = `${authApiUrl}/validate-session`
+
+  try {
+    const res = await fetch(authUrl, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        cookie: `${cookieName}=${sessionId}`,
+      },
+    })
+
+    if (!res.ok) {
+      return null
+    }
+
+    const user = (await res.json()) as AuthUser
+    return user || null
+  } catch (error) {
+    console.error("Session validation error:", error)
+    return null
   }
 }
 

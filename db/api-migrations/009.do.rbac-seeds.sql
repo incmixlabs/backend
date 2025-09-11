@@ -4,8 +4,8 @@ BEGIN;
 INSERT INTO
   roles (id, name, description, is_system_role, scope)
 VALUES
-  (1, 'owner', 'Full control over the organization', true, 'organization'),
-  (2, 'admin', 'Administrative access to the organization', true, 'organization'),
+  (1, 'owner', 'Full control over the org', true, 'org'),
+  (2, 'admin', 'Administrative access to the org', true, 'org'),
   (3, 'member', 'Standard member with basic access', true, 'both'),
   (4, 'project_manager', 'Manages projects and team coordination', true, 'project'),
   (5, 'guest', 'Limited access for external collaborators', false, 'project');

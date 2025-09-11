@@ -386,7 +386,7 @@ export const setupTasksRoutes = async (app: FastifyInstance) => {
           additionalProperties: false,
         },
         response: {
-          200: {
+          202: {
             type: "object",
             properties: {
               message: { type: "string" },
@@ -397,7 +397,7 @@ export const setupTasksRoutes = async (app: FastifyInstance) => {
     },
     async (_request, _reply) => {
       // TODO: Implement bulk AI generation logic
-      return { message: "Tasks queued for AI generation" }
+      return reply.code(202).send({ message: "Tasks queued for AI generation" })
     }
   )
 

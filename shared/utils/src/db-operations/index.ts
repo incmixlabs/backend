@@ -3,7 +3,7 @@ import { jsonArrayFrom } from "kysely/helpers/postgres"
 
 export interface FindUserOptions {
   includeProfile?: boolean
-  includeOrganizations?: boolean
+  includeorgs?: boolean
   includeProjects?: boolean
 }
 
@@ -27,24 +27,15 @@ export class CommonDbOperations {
         ])
     }
 
-    if (options.includeOrganizations) {
+    if (options.includeorgs) {
       query = query.select((eb) =>
         jsonArrayFrom(
           eb
-            .selectFrom("userOrganizations")
-            .leftJoin(
-              "organizations",
-              "userOrganizations.organizationId",
-              "organizations.id"
-            )
-            .select([
-              "organizations.id",
-              "organizations.name",
-              "organizations.slug",
-              "userOrganizations.role",
-            ])
-            .whereRef("userOrganizations.userId", "=", "users.id")
-        ).as("organizations")
+            .selectFrom("userorgs")
+            .leftJoin("orgs", "userorgs.orgId", "orgs.id")
+            .select(["orgs.id", "orgs.name", "orgs.slug", "userorgs.role"])
+            .whereRef("userorgs.userId", "=", "users.id")
+        ).as("orgs")
       )
     }
 
@@ -85,24 +76,15 @@ export class CommonDbOperations {
         ])
     }
 
-    if (options.includeOrganizations) {
+    if (options.includeorgs) {
       query = query.select((eb) =>
         jsonArrayFrom(
           eb
-            .selectFrom("userOrganizations")
-            .leftJoin(
-              "organizations",
-              "userOrganizations.organizationId",
-              "organizations.id"
-            )
-            .select([
-              "organizations.id",
-              "organizations.name",
-              "organizations.slug",
-              "userOrganizations.role",
-            ])
-            .whereRef("userOrganizations.userId", "=", "users.id")
-        ).as("organizations")
+            .selectFrom("userorgs")
+            .leftJoin("orgs", "userorgs.orgId", "orgs.id")
+            .select(["orgs.id", "orgs.name", "orgs.slug", "userorgs.role"])
+            .whereRef("userorgs.userId", "=", "users.id")
+        ).as("orgs")
       )
     }
 
@@ -137,11 +119,11 @@ export class CommonDbOperations {
     return member
   }
 
-  async checkOrganizationMembership(userId: string, organizationId: string) {
+  async checkorgMembership(userId: string, orgId: string) {
     const member = await this.db
-      .selectFrom("userOrganizations")
+      .selectFrom("userorgs")
       .where("userId", "=", userId)
-      .where("organizationId", "=", organizationId)
+      .where("orgId", "=", orgId)
       .select(["role", "createdAt"])
       .executeTakeFirst()
 
@@ -175,16 +157,16 @@ export class CommonDbOperations {
     return project
   }
 
-  async getOrganizationWithMembers(organizationId: string) {
-    const organization = await this.db
-      .selectFrom("organizations")
-      .where("organizations.id", "=", organizationId)
-      .selectAll("organizations")
+  async getorgWithMembers(orgId: string) {
+    const org = await this.db
+      .selectFrom("orgs")
+      .where("orgs.id", "=", orgId)
+      .selectAll("orgs")
       .select((eb) =>
         jsonArrayFrom(
           eb
-            .selectFrom("userOrganizations")
-            .leftJoin("users", "userOrganizations.userId", "users.id")
+            .selectFrom("userorgs")
+            .leftJoin("users", "userorgs.userId", "users.id")
             .leftJoin("userProfiles", "users.id", "userProfiles.userId")
             .select([
               "users.id",
@@ -192,18 +174,14 @@ export class CommonDbOperations {
               "userProfiles.firstName",
               "userProfiles.lastName",
               "userProfiles.avatar",
-              "userOrganizations.role",
+              "userorgs.role",
             ])
-            .whereRef(
-              "userOrganizations.organizationId",
-              "=",
-              "organizations.id"
-            )
+            .whereRef("userorgs.orgId", "=", "orgs.id")
         ).as("members")
       )
       .executeTakeFirst()
 
-    return organization
+    return org
   }
 
   async paginatedQuery<_T>(

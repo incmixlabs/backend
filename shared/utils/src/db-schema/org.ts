@@ -10,12 +10,12 @@ import type {
 } from "kysely"
 
 // New enum types based on SQL migration
-export type RoleScope = "organization" | "project" | "both"
+export type RoleScope = "org" | "project" | "both"
 export type PermissionAction = Action
 
 export type ResourceType = Subject
 
-type OrganisationTable = {
+type OrgTable = {
   id: string
   name: string
   handle: string
@@ -34,7 +34,7 @@ type RoleTable = {
   id: Generated<number>
   name: string
   description: string | null
-  organizationId: string | null
+  orgId: string | null
   isSystemRole: boolean
   scope: ColumnType<RoleScope, string, string>
   createdAt: ColumnType<Date, string, never>
@@ -61,9 +61,9 @@ export type RolePermissionsTable = {
   createdAt: ColumnType<Date, string, never>
 }
 
-export type Organisation = Selectable<OrganisationTable>
-export type NewOrganisation = Insertable<OrganisationTable>
-export type UpdatedOrganisation = Updateable<OrganisationTable>
+export type Org = Selectable<OrgTable>
+export type NewOrg = Insertable<OrgTable>
+export type UpdatedOrganisation = Updateable<OrgTable>
 
 export type Member = Selectable<MemberTable>
 export type NewMember = Insertable<MemberTable>
@@ -81,10 +81,33 @@ export type RolePermissions = Selectable<RolePermissionsTable>
 export type NewRolePermissions = Insertable<RolePermissionsTable>
 export type UpdatedRolePermissions = Updateable<RolePermissionsTable>
 
+// Audit log table for tracking mutations
+export type AuditLogTable = {
+  id: Generated<number>
+  userId: string
+  userEmail: string
+  action: string
+  resourceType: string
+  resourceId: string | null
+  orgId: string | null
+  projectId: string | null
+  method: string
+  path: string
+  statusCode: number | null
+  metadata: JSONColumnType<Record<string, any>, string, string> | null
+  timestamp: ColumnType<Date, string, never>
+  ip: string | null
+  userAgent: string | null
+}
+
+export type AuditLog = Selectable<AuditLogTable>
+export type NewAuditLog = Insertable<AuditLogTable>
+
 export type OrgTables = {
-  organisations: OrganisationTable
+  organisations: OrgTable
   members: MemberTable
   roles: RoleTable
   permissions: PermissionTable
   rolePermissions: RolePermissionsTable
+  auditLogs: AuditLogTable
 }

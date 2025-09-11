@@ -48,10 +48,10 @@ export const setupProjectRoutes = async (app: FastifyInstance) => {
 
   // List projects
   app.get(
-    "/organizations/:orgId",
+    "/orgs/:orgId",
     {
       schema: {
-        description: "List projects for an organization",
+        description: "List projects for an org",
         tags: ["projects"],
         params: {
           type: "object",
@@ -124,13 +124,14 @@ export const setupProjectRoutes = async (app: FastifyInstance) => {
         },
       },
     },
-    async (_request, _reply) => {
+    async (_request, reply) => {
       // TODO: Implement project creation logic
-      return {
+      const payload = {
         id: "temp-id",
         name: "temp-name",
         message: "Project created successfully",
       }
+      return reply.code(201).send(payload)
     }
   )
 
@@ -373,9 +374,11 @@ export const setupProjectRoutes = async (app: FastifyInstance) => {
         },
       },
     },
-    async (_request, _reply) => {
+    async (_request, reply) => {
       // TODO: Implement add checklist item logic
-      return { message: "Checklist item added successfully" }
+      return reply
+        .code(201)
+        .send({ message: "Checklist item added successfully" })
     }
   )
 

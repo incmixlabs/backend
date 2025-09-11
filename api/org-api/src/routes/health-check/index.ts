@@ -54,6 +54,7 @@ export const setupHealthcheckRoutes = async (app: FastifyInstance) => {
           const roles = await request.context.db
             .selectFrom("roles")
             .selectAll()
+            .limit(1)
             .execute()
           checks.database = roles.length > 0
         }
@@ -68,6 +69,7 @@ export const setupHealthcheckRoutes = async (app: FastifyInstance) => {
           "COOKIE_NAME",
           "DOMAIN",
           "INTL_API_URL",
+          "DATABASE_URL",
         ]
 
         checks.envVars = requiredEnvVars.every((varName) => {

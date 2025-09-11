@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest"
 
-describe("Organisation API", () => {
+describe("Org API", () => {
   it("should have basic test setup", () => {
     expect(true).toBe(true)
   })

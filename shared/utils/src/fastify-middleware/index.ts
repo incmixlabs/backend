@@ -1,4 +1,5 @@
 export * from "./auth"
 export * from "./cors"
 export * from "./error-handler"
+export * from "./rbac"
 export * from "./validation"

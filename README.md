@@ -1,5 +1,5 @@
 # Incmix API Monorepo
-# Accidental merge
+
 # Recent Refactoring
 -- added CODEQL
 We've recently standardized the health check implementation across all microservices. Now all services use a shared utility for health checks, providing consistent behavior and reducing code duplication.

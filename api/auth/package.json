@@ -10,18 +10,17 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
-    "@fastify/swagger": "^9.5.1",
-    "@fastify/swagger-ui": "^5.0.1",
+    "@fastify/swagger": "catalog:",
+    "@fastify/swagger-ui": "catalog:",
     "@incmix-api/utils": "workspace:^",
     "@incmix/utils": "catalog:",
-    "@scalar/fastify-api-reference": "^1.35.2",
-    "ajv": "^8.17.1",
-    "ajv-formats": "^3.0.1",
-    "arctic": "2.3.0",
-    "bcrypt": "^5.1.1",
-    "fastify": "^5.6.0",
+    "@scalar/fastify-api-reference": "catalog:",
+    "ajv": "catalog:",
+    "ajv-formats": "catalog:",
+    "arctic": "catalog:",
+    "bcrypt": "catalog:",
+    "fastify": "catalog:",
     "kysely": "catalog:",
-    "kysely-ctl": "0.12.1",
     "mailslurp-client": "15.20.2",
     "oslo": "1.2.1",
     "pg": "catalog:"
@@ -29,16 +28,17 @@
   "devDependencies": {
     "@incmix-api/config": "workspace:^",
     "@incmix-api/test-utils": "workspace:^",
-    "@testcontainers/postgresql": "^11.5.1",
-    "@types/bcrypt": "^5.0.2",
+    "@testcontainers/postgresql": "catalog:",
+    "@types/bcrypt": "catalog:",
     "@types/node": "catalog:",
     "@types/pg": "catalog:",
     "dotenv": "catalog:",
-    "testcontainers": "^11.5.1",
+    "kysely-ctl": "catalog:",
+    "testcontainers": "catalog:",
     "tsc-alias": "catalog:",
     "tsx": "catalog:",
     "typescript": "catalog:",
-    "vite-tsconfig-paths": "^5.1.4",
+    "vite-tsconfig-paths": "catalog:",
     "vitest": "catalog:"
   }
 }

@@ -1,13 +1,13 @@
 import type { FastifyInstance } from "fastify"
 import { envVars } from "@/env-vars"
 import { setupHealthcheckRoutes } from "@/routes/health-check"
-import { setupOrganisationRoutes } from "./organisations"
+import { setupOrgRoutes } from "./orgs"
 import { setupPermissionRoutes } from "./permissions"
 
 export const setupRoutes = async (app: FastifyInstance) => {
   // Add a direct test route to verify routing works at all
   if (envVars.NODE_ENV === "test") {
-    app.get("/api/organizations/test-direct", async (_request, _reply) => {
+    app.get("/api/orgs/test-direct", async (_request, _reply) => {
       return { message: "Direct route works!" }
     })
   }
@@ -23,8 +23,8 @@ export const setupRoutes = async (app: FastifyInstance) => {
 
       await setupHealthcheckRoutes(fastify)
       await setupPermissionRoutes(fastify)
-      await setupOrganisationRoutes(fastify)
+      await setupOrgRoutes(fastify)
     },
-    { prefix: "/api/organizations" }
+    { prefix: "/api/orgs" }
   )
 }
