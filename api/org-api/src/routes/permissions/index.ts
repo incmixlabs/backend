@@ -7,24 +7,13 @@ import { requireOrgPermission } from "@incmix-api/utils/fastify-middleware/rbac"
 import type { FastifyInstance } from "fastify"
 
 export const setupPermissionRoutes = async (app: FastifyInstance) => {
-  // Get database instance from app context
-  const db = (app as any).db
-  if (!db) {
-    throw new Error("Database not initialized")
-  }
-
-  // Setup audit logging
-  const { auditLogger, middleware: auditMiddleware } = createAuditMiddleware(db)
-
-  // Register audit middleware for all routes
-  app.addHook("onRequest", auditMiddleware)
-
   // Setup authentication middleware
   const requireAuth = createAuthMiddleware()
   const optionalAuth = createOptionalAuthMiddleware()
+
   // Get all available permissions reference data (public endpoint)
   app.get(
-    "/reference",
+    "/permissions-reference",
     {
       preHandler: [optionalAuth],
       schema: {
@@ -112,7 +101,7 @@ export const setupPermissionRoutes = async (app: FastifyInstance) => {
   app.post(
     "/orgs/:orgId/roles",
     {
-      preHandler: [requireAuth, requireOrgPermission(db, "create", "Role")],
+      preHandler: [requireAuth],
       schema: {
         description: "Create a new role",
         tags: ["permissions"],
@@ -154,13 +143,24 @@ export const setupPermissionRoutes = async (app: FastifyInstance) => {
         },
       },
     },
-    async (request, _reply) => {
+    async (request, reply) => {
       const { orgId } = request.params as { orgId: string }
       const { name, permissions } = request.body as {
         name: string
         permissions: any[]
       }
       const _user = request.user!
+      const db = request.context?.db
+
+      if (!db) {
+        throw new Error("Database not initialized")
+      }
+
+      // Setup audit logging for this request
+      const { auditLogger } = createAuditMiddleware(db)
+
+      // Check org permission
+      await requireOrgPermission(db, "create", "Role")(request, reply)
 
       // Log the mutation
       await auditLogger.logMutation(
@@ -185,7 +185,7 @@ export const setupPermissionRoutes = async (app: FastifyInstance) => {
   app.put(
     "/orgs/:orgId/roles/:roleId",
     {
-      preHandler: [requireAuth, requireOrgPermission(db, "update", "Role")],
+      preHandler: [requireAuth],
       schema: {
         description: "Update a role",
         tags: ["permissions"],
@@ -225,13 +225,24 @@ export const setupPermissionRoutes = async (app: FastifyInstance) => {
         },
       },
     },
-    async (request, _reply) => {
+    async (request, reply) => {
       const { orgId, roleId } = request.params as {
         orgId: string
         roleId: string
       }
       const body = request.body as any
       const _user = request.user!
+      const db = request.context?.db
+
+      if (!db) {
+        throw new Error("Database not initialized")
+      }
+
+      // Setup audit logging for this request
+      const { auditLogger } = createAuditMiddleware(db)
+
+      // Check org permission
+      await requireOrgPermission(db, "update", "Role")(request, reply)
 
       // Log the mutation
       await auditLogger.logMutation(
@@ -252,7 +263,7 @@ export const setupPermissionRoutes = async (app: FastifyInstance) => {
   app.delete(
     "/orgs/:orgId/roles/:roleId",
     {
-      preHandler: [requireAuth, requireOrgPermission(db, "delete", "Role")],
+      preHandler: [requireAuth],
       schema: {
         description: "Delete a role",
         tags: ["permissions"],
@@ -274,12 +285,23 @@ export const setupPermissionRoutes = async (app: FastifyInstance) => {
         },
       },
     },
-    async (request, _reply) => {
+    async (request, reply) => {
       const { orgId, roleId } = request.params as {
         orgId: string
         roleId: string
       }
       const _user = request.user!
+      const db = request.context?.db
+
+      if (!db) {
+        throw new Error("Database not initialized")
+      }
+
+      // Setup audit logging for this request
+      const { auditLogger } = createAuditMiddleware(db)
+
+      // Check org permission
+      await requireOrgPermission(db, "delete", "Role")(request, reply)
 
       // Log the mutation
       await auditLogger.logMutation(request, "DELETE", "Role", roleId, orgId)
@@ -293,7 +315,7 @@ export const setupPermissionRoutes = async (app: FastifyInstance) => {
   app.post(
     "/orgs/:orgId/roles/:roleId/permissions",
     {
-      preHandler: [requireAuth, requireOrgPermission(db, "update", "Role")],
+      preHandler: [requireAuth],
       schema: {
         description: "Add permission to role",
         tags: ["permissions"],
@@ -324,13 +346,24 @@ export const setupPermissionRoutes = async (app: FastifyInstance) => {
         },
       },
     },
-    async (request, _reply) => {
+    async (request, reply) => {
       const { orgId, roleId } = request.params as {
         orgId: string
         roleId: string
       }
       const permission = request.body as { action: string; subject: string }
       const _user = request.user!
+      const db = request.context?.db
+
+      if (!db) {
+        throw new Error("Database not initialized")
+      }
+
+      // Setup audit logging for this request
+      const { auditLogger } = createAuditMiddleware(db)
+
+      // Check org permission
+      await requireOrgPermission(db, "update", "Role")(request, reply)
 
       // Log the mutation
       await auditLogger.logMutation(
@@ -351,7 +384,7 @@ export const setupPermissionRoutes = async (app: FastifyInstance) => {
   app.delete(
     "/orgs/:orgId/roles/:roleId/permissions",
     {
-      preHandler: [requireAuth, requireOrgPermission(db, "update", "Role")],
+      preHandler: [requireAuth],
       schema: {
         description: "Remove permission from role",
         tags: ["permissions"],
@@ -382,13 +415,24 @@ export const setupPermissionRoutes = async (app: FastifyInstance) => {
         },
       },
     },
-    async (request, _reply) => {
+    async (request, reply) => {
       const { orgId, roleId } = request.params as {
         orgId: string
         roleId: string
       }
       const permission = request.body as { action: string; subject: string }
       const _user = request.user!
+      const db = request.context?.db
+
+      if (!db) {
+        throw new Error("Database not initialized")
+      }
+
+      // Setup audit logging for this request
+      const { auditLogger } = createAuditMiddleware(db)
+
+      // Check org permission
+      await requireOrgPermission(db, "update", "Role")(request, reply)
 
       // Log the mutation
       await auditLogger.logMutation(

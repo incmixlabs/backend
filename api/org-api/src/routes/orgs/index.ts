@@ -7,21 +7,10 @@ import { requireOrgPermission } from "@incmix-api/utils/fastify-middleware/rbac"
 import type { FastifyInstance } from "fastify"
 
 export const setupOrgRoutes = async (app: FastifyInstance) => {
-  // Get database instance from app context
-  const db = (app as any).db
-  if (!db) {
-    throw new Error("Database not initialized")
-  }
-
-  // Setup audit logging
-  const { auditLogger, middleware: auditMiddleware } = createAuditMiddleware(db)
-
-  // Register audit middleware for all routes
-  app.addHook("onRequest", auditMiddleware)
-
   // Setup authentication middleware
   const requireAuth = createAuthMiddleware()
   const optionalAuth = createOptionalAuthMiddleware()
+
   // Get user's orgs (requires authentication)
   app.get(
     "/",
@@ -50,12 +39,59 @@ export const setupOrgRoutes = async (app: FastifyInstance) => {
       },
     },
     async (_request, _reply) => {
-      // TODO: Implement get user orgs logic
+      // TODO: Implement get user's orgs logic
       return []
     }
   )
 
-  // Create org (requires authentication)
+  // Get org by ID (public endpoint)
+  app.get(
+    "/:orgId",
+    {
+      preHandler: [optionalAuth],
+      schema: {
+        description: "Get org by ID",
+        tags: ["orgs"],
+        params: {
+          type: "object",
+          properties: {
+            orgId: { type: "string" },
+          },
+          required: ["orgId"],
+        },
+        response: {
+          200: {
+            type: "object",
+            properties: {
+              id: { type: "string" },
+              name: { type: "string" },
+              handle: { type: "string" },
+              description: { type: "string" },
+              logo: { type: "string" },
+              website: { type: "string" },
+              isPublic: { type: "boolean" },
+            },
+          },
+        },
+      },
+    },
+    async (request, _reply) => {
+      const { orgId } = request.params as { orgId: string }
+
+      // TODO: Implement get org by ID logic
+      return {
+        id: orgId,
+        name: "Example Org",
+        handle: "example-org",
+        description: "An example org",
+        logo: "",
+        website: "",
+        isPublic: true,
+      }
+    }
+  )
+
+  // Create new org (requires authentication)
   app.post(
     "/",
     {
@@ -69,8 +105,8 @@ export const setupOrgRoutes = async (app: FastifyInstance) => {
             name: { type: "string", minLength: 1 },
             handle: { type: "string", minLength: 1 },
             description: { type: "string" },
-            website: { type: "string" },
             logo: { type: "string" },
+            website: { type: "string" },
           },
           required: ["name", "handle"],
           additionalProperties: false,
@@ -89,119 +125,65 @@ export const setupOrgRoutes = async (app: FastifyInstance) => {
       },
     },
     async (request, _reply) => {
-      const body = request.body as {
+      const { name, handle, description, logo, website } = request.body as {
         name: string
         handle: string
         description?: string
-        website?: string
         logo?: string
+        website?: string
       }
       const _user = request.user!
+      const db = request.context?.db
+
+      if (!db) {
+        throw new Error("Database not initialized")
+      }
+
+      // Setup audit logging for this request
+      const { auditLogger } = createAuditMiddleware(db)
 
       // Log the mutation
       await auditLogger.logMutation(
         request,
         "CREATE",
-        "org",
+        "Org",
         undefined,
         undefined,
-        body
+        { name, handle, description, logo, website }
       )
 
-      // TODO: Implement actual org creation logic in database
+      // TODO: Implement actual create org logic in database
       return {
         id: "temp-id",
-        name: body.name,
-        handle: body.handle,
-        message: "org created successfully",
-      }
-    }
-  )
-
-  // Get org by ID (requires authentication and membership)
-  app.get(
-    "/:id",
-    {
-      preHandler: [
-        requireAuth,
-        requireOrgPermission(db, "read", "Organisation"),
-      ],
-      schema: {
-        description: "Get org by ID",
-        tags: ["orgs"],
-        params: {
-          type: "object",
-          properties: {
-            id: { type: "string" },
-          },
-          required: ["id"],
-        },
-        response: {
-          200: {
-            type: "object",
-            properties: {
-              id: { type: "string" },
-              name: { type: "string" },
-              handle: { type: "string" },
-              description: { type: "string" },
-              logo: { type: "string" },
-              website: { type: "string" },
-              members: {
-                type: "array",
-                items: {
-                  type: "object",
-                  properties: {
-                    id: { type: "string" },
-                    name: { type: "string" },
-                    email: { type: "string" },
-                    role: { type: "string" },
-                  },
-                },
-              },
-            },
-          },
-        },
-      },
-    },
-    async (_request, _reply) => {
-      // TODO: Implement Get org by ID logic
-      return {
-        id: "temp-id",
-        name: "temp-name",
-        handle: "temp-handle",
-        description: "temp-description",
-        logo: "",
-        website: "",
-        members: [],
+        name,
+        handle,
+        message: "Org created successfully",
       }
     }
   )
 
   // Update org (requires authentication and update permission)
   app.put(
-    "/:id",
+    "/:orgId",
     {
-      preHandler: [
-        requireAuth,
-        requireOrgPermission(db, "update", "Organisation"),
-      ],
+      preHandler: [requireAuth],
       schema: {
         description: "Update an org",
         tags: ["orgs"],
         params: {
           type: "object",
           properties: {
-            id: { type: "string" },
+            orgId: { type: "string" },
           },
-          required: ["id"],
+          required: ["orgId"],
         },
         body: {
           type: "object",
           properties: {
             name: { type: "string" },
             description: { type: "string" },
-            website: { type: "string" },
             logo: { type: "string" },
+            website: { type: "string" },
           },
           additionalProperties: false,
         },
@@ -215,36 +197,51 @@ export const setupOrgRoutes = async (app: FastifyInstance) => {
         },
       },
     },
-    async (request, _reply) => {
-      const { id } = request.params as { id: string }
+    async (request, reply) => {
+      const { orgId } = request.params as { orgId: string }
       const body = request.body as any
       const _user = request.user!
+      const db = request.context?.db
+
+      if (!db) {
+        throw new Error("Database not initialized")
+      }
+
+      // Setup audit logging for this request
+      const { auditLogger } = createAuditMiddleware(db)
+
+      // Check org permission
+      await requireOrgPermission(db, "update", "Organisation")(request, reply)
 
       // Log the mutation
-      await auditLogger.logMutation(request, "UPDATE", "Org", id, id, body)
+      await auditLogger.logMutation(
+        request,
+        "UPDATE",
+        "Org",
+        orgId,
+        orgId,
+        body
+      )
 
-      // TODO: Implement actual org update logic in database
+      // TODO: Implement actual update org logic in database
       return { message: "Org updated successfully" }
     }
   )
 
   // Delete org (requires authentication and delete permission)
   app.delete(
-    "/:id",
+    "/:orgId",
     {
-      preHandler: [
-        requireAuth,
-        requireOrgPermission(db, "delete", "Organisation"),
-      ],
+      preHandler: [requireAuth],
       schema: {
         description: "Delete an org",
         tags: ["orgs"],
         params: {
           type: "object",
           properties: {
-            id: { type: "string" },
+            orgId: { type: "string" },
           },
-          required: ["id"],
+          required: ["orgId"],
         },
         response: {
           200: {
@@ -256,40 +253,51 @@ export const setupOrgRoutes = async (app: FastifyInstance) => {
         },
       },
     },
-    async (request, _reply) => {
-      const { id } = request.params as { id: string }
+    async (request, reply) => {
+      const { orgId } = request.params as { orgId: string }
       const _user = request.user!
+      const db = request.context?.db
+
+      if (!db) {
+        throw new Error("Database not initialized")
+      }
+
+      // Setup audit logging for this request
+      const { auditLogger } = createAuditMiddleware(db)
+
+      // Check org permission
+      await requireOrgPermission(db, "delete", "Organisation")(request, reply)
 
       // Log the mutation
-      await auditLogger.logMutation(request, "DELETE", "Org", id, id)
+      await auditLogger.logMutation(request, "DELETE", "Org", orgId, orgId)
 
-      // TODO: Implement actual org deletion logic in database
+      // TODO: Implement actual delete org logic in database
       return { message: "Org deleted successfully" }
     }
   )
 
   // Add member to org (requires authentication and manage permission)
   app.post(
-    "/:id/members",
+    "/:orgId/members",
     {
-      preHandler: [requireAuth, requireOrgPermission(db, "manage", "Member")],
+      preHandler: [requireAuth],
       schema: {
         description: "Add member to org",
         tags: ["orgs"],
         params: {
           type: "object",
           properties: {
-            id: { type: "string" },
+            orgId: { type: "string" },
           },
-          required: ["id"],
+          required: ["orgId"],
         },
         body: {
           type: "object",
           properties: {
-            email: { type: "string", format: "email" },
+            userId: { type: "string" },
             role: { type: "string" },
           },
-          required: ["email", "role"],
+          required: ["userId", "role"],
           additionalProperties: false,
         },
         response: {
@@ -302,31 +310,42 @@ export const setupOrgRoutes = async (app: FastifyInstance) => {
         },
       },
     },
-    async (request, _reply) => {
-      const { id } = request.params as { id: string }
-      const { email, role } = request.body as { email: string; role: string }
+    async (request, reply) => {
+      const { orgId } = request.params as { orgId: string }
+      const { userId, role } = request.body as { userId: string; role: string }
       const _user = request.user!
+      const db = request.context?.db
+
+      if (!db) {
+        throw new Error("Database not initialized")
+      }
+
+      // Setup audit logging for this request
+      const { auditLogger } = createAuditMiddleware(db)
+
+      // Check org permission
+      await requireOrgPermission(db, "manage", "Member")(request, reply)
 
       // Log the mutation
       await auditLogger.logMutation(
         request,
         "CREATE",
-        "Member",
+        "OrgMember",
         undefined,
-        id,
-        { email, role }
+        orgId,
+        { userId, role }
       )
 
       // TODO: Implement actual add member logic in database
-      return { message: "Member added successfully" }
+      return { message: "Member added to org successfully" }
     }
   )
 
   // Remove member from org (requires authentication and manage permission)
   app.delete(
-    "/:orgId/members/:memberId",
+    "/:orgId/members/:userId",
     {
-      preHandler: [requireAuth, requireOrgPermission(db, "manage", "Member")],
+      preHandler: [requireAuth],
       schema: {
         description: "Remove member from org",
         tags: ["orgs"],
@@ -334,9 +353,9 @@ export const setupOrgRoutes = async (app: FastifyInstance) => {
           type: "object",
           properties: {
             orgId: { type: "string" },
-            memberId: { type: "string" },
+            userId: { type: "string" },
           },
-          required: ["orgId", "memberId"],
+          required: ["orgId", "userId"],
         },
         response: {
           200: {
@@ -348,131 +367,53 @@ export const setupOrgRoutes = async (app: FastifyInstance) => {
         },
       },
     },
-    async (request, _reply) => {
-      const { orgId, memberId } = request.params as {
+    async (request, reply) => {
+      const { orgId, userId } = request.params as {
         orgId: string
-        memberId: string
+        userId: string
       }
       const _user = request.user!
+      const db = request.context?.db
+
+      if (!db) {
+        throw new Error("Database not initialized")
+      }
+
+      // Setup audit logging for this request
+      const { auditLogger } = createAuditMiddleware(db)
+
+      // Check org permission
+      await requireOrgPermission(db, "manage", "Member")(request, reply)
 
       // Log the mutation
       await auditLogger.logMutation(
         request,
         "DELETE",
-        "Member",
-        memberId,
+        "OrgMember",
+        userId,
         orgId
       )
 
       // TODO: Implement actual remove member logic in database
-      return { message: "Member removed successfully" }
-    }
-  )
-
-  // Get org members (requires authentication and read permission)
-  app.get(
-    "/:id/members",
-    {
-      preHandler: [requireAuth, requireOrgPermission(db, "read", "Member")],
-      schema: {
-        description: "Get org members",
-        tags: ["org"],
-        params: {
-          type: "object",
-          properties: {
-            id: { type: "string" },
-          },
-          required: ["id"],
-        },
-        response: {
-          200: {
-            type: "array",
-            items: {
-              type: "object",
-              properties: {
-                id: { type: "string" },
-                name: { type: "string" },
-                email: { type: "string" },
-                role: { type: "string" },
-                joinedAt: { type: "string" },
-              },
-            },
-          },
-        },
-      },
-    },
-    async (_request, _reply) => {
-      // TODO: Implement get org members logic
-      return []
-    }
-  )
-
-  // Get org permissions (requires authentication and read permission)
-  app.get(
-    "/:id/permissions",
-    {
-      preHandler: [requireAuth, requireOrgPermission(db, "read", "Permission")],
-      schema: {
-        description: "Get org permissions",
-        tags: ["org"],
-        params: {
-          type: "object",
-          properties: {
-            id: { type: "string" },
-          },
-          required: ["id"],
-        },
-        response: {
-          200: {
-            type: "object",
-            properties: {
-              permissions: {
-                type: "array",
-                items: { type: "string" },
-              },
-              roles: {
-                type: "array",
-                items: {
-                  type: "object",
-                  properties: {
-                    id: { type: "string" },
-                    name: { type: "string" },
-                    permissions: {
-                      type: "array",
-                      items: { type: "string" },
-                    },
-                  },
-                },
-              },
-            },
-          },
-        },
-      },
-    },
-    async (_request, _reply) => {
-      // TODO: Implement get org permissions logic
-      return {
-        permissions: [],
-        roles: [],
-      }
+      return { message: "Member removed from org successfully" }
     }
   )
 
   // Update member role (requires authentication and manage permission)
   app.put(
-    "/:orgId/members/:memberId/role",
+    "/:orgId/members/:userId",
     {
-      preHandler: [requireAuth, requireOrgPermission(db, "manage", "Member")],
+      preHandler: [requireAuth],
       schema: {
-        description: "Update member role in org",
+        description: "Update member role",
         tags: ["orgs"],
         params: {
           type: "object",
           properties: {
             orgId: { type: "string" },
-            memberId: { type: "string" },
+            userId: { type: "string" },
           },
-          required: ["orgId", "memberId"],
+          required: ["orgId", "userId"],
         },
         body: {
           type: "object",
@@ -492,57 +433,37 @@ export const setupOrgRoutes = async (app: FastifyInstance) => {
         },
       },
     },
-    async (request, _reply) => {
-      const { orgId, memberId } = request.params as {
+    async (request, reply) => {
+      const { orgId, userId } = request.params as {
         orgId: string
-        memberId: string
+        userId: string
       }
       const { role } = request.body as { role: string }
       const _user = request.user!
+      const db = request.context?.db
+
+      if (!db) {
+        throw new Error("Database not initialized")
+      }
+
+      // Setup audit logging for this request
+      const { auditLogger } = createAuditMiddleware(db)
+
+      // Check org permission
+      await requireOrgPermission(db, "manage", "Member")(request, reply)
 
       // Log the mutation
       await auditLogger.logMutation(
         request,
         "UPDATE",
-        "Member",
-        memberId,
+        "OrgMember",
+        userId,
         orgId,
         { role }
       )
 
       // TODO: Implement actual update member role logic in database
       return { message: "Member role updated successfully" }
-    }
-  )
-
-  // Check handle availability (public endpoint)
-  app.get(
-    "/check-handle/:handle",
-    {
-      preHandler: [optionalAuth],
-      schema: {
-        description: "Check if org handle is available",
-        tags: ["orgs"],
-        params: {
-          type: "object",
-          properties: {
-            handle: { type: "string" },
-          },
-          required: ["handle"],
-        },
-        response: {
-          200: {
-            type: "object",
-            properties: {
-              available: { type: "boolean" },
-            },
-          },
-        },
-      },
-    },
-    async (_request, _reply) => {
-      // TODO: Implement handle availability check logic
-      return { available: true }
     }
   )
 }

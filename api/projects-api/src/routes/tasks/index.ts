@@ -395,7 +395,7 @@ export const setupTasksRoutes = async (app: FastifyInstance) => {
         },
       },
     },
-    async (_request, _reply) => {
+    async (_request, reply) => {
       // TODO: Implement bulk AI generation logic
       return reply.code(202).send({ message: "Tasks queued for AI generation" })
     }

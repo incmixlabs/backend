@@ -7,7 +7,7 @@ import { setupPermissionRoutes } from "./permissions"
 export const setupRoutes = async (app: FastifyInstance) => {
   // Add a direct test route to verify routing works at all
   if (envVars.NODE_ENV === "test") {
-    app.get("/api/orgs/test-direct", async (_request, _reply) => {
+    app.get("/api/org/test-direct", async (_request, _reply) => {
       return { message: "Direct route works!" }
     })
   }
@@ -25,6 +25,6 @@ export const setupRoutes = async (app: FastifyInstance) => {
       await setupPermissionRoutes(fastify)
       await setupOrgRoutes(fastify)
     },
-    { prefix: "/api/orgs" }
+    { prefix: "/api/org" }
   )
 }
