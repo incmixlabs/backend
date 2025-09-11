@@ -3,7 +3,7 @@ import type { FastifyInstance } from "fastify"
 export const setupProjectRoutes = async (app: FastifyInstance) => {
   // Get projects reference data
   app.get(
-    "/reference",
+    "/projects-reference",
     {
       schema: {
         description: "Get projects reference data",

@@ -543,7 +543,7 @@ export const getProjectMembers = createRoute({
 })
 
 export const getProjectReference = createRoute({
-  path: "/reference",
+  path: "/projects-reference",
   method: "get",
   summary: "Get Project Reference Data",
   tags: ["Projects"],

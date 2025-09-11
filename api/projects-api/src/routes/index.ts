@@ -22,7 +22,7 @@ export const setupRoutes = async (app: FastifyInstance) => {
       }
 
       await setupHealthcheckRoutes(fastify)
-      await setupTasksRoutes(fastify)
+      await fastify.register(setupTasksRoutes, { prefix: "/tasks" })
       await setupProjectRoutes(fastify)
     },
     { prefix: "/api/projects" }

@@ -5,15 +5,15 @@ import { envVars } from "../env-vars"
 const MIGRATED_SERVICES = {
   auth: {
     prefix: "/api/auth",
-    upstream: envVars.AUTH_API_URL?.replace("/api/auth", ""),
+    upstream: envVars.AUTH_API_URL?.replace("/api/auth", "") ?? "",
   },
   org: {
     prefix: "/api/org",
-    upstream: envVars.ORG_API_URL?.replace("/api/org", ""),
+    upstream: envVars.ORG_API_URL?.replace("/api/org", "") ?? "",
   },
   projects: {
     prefix: "/api/projects",
-    upstream: envVars.PROJECTS_API_URL?.replace("/api/projects", ""),
+    upstream: envVars.PROJECTS_API_URL?.replace("/api/projects", "") ?? "",
   },
 } as const
 
