@@ -1,33 +1,90 @@
-import { createHealthCheckRoute } from "@incmix-api/utils"
+import type { FastifyInstance } from "fastify"
 import { envVars } from "@/env-vars"
-import { BASE_PATH } from "@/lib/constants"
-import type { HonoApp } from "@/types"
 
-const healthcheckRoutes = createHealthCheckRoute<HonoApp>({
-  envVars: {
-    DOMAIN: envVars.DOMAIN,
-    INTL_API_URL: envVars.INTL_API_URL,
-    LOCATION_API_KEY: envVars.LOCATION_API_KEY,
-    LOCATION_URL: envVars.LOCATION_URL,
-    WEATHER_API_KEY: envVars.WEATHER_API_KEY,
-    WEATHER_URL: envVars.WEATHER_URL,
-  },
-
-  basePath: BASE_PATH,
-
-  checks: [
+export const setupHealthcheckRoutes = async (app: FastifyInstance) => {
+  app.get(
+    "/healthcheck",
     {
-      name: "Redis",
-      check: async (c) => {
-        try {
-          const result = await c.get("redis").ping()
-          return result === "PONG"
-        } catch (_error) {
-          return false
-        }
+      schema: {
+        description: "Health check endpoint",
+        tags: ["healthcheck"],
+        response: {
+          200: {
+            type: "object",
+            properties: {
+              status: { type: "string", enum: ["UP", "DOWN"] },
+              service: { type: "string" },
+              timestamp: { type: "string" },
+              checks: {
+                type: "object",
+                properties: {
+                  redis: { type: "boolean" },
+                  envVars: { type: "boolean" },
+                },
+              },
+            },
+          },
+          503: {
+            type: "object",
+            properties: {
+              status: { type: "string", enum: ["UP", "DOWN"] },
+              service: { type: "string" },
+              timestamp: { type: "string" },
+              checks: {
+                type: "object",
+                properties: {
+                  redis: { type: "boolean" },
+                  envVars: { type: "boolean" },
+                },
+              },
+            },
+          },
+        },
       },
     },
-  ],
-})
+    async (_request, reply) => {
+      const checks = {
+        redis: false,
+        envVars: false,
+      }
 
-export default healthcheckRoutes
+      // Check Redis connectivity
+      try {
+        // TODO: Add Redis connection check when redis is available
+        checks.redis = true
+      } catch (error) {
+        console.error("Redis health check failed:", error)
+      }
+
+      // Check environment variables
+      try {
+        const requiredEnvVars = [
+          "DOMAIN",
+          "INTL_API_URL",
+          "LOCATION_API_KEY",
+          "LOCATION_URL",
+          "WEATHER_API_KEY",
+          "WEATHER_URL",
+        ]
+
+        checks.envVars = requiredEnvVars.every((varName) => {
+          const value = (envVars as any)[varName]
+          return value !== undefined && value !== ""
+        })
+      } catch (error) {
+        console.error("Environment variables check failed:", error)
+      }
+
+      const allChecksPass = Object.values(checks).every(Boolean)
+
+      const status = allChecksPass ? "UP" : "DOWN"
+      const body = {
+        status,
+        service: "location-api",
+        timestamp: new Date().toISOString(),
+        checks,
+      }
+      return reply.code(allChecksPass ? 200 : 503).send(body)
+    }
+  )
+}

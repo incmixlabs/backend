@@ -1,30 +1,89 @@
-import { createHealthCheckRoute } from "@incmix-api/utils"
+import type { FastifyInstance } from "fastify"
 import { envVars } from "@/env-vars"
-import { BASE_PATH } from "@/lib/constants"
-import type { HonoApp } from "@/types"
 
-const healthcheckRoutes = createHealthCheckRoute<HonoApp>({
-  envVars: {
-    AUTH_API_URL: envVars.AUTH_API_URL,
-    COOKIE_NAME: envVars.COOKIE_NAME,
-    DATABASE_URL: envVars.DATABASE_URL,
-  },
-
-  basePath: BASE_PATH,
-
-  checks: [
+export const setupHealthcheckRoutes = async (app: FastifyInstance) => {
+  app.get(
+    "/healthcheck",
     {
-      name: "Database",
-      check: async (c) => {
-        try {
-          await c.get("db").selectFrom("locales").selectAll().execute()
-          return true
-        } catch (_error) {
-          return false
-        }
+      schema: {
+        description: "Health check endpoint",
+        tags: ["healthcheck"],
+        response: {
+          200: {
+            type: "object",
+            properties: {
+              status: { type: "string", enum: ["UP", "DOWN"] },
+              service: { type: "string" },
+              timestamp: { type: "string" },
+              checks: {
+                type: "object",
+                properties: {
+                  database: { type: "boolean" },
+                  envVars: { type: "boolean" },
+                },
+              },
+            },
+          },
+          503: {
+            type: "object",
+            properties: {
+              status: { type: "string", enum: ["UP", "DOWN"] },
+              service: { type: "string" },
+              timestamp: { type: "string" },
+              checks: {
+                type: "object",
+                properties: {
+                  database: { type: "boolean" },
+                  envVars: { type: "boolean" },
+                },
+              },
+            },
+          },
+        },
       },
     },
-  ],
-})
+    async (request, reply) => {
+      const checks = {
+        database: false,
+        envVars: false,
+      }
 
-export default healthcheckRoutes
+      // Check database connectivity
+      try {
+        if (request.context?.db) {
+          await request.context.db
+            .selectFrom("locales")
+            .selectAll()
+            .limit(1)
+            .execute()
+          checks.database = true
+        }
+      } catch (error) {
+        console.error("Database health check failed:", error)
+      }
+
+      // Check environment variables
+      try {
+        const requiredEnvVars = ["AUTH_API_URL", "COOKIE_NAME", "DATABASE_URL"]
+
+        checks.envVars = requiredEnvVars.every((varName) => {
+          const value = (envVars as any)[varName]
+          return value !== undefined && value !== ""
+        })
+      } catch (error) {
+        console.error("Environment variables check failed:", error)
+      }
+
+      const allChecksPass = Object.values(checks).every(Boolean)
+
+      const status = allChecksPass ? "UP" : "DOWN"
+      const body = {
+        status,
+        service: "intl-api",
+        timestamp: new Date().toISOString(),
+        checks,
+      }
+      return reply.code(allChecksPass ? 200 : 503).send(body)
+    }
+  )
+}

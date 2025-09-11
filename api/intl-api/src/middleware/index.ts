@@ -1,14 +1,7 @@
-import type { OpenAPIHono } from "@hono/zod-openapi"
-import { setupApiMiddleware } from "@incmix-api/utils/middleware"
-import { BASE_PATH } from "@/lib/constants"
-import { createI18nMiddleware } from "@/middleware/i18n"
-import type { HonoApp } from "@/types"
+import type { FastifyInstance } from "fastify"
 
-export const middlewares = (app: OpenAPIHono<HonoApp>) => {
-  setupApiMiddleware(app, {
-    basePath: BASE_PATH,
-    serviceName: "intl-api",
-    skipAuth: true,
-    customI18nMiddleware: createI18nMiddleware,
-  })
+export const setupMiddleware = async (_app: FastifyInstance) => {
+  // TODO: Setup middleware for intl-api
+  // This might include CORS, authentication, logging, etc.
+  // For now, intl-api has skipAuth: true, so minimal middleware needed
 }

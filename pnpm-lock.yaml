@@ -300,21 +300,30 @@ importers:
 
   api/comments-api:
     dependencies:
-      '@hono/zod-openapi':
+      '@fastify/swagger':
         specifier: 'catalog:'
-        version: 1.1.0(hono@4.6.16)(zod@4.1.1)
-      '@hono/zod-validator':
+        version: 9.5.1
+      '@fastify/swagger-ui':
         specifier: 'catalog:'
-        version: 0.7.2(hono@4.6.16)(zod@4.1.1)
+        version: 5.2.3
       '@incmix-api/utils':
         specifier: workspace:^
         version: link:../../shared/utils
       '@incmix/utils':
         specifier: 'catalog:'
         version: 0.51.0(zod@4.1.1)
-      hono:
+      '@scalar/fastify-api-reference':
         specifier: 'catalog:'
-        version: 4.6.16
+        version: 1.35.2(typescript@5.7.3)
+      ajv:
+        specifier: 'catalog:'
+        version: 8.17.1
+      ajv-formats:
+        specifier: 'catalog:'
+        version: 3.0.1(ajv@8.17.1)
+      fastify:
+        specifier: 'catalog:'
+        version: 5.6.0
       kysely:
         specifier: 'catalog:'
         version: 0.27.5
@@ -330,9 +339,6 @@ importers:
       pg:
         specifier: 'catalog:'
         version: 8.13.3
-      zod:
-        specifier: 'catalog:'
-        version: 4.1.1
     devDependencies:
       '@incmix-api/config':
         specifier: workspace:^
@@ -616,12 +622,12 @@ importers:
 
   api/intl-api:
     dependencies:
-      '@hono/zod-openapi':
+      '@fastify/swagger':
         specifier: 'catalog:'
-        version: 1.1.0(hono@4.6.16)(zod@4.1.1)
-      '@hono/zod-validator':
+        version: 9.5.1
+      '@fastify/swagger-ui':
         specifier: 'catalog:'
-        version: 0.7.2(hono@4.6.16)(zod@4.1.1)
+        version: 5.2.3
       '@incmix-api/utils':
         specifier: workspace:^
         version: link:../../shared/utils
@@ -631,9 +637,18 @@ importers:
       '@intlify/utils':
         specifier: 0.13.0
         version: 0.13.0
-      hono:
+      '@scalar/fastify-api-reference':
         specifier: 'catalog:'
-        version: 4.6.16
+        version: 1.35.2(typescript@5.7.3)
+      ajv:
+        specifier: 'catalog:'
+        version: 8.17.1
+      ajv-formats:
+        specifier: 'catalog:'
+        version: 3.0.1(ajv@8.17.1)
+      fastify:
+        specifier: 'catalog:'
+        version: 5.6.0
       kysely:
         specifier: 'catalog:'
         version: 0.27.5
@@ -643,9 +658,6 @@ importers:
       pg:
         specifier: 'catalog:'
         version: 8.13.3
-      zod:
-        specifier: 'catalog:'
-        version: 4.1.1
     devDependencies:
       '@incmix-api/config':
         specifier: workspace:^
@@ -671,36 +683,36 @@ importers:
 
   api/location-api:
     dependencies:
-      '@hono-rate-limiter/cloudflare':
-        specifier: 0.2.2
-        version: 0.2.2(@cloudflare/workers-types@4.20250327.0)(hono@4.6.16)
-      '@hono/node-server':
-        specifier: ^1.13.8
-        version: 1.14.0(hono@4.6.16)
-      '@hono/zod-openapi':
+      '@fastify/swagger':
         specifier: 'catalog:'
-        version: 1.1.0(hono@4.6.16)(zod@4.1.1)
-      '@hono/zod-validator':
-        specifier: 0.4.1
-        version: 0.4.1(hono@4.6.16)(zod@4.1.1)
+        version: 9.5.1
+      '@fastify/swagger-ui':
+        specifier: 'catalog:'
+        version: 5.2.3
       '@incmix-api/utils':
         specifier: workspace:^
         version: link:../../shared/utils
       '@incmix/utils':
         specifier: 'catalog:'
         version: 0.51.0(zod@4.1.1)
-      hono:
+      '@scalar/fastify-api-reference':
         specifier: 'catalog:'
-        version: 4.6.16
+        version: 1.35.2(typescript@5.7.3)
+      ajv:
+        specifier: 'catalog:'
+        version: 8.17.1
+      ajv-formats:
+        specifier: 'catalog:'
+        version: 3.0.1(ajv@8.17.1)
+      fastify:
+        specifier: 'catalog:'
+        version: 5.6.0
       kysely:
         specifier: 'catalog:'
         version: 0.27.5
       pg:
         specifier: 'catalog:'
         version: 8.13.3
-      zod:
-        specifier: 'catalog:'
-        version: 4.1.1
     devDependencies:
       '@incmix-api/config':
         specifier: workspace:^
@@ -1348,9 +1360,6 @@ packages:
   '@casl/ability@6.7.3':
     resolution: {integrity: sha512-A4L28Ko+phJAsTDhRjzCOZWECQWN2jzZnJPnROWWHjJpyMq1h7h9ZqjwS2WbIUa3Z474X1ZPSgW0f1PboZGC0A==}
 
-  '@cloudflare/workers-types@4.20250327.0':
-    resolution: {integrity: sha512-rkoGnSY/GgBLCuhjZMIC3mt0jjqqvL17uOK92OI4eivmE+pMFOAchowDxIWOzDyYe5vwNCakbCeIM/FrSmwGJA==}
-
   '@commitlint/cli@19.8.1':
     resolution: {integrity: sha512-LXUdNIkspyxrlV6VDHWBmCZRtkEVRpBKxi2Gtw3J54cGWhLCTouVD/Q6ZSaSvd2YaDObWK8mDjrz3TIKtaQMAA==}
     engines: {node: '>=v18'}
@@ -1644,20 +1653,8 @@ packages:
     engines: {node: '>=6'}
     hasBin: true
 
-  '@hono-rate-limiter/cloudflare@0.2.2':
-    resolution: {integrity: sha512-wMnqeV+cb5Wov2npLIMFtCVm3tiNMtqw9LhPWSzSMwHOzh2qbhI3mCS6s962fxcJ6UUNJhRqDbVMEsB/NinCIQ==}
-    peerDependencies:
-      '@cloudflare/workers-types': ^4.20240529.0
-      hono: ^4.4.8
-
   '@hono/node-server@1.13.8':
     resolution: {integrity: sha512-fsn8ucecsAXUoVxrUil0m13kOEq4mkX4/4QozCqmY+HpGfKl74OYSn8JcMA8GnG0ClfdRI4/ZSeG7zhFaVg+wg==}
-    engines: {node: '>=18.14.1'}
-    peerDependencies:
-      hono: ^4
-
-  '@hono/node-server@1.14.0':
-    resolution: {integrity: sha512-YUCxJwgHRKSqjrdTk9e4VMGKN27MK5r4+MGPyZTgKH+IYbK+KtYbHeOcPGJ91KGGD6RIQiz2dAHxvjauNhOS8g==}
     engines: {node: '>=18.14.1'}
     peerDependencies:
       hono: ^4
@@ -1673,12 +1670,6 @@ packages:
     peerDependencies:
       hono: '>=4.3.6'
       zod: ^4.0.0
-
-  '@hono/zod-validator@0.4.1':
-    resolution: {integrity: sha512-I8LyfeJfvVmC5hPjZ2Iij7RjexlgSBT7QJudZ4JvNPLxn0JQ3sqclz2zydlwISAnw21D2n4LQ0nfZdoiv9fQQA==}
-    peerDependencies:
-      hono: '>=3.9.0'
-      zod: ^3.19.1
 
   '@hono/zod-validator@0.7.2':
     resolution: {integrity: sha512-ub5eL/NeZ4eLZawu78JpW/J+dugDAYhwqUIdp9KYScI6PZECij4Hx4UsrthlEUutqDDhPwRI0MscUfNkvn/mqQ==}
@@ -5880,8 +5871,6 @@ snapshots:
     dependencies:
       '@ucast/mongo2js': 1.4.0
 
-  '@cloudflare/workers-types@4.20250327.0': {}
-
   '@commitlint/cli@19.8.1(@types/node@24.3.0)(typescript@5.7.3)':
     dependencies:
       '@commitlint/format': 19.8.1
@@ -6182,16 +6171,7 @@ snapshots:
       protobufjs: 7.5.4
       yargs: 17.7.2
 
-  '@hono-rate-limiter/cloudflare@0.2.2(@cloudflare/workers-types@4.20250327.0)(hono@4.6.16)':
-    dependencies:
-      '@cloudflare/workers-types': 4.20250327.0
-      hono: 4.6.16
-
   '@hono/node-server@1.13.8(hono@4.6.16)':
-    dependencies:
-      hono: 4.6.16
-
-  '@hono/node-server@1.14.0(hono@4.6.16)':
     dependencies:
       hono: 4.6.16
 
@@ -6206,11 +6186,6 @@ snapshots:
       '@hono/zod-validator': 0.7.2(hono@4.6.16)(zod@4.1.1)
       hono: 4.6.16
       openapi3-ts: 4.5.0
-      zod: 4.1.1
-
-  '@hono/zod-validator@0.4.1(hono@4.6.16)(zod@4.1.1)':
-    dependencies:
-      hono: 4.6.16
       zod: 4.1.1
 
   '@hono/zod-validator@0.7.2(hono@4.6.16)(zod@4.1.1)':

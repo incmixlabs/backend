@@ -1,15 +1,32 @@
-import type { OpenAPIHono } from "@hono/zod-openapi"
-import { BASE_PATH } from "@/lib/constants"
-import type { HonoApp } from "@/types"
-import healthcheckRoutes from "./healthcheck"
-import newsRoutes from "./news"
-import rateLimitRoutes from "./rate-limits"
-import weatherRoutes from "./weather"
+import type { FastifyInstance } from "fastify"
+import { envVars } from "@/env-vars"
+import { setupHealthcheckRoutes } from "./healthcheck"
+import { setupNewsRoutes } from "./news"
+import { setupRateLimitRoutes } from "./rate-limits"
+import { setupWeatherRoutes } from "./weather"
 
-console.log("BASE_PATH", BASE_PATH)
-export const routes = (app: OpenAPIHono<HonoApp>) => {
-  app.route(`${BASE_PATH}/weather`, weatherRoutes)
-  app.route(`${BASE_PATH}/news`, newsRoutes)
-  app.route(`${BASE_PATH}/rate-limits`, rateLimitRoutes)
-  app.route(`${BASE_PATH}/healthcheck`, healthcheckRoutes)
+export const setupRoutes = async (app: FastifyInstance) => {
+  // Add a direct test route to verify routing works at all
+  if (envVars.NODE_ENV === "test") {
+    app.get("/api/location/test-direct", async (_request, _reply) => {
+      return { message: "Direct route works!" }
+    })
+  }
+  // Register all routes with the base path prefix
+  await app.register(
+    async (fastify) => {
+      // Add a simple test route to verify routing works
+      if (envVars.NODE_ENV === "test") {
+        fastify.get("/test", async (_request, _reply) => {
+          return { message: "Test route works!" }
+        })
+      }
+
+      await setupHealthcheckRoutes(fastify)
+      await setupWeatherRoutes(fastify)
+      await setupNewsRoutes(fastify)
+      await setupRateLimitRoutes(fastify)
+    },
+    { prefix: "/api/location" }
+  )
 }

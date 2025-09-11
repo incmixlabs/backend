@@ -1,17 +1,28 @@
-import { OpenAPIHono } from "@hono/zod-openapi"
-import type { HonoApp } from "@/types"
-import { getLimts } from "./openapi"
+import type { FastifyInstance } from "fastify"
 
-const rateLimitRoutes = new OpenAPIHono<HonoApp>()
-
-rateLimitRoutes.openapi(getLimts, (c) => {
-  return c.json(
+export const setupRateLimitRoutes = async (app: FastifyInstance) => {
+  app.get(
+    "/rate-limits",
     {
-      time: 100,
-      limit: 100,
+      schema: {
+        description: "Get rate limits",
+        tags: ["rate-limits"],
+        response: {
+          200: {
+            type: "object",
+            properties: {
+              time: { type: "number" },
+              limit: { type: "number" },
+            },
+          },
+        },
+      },
     },
-    200
+    async (_request, _reply) => {
+      return {
+        time: 100,
+        limit: 100,
+      }
+    }
   )
-})
-
-export default rateLimitRoutes
+}
