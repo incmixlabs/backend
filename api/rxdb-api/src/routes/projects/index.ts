@@ -51,7 +51,7 @@ projectsRoutes.post(
         )
       }
 
-      // Query builder to get user's projects from organizations they're members of
+      // Query builder to get user's projects from orgs they're members of
       const query = c
         .get("db")
         .selectFrom("projects")
@@ -282,7 +282,7 @@ projectsRoutes.post(
 //                 continue
 //               }
 
-//               // Verify organization exists and user is a member
+//               // Verify org exists and user is a member
 //               const orgMember = await c
 //                 .get("db")
 //                 .selectFrom("members")
@@ -297,7 +297,7 @@ projectsRoutes.post(
 
 //               if (!orgMember) {
 //                 conflicts.push({
-//                   error: "Organization not found or user is not a member",
+//                   error: "org not found or user is not a member",
 //                   document: newDoc,
 //                 })
 //                 continue

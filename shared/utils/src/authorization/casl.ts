@@ -74,7 +74,7 @@ export class PermissionService {
       ])
 
     if (orgId) {
-      query.where("roles.organizationId", "=", orgId)
+      query.where("roles.orgId", "=", orgId)
     }
 
     const permissionData = await query.execute()
@@ -152,7 +152,7 @@ export class PermissionService {
           subject: permission.resourceType,
         }
 
-        if (scope === "organization" || scope === "both") {
+        if (scope === "org" || scope === "both") {
           if (!acc.orgPermissions.find((o) => o.orgId === orgId)) {
             acc.orgPermissions.push({
               role: { name: roleName, id: roleId },
@@ -216,7 +216,7 @@ export class PermissionService {
       return build()
     }
 
-    if (scope === "organization") {
+    if (scope === "org") {
       const permissions =
         memberPermissions.orgPermissions
           .find((o) => o.orgId === id)
@@ -292,7 +292,7 @@ export class PermissionService {
     const isMember = await this.isOrgMember(id)
     if (!isMember) return false
 
-    const ability = await this.buildAbility("organization", id)
+    const ability = await this.buildAbility("org", id)
     if (!ability) return false
 
     return ability.can(action, subject)

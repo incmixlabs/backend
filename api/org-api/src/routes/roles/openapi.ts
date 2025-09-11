@@ -166,8 +166,8 @@ export const updateMemberRole = createRoute({
   request: {
     params: z.object({
       handle: z.string().openapi({
-        example: "test-organisation",
-        description: "Organisation handle",
+        example: "test-Org",
+        description: "Org handle",
       }),
     }),
     body: {
@@ -218,7 +218,7 @@ export const updateMemberRole = createRoute({
           schema: MessageResponseSchema,
         },
       },
-      description: "Organisation or member not found",
+      description: "Org or member not found",
     },
     500: {
       content: {

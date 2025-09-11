@@ -5,7 +5,7 @@ import type {
   KyselyDb,
   NewFeatureFlag,
   NewMember,
-  NewOrganisation,
+  NewOrg,
   NewPermission,
   NewRole,
   UpdatedFeatureFlag,
@@ -53,10 +53,7 @@ export function findAllRoles(c: Context, orgId?: string) {
 
   if (orgId) {
     query = query.where((eb) =>
-      eb.or([
-        eb("organizationId", "=", orgId),
-        eb("organizationId", "is", null),
-      ])
+      eb.or([eb("orgId", "=", orgId), eb("orgId", "is", null)])
     )
   }
 
@@ -68,7 +65,7 @@ export function findRoleByName(c: Context, name: string, orgId?: string) {
 
   if (orgId) {
     query = query.where((eb) =>
-      eb.and([eb("organizationId", "=", orgId), eb("name", "=", name)])
+      eb.and([eb("orgId", "=", orgId), eb("name", "=", name)])
     )
   } else {
     query = query.where("name", "=", name)
@@ -82,7 +79,7 @@ export function findRoleById(c: Context, id: number, orgId?: string) {
 
   if (orgId) {
     query = query.where((eb) =>
-      eb.and([eb("organizationId", "=", orgId), eb("id", "=", id)])
+      eb.and([eb("orgId", "=", orgId), eb("id", "=", id)])
     )
   } else {
     query = query.where("id", "=", id)
@@ -91,7 +88,7 @@ export function findRoleById(c: Context, id: number, orgId?: string) {
   return query.executeTakeFirst()
 }
 
-export function insertOrganisation(c: Context, org: NewOrganisation) {
+export function insertOrg(c: Context, org: NewOrg) {
   return c
     .get("db")
     .insertInto("organisations")
@@ -111,7 +108,7 @@ export async function checkHandleAvailability(c: Context, handle: string) {
   return false
 }
 
-export async function findOrganisationByHandle(c: Context, handle: string) {
+export async function findOrgByHandle(c: Context, handle: string) {
   const org = await c
     .get("db")
 
@@ -145,7 +142,7 @@ export async function findOrganisationByHandle(c: Context, handle: string) {
 
   return { ...org, owners }
 }
-export async function findOrganisationByName(c: Context, name: string) {
+export async function findOrgByName(c: Context, name: string) {
   const org = await c
     .get("db")
     .selectFrom("organisations")
@@ -162,7 +159,7 @@ export async function findOrganisationByName(c: Context, name: string) {
   return org
 }
 
-export function findOrganisationByUserId(c: Context, userId: string) {
+export function findOrgByUserId(c: Context, userId: string) {
   return c
     .get("db")
     .selectFrom("organisations")
@@ -183,7 +180,7 @@ export function findOrganisationByUserId(c: Context, userId: string) {
     .execute()
 }
 
-export async function findOrganisationById(c: Context, id: string) {
+export async function findOrgById(c: Context, id: string) {
   const org = await c
     .get("db")
     .selectFrom("organisations")
@@ -294,7 +291,7 @@ export async function ensureAtLeastOneOwner(
   }
 }
 
-export async function doesOrganisationExist(
+export async function doesOrgExist(
   c: Context,
   name: string,
   userId: string

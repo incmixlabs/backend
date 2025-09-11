@@ -3,7 +3,7 @@ import { z } from "@hono/zod-openapi"
 export const OrgIdSchema = z.object({
   orgId: z.string().optional().openapi({
     example: "123",
-    description: "The id of the organisation",
+    description: "The id of the Org",
   }),
 })
 

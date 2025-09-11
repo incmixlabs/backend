@@ -24,7 +24,7 @@ interface Props {
   orgImage?: string
   inviteUrl?: string
   invitedBy?: string | null
-  type?: "system" | "organization"
+  type?: "system" | "org"
   replyTo?: string
 }
 
@@ -37,11 +37,11 @@ export const InviteEmail = ({
   orgName,
   orgImage = `${productionUrl}/static/org.png`,
   inviteUrl = baseUrl,
-  type = "organization",
+  type = "org",
   replyTo = config.notificationsEmail,
 }: Props) => {
   username = username || "Unknown name"
-  orgName = orgName || "Unknown organization"
+  orgName = orgName || "Unknown org"
 
   return (
     <Html>
@@ -49,7 +49,7 @@ export const InviteEmail = ({
       {/* <Preview>
           {type === "system"
             ? "Invite Prevew"
-            : i18n.t("backend:email.invite_in_organization_preview_text", {
+            : i18n.t("backend:email.invite_in_org_preview_text", {
                 orgName,
               })}
         </Preview> */}
@@ -71,7 +71,7 @@ export const InviteEmail = ({
                   __html:
                     type === "system"
                       ? contents.invite_title
-                      : contents.invite_to_organization_title,
+                      : contents.invite_to_org_title,
                 }}
               />
             </Heading>
@@ -81,7 +81,7 @@ export const InviteEmail = ({
               //   __html:
               //     type === 'system'
               //       ? (contents.invite_description, { username, invitedBy: invitedBy || i18n.t('common:unknown_inviter') }})
-              //       : contents.invite_to_organization_description, {
+              //       : contents.invite_to_org_description, {
               //           username,
               //           invitedBy: invitedBy || i18n.t('common:unknown_inviter'),
               //           orgName,

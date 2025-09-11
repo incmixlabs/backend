@@ -100,7 +100,7 @@ export const listProjects = createRoute({
           schema: ResponseSchema,
         },
       },
-      description: "Error response when organization does not exist",
+      description: "Error response when org does not exist",
     },
     500: {
       content: {
@@ -543,7 +543,7 @@ export const getProjectMembers = createRoute({
 })
 
 export const getProjectReference = createRoute({
-  path: "/reference",
+  path: "/projects-reference",
   method: "get",
   summary: "Get Project Reference Data",
   tags: ["Projects"],

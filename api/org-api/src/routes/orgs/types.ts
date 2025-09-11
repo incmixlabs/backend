@@ -26,11 +26,11 @@ export const OrgSchema = z
       .string({ message: "Id is Required" })
       .openapi({ example: "123456886" }),
     name: z
-      .string({ message: "Organisation Name is required" })
-      .openapi({ example: "Test Organisation" }),
+      .string({ message: "Org Name is required" })
+      .openapi({ example: "Test Org" }),
     handle: z
-      .string({ message: "Organisation Handle is required" })
-      .openapi({ example: "test-organisation" }),
+      .string({ message: "Org Handle is required" })
+      .openapi({ example: "test-Org" }),
     members: z.array(MemberSchema).openapi({
       example: [
         {
@@ -40,11 +40,11 @@ export const OrgSchema = z
       ],
     }),
   })
-  .openapi("Organisation")
+  .openapi("Org")
 
 export const OrgHandleSchema = z.object({
   handle: z.string().openapi({
-    example: "test-organisation",
+    example: "test-Org",
   }),
 })
 
@@ -65,24 +65,24 @@ export const SuccessSchema = z
 export const CreateOrgSchema = z
   .object({
     name: z
-      .string({ message: "Organisation Name is required" })
-      .openapi({ example: "Test Organisation" }),
+      .string({ message: "Org Name is required" })
+      .openapi({ example: "Test Org" }),
     handle: z.string().openapi({
-      example: "test-organisation",
+      example: "test-Org",
     }),
     members: z.array(MemberSchema).openapi({
       example: [{ userId: "93jpbulpkkavxnz", role: UserRoles.ROLE_VIEWER }],
     }),
   })
-  .openapi("Create Organisation")
+  .openapi("Create Org")
 
 export const UpdateOrgSchema = z
   .object({
     name: z
-      .string({ message: "Organisation Name is required" })
-      .openapi({ example: "Test Organisation" }),
+      .string({ message: "Org Name is required" })
+      .openapi({ example: "Test Org" }),
   })
-  .openapi("Update Organisation")
+  .openapi("Update Org")
 
 export const RemoveMembersSchema = z.object({
   userIds: z
@@ -109,7 +109,7 @@ export const PermissionsResponseSchema = z
       action: z.enum(["manage", "create", "read", "update", "delete"]),
       subject: z.enum([
         "all",
-        "Organisation",
+        "Org",
         "Member",
         "Project",
         "Task",

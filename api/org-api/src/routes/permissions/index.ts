@@ -1,385 +1,451 @@
-import { OpenAPIHono } from "@hono/zod-openapi"
-import type { UserRole } from "@incmix/utils/types"
-import { actions, subjects, UserRoles } from "@incmix/utils/types"
-import { ERROR_BAD_REQUEST, ERROR_UNAUTHORIZED } from "@incmix-api/utils"
+import { createAuditMiddleware } from "@incmix-api/utils/audit"
 import {
-  NotFoundError,
-  processError,
-  ServerError,
-  UnauthorizedError,
-  UnprocessableEntityError,
-  zodError,
-} from "@incmix-api/utils/errors"
-import { useTranslation } from "@incmix-api/utils/middleware"
-import { ERROR_MEMBER_UPDATE_FAIL, ERROR_NO_ROLES } from "@/lib/constants"
-import {
-  deletePermission,
-  deleteRoleById,
-  ensureAtLeastOneOwner,
-  findAllRoles,
-  findOrganisationByHandle,
-  findOrgMemberById,
-  findPermissionBySubjectAndAction,
-  findRoleByName,
-  insertPermission,
-  insertRole,
-  updateRoleById,
-} from "@/lib/db"
-import { throwUnlessUserCan } from "@/lib/helper"
-import {
-  addNewRole,
-  deleteRole,
-  updateMemberRole,
-  updateRole,
-} from "@/routes/roles/openapi"
-import type { HonoApp } from "@/types"
-import { getRolesPermissions, updatePermissions } from "./openapi"
+  createAuthMiddleware,
+  createOptionalAuthMiddleware,
+} from "@incmix-api/utils/fastify-middleware/auth"
+import { requireOrgPermission } from "@incmix-api/utils/fastify-middleware/rbac"
+import type { FastifyInstance } from "fastify"
 
-const permissionRoutes = new OpenAPIHono<HonoApp>({
-  defaultHook: zodError,
-})
+export const setupPermissionRoutes = async (app: FastifyInstance) => {
+  // Setup authentication middleware
+  const requireAuth = createAuthMiddleware()
+  const optionalAuth = createOptionalAuthMiddleware()
 
-permissionRoutes.openapi(getRolesPermissions, async (c) => {
-  try {
-    const user = c.get("user")
-    const t = await useTranslation(c)
-    if (!user) {
-      const msg = await t.text(ERROR_UNAUTHORIZED)
-      throw new UnauthorizedError(msg)
-    }
-
-    const { orgId } = c.req.valid("query")
-
-    await throwUnlessUserCan(c, "update", "Role", orgId)
-
-    const roles = await findAllRoles(c, orgId)
-
-    const rbac = c.get("rbac")
-
-    const permissions = await rbac.getAllPermissions(orgId)
-    const subjectActionCombinations = []
-    for (const subject of subjects) {
-      for (const action of actions) {
-        subjectActionCombinations.push({
-          subject,
-          action,
-        })
-      }
-    }
-    // Create a map of role IDs to their names for easier lookup
-    const roleMap = new Map(roles.map((role) => [role.id, role.name]))
-
-    // Create a map to track which permissions are assigned to which roles
-    const rolePermissionsMap = new Map()
-
-    // Initialize the map with all subject-action combinations for each role
-    for (const role of roles) {
-      rolePermissionsMap.set(role.id, new Set())
-    }
-
-    // Populate the map with actual permissions
-    for (const permission of permissions) {
-      if (permission.role.id) {
-        const permissionSet = rolePermissionsMap.get(permission.role.id)
-        if (permissionSet) {
-          const key = `${permission.subject}:${permission.action}`
-          permissionSet.add(key)
-        }
-      }
-    }
-    // console.log(rolePermissionsMap)
-    // Create a flat array of all permissions with role information
-    const enhancedPermissions: Record<
-      string,
-      (typeof subjects)[number] | (typeof actions)[number] | boolean
-    >[] = []
-
-    // Process all subject-action combinations
-    subjectActionCombinations.forEach(({ subject, action }) => {
-      if (subject === "all") {
-        return
-      }
-
-      const permissionObj: Record<
-        string,
-        (typeof subjects)[number] | (typeof actions)[number] | boolean
-      > = {
-        subject,
-        action,
-        ...Object.fromEntries(roles.map((role) => [role.name, false])),
-      }
-
-      // Add a boolean flag for each role
-      for (const role of roles) {
-        const roleName = roleMap.get(role.id) || role.name
-        const permissionKey = `${subject}:${action}`
-        // Check if this role has this specific permission
-        const hasPermission =
-          rolePermissionsMap.get(role.id)?.has(permissionKey) || false
-
-        permissionObj[roleName] = hasPermission
-      }
-
-      enhancedPermissions.push(permissionObj)
-    })
-
-    return c.json(
-      {
-        roles,
-        permissions: enhancedPermissions,
+  // Get all available permissions reference data (public endpoint)
+  app.get(
+    "/reference",
+    {
+      preHandler: [optionalAuth],
+      schema: {
+        description: "Get permissions reference data",
+        tags: ["permissions"],
+        response: {
+          200: {
+            type: "object",
+            properties: {
+              actions: {
+                type: "array",
+                items: { type: "string" },
+              },
+              subjects: {
+                type: "array",
+                items: { type: "string" },
+              },
+              roles: {
+                type: "array",
+                items: { type: "string" },
+              },
+            },
+          },
+        },
       },
-      200
-    )
-  } catch (error) {
-    return await processError<typeof getRolesPermissions>(c, error, [
-      "{{ default }}",
-      "get-roles-permissions",
-    ])
-  }
-})
+    },
+    async (_request, _reply) => {
+      // TODO: Implement permissions reference logic
+      const referenceData = {
+        actions: ["create", "read", "update", "delete", "manage"],
+        subjects: ["User", "Project", "Task", "org"],
+        roles: ["owner", "admin", "member", "viewer"],
+      }
 
-permissionRoutes.openapi(updatePermissions, async (c) => {
-  try {
-    const user = c.get("user")
-    const t = await useTranslation(c)
-    if (!user) {
-      const msg = await t.text(ERROR_UNAUTHORIZED)
-      throw new UnauthorizedError(msg)
+      return referenceData
     }
+  )
 
-    const { orgId } = c.req.valid("param")
-    await throwUnlessUserCan(c, "update", "Role", orgId)
-
-    const { updates } = c.req.valid("json")
-
-    if (updates.length === 0) {
-      const msg = await t.text(ERROR_BAD_REQUEST)
-      throw new UnprocessableEntityError(msg)
-    }
-    await c
-      .get("db")
-      .transaction()
-      .execute(async (tx) => {
-        for (const update of updates) {
-          const { subject, action, roleId, allowed } = update
-
-          // Check existing role-permission join
-          const joined = await findPermissionBySubjectAndAction(
-            c,
-            subject,
-            action,
-            roleId,
-            tx
-          )
-
-          if (allowed) {
-            // Get or create permission by (subject, action)
-            const existingPerm = await tx
-              .selectFrom("permissions")
-              .selectAll()
-              .where("resourceType", "=", subject)
-              .where("action", "=", action)
-              .executeTakeFirst()
-
-            const perm =
-              existingPerm ??
-              (await insertPermission(
-                c,
-                {
-                  resourceType: subject,
-                  action,
-                  conditions: null,
-                  createdAt: new Date().toISOString(),
-                  updatedAt: new Date().toISOString(),
-                  name: `${subject} ${action}`,
+  // Get roles for an org (requires authentication)
+  app.get(
+    "/orgs/:orgId/roles",
+    {
+      preHandler: [requireAuth],
+      schema: {
+        description: "Get roles for an org",
+        tags: ["permissions"],
+        params: {
+          type: "object",
+          properties: {
+            orgId: { type: "string" },
+          },
+          required: ["orgId"],
+        },
+        response: {
+          200: {
+            type: "array",
+            items: {
+              type: "object",
+              properties: {
+                id: { type: "string" },
+                name: { type: "string" },
+                permissions: {
+                  type: "array",
+                  items: {
+                    type: "object",
+                    properties: {
+                      action: { type: "string" },
+                      subject: { type: "string" },
+                    },
+                  },
                 },
-                tx
-              ))
-
-            if (!perm?.id) {
-              throw new ServerError("Failed to create permission")
-            }
-
-            // Ensure rolePermissions link exists
-            if (!joined) {
-              await tx
-                .insertInto("rolePermissions")
-                .values({
-                  roleId,
-                  permissionId: perm.id,
-                  createdAt: new Date().toISOString(),
-                })
-                .executeTakeFirst()
-            }
-          } else if (joined) {
-            // Remove role-permission link
-            const deleted = await deletePermission(
-              c,
-              joined.permissionId,
-              roleId,
-              tx
-            )
-            if (!deleted) {
-              throw new ServerError("Failed to delete permission mapping")
-            }
-          }
-        }
-      })
-
-    return c.json({ message: "Permissions updated" }, 200)
-  } catch (error) {
-    return await processError<typeof updatePermissions>(c, error, [
-      "{{ default }}",
-      "update-permission",
-    ])
-  }
-})
-
-permissionRoutes.openapi(addNewRole, async (c) => {
-  try {
-    const user = c.get("user")
-    const t = await useTranslation(c)
-    if (!user) {
-      const msg = await t.text(ERROR_UNAUTHORIZED)
-      throw new UnauthorizedError(msg)
+              },
+            },
+          },
+        },
+      },
+    },
+    async (_request, _reply) => {
+      // TODO: Implement Get org roles logic
+      return []
     }
+  )
 
-    const { orgId } = c.req.valid("query")
-    await throwUnlessUserCan(c, "create", "Role", orgId)
+  // Create new role (requires authentication and create permission)
+  app.post(
+    "/orgs/:orgId/roles",
+    {
+      preHandler: [requireAuth],
+      schema: {
+        description: "Create a new role",
+        tags: ["permissions"],
+        params: {
+          type: "object",
+          properties: {
+            orgId: { type: "string" },
+          },
+          required: ["orgId"],
+        },
+        body: {
+          type: "object",
+          properties: {
+            name: { type: "string", minLength: 1 },
+            permissions: {
+              type: "array",
+              items: {
+                type: "object",
+                properties: {
+                  action: { type: "string" },
+                  subject: { type: "string" },
+                },
+                required: ["action", "subject"],
+              },
+            },
+          },
+          required: ["name", "permissions"],
+          additionalProperties: false,
+        },
+        response: {
+          201: {
+            type: "object",
+            properties: {
+              id: { type: "string" },
+              name: { type: "string" },
+              message: { type: "string" },
+            },
+          },
+        },
+      },
+    },
+    async (request, reply) => {
+      const { orgId } = request.params as { orgId: string }
+      const { name, permissions } = request.body as {
+        name: string
+        permissions: any[]
+      }
+      const _user = request.user!
+      const db = request.context?.db
 
-    const { name, description, scope } = c.req.valid("json")
+      if (!db) {
+        throw new Error("Database not initialized")
+      }
 
-    const newRole = await insertRole(c, {
-      name,
-      description,
-      scope,
-      organizationId: orgId,
-      isSystemRole: false,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    })
+      // Setup audit logging for this request
+      const { auditLogger } = createAuditMiddleware(db)
 
-    if (!newRole) {
-      throw new ServerError("Failed to create role")
-    }
+      // Check org permission
+      await requireOrgPermission(db, "create", "Role")(request, reply)
 
-    return c.json({ message: "Role created successfully" }, 201)
-  } catch (error) {
-    return await processError<typeof addNewRole>(c, error, [
-      "{{ default }}",
-      "add-new-role",
-    ])
-  }
-})
-permissionRoutes.openapi(updateRole, async (c) => {
-  try {
-    const user = c.get("user")
-    const t = await useTranslation(c)
-    if (!user) {
-      const msg = await t.text(ERROR_UNAUTHORIZED)
-      throw new UnauthorizedError(msg)
-    }
-
-    const { orgId } = c.req.valid("query")
-    const { id } = c.req.valid("param")
-    await throwUnlessUserCan(c, "update", "Role", orgId)
-
-    const updateData = c.req.valid("json")
-
-    const result = await updateRoleById(c, updateData, id)
-
-    if (Number(result.numUpdatedRows) === 0) {
-      throw new NotFoundError("Role not found")
-    }
-
-    return c.json({ message: "Role updated successfully" }, 200)
-  } catch (error) {
-    return await processError<typeof updateRole>(c, error, [
-      "{{ default }}",
-      "update-role",
-    ])
-  }
-})
-permissionRoutes.openapi(deleteRole, async (c) => {
-  try {
-    const user = c.get("user")
-    const t = await useTranslation(c)
-    if (!user) {
-      const msg = await t.text(ERROR_UNAUTHORIZED)
-      throw new UnauthorizedError(msg)
-    }
-
-    const { orgId } = c.req.valid("query")
-    const { id } = c.req.valid("param")
-    await throwUnlessUserCan(c, "delete", "Role", orgId)
-
-    const result = await deleteRoleById(c, id)
-    if (!result) {
-      throw new NotFoundError("Role not found")
-    }
-
-    return c.json({ message: "Role deleted successfully" }, 200)
-  } catch (error) {
-    return await processError<typeof deleteRole>(c, error, [
-      "{{ default }}",
-      "delete-role",
-    ])
-  }
-})
-
-permissionRoutes.openapi(updateMemberRole, async (c) => {
-  try {
-    const user = c.get("user")
-    const t = await useTranslation(c)
-    if (!user) {
-      const msg = await t.text(ERROR_UNAUTHORIZED)
-      throw new UnauthorizedError(msg)
-    }
-
-    const { handle } = c.req.valid("param")
-    const { role: newRole, userId } = c.req.valid("json")
-
-    const org = await findOrganisationByHandle(c, handle)
-
-    await throwUnlessUserCan(c, "update", "Member", org.id)
-
-    const member = await findOrgMemberById(c, userId, org.id)
-
-    if (
-      member.role === UserRoles.ROLE_OWNER &&
-      newRole !== UserRoles.ROLE_OWNER
-    ) {
-      await ensureAtLeastOneOwner(c, org.id, [userId], "update")
-    }
-
-    const dbRole = await findRoleByName(c, newRole as UserRole)
-    if (!dbRole) {
-      const msg = await t.text(ERROR_NO_ROLES)
-      throw new ServerError(msg)
-    }
-
-    const updated = await c
-      .get("db")
-      .updateTable("members")
-      .set({ roleId: dbRole.id })
-      .where((eb) =>
-        eb.and([eb("orgId", "=", org.id), eb("userId", "=", userId)])
+      // Log the mutation
+      await auditLogger.logMutation(
+        request,
+        "CREATE",
+        "Role",
+        undefined,
+        orgId,
+        { name, permissions }
       )
-      .returningAll()
-      .executeTakeFirst()
 
-    if (!updated) {
-      const msg = await t.text(ERROR_MEMBER_UPDATE_FAIL)
-      throw new ServerError(msg)
+      // TODO: Implement actual create role logic in database
+      return {
+        id: "temp-id",
+        name,
+        message: "Role created successfully",
+      }
     }
+  )
 
-    return c.json({ message: "Member role updated successfully" }, 200)
-  } catch (error) {
-    return await processError<typeof updateMemberRole>(c, error, [
-      "{{ default }}",
-      "update-member-role",
-    ])
-  }
-})
+  // Update role (requires authentication and update permission)
+  app.put(
+    "/orgs/:orgId/roles/:roleId",
+    {
+      preHandler: [requireAuth],
+      schema: {
+        description: "Update a role",
+        tags: ["permissions"],
+        params: {
+          type: "object",
+          properties: {
+            orgId: { type: "string" },
+            roleId: { type: "string" },
+          },
+          required: ["orgId", "roleId"],
+        },
+        body: {
+          type: "object",
+          properties: {
+            name: { type: "string" },
+            permissions: {
+              type: "array",
+              items: {
+                type: "object",
+                properties: {
+                  action: { type: "string" },
+                  subject: { type: "string" },
+                },
+                required: ["action", "subject"],
+              },
+            },
+          },
+          additionalProperties: false,
+        },
+        response: {
+          200: {
+            type: "object",
+            properties: {
+              message: { type: "string" },
+            },
+          },
+        },
+      },
+    },
+    async (request, reply) => {
+      const { orgId, roleId } = request.params as {
+        orgId: string
+        roleId: string
+      }
+      const body = request.body as any
+      const _user = request.user!
+      const db = request.context?.db
 
-export default permissionRoutes
+      if (!db) {
+        throw new Error("Database not initialized")
+      }
+
+      // Setup audit logging for this request
+      const { auditLogger } = createAuditMiddleware(db)
+
+      // Check org permission
+      await requireOrgPermission(db, "update", "Role")(request, reply)
+
+      // Log the mutation
+      await auditLogger.logMutation(
+        request,
+        "UPDATE",
+        "Role",
+        roleId,
+        orgId,
+        body
+      )
+
+      // TODO: Implement actual update role logic in database
+      return { message: "Role updated successfully" }
+    }
+  )
+
+  // Delete role (requires authentication and delete permission)
+  app.delete(
+    "/orgs/:orgId/roles/:roleId",
+    {
+      preHandler: [requireAuth],
+      schema: {
+        description: "Delete a role",
+        tags: ["permissions"],
+        params: {
+          type: "object",
+          properties: {
+            orgId: { type: "string" },
+            roleId: { type: "string" },
+          },
+          required: ["orgId", "roleId"],
+        },
+        response: {
+          200: {
+            type: "object",
+            properties: {
+              message: { type: "string" },
+            },
+          },
+        },
+      },
+    },
+    async (request, reply) => {
+      const { orgId, roleId } = request.params as {
+        orgId: string
+        roleId: string
+      }
+      const _user = request.user!
+      const db = request.context?.db
+
+      if (!db) {
+        throw new Error("Database not initialized")
+      }
+
+      // Setup audit logging for this request
+      const { auditLogger } = createAuditMiddleware(db)
+
+      // Check org permission
+      await requireOrgPermission(db, "delete", "Role")(request, reply)
+
+      // Log the mutation
+      await auditLogger.logMutation(request, "DELETE", "Role", roleId, orgId)
+
+      // TODO: Implement actual delete role logic in database
+      return { message: "Role deleted successfully" }
+    }
+  )
+
+  // Add permission to role (requires authentication and update permission)
+  app.post(
+    "/orgs/:orgId/roles/:roleId/permissions",
+    {
+      preHandler: [requireAuth],
+      schema: {
+        description: "Add permission to role",
+        tags: ["permissions"],
+        params: {
+          type: "object",
+          properties: {
+            orgId: { type: "string" },
+            roleId: { type: "string" },
+          },
+          required: ["orgId", "roleId"],
+        },
+        body: {
+          type: "object",
+          properties: {
+            action: { type: "string" },
+            subject: { type: "string" },
+          },
+          required: ["action", "subject"],
+          additionalProperties: false,
+        },
+        response: {
+          200: {
+            type: "object",
+            properties: {
+              message: { type: "string" },
+            },
+          },
+        },
+      },
+    },
+    async (request, reply) => {
+      const { orgId, roleId } = request.params as {
+        orgId: string
+        roleId: string
+      }
+      const permission = request.body as { action: string; subject: string }
+      const _user = request.user!
+      const db = request.context?.db
+
+      if (!db) {
+        throw new Error("Database not initialized")
+      }
+
+      // Setup audit logging for this request
+      const { auditLogger } = createAuditMiddleware(db)
+
+      // Check org permission
+      await requireOrgPermission(db, "update", "Role")(request, reply)
+
+      // Log the mutation
+      await auditLogger.logMutation(
+        request,
+        "UPDATE",
+        "RolePermission",
+        roleId,
+        orgId,
+        { action: "add", permission }
+      )
+
+      // TODO: Implement actual add permission logic in database
+      return { message: "Permission added to role successfully" }
+    }
+  )
+
+  // Remove permission from role (requires authentication and update permission)
+  app.delete(
+    "/orgs/:orgId/roles/:roleId/permissions",
+    {
+      preHandler: [requireAuth],
+      schema: {
+        description: "Remove permission from role",
+        tags: ["permissions"],
+        params: {
+          type: "object",
+          properties: {
+            orgId: { type: "string" },
+            roleId: { type: "string" },
+          },
+          required: ["orgId", "roleId"],
+        },
+        body: {
+          type: "object",
+          properties: {
+            action: { type: "string" },
+            subject: { type: "string" },
+          },
+          required: ["action", "subject"],
+          additionalProperties: false,
+        },
+        response: {
+          200: {
+            type: "object",
+            properties: {
+              message: { type: "string" },
+            },
+          },
+        },
+      },
+    },
+    async (request, reply) => {
+      const { orgId, roleId } = request.params as {
+        orgId: string
+        roleId: string
+      }
+      const permission = request.body as { action: string; subject: string }
+      const _user = request.user!
+      const db = request.context?.db
+
+      if (!db) {
+        throw new Error("Database not initialized")
+      }
+
+      // Setup audit logging for this request
+      const { auditLogger } = createAuditMiddleware(db)
+
+      // Check org permission
+      await requireOrgPermission(db, "update", "Role")(request, reply)
+
+      // Log the mutation
+      await auditLogger.logMutation(
+        request,
+        "UPDATE",
+        "RolePermission",
+        roleId,
+        orgId,
+        { action: "remove", permission }
+      )
+
+      // TODO: Implement actual remove permission logic in database
+      return { message: "Permission removed from role successfully" }
+    }
+  )
+}

@@ -7,9 +7,7 @@ export async function findRoleByName(c: Context, name: string, orgId: string) {
     .get("db")
     .selectFrom("roles")
     .selectAll()
-    .where((eb) =>
-      eb.and([eb("organizationId", "=", orgId), eb("name", "=", name)])
-    )
+    .where((eb) => eb.and([eb("orgId", "=", orgId), eb("name", "=", name)]))
     .executeTakeFirst()
 
   if (!role) {

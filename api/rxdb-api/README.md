@@ -22,7 +22,7 @@ This API provides synchronization endpoints for RxDB clients to sync data with t
 - Retrieve data that has been updated since the last pull
 - Return data in RxDB sync protocol format with documents and checkpoint
 - Include user profile information for created/updated by fields
-- Filter data based on user permissions (project membership, organization membership)
+- Filter data based on user permissions (project membership, org membership)
 
 ### Push Endpoints
 - Accept changes from client in RxDB change format
@@ -47,7 +47,7 @@ All endpoints require valid user authentication via session cookies.
 - Include checklist and label tagging
 
 ### Projects
-- Organization-scoped projects with status, dates, and budget
+- org-scoped projects with status, dates, and budget
 - Include member management and role assignment
 - Support company information and logo
 

@@ -1,4 +1,4 @@
-import type { Column, Organization, Project, Task } from "@incmix/utils/types"
+import type { Column, org, Project, Task } from "@incmix/utils/types"
 import test, { type APIRequestContext, expect } from "@playwright/test"
 
 test.setTimeout(120000)
@@ -96,8 +96,8 @@ async function setupDatabase(request: APIRequestContext) {
     "https://org-api-dev-prev.uincmix.workers.dev/api/org",
     {
       data: {
-        name: "Test Organisation",
-        handle: "test-organisation",
+        name: "Test Org",
+        handle: "test-Org",
         members: [],
       },
     }
@@ -105,10 +105,10 @@ async function setupDatabase(request: APIRequestContext) {
 
   expect([201, 409]).toContain(orgRes.status())
 
-  let org: Organization = await orgRes.json()
+  let org: org = await orgRes.json()
   if (orgRes.status() === 409) {
     const getOrgRes = await request.get(
-      "https://org-api-dev-prev.uincmix.workers.dev/api/org/handle/test-organisation"
+      "https://org-api-dev-prev.uincmix.workers.dev/api/org/handle/test-Org"
     )
 
     expect(getOrgRes.status()).toBe(200)

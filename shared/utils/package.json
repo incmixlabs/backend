@@ -67,6 +67,18 @@
     "./db-operations": {
       "types": "./dist/src/db-operations/index.d.ts",
       "default": "./dist/src/db-operations/index.js"
+    },
+    "./audit": {
+      "types": "./dist/src/audit/index.d.ts",
+      "default": "./dist/src/audit/index.js"
+    },
+    "./fastify-middleware/auth": {
+      "types": "./dist/src/fastify-middleware/auth.d.ts",
+      "default": "./dist/src/fastify-middleware/auth.js"
+    },
+    "./fastify-middleware/rbac": {
+      "types": "./dist/src/fastify-middleware/rbac.d.ts",
+      "default": "./dist/src/fastify-middleware/rbac.js"
     }
   },
   "dependencies": {
