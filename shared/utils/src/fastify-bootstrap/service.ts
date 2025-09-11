@@ -1,12 +1,45 @@
-import fastify, { type FastifyInstance } from "fastify"
+import { randomUUID } from "node:crypto"
+import { type FastifyInstance, fastify } from "fastify"
 import { initDb } from "../db-schema"
+import { NodeEnvs, type Service, services } from "../env-config"
 import { createCorsMiddleware, createErrorHandler } from "../fastify-middleware"
 import type { FastifyServiceConfig } from "./types"
+import { defaults } from "./types"
+export interface APIServices {
+  name: Service
+  setupRoutes?: (app: FastifyInstance) => Promise<void>
+  setupMiddleware?: (app: FastifyInstance) => Promise<void>
+}
 
-export function createFastifyService(config: FastifyServiceConfig) {
+export const defaultSetupMiddleware = (app: FastifyInstance) => {
+  // Basic request logging
+
+  app.addHook("onRequest", (request, reply) => {
+    const incoming = request.headers["x-request-id"] as string | undefined
+    const requestId = incoming ?? request.id ?? randomUUID()
+    reply.header("X-Request-Id", requestId)
+  })
+}
+
+export function createAPIService({
+  name,
+  setupRoutes,
+  setupMiddleware,
+}: APIServices) {
+  const service = services[name]
+  return createFastifyService({
+    name: service.dir,
+    port: service.port,
+    setupRoutes,
+    setupMiddleware: setupMiddleware ?? defaultSetupMiddleware,
+    basePath: `/api/${service.dir}`,
+  })
+}
+export function createFastifyService(conf: FastifyServiceConfig) {
+  const config: FastifyServiceConfig = { ...defaults, ...conf }
   const app: FastifyInstance = fastify({
     logger: {
-      level: process.env.NODE_ENV === "prod" ? "info" : "debug",
+      level: process.env.NODE_ENV === NodeEnvs.prod ? "info" : "debug",
     },
     ajv: {
       customOptions: {

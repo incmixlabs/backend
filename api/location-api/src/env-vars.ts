@@ -1,4 +1,8 @@
-import { createEnvConfig, type LocationEnv } from "@incmix-api/utils/env-config"
+import {
+  createEnvConfig,
+  type LocationEnv,
+  Services as serv,
+} from "@incmix-api/utils/env-config"
 
 // Use the new env-config system with dotenv-mono
 // This will automatically merge:
@@ -6,5 +10,6 @@ import { createEnvConfig, type LocationEnv } from "@incmix-api/utils/env-config"
 // 2. Root .env.{NODE_ENV} file
 // 3. Service-specific .env file (if exists)
 // 4. Service-specific .env.{NODE_ENV} file (if exists)
-export const envVars = createEnvConfig("location") as LocationEnv
+export const envVars = createEnvConfig(serv.location) as LocationEnv
 export type Env = LocationEnv
+export { serv as Services }
