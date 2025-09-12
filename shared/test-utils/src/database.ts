@@ -3,11 +3,12 @@ import path from "node:path"
 import { findProjectRoot } from "@incmix-api/utils"
 import type { Database } from "@incmix-api/utils/db-schema"
 import { CamelCasePlugin, Kysely, PostgresDialect } from "kysely"
-import { Pool } from "pg"
+import pg from "pg"
+const { Pool } = pg
 
 export class TestDatabase {
   private db: Kysely<Database> | null = null
-  private pool: Pool | null = null
+  private pool: InstanceType<typeof Pool> | null = null
 
   setup(): Kysely<Database> {
     if (this.db) {

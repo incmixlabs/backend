@@ -4,15 +4,13 @@ import type {
   NewUser,
   User,
 } from "@incmix-api/utils/db-schema"
-import {
-  createFastifyService,
-  defaultSetupMiddleware,
-} from "@incmix-api/utils/fastify-bootstrap"
+import { createFastifyService } from "@incmix-api/utils/fastify-bootstrap"
 import type { Kysely } from "kysely"
 import { expect } from "vitest"
 import type { Session } from "@/auth/types"
 import { envVars } from "@/env-vars"
 import { BASE_PATH } from "../../src/lib/constants"
+import { setupMiddleware } from "../../src/middleware"
 import { setupRoutes } from "../../src/routes"
 
 type Credentials = {
@@ -33,7 +31,7 @@ export async function createTestClient() {
     name: "auth-api-test",
     port: 0, // Use random available port for testing
     basePath: BASE_PATH,
-    setupMiddleware: defaultSetupMiddleware,
+    setupMiddleware,
     setupRoutes,
     needDb: true,
     needSwagger: false, // Disable swagger for tests
@@ -47,7 +45,7 @@ export async function createTestClient() {
   const { app } = service
 
   // Manually set up middleware and routes for testing since we're not calling startServer
-  await defaultSetupMiddleware(app)
+  await setupMiddleware(app)
   await setupRoutes(app)
 
   return {

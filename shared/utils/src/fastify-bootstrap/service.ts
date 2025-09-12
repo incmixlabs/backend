@@ -34,7 +34,7 @@ export function createAPIService({
   const service = services[name]
   const envVars = createEnvConfig(name)
   const params = {
-    name: service.dir,
+    name: name,
     port: service.port,
     basePath: `/api/${service.dir}`,
     bindings: envVars,

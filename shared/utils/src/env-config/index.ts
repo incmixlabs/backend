@@ -3,6 +3,7 @@ import path from "node:path"
 import { fileURLToPath } from "node:url"
 import { config as dotenvConfig } from "dotenv"
 import { z } from "zod"
+import { c } from "@intlify/utils/dist/shared/utils.77e85720.js"
 
 export const NodeEnvs = {
   dev: "dev",
@@ -209,7 +210,6 @@ export function createEnvConfig<T extends ServiceName>(
   // This ensures that higher priority files override lower priority ones
 
   const envFiles: Array<{ path: string; priority: number }> = []
-
   // Base priority: monorepo root .env files (lowest priority)
   const monorepoEnv = path.join(monorepoRoot, ".env")
   const monorepoEnvWithMode = path.join(monorepoRoot, `.env.${nodeEnv}`)
@@ -261,15 +261,6 @@ export function createEnvConfig<T extends ServiceName>(
     dotenvConfig({ path: file.path, override: false })
   }
 
-  if (process.env.DEBUG_ENV_LOADING) {
-    console.log("[DEBUG] After loading all files:")
-    console.log("  DATABASE_URL:", process.env.DATABASE_URL ? "✓" : "✗")
-    console.log("  SENTRY_DSN:", process.env.SENTRY_DSN ? "✓" : "✗")
-    console.log(
-      "  GOOGLE_REDIRECT_URL:",
-      process.env.GOOGLE_REDIRECT_URL ? "✓" : "✗"
-    )
-  }
   // Start with base schema
   let schema: z.ZodObject<any> = baseEnvSchema as z.ZodObject<any>
 
