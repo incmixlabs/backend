@@ -3,7 +3,6 @@ import path from "node:path"
 import { fileURLToPath } from "node:url"
 import { config as dotenvConfig } from "dotenv"
 import { z } from "zod"
-import { c } from "@intlify/utils/dist/shared/utils.77e85720.js"
 
 export const NodeEnvs = {
   dev: "dev",

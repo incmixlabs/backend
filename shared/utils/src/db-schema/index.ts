@@ -6,7 +6,9 @@ import {
   PostgresDialect,
 } from "kysely"
 import pg from "pg"
+
 const { Pool } = pg
+
 import type { EmailTables } from "./email"
 import type { FeatureFlagsTables } from "./feature-flags"
 import type { GenAiTables } from "./gen-ai"

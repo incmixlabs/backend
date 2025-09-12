@@ -4,6 +4,7 @@ import { findProjectRoot } from "@incmix-api/utils"
 import type { Database } from "@incmix-api/utils/db-schema"
 import { CamelCasePlugin, Kysely, PostgresDialect } from "kysely"
 import pg from "pg"
+
 const { Pool } = pg
 
 export class TestDatabase {
