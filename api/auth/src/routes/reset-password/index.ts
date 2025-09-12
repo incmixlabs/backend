@@ -1,12 +1,16 @@
 import type { FastifyInstance } from "fastify"
+import { setSessionCookie } from "@/auth/cookies"
+import { createSession, invalidateAllSessions } from "@/auth/session"
+import { sendForgetPasswordEmail } from "@/lib/helper"
+import { authMiddleware } from "@/middleware/auth"
 
-export const setupResetPasswordRoutes = async (app: FastifyInstance) => {
-  // Request password reset
+export const setupResetPasswordRoutes = (app: FastifyInstance) => {
+  // Send forget password email
   app.post(
     "/reset-password/request",
     {
       schema: {
-        description: "Request password reset",
+        description: "Send forget password email",
         tags: ["password-reset"],
         body: {
           type: "object",
@@ -89,8 +93,19 @@ export const setupResetPasswordRoutes = async (app: FastifyInstance) => {
           })
           .execute()
 
-        // TODO: Send email with reset link
-        // await sendResetPasswordEmail(user.email, verificationCode)
+        // Send forget password email
+        try {
+          await sendForgetPasswordEmail(
+            request as any,
+            user.email,
+            verificationCode,
+            user.id
+          )
+        } catch (emailError) {
+          console.error("Failed to send reset password email:", emailError)
+          // Don't reveal email sending failures for security
+          // Still return success message to prevent email enumeration
+        }
 
         return { message: "If the account exists, we sent a reset email" }
       } catch (error) {
@@ -100,12 +115,12 @@ export const setupResetPasswordRoutes = async (app: FastifyInstance) => {
     }
   )
 
-  // Confirm password reset
+  // Forget password (confirm with token)
   app.post(
     "/reset-password/confirm",
     {
       schema: {
-        description: "Confirm password reset with token",
+        description: "Forget password confirmation with token",
         tags: ["password-reset"],
         body: {
           type: "object",
@@ -234,7 +249,7 @@ export const setupResetPasswordRoutes = async (app: FastifyInstance) => {
 
   // Reset password (authenticated user)
   app.post(
-    "/reset-password",
+    "/reset-password/",
     {
       schema: {
         description: "Reset password for authenticated user",
@@ -263,11 +278,104 @@ export const setupResetPasswordRoutes = async (app: FastifyInstance) => {
           },
         },
       },
+      preHandler: authMiddleware,
     },
-    async (_request, _reply) => {
+    async (request: any, reply: any) => {
       try {
-        // TODO: Implement authenticated password reset
-        return { message: "Password reset successfully" }
+        const { currentPassword, newPassword } = request.body as {
+          currentPassword: string
+          newPassword: string
+        }
+
+        // Check if user is authenticated
+        if (!request.user) {
+          return reply.status(401).send({ message: "Unauthorized" })
+        }
+
+        if (!request.context?.db) {
+          throw new Error("Database not available")
+        }
+
+        const userId = request.user.id
+        const db = request.context.db
+
+        // Get current user with password from database
+        const user = await db
+          .selectFrom("users")
+          .select(["id", "hashedPassword", "isActive"])
+          .where("id", "=", userId)
+          .executeTakeFirst()
+
+        if (!user) {
+          return reply.status(404).send({ message: "User not found" })
+        }
+
+        if (!user.isActive) {
+          return reply
+            .status(400)
+            .send({ message: "User account is deactivated" })
+        }
+
+        // Verify current password
+        const bcrypt = await import("bcrypt")
+        const isCurrentPasswordValid = await bcrypt.compare(
+          currentPassword,
+          user.hashedPassword
+        )
+
+        if (!isCurrentPasswordValid) {
+          return reply
+            .status(400)
+            .send({ message: "Current password is incorrect" })
+        }
+
+        // Hash new password
+        const hashedNewPassword = await bcrypt.hash(newPassword, 10)
+
+        // Get current session ID to preserve it
+        const currentSessionId = request.session?.id
+
+        // Update password and manage sessions in transaction
+        await db.transaction().execute(async (tx: any) => {
+          // Update user password
+          await tx
+            .updateTable("users")
+            .set({
+              hashedPassword: hashedNewPassword,
+            })
+            .where("id", "=", userId)
+            .execute()
+
+          // Invalidate all existing sessions except current one
+          if (currentSessionId) {
+            await tx
+              .deleteFrom("sessions")
+              .where("userId", "=", userId)
+              .where("id", "!=", currentSessionId)
+              .execute()
+          } else {
+            // If no current session, invalidate all
+            await invalidateAllSessions(tx, userId)
+          }
+        })
+
+        // Create a new session for security
+        const newSession = await createSession(db, userId)
+
+        // Set new session cookie
+        setSessionCookie(
+          request as any,
+          newSession.id,
+          new Date(newSession.expiresAt)
+        )
+
+        return {
+          message: "Password reset successfully",
+          session: {
+            id: newSession.id,
+            expiresAt: newSession.expiresAt,
+          },
+        }
       } catch (error) {
         console.error("Reset password error:", error)
         throw error

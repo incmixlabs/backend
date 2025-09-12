@@ -1,6 +1,12 @@
+import { generateCodeVerifier, generateState, OAuth2RequestError } from "arctic"
 import type { FastifyInstance } from "fastify"
+import { setSessionCookie } from "@/auth/cookies"
+import { createSession } from "@/auth/session"
+import { insertOAuthUser } from "@/lib/helper"
+import { initializeGoogleAuth } from "@/lib/oauth"
+import { envVars } from "../../env-vars"
 
-export const setupOAuthRoutes = async (app: FastifyInstance) => {
+export const setupOAuthRoutes = (app: FastifyInstance) => {
   // Google OAuth login
   app.get(
     "/google/login",
@@ -18,16 +24,34 @@ export const setupOAuthRoutes = async (app: FastifyInstance) => {
         },
       },
     },
-    async (_request, _reply) => {
+    async (request, reply) => {
       try {
-        // TODO: Implement Google OAuth flow
-        // const clientType = request.headers["x-client-type"]
-        // const google = initializeGoogleAuth({ isTauri: clientType === "desktop" })
-        // const state = generateState()
-        // const codeVerifier = generateCodeVerifier()
-        // const url = google.createAuthorizationURL(state, codeVerifier, ["email", "profile"])
+        const clientType = request.headers["x-client-type"]
+        const google = initializeGoogleAuth(request as any, {
+          isTauri: clientType === "desktop",
+        })
+        const state = generateState()
+        const codeVerifier = generateCodeVerifier()
+        const url = google.createAuthorizationURL(state, codeVerifier, [
+          "email",
+          "profile",
+        ])
 
-        return { authUrl: "https://accounts.google.com/oauth/authorize" }
+        // Set secure cookies for state and code verifier
+        const domain = envVars.DOMAIN
+        const isIp = domain ? /^\d{1,3}(\.\d{1,3}){3}$/.test(domain) : false
+        const domainPart =
+          domain && !/localhost/i.test(domain) && !isIp
+            ? `; Domain=${domain}`
+            : ""
+        const securePart = envVars.NODE_ENV === "prod" ? "; Secure" : ""
+
+        reply.header("Set-Cookie", [
+          `state=${state}; Path=/; HttpOnly; SameSite=None; Max-Age=600${securePart}${domainPart}`,
+          `code_verifier=${codeVerifier}; Path=/; HttpOnly; SameSite=None; Max-Age=600${securePart}${domainPart}`,
+        ])
+
+        return { authUrl: url.toString() }
       } catch (error) {
         console.error("Google OAuth error:", error)
         throw error
@@ -82,21 +106,122 @@ export const setupOAuthRoutes = async (app: FastifyInstance) => {
             .send({ message: "Missing code or state parameter" })
         }
 
-        // TODO: Implement Google OAuth callback handling
-        // const stateCookie = request.cookies.state
-        // const codeVerifierCookie = request.cookies.code_verifier
-        // Validate state and code verifier
-        // Exchange code for tokens
-        // Get user info from Google
-        // Create or update user in database
-        // Create session and set cookies
+        // Get state and code verifier from cookies
+        const cookies = request.headers.cookie
+        if (!cookies) {
+          return reply
+            .status(400)
+            .send({ message: "Missing authentication cookies" })
+        }
 
-        return {
-          id: "user-id",
-          email: "user@example.com",
-          emailVerified: true,
-          isSuperAdmin: false,
-          session: { id: "session-id" },
+        const stateCookie = cookies
+          .split("; ")
+          .find((row) => row.startsWith("state="))
+          ?.split("=")[1]
+
+        const codeVerifierCookie = cookies
+          .split("; ")
+          .find((row) => row.startsWith("code_verifier="))
+          ?.split("=")[1]
+
+        if (!stateCookie || !codeVerifierCookie) {
+          return reply
+            .status(400)
+            .send({ message: "Missing state or code verifier" })
+        }
+
+        // Validate state
+        if (state !== stateCookie) {
+          return reply.status(400).send({ message: "Invalid state parameter" })
+        }
+
+        if (!request.context?.db) {
+          throw new Error("Database not available")
+        }
+
+        try {
+          // Initialize Google OAuth client
+          const clientType = request.headers["x-client-type"]
+          const google = initializeGoogleAuth(request as any, {
+            isTauri: clientType === "desktop",
+          })
+
+          // Exchange code for tokens
+          const tokens = await google.validateAuthorizationCode(
+            code,
+            codeVerifierCookie
+          )
+
+          // Get user info from Google
+          const googleUserResponse = await fetch(
+            "https://www.googleapis.com/oauth2/v2/userinfo",
+            {
+              headers: {
+                Authorization: `Bearer ${tokens.accessToken}`,
+              },
+            }
+          )
+
+          const googleUser = (await googleUserResponse.json()) as {
+            id: string
+            email: string
+            verified_email: boolean
+            name: string
+            picture?: string
+          }
+
+          if (!googleUser.verified_email) {
+            return reply
+              .status(400)
+              .send({ message: "Google email not verified" })
+          }
+
+          // Create or update user in database
+          const user = await insertOAuthUser(
+            "google",
+            {
+              fullName: googleUser.name,
+              email: googleUser.email,
+              avatar: googleUser.picture,
+            },
+            googleUser.id,
+            request as any
+          )
+
+          // Check if user is active
+          if (!user.isActive) {
+            return reply
+              .status(400)
+              .send({ message: "User account is deactivated" })
+          }
+
+          // Create session
+          const session = await createSession(request.context.db, user.id)
+
+          // Set session cookie
+          setSessionCookie(
+            request as any,
+            session.id,
+            new Date(session.expiresAt)
+          )
+
+          return {
+            id: user.id,
+            email: user.email,
+            emailVerified: Boolean(user.emailVerifiedAt),
+            isSuperAdmin: user.isSuperAdmin,
+            session: {
+              id: session.id,
+              expiresAt: session.expiresAt,
+            },
+          }
+        } catch (error) {
+          if (error instanceof OAuth2RequestError) {
+            return reply
+              .status(400)
+              .send({ message: "Invalid authorization code" })
+          }
+          throw error
         }
       } catch (error) {
         console.error("Google OAuth callback error:", error)
