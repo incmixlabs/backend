@@ -16,27 +16,39 @@ import {
   NotFoundError,
   PreconditionFailedError,
 } from "@incmix-api/utils/errors"
-import { useTranslation } from "@incmix-api/utils/middleware"
+import type { FastifyRequest } from "fastify"
 import { sql } from "kysely"
 import { jsonArrayFrom } from "kysely/helpers/postgres"
-import type { Context } from "@/types"
-import {
-  ERROR_LAST_OWNER,
-  ERROR_NOT_MEMBER,
-  ERROR_ORG_NOT_FOUND,
-} from "./constants"
+
+// Adapter type to make functions work with both Hono Context and FastifyRequest
+type Context =
+  | FastifyRequest
+  | {
+      get: (key: string) => any
+    }
+
+// Helper to get database from either Context or FastifyRequest
+function getDb(context: Context): KyselyDb {
+  if ("context" in context && context.context?.db) {
+    return context.context.db
+  }
+  if ("get" in context) {
+    return context.get("db")
+  }
+  throw new Error("Database not initialized")
+}
 
 export async function getUserByEmail(c: Context, email: string) {
-  return await c
-    .get("db")
+  const db = getDb(c)
+  return await db
     .selectFrom("userProfiles")
     .selectAll()
     .where("email", "=", email)
     .executeTakeFirst()
 }
 export async function getUserById(c: Context, id: string) {
-  return await c
-    .get("db")
+  const db = getDb(c)
+  return await db
     .selectFrom("userProfiles")
     .selectAll()
     .where("id", "=", id)
@@ -49,7 +61,8 @@ export async function isValidUser(c: Context, id: string) {
 }
 
 export function findAllRoles(c: Context, orgId?: string) {
-  let query = c.get("db").selectFrom("roles").selectAll()
+  const db = getDb(c)
+  let query = db.selectFrom("roles").selectAll()
 
   if (orgId) {
     query = query.where((eb) =>
@@ -61,7 +74,7 @@ export function findAllRoles(c: Context, orgId?: string) {
 }
 
 export function findRoleByName(c: Context, name: string, orgId?: string) {
-  let query = c.get("db").selectFrom("roles").selectAll()
+  let query = getDb(c).selectFrom("roles").selectAll()
 
   if (orgId) {
     query = query.where((eb) =>
@@ -75,7 +88,7 @@ export function findRoleByName(c: Context, name: string, orgId?: string) {
 }
 
 export function findRoleById(c: Context, id: number, orgId?: string) {
-  let query = c.get("db").selectFrom("roles").selectAll()
+  let query = getDb(c).selectFrom("roles").selectAll()
 
   if (orgId) {
     query = query.where((eb) =>
@@ -89,8 +102,8 @@ export function findRoleById(c: Context, id: number, orgId?: string) {
 }
 
 export function insertOrg(c: Context, org: NewOrg) {
-  return c
-    .get("db")
+  const db = getDb(c)
+  return db
     .insertInto("organisations")
     .values(org)
     .returningAll()
@@ -98,8 +111,8 @@ export function insertOrg(c: Context, org: NewOrg) {
 }
 
 export async function checkHandleAvailability(c: Context, handle: string) {
-  const org = await c
-    .get("db")
+  const db = getDb(c)
+  const org = await db
     .selectFrom("organisations")
     .selectAll()
     .where("handle", "=", handle)
@@ -109,9 +122,8 @@ export async function checkHandleAvailability(c: Context, handle: string) {
 }
 
 export async function findOrgByHandle(c: Context, handle: string) {
-  const org = await c
-    .get("db")
-
+  const db = getDb(c)
+  const org = await db
     .selectFrom("organisations")
     .select((eb) => [
       "organisations.id",
@@ -131,9 +143,7 @@ export async function findOrgByHandle(c: Context, handle: string) {
     .executeTakeFirst()
 
   if (!org) {
-    const t = await useTranslation(c)
-    const msg = await t.text(ERROR_ORG_NOT_FOUND)
-    throw new NotFoundError(msg)
+    throw new NotFoundError("Organization not found")
   }
 
   const owners = org.members
@@ -143,25 +153,23 @@ export async function findOrgByHandle(c: Context, handle: string) {
   return { ...org, owners }
 }
 export async function findOrgByName(c: Context, name: string) {
-  const org = await c
-    .get("db")
+  const db = getDb(c)
+  const org = await db
     .selectFrom("organisations")
     .selectAll()
     .where("name", "=", name)
     .executeTakeFirst()
 
-  const t = await useTranslation(c)
   if (!org) {
-    const msg = await t.text(ERROR_ORG_NOT_FOUND)
-    throw new NotFoundError(msg)
+    throw new NotFoundError("Organization not found")
   }
 
   return org
 }
 
 export function findOrgByUserId(c: Context, userId: string) {
-  return c
-    .get("db")
+  const db = getDb(c)
+  return db
     .selectFrom("organisations")
     .innerJoin("members", "members.orgId", "organisations.id")
     .select((eb) => [
@@ -181,8 +189,8 @@ export function findOrgByUserId(c: Context, userId: string) {
 }
 
 export async function findOrgById(c: Context, id: string) {
-  const org = await c
-    .get("db")
+  const db = getDb(c)
+  const org = await db
     .selectFrom("organisations")
     .select((eb) => [
       "organisations.id",
@@ -202,9 +210,7 @@ export async function findOrgById(c: Context, id: string) {
     .executeTakeFirst()
 
   if (!org) {
-    const t = await useTranslation(c)
-    const msg = await t.text(ERROR_ORG_NOT_FOUND)
-    throw new NotFoundError(msg)
+    throw new NotFoundError("Organization not found")
   }
 
   const owners = org.members
@@ -215,12 +221,8 @@ export async function findOrgById(c: Context, id: string) {
 }
 
 export function insertMembers(c: Context, members: NewMember[]) {
-  return c
-    .get("db")
-    .insertInto("members")
-    .values(members)
-    .returningAll()
-    .execute()
+  const db = getDb(c)
+  return db.insertInto("members").values(members).returningAll().execute()
 }
 
 export async function findOrgMemberById(
@@ -228,8 +230,8 @@ export async function findOrgMemberById(
   userId: string,
   orgId: string
 ) {
-  const member = await c
-    .get("db")
+  const db = getDb(c)
+  const member = await db
     .selectFrom("members")
     .innerJoin("roles", "roles.id", "members.roleId")
     .select(["orgId", "roleId", "userId", "roles.name as role"])
@@ -241,21 +243,27 @@ export async function findOrgMemberById(
     )
     .executeTakeFirst()
 
-  const t = await useTranslation(c)
   if (!member?.userId) {
-    const msg = await t.text(ERROR_NOT_MEMBER)
-    throw new NotFoundError(msg)
+    throw new NotFoundError("User is not a member of this organization")
   }
 
   return member
 }
 
 export function findOrgMembers(c: Context, orgId: string) {
-  return c
-    .get("db")
+  const db = getDb(c)
+  return db
     .selectFrom("members")
     .innerJoin("roles", "roles.id", "members.roleId")
-    .select(["members.userId", "members.orgId", "roles.name as role"])
+    .innerJoin("userProfiles", "userProfiles.id", "members.userId")
+    .select([
+      "members.userId",
+      "userProfiles.fullName",
+      "userProfiles.email",
+      "userProfiles.profileImage",
+      "userProfiles.avatar",
+      "roles.name as role",
+    ])
     .where("members.orgId", "=", orgId)
     .execute()
 }
@@ -266,7 +274,6 @@ export async function ensureAtLeastOneOwner(
   affectedUserIds: string[],
   operation: "remove" | "update"
 ): Promise<void> {
-  const t = await useTranslation(c)
   const currentMembers = await findOrgMembers(c, orgId)
   const adminMembers = currentMembers.filter(
     (m) => m.role === UserRoles.ROLE_OWNER
@@ -277,15 +284,17 @@ export async function ensureAtLeastOneOwner(
       adminMembers.some((admin) => admin.userId === userId)
     )
     if (removingAdmins && adminMembers.length <= affectedUserIds.length) {
-      const msg = await t.text(ERROR_LAST_OWNER)
-      throw new PreconditionFailedError(msg)
+      throw new PreconditionFailedError(
+        "Cannot remove the last owner of the organization"
+      )
     }
   } else if (operation === "update") {
     if (adminMembers.length === 1) {
       const admin = adminMembers[0]
       if (admin && affectedUserIds.includes(admin.userId)) {
-        const msg = await t.text(ERROR_LAST_OWNER)
-        throw new PreconditionFailedError(msg)
+        throw new PreconditionFailedError(
+          "Cannot change role of the last owner"
+        )
       }
     }
   }
@@ -296,8 +305,8 @@ export async function doesOrgExist(
   name: string,
   userId: string
 ): Promise<boolean> {
-  const org = await c
-    .get("db")
+  const db = getDb(c)
+  const org = await db
     .selectFrom("organisations")
     .select("id")
     .where((eb) => eb.and([eb("name", "=", name)]))
@@ -310,17 +319,13 @@ export async function doesOrgExist(
 }
 
 export function insertRole(c: Context, role: NewRole) {
-  return c
-    .get("db")
-    .insertInto("roles")
-    .values(role)
-    .returningAll()
-    .executeTakeFirst()
+  const db = getDb(c)
+  return db.insertInto("roles").values(role).returningAll().executeTakeFirst()
 }
 
 export function updateRoleById(c: Context, role: UpdatedRole, id: number) {
-  return c
-    .get("db")
+  const db = getDb(c)
+  return db
     .updateTable("roles")
     .set(role)
     .where("id", "=", id)
@@ -328,29 +333,27 @@ export function updateRoleById(c: Context, role: UpdatedRole, id: number) {
 }
 
 export async function deleteRoleById(c: Context, id: number) {
-  return await c
-    .get("db")
-    .transaction()
-    .execute(async (tx) => {
-      const inUse = await tx
-        .selectFrom("members")
-        .select("userId")
-        .where("roleId", "=", id)
-        .limit(1)
-        .executeTakeFirst()
-      if (inUse) {
-        throw new PreconditionFailedError("role_in_use")
-      }
-      if (inUse) {
-        throw new PreconditionFailedError("role_in_use")
-      }
-      await tx.deleteFrom("rolePermissions").where("roleId", "=", id).execute()
-      return await tx
-        .deleteFrom("roles")
-        .where("id", "=", id)
-        .returningAll()
-        .executeTakeFirstOrThrow()
-    })
+  const db = getDb(c)
+  return await db.transaction().execute(async (tx) => {
+    const inUse = await tx
+      .selectFrom("members")
+      .select("userId")
+      .where("roleId", "=", id)
+      .limit(1)
+      .executeTakeFirst()
+    if (inUse) {
+      throw new PreconditionFailedError("role_in_use")
+    }
+    if (inUse) {
+      throw new PreconditionFailedError("role_in_use")
+    }
+    await tx.deleteFrom("rolePermissions").where("roleId", "=", id).execute()
+    return await tx
+      .deleteFrom("roles")
+      .where("id", "=", id)
+      .returningAll()
+      .executeTakeFirstOrThrow()
+  })
 }
 
 export function findPermissionBySubjectAndAction(
@@ -360,7 +363,7 @@ export function findPermissionBySubjectAndAction(
   roleId: number,
   instance?: KyselyDb
 ) {
-  return (instance ?? c.get("db"))
+  return (instance ?? getDb(c))
     .selectFrom("rolePermissions")
     .innerJoin("permissions", "permissions.id", "rolePermissions.permissionId")
     .selectAll()
@@ -375,7 +378,7 @@ export function insertPermission(
   permission: NewPermission,
   instance?: KyselyDb
 ) {
-  return (instance ?? c.get("db"))
+  return (instance ?? getDb(c))
     .insertInto("permissions")
     .values(permission)
     .returningAll()
@@ -388,7 +391,7 @@ export function updatePermission(
   id: number,
   instance?: KyselyDb
 ) {
-  return (instance ?? c.get("db"))
+  return (instance ?? getDb(c))
     .updateTable("permissions")
     .set(permission)
     .where("id", "=", id)
@@ -401,7 +404,7 @@ export function deletePermission(
   roleId: number,
   instance?: KyselyDb
 ) {
-  return (instance ?? c.get("db"))
+  return (instance ?? getDb(c))
     .deleteFrom("rolePermissions")
     .where((eb) =>
       eb.and([eb("permissionId", "=", id), eb("roleId", "=", roleId)])
@@ -417,8 +420,8 @@ export async function getFeatureFlags(
   // First check if user is a superuser
   const isSuperUser = await isUserSuperUser(c, userId)
 
-  const query = c
-    .get("db")
+  const db = getDb(c)
+  const query = db
     .selectFrom("featureFlags")
     .selectAll()
     .where((eb) => {
@@ -451,8 +454,8 @@ export async function getFeatureFlagById(
   featureFlagId: string,
   userId: string
 ) {
-  const featureFlag = await c
-    .get("db")
+  const db = getDb(c)
+  const featureFlag = await db
     .selectFrom("featureFlags")
     .selectAll()
     .where("id", "=", featureFlagId)
@@ -492,8 +495,8 @@ export async function createFeatureFlag(
   userId: string
 ) {
   // Check if feature flag with same name already exists
-  const existingFlag = await c
-    .get("db")
+  const db = getDb(c)
+  const existingFlag = await db
     .selectFrom("featureFlags")
     .select("id")
     .where("name", "=", data.name)
@@ -503,8 +506,7 @@ export async function createFeatureFlag(
     throw new Error("Feature flag with this name already exists")
   }
 
-  const newFeatureFlag = await c
-    .get("db")
+  const newFeatureFlag = await db
     .insertInto("featureFlags")
     .values({
       ...data,
@@ -535,8 +537,8 @@ export async function updateFeatureFlag(
   userId: string
 ) {
   // Check if feature flag exists
-  const existingFlag = await c
-    .get("db")
+  const db = getDb(c)
+  const existingFlag = await db
     .selectFrom("featureFlags")
     .selectAll()
     .where("id", "=", featureFlagId)
@@ -548,8 +550,7 @@ export async function updateFeatureFlag(
 
   // If name is being updated, check for conflicts
   if (data.name && data.name !== existingFlag.name) {
-    const nameConflict = await c
-      .get("db")
+    const nameConflict = await db
       .selectFrom("featureFlags")
       .select("id")
       .where("name", "=", data.name)
@@ -561,8 +562,7 @@ export async function updateFeatureFlag(
     }
   }
 
-  const updatedFeatureFlag = await c
-    .get("db")
+  const updatedFeatureFlag = await db
     .updateTable("featureFlags")
     .set({
       ...data,
@@ -583,8 +583,8 @@ export async function updateFeatureFlag(
 }
 
 export async function deleteFeatureFlag(c: Context, featureFlagId: string) {
-  const deletedFeatureFlag = await c
-    .get("db")
+  const db = getDb(c)
+  const deletedFeatureFlag = await db
     .deleteFrom("featureFlags")
     .where("id", "=", featureFlagId)
     .returningAll()
@@ -601,8 +601,8 @@ export async function isUserSuperUser(
   c: Context,
   userId: string
 ): Promise<boolean> {
-  const user = await c
-    .get("db")
+  const db = getDb(c)
+  const user = await db
     .selectFrom("users")
     .select("isSuperAdmin")
     .where("id", "=", userId)

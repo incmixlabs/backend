@@ -13,7 +13,7 @@ export const setupPermissionRoutes = async (app: FastifyInstance) => {
 
   // Get all available permissions reference data (public endpoint)
   app.get(
-    "/permissions-reference",
+    "/reference",
     {
       preHandler: [optionalAuth],
       schema: {
