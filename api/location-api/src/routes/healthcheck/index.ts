@@ -51,7 +51,7 @@ export const setupHealthcheckRoutes = async (app: FastifyInstance) => {
       // Check Redis connectivity
       try {
         // TODO: Add Redis connection check when redis is available
-        checks.redis = true
+        checks.redis = false
       } catch (error) {
         console.error("Redis health check failed:", error)
       }

@@ -1,5 +1,6 @@
 import type { FastifyInstance } from "fastify"
 import { envVars } from "@/env-vars"
+import { BASE_PATH } from "@/lib/constants"
 import { setupHealthcheckRoutes } from "./healthcheck"
 import { setupNewsRoutes } from "./news"
 import { setupRateLimitRoutes } from "./rate-limits"
@@ -27,6 +28,6 @@ export const setupRoutes = async (app: FastifyInstance) => {
       await setupNewsRoutes(fastify)
       await setupRateLimitRoutes(fastify)
     },
-    { prefix: "/api/location" }
+    { prefix: BASE_PATH }
   )
 }

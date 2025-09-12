@@ -6,6 +6,9 @@ import {
   PostgresDialect,
 } from "kysely"
 import pg from "pg"
+
+const { Pool } = pg
+
 import type { EmailTables } from "./email"
 import type { FeatureFlagsTables } from "./feature-flags"
 import type { GenAiTables } from "./gen-ai"
@@ -27,7 +30,7 @@ export type KyselyDb = Kysely<Database>
 
 export function initDb(connectionString: string) {
   const dialect = new PostgresDialect({
-    pool: new pg.Pool({
+    pool: new Pool({
       connectionString,
       max: 10,
     }),

@@ -5,7 +5,7 @@ import { setupMiddleware } from "@/middleware"
 import { setupRoutes } from "@/routes"
 
 const service = createFastifyService({
-  name: "org-api",
+  name: "org",
   port: envVars.PORT,
   basePath: BASE_PATH,
   setupMiddleware,

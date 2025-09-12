@@ -4,50 +4,70 @@ import { fileURLToPath } from "node:url"
 import { config as dotenvConfig } from "dotenv"
 import { z } from "zod"
 
+export const NodeEnvs = {
+  dev: "dev",
+  qa: "qa",
+  uat: "uat",
+  prod: "prod",
+  test: "test",
+} as const
+export const Services = {
+  auth: "auth",
+  email: "email",
+  genai: "genai",
+  files: "files",
+  location: "location",
+  bff: "bff",
+  comments: "comments",
+  intl: "intl",
+  org: "org",
+  projects: "projects",
+  rxdb: "rxdb",
+} as const
+export type Service = (typeof Services)[keyof typeof Services]
 // Default ports for each service
 export const services = {
-  auth: {
+  [Services.auth]: {
     port: 8787,
     dir: "auth",
   },
-  email: {
+  [Services.email]: {
     port: 8989,
     dir: "email",
   },
-  genai: {
+  [Services.genai]: {
     port: 8383,
     dir: "genai-api",
   },
-  files: {
+  [Services.files]: {
     port: 8282,
     dir: "files-api",
   },
-  location: {
+  [Services.location]: {
     port: 9494,
     dir: "location-api",
   },
-  bff: {
+  [Services.bff]: {
     port: 8080,
     dir: "bff-web",
   },
-  comments: {
+  [Services.comments]: {
     port: 8585,
     dir: "comments-api",
   },
-  intl: {
+  [Services.intl]: {
     port: 9090,
     dir: "intl-api",
   },
-  org: {
+  [Services.org]: {
     port: 9292,
     dir: "org-api",
   },
-
-  projects: {
+  [Services.projects]: {
     port: 8484,
     dir: "projects-api",
   },
-  rxdb: {
+  [Services.rxdb]: {
     port: 8686,
     dir: "rxdb-api",
     endpoint: "rxdb-sync",
@@ -189,7 +209,6 @@ export function createEnvConfig<T extends ServiceName>(
   // This ensures that higher priority files override lower priority ones
 
   const envFiles: Array<{ path: string; priority: number }> = []
-
   // Base priority: monorepo root .env files (lowest priority)
   const monorepoEnv = path.join(monorepoRoot, ".env")
   const monorepoEnvWithMode = path.join(monorepoRoot, `.env.${nodeEnv}`)
@@ -241,15 +260,6 @@ export function createEnvConfig<T extends ServiceName>(
     dotenvConfig({ path: file.path, override: false })
   }
 
-  if (process.env.DEBUG_ENV_LOADING) {
-    console.log("[DEBUG] After loading all files:")
-    console.log("  DATABASE_URL:", process.env.DATABASE_URL ? "✓" : "✗")
-    console.log("  SENTRY_DSN:", process.env.SENTRY_DSN ? "✓" : "✗")
-    console.log(
-      "  GOOGLE_REDIRECT_URL:",
-      process.env.GOOGLE_REDIRECT_URL ? "✓" : "✗"
-    )
-  }
   // Start with base schema
   let schema: z.ZodObject<any> = baseEnvSchema as z.ZodObject<any>
 
