@@ -22,8 +22,8 @@ export const setupRoutes = async (app: FastifyInstance) => {
       }
 
       await setupHealthcheckRoutes(fastify)
-      await setupPermissionRoutes(fastify)
-      await setupOrgRoutes(fastify)
+      await fastify.register(setupPermissionRoutes, { prefix: "/permissions" })
+      await fastify.register(setupOrgRoutes, { prefix: "/orgs" })
     },
     { prefix: "/api/org" }
   )

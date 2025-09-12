@@ -13,83 +13,78 @@ export const setupHealthcheckRoutes = async (app: FastifyInstance) => {
             type: "object",
             properties: {
               status: { type: "string", enum: ["UP", "DOWN"] },
-              service: { type: "string" },
-              timestamp: { type: "string" },
-              checks: {
-                type: "object",
-                properties: {
-                  database: { type: "boolean" },
-                  envVars: { type: "boolean" },
-                },
-              },
-            },
-          },
-          503: {
-            type: "object",
-            properties: {
-              status: { type: "string", enum: ["UP", "DOWN"] },
-              service: { type: "string" },
-              timestamp: { type: "string" },
-              checks: {
-                type: "object",
-                properties: {
-                  database: { type: "boolean" },
-                  envVars: { type: "boolean" },
-                },
-              },
+              reason: { type: "string" },
             },
           },
         },
-      },
+      } as any,
     },
     async (request, reply) => {
-      const checks = {
-        database: false,
-        envVars: false,
-      }
-
-      // Check database connectivity
       try {
-        if (request.context?.db) {
-          const roles = await request.context.db
-            .selectFrom("roles")
-            .selectAll()
-            .limit(1)
-            .execute()
-          checks.database = roles.length > 0
+        let status = "UP"
+        const missing: string[] = []
+        const checkFailures: string[] = []
+
+        // Check required environment variables (matching GitHub reference)
+        const requiredEnvVars = {
+          AUTH_API_URL: envVars.AUTH_API_URL,
+          COOKIE_NAME: envVars.COOKIE_NAME,
+          DOMAIN: envVars.DOMAIN,
+          INTL_API_URL: envVars.INTL_API_URL,
         }
-      } catch (error) {
-        console.error("Database health check failed:", error)
-      }
 
-      // Check environment variables
-      try {
-        const requiredEnvVars = [
-          "AUTH_API_URL",
-          "COOKIE_NAME",
-          "DOMAIN",
-          "INTL_API_URL",
-          "DATABASE_URL",
-        ]
+        for (const [name, value] of Object.entries(requiredEnvVars)) {
+          if (!value) {
+            status = "DOWN"
+            missing.push(name)
+          }
+        }
 
-        checks.envVars = requiredEnvVars.every((varName) => {
-          const value = (envVars as any)[varName]
-          return value !== undefined && value !== ""
+        // Database check (matching GitHub reference pattern)
+        try {
+          if (request.context?.db) {
+            const roles = await request.context.db
+              .selectFrom("roles")
+              .selectAll()
+              .execute()
+            if (!(roles.length > 0)) {
+              status = "DOWN"
+              checkFailures.push("Database")
+            }
+          } else {
+            status = "DOWN"
+            checkFailures.push("Database")
+          }
+        } catch (_error) {
+          status = "DOWN"
+          checkFailures.push("Database")
+        }
+
+        // Combine all failure reasons
+        let reason: string | undefined
+
+        if (missing.length > 0) {
+          reason = `Env variables missing: [${missing.join(", ")}]`
+        }
+
+        if (checkFailures.length > 0) {
+          const checkFailureStr = `Check failures: [${checkFailures.join(", ")}]`
+          reason = reason ? `${reason}, ${checkFailureStr}` : checkFailureStr
+        }
+
+        return reply.code(200).send({
+          status,
+          reason,
         })
       } catch (error) {
-        console.error("Environment variables check failed:", error)
-      }
+        let reason = "Service error"
+        if (error instanceof Error) reason = error.message
 
-      const allChecksPass = Object.values(checks).every(Boolean)
-
-      const status = allChecksPass ? "UP" : "DOWN"
-      const body = {
-        status,
-        service: "org-api",
-        timestamp: new Date().toISOString(),
-        checks,
+        return reply.code(200).send({
+          status: "DOWN",
+          reason,
+        })
       }
-      return reply.code(allChecksPass ? 200 : 503).send(body)
     }
   )
 }

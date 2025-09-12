@@ -1,7 +1,7 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify"
 import type { Kysely } from "kysely"
 import type { Database } from "../db-schema"
-
+import { envVars } from "../env-config"
 export interface FastifyServiceBindings {
   DATABASE_URL?: string
   [key: string]: any
@@ -23,7 +23,7 @@ export interface FastifyServiceConfig {
   version?: string
   port: number
   basePath: string
-  setupMiddleware?: (app: FastifyInstance) => Promise<void>
+  setupMiddleware?: (app: FastifyInstance) => void
   setupRoutes?: (app: FastifyInstance) => Promise<void>
   needDb?: boolean
   needSwagger?: boolean
@@ -36,6 +36,15 @@ export interface FastifyServiceConfig {
   }
 }
 
+export const defaults: Partial<FastifyServiceConfig> = {
+  needDb: true,
+  needSwagger: true,
+  version: "1.0.0",
+  cors:
+    envVars.NODE_ENV !== "prod"
+      ? { origin: true, credentials: true }
+      : { origin: envVars.DOMAIN, credentials: true },
+}
 export type RouteHandler = (
   request: FastifyRequest,
   reply: FastifyReply

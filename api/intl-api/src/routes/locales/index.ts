@@ -1,236 +1,231 @@
-import { OpenAPIHono } from "@hono/zod-openapi"
-import type { KyselyDb } from "@incmix-api/utils/db-schema"
-import {
-  ConflictError,
-  NotFoundError,
-  processError,
-  ServerError,
-  UnauthorizedError,
-  zodError,
-} from "@incmix-api/utils/errors"
-import {
-  addLocale,
-  deleteLocale,
-  getAllLocales,
-  getDefaultLocale,
-  getLocale,
-  updateLocale,
-} from "@/routes/locales/openapi"
-import type { HonoApp } from "@/types"
+import type { FastifyInstance } from "fastify"
 
-const localeRoutes = new OpenAPIHono<HonoApp>({
-  defaultHook: zodError,
-})
-
-localeRoutes.openapi(addLocale, async (c) => {
-  try {
-    // const user = c.get("user")
-    // if (!user) throw new UnauthorizedError()
-
-    const { code, isDefault } = c.req.valid("json")
-    const existingLocale = await c
-      .get("db")
-      .selectFrom("locales")
-      .selectAll()
-      .where("code", "=", code)
-      .executeTakeFirst()
-
-    if (existingLocale) throw new ConflictError("Locale already exists")
-
-    const insertedLocale = await c
-      .get("db")
-      .insertInto("locales")
-      .values({ code, isDefault })
-      .returningAll()
-      .executeTakeFirstOrThrow()
-
-    if (!insertedLocale) throw new ServerError("Failed to insert Locale")
-
-    if (isDefault) {
-      await (c.get("db") as KyselyDb)
-        .updateTable("locales")
-        .set({ isDefault: false })
-        .where((eb) =>
-          eb.and([
-            eb("id", "!=", insertedLocale.id),
-            eb("isDefault", "=", true),
-          ])
-        )
-        .execute()
-    }
-
-    return c.json({ code, isDefault }, 201)
-  } catch (error) {
-    return await processError<typeof addLocale>(c, error, [
-      "{{ default }}",
-      "add-locale",
-    ])
-  }
-})
-
-localeRoutes.openapi(updateLocale, async (c) => {
-  try {
-    const user = c.get("user")
-    if (!user) throw new UnauthorizedError()
-    const { code } = c.req.valid("param")
-    const { code: newCode, isDefault } = c.req.valid("json")
-    const existingLocale = await c
-      .get("db")
-      .selectFrom("locales")
-      .selectAll()
-      .where("code", "=", code)
-      .executeTakeFirst()
-
-    if (!existingLocale)
-      throw new NotFoundError(`Locale '${code}' doesn't exist`)
-
-    const updatedLocale = await c
-      .get("db")
-      .updateTable("locales")
-      .set({ code: newCode, isDefault })
-      .where("code", "=", code)
-      .returningAll()
-      .executeTakeFirstOrThrow()
-
-    if (!updatedLocale) throw new ServerError("Failed to update Locale")
-
-    if (isDefault) {
-      await (c.get("db") as KyselyDb)
-        .updateTable("locales")
-        .set({ isDefault: false })
-        .where((eb) =>
-          eb.and([eb("id", "!=", updatedLocale.id), eb("isDefault", "=", true)])
-        )
-        .execute()
-    }
-
-    return c.json({ code, isDefault }, 200)
-  } catch (error) {
-    return await processError<typeof updateLocale>(c, error, [
-      "{{ default }}",
-      "update-locale",
-    ])
-  }
-})
-localeRoutes.openapi(deleteLocale, async (c) => {
-  try {
-    const user = c.get("user")
-    if (!user) throw new UnauthorizedError()
-    const { code } = c.req.valid("param")
-
-    const existingLocale = await c
-      .get("db")
-      .selectFrom("locales")
-      .selectAll()
-      .where("code", "=", code)
-      .executeTakeFirst()
-
-    if (!existingLocale)
-      throw new NotFoundError(`Locale '${code}' doesn't exist`)
-
-    if (existingLocale.isDefault)
-      throw new ConflictError("Default Locale can't be deleted")
-
-    const deletedLocale = await c
-      .get("db")
-      .deleteFrom("locales")
-      .where("code", "=", code)
-      .returningAll()
-      .executeTakeFirstOrThrow()
-
-    if (!deletedLocale) throw new ServerError("Failed to delete Locale")
-
-    return c.json(
-      {
-        code: deletedLocale.code,
-        isDefault: Boolean(deletedLocale.code),
+export const setupLocaleRoutes = async (app: FastifyInstance) => {
+  // Get all locales
+  app.get(
+    "/locales",
+    {
+      schema: {
+        description: "Get all locales",
+        tags: ["locales"],
+        response: {
+          200: {
+            type: "array",
+            items: {
+              type: "object",
+              properties: {
+                code: { type: "string" },
+                name: { type: "string" },
+                isDefault: { type: "boolean" },
+              },
+            },
+          },
+        },
       },
-      200
-    )
-  } catch (error) {
-    return await processError<typeof deleteLocale>(c, error, [
-      "{{ default }}",
-      "delete-locale",
-    ])
-  }
-})
+    },
+    async (request, _reply) => {
+      const db = request.context?.db
+      if (!db) {
+        throw new Error("Database not initialized")
+      }
 
-localeRoutes.openapi(getDefaultLocale, async (c) => {
-  try {
-    const defaultLocale = await c
-      .get("db")
-      .selectFrom("locales")
-      .selectAll()
-      .where("isDefault", "=", true)
-      .executeTakeFirstOrThrow()
+      const locales = await db.selectFrom("locales").selectAll().execute()
 
-    if (!defaultLocale) throw new NotFoundError("Default Locale not set")
-
-    return c.json(
-      {
-        code: defaultLocale.code,
-        isDefault: Boolean(defaultLocale.isDefault),
-      },
-      200
-    )
-  } catch (error) {
-    return await processError<typeof getDefaultLocale>(c, error, [
-      "{{ default }}",
-      "get-default-locale",
-    ])
-  }
-})
-
-localeRoutes.openapi(getLocale, async (c) => {
-  try {
-    const { code } = c.req.valid("param")
-
-    const existingLocale = await c
-      .get("db")
-      .selectFrom("locales")
-      .selectAll()
-      .where("code", "=", code)
-      .executeTakeFirstOrThrow()
-
-    if (!existingLocale)
-      throw new NotFoundError(`Locale '${code}' doesn't exist`)
-
-    return c.json(
-      {
-        code: existingLocale.code,
-        isDefault: Boolean(existingLocale.isDefault),
-      },
-      200
-    )
-  } catch (error) {
-    return await processError<typeof getLocale>(c, error, [
-      "{{ default }}",
-      "get-locale",
-    ])
-  }
-})
-
-localeRoutes.openapi(getAllLocales, async (c) => {
-  try {
-    const locales = await c
-      .get("db")
-      .selectFrom("locales")
-      .selectAll()
-      .execute()
-
-    return c.json(
-      locales.map((l) => ({
+      return locales.map((l) => ({
         code: l.code,
+        name: l.name,
         isDefault: Boolean(l.isDefault),
-      })),
-      200
-    )
-  } catch (error) {
-    return await processError<typeof getAllLocales>(c, error, [
-      "{{ default }}",
-      "get-all-locales",
-    ])
-  }
-})
+      }))
+    }
+  )
 
-export default localeRoutes
+  // Get default locale
+  app.get(
+    "/locales/default",
+    {
+      schema: {
+        description: "Get default locale",
+        tags: ["locales"],
+        response: {
+          200: {
+            type: "object",
+            properties: {
+              code: { type: "string" },
+              isDefault: { type: "boolean" },
+            },
+          },
+          404: {
+            type: "object",
+            properties: {
+              message: { type: "string" },
+            },
+          },
+        },
+      },
+    },
+    async (request, reply) => {
+      const db = request.context?.db
+      if (!db) {
+        throw new Error("Database not initialized")
+      }
+
+      const defaultLocale = await db
+        .selectFrom("locales")
+        .selectAll()
+        .where("isDefault", "=", true)
+        .executeTakeFirst()
+
+      if (!defaultLocale) {
+        return reply.code(404).send({ message: "Default Locale not set" })
+      }
+
+      return {
+        code: defaultLocale.code,
+        name: defaultLocale.name,
+        isDefault: Boolean(defaultLocale.isDefault),
+      }
+    }
+  )
+
+  // Get locale by code
+  app.get(
+    "/locales/:code",
+    {
+      schema: {
+        description: "Get locale by code",
+        tags: ["locales"],
+        params: {
+          type: "object",
+          properties: {
+            code: { type: "string" },
+          },
+          required: ["code"],
+        },
+        response: {
+          200: {
+            type: "object",
+            properties: {
+              code: { type: "string" },
+              isDefault: { type: "boolean" },
+            },
+          },
+          404: {
+            type: "object",
+            properties: {
+              message: { type: "string" },
+            },
+          },
+        },
+      },
+    },
+    async (request, reply) => {
+      const { code } = request.params as { code: string }
+      const db = request.context?.db
+      if (!db) {
+        throw new Error("Database not initialized")
+      }
+
+      const existingLocale = await db
+        .selectFrom("locales")
+        .selectAll()
+        .where("code", "=", code)
+        .executeTakeFirst()
+
+      if (!existingLocale) {
+        return reply
+          .code(404)
+          .send({ message: `Locale '${code}' doesn't exist` })
+      }
+
+      return {
+        code: existingLocale.code,
+        name: existingLocale.name,
+        isDefault: Boolean(existingLocale.isDefault),
+      }
+    }
+  )
+
+  // Add new locale (requires authentication)
+  app.post(
+    "/locales",
+    {
+      schema: {
+        description: "Add new locale",
+        tags: ["locales"],
+        body: {
+          type: "object",
+          properties: {
+            code: { type: "string", minLength: 2 },
+            name: { type: "string", minLength: 1 },
+            isDefault: { type: "boolean", default: false },
+          },
+          required: ["code", "name"],
+          additionalProperties: false,
+        },
+        response: {
+          201: {
+            type: "object",
+            properties: {
+              code: { type: "string" },
+              isDefault: { type: "boolean" },
+            },
+          },
+          409: {
+            type: "object",
+            properties: {
+              message: { type: "string" },
+            },
+          },
+        },
+      },
+    },
+    async (request, reply) => {
+      const {
+        code,
+        name,
+        isDefault = false,
+      } = request.body as { code: string; name: string; isDefault?: boolean }
+      const db = request.context?.db
+      if (!db) {
+        throw new Error("Database not initialized")
+      }
+
+      const existingLocale = await db
+        .selectFrom("locales")
+        .selectAll()
+        .where("code", "=", code)
+        .executeTakeFirst()
+
+      if (existingLocale) {
+        return reply.code(409).send({ message: "Locale already exists" })
+      }
+
+      const insertedLocale = await db
+        .insertInto("locales")
+        .values({
+          code,
+          name,
+          isDefault,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        })
+        .returningAll()
+        .executeTakeFirstOrThrow()
+
+      if (isDefault) {
+        await db
+          .updateTable("locales")
+          .set({ isDefault: false })
+          .where((eb) =>
+            eb.and([
+              eb("id", "!=", insertedLocale.id),
+              eb("isDefault", "=", true),
+            ])
+          )
+          .execute()
+      }
+
+      return reply.code(201).send({ code, name, isDefault })
+    }
+  )
+}

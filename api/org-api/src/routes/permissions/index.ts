@@ -5,8 +5,16 @@ import {
 } from "@incmix-api/utils/fastify-middleware/auth"
 import { requireOrgPermission } from "@incmix-api/utils/fastify-middleware/rbac"
 import type { FastifyInstance } from "fastify"
+import {
+  addPermissionToRole,
+  createRoleWithPermissions,
+  deleteRoleById,
+  getRolesWithPermissions,
+  removePermissionFromRole,
+  updateRoleWithPermissions,
+} from "../../lib/db"
 
-export const setupPermissionRoutes = async (app: FastifyInstance) => {
+export const setupPermissionRoutes = (app: FastifyInstance) => {
   // Setup authentication middleware
   const requireAuth = createAuthMiddleware()
   const optionalAuth = createOptionalAuthMiddleware()
@@ -91,9 +99,9 @@ export const setupPermissionRoutes = async (app: FastifyInstance) => {
         },
       },
     },
-    async (_request, _reply) => {
-      // TODO: Implement Get org roles logic
-      return []
+    async (request, _reply) => {
+      const { orgId } = request.params as { orgId: string }
+      return await getRolesWithPermissions(request, orgId)
     }
   )
 
@@ -101,7 +109,16 @@ export const setupPermissionRoutes = async (app: FastifyInstance) => {
   app.post(
     "/orgs/:orgId/roles",
     {
-      preHandler: [requireAuth],
+      preHandler: [
+        requireAuth,
+        async (request, reply) => {
+          const db = request.context?.db
+          if (!db) {
+            throw new Error("Database not initialized")
+          }
+          await requireOrgPermission(db, "create", "Role")(request, reply)
+        },
+      ],
       schema: {
         description: "Create a new role",
         tags: ["permissions"],
@@ -143,7 +160,7 @@ export const setupPermissionRoutes = async (app: FastifyInstance) => {
         },
       },
     },
-    async (request, reply) => {
+    async (request, _reply) => {
       const { orgId } = request.params as { orgId: string }
       const { name, permissions } = request.body as {
         name: string
@@ -159,9 +176,6 @@ export const setupPermissionRoutes = async (app: FastifyInstance) => {
       // Setup audit logging for this request
       const { auditLogger } = createAuditMiddleware(db)
 
-      // Check org permission
-      await requireOrgPermission(db, "create", "Role")(request, reply)
-
       // Log the mutation
       await auditLogger.logMutation(
         request,
@@ -172,10 +186,15 @@ export const setupPermissionRoutes = async (app: FastifyInstance) => {
         { name, permissions }
       )
 
-      // TODO: Implement actual create role logic in database
-      return {
-        id: "temp-id",
+      const newRole = await createRoleWithPermissions(
+        request,
+        orgId,
         name,
+        permissions
+      )
+      return {
+        id: newRole.id.toString(),
+        name: newRole.name,
         message: "Role created successfully",
       }
     }
@@ -185,7 +204,16 @@ export const setupPermissionRoutes = async (app: FastifyInstance) => {
   app.put(
     "/orgs/:orgId/roles/:roleId",
     {
-      preHandler: [requireAuth],
+      preHandler: [
+        requireAuth,
+        async (request, reply) => {
+          const db = request.context?.db
+          if (!db) {
+            throw new Error("Database not initialized")
+          }
+          await requireOrgPermission(db, "update", "Role")(request, reply)
+        },
+      ],
       schema: {
         description: "Update a role",
         tags: ["permissions"],
@@ -225,7 +253,7 @@ export const setupPermissionRoutes = async (app: FastifyInstance) => {
         },
       },
     },
-    async (request, reply) => {
+    async (request, _reply) => {
       const { orgId, roleId } = request.params as {
         orgId: string
         roleId: string
@@ -241,9 +269,6 @@ export const setupPermissionRoutes = async (app: FastifyInstance) => {
       // Setup audit logging for this request
       const { auditLogger } = createAuditMiddleware(db)
 
-      // Check org permission
-      await requireOrgPermission(db, "update", "Role")(request, reply)
-
       // Log the mutation
       await auditLogger.logMutation(
         request,
@@ -254,7 +279,13 @@ export const setupPermissionRoutes = async (app: FastifyInstance) => {
         body
       )
 
-      // TODO: Implement actual update role logic in database
+      const { name, permissions } = body
+      await updateRoleWithPermissions(
+        request,
+        parseInt(roleId, 10),
+        name,
+        permissions
+      )
       return { message: "Role updated successfully" }
     }
   )
@@ -263,7 +294,16 @@ export const setupPermissionRoutes = async (app: FastifyInstance) => {
   app.delete(
     "/orgs/:orgId/roles/:roleId",
     {
-      preHandler: [requireAuth],
+      preHandler: [
+        requireAuth,
+        async (request, reply) => {
+          const db = request.context?.db
+          if (!db) {
+            throw new Error("Database not initialized")
+          }
+          await requireOrgPermission(db, "delete", "Role")(request, reply)
+        },
+      ],
       schema: {
         description: "Delete a role",
         tags: ["permissions"],
@@ -285,7 +325,7 @@ export const setupPermissionRoutes = async (app: FastifyInstance) => {
         },
       },
     },
-    async (request, reply) => {
+    async (request, _reply) => {
       const { orgId, roleId } = request.params as {
         orgId: string
         roleId: string
@@ -300,13 +340,10 @@ export const setupPermissionRoutes = async (app: FastifyInstance) => {
       // Setup audit logging for this request
       const { auditLogger } = createAuditMiddleware(db)
 
-      // Check org permission
-      await requireOrgPermission(db, "delete", "Role")(request, reply)
-
       // Log the mutation
       await auditLogger.logMutation(request, "DELETE", "Role", roleId, orgId)
 
-      // TODO: Implement actual delete role logic in database
+      await deleteRoleById(request, parseInt(roleId, 10))
       return { message: "Role deleted successfully" }
     }
   )
@@ -315,7 +352,16 @@ export const setupPermissionRoutes = async (app: FastifyInstance) => {
   app.post(
     "/orgs/:orgId/roles/:roleId/permissions",
     {
-      preHandler: [requireAuth],
+      preHandler: [
+        requireAuth,
+        async (request, reply) => {
+          const db = request.context?.db
+          if (!db) {
+            throw new Error("Database not initialized")
+          }
+          await requireOrgPermission(db, "update", "Role")(request, reply)
+        },
+      ],
       schema: {
         description: "Add permission to role",
         tags: ["permissions"],
@@ -346,7 +392,7 @@ export const setupPermissionRoutes = async (app: FastifyInstance) => {
         },
       },
     },
-    async (request, reply) => {
+    async (request, _reply) => {
       const { orgId, roleId } = request.params as {
         orgId: string
         roleId: string
@@ -362,9 +408,6 @@ export const setupPermissionRoutes = async (app: FastifyInstance) => {
       // Setup audit logging for this request
       const { auditLogger } = createAuditMiddleware(db)
 
-      // Check org permission
-      await requireOrgPermission(db, "update", "Role")(request, reply)
-
       // Log the mutation
       await auditLogger.logMutation(
         request,
@@ -375,7 +418,12 @@ export const setupPermissionRoutes = async (app: FastifyInstance) => {
         { action: "add", permission }
       )
 
-      // TODO: Implement actual add permission logic in database
+      await addPermissionToRole(
+        request,
+        parseInt(roleId, 10),
+        permission.action,
+        permission.subject
+      )
       return { message: "Permission added to role successfully" }
     }
   )
@@ -384,7 +432,16 @@ export const setupPermissionRoutes = async (app: FastifyInstance) => {
   app.delete(
     "/orgs/:orgId/roles/:roleId/permissions",
     {
-      preHandler: [requireAuth],
+      preHandler: [
+        requireAuth,
+        async (request, reply) => {
+          const db = request.context?.db
+          if (!db) {
+            throw new Error("Database not initialized")
+          }
+          await requireOrgPermission(db, "update", "Role")(request, reply)
+        },
+      ],
       schema: {
         description: "Remove permission from role",
         tags: ["permissions"],
@@ -415,7 +472,7 @@ export const setupPermissionRoutes = async (app: FastifyInstance) => {
         },
       },
     },
-    async (request, reply) => {
+    async (request, _reply) => {
       const { orgId, roleId } = request.params as {
         orgId: string
         roleId: string
@@ -431,9 +488,6 @@ export const setupPermissionRoutes = async (app: FastifyInstance) => {
       // Setup audit logging for this request
       const { auditLogger } = createAuditMiddleware(db)
 
-      // Check org permission
-      await requireOrgPermission(db, "update", "Role")(request, reply)
-
       // Log the mutation
       await auditLogger.logMutation(
         request,
@@ -444,7 +498,12 @@ export const setupPermissionRoutes = async (app: FastifyInstance) => {
         { action: "remove", permission }
       )
 
-      // TODO: Implement actual remove permission logic in database
+      await removePermissionFromRole(
+        request,
+        parseInt(roleId, 10),
+        permission.action,
+        permission.subject
+      )
       return { message: "Permission removed from role successfully" }
     }
   )
