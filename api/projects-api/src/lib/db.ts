@@ -296,6 +296,292 @@ export async function isProjectMember(
   return !!member
 }
 
+export async function addProjectMembers(
+  c: Context,
+  projectId: string,
+  members: { id: string; role?: string }[],
+  userId: string
+) {
+  // First validate that all users exist and are org members
+  const project = await getProjectById(c, projectId)
+  if (!project) {
+    throw new Error("Project not found")
+  }
+
+  // Check each member exists and is an org member
+  for (const member of members) {
+    const userExists = await c
+      .get("db")
+      .selectFrom("userProfiles")
+      .select("id")
+      .where("id", "=", member.id)
+      .executeTakeFirst()
+
+    if (!userExists) {
+      throw new Error(`User ${member.id} not found`)
+    }
+
+    const isOrgMemberCheck = await isOrgMember(c, project.orgId, member.id)
+    if (!isOrgMemberCheck) {
+      throw new Error(
+        `User ${member.id} is not a member of organization ${project.orgId}`
+      )
+    }
+
+    // Check if user is already a project member
+    const existingMember = await isProjectMember(c, projectId, member.id)
+    if (existingMember) {
+      throw new Error(`User ${member.id} is already a member of this project`)
+    }
+  }
+
+  // Add all members to the project
+  // Map role names to roleIds (similar to org-api)
+  // 1 = owner, 2 = admin, 3 = member
+  const getRoleId = (role: string) => {
+    switch (role?.toLowerCase()) {
+      case "owner":
+        return 1
+      case "admin":
+        return 2
+      default:
+        return 3
+    }
+  }
+
+  const membersToInsert = members.map((member) => ({
+    projectId,
+    userId: member.id,
+    role: member.role || "member",
+    roleId: getRoleId(member.role || "member"),
+    isOwner: false,
+    createdBy: userId,
+    updatedBy: userId,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  }))
+
+  await c
+    .get("db")
+    .insertInto("projectMembers")
+    .values(membersToInsert)
+    .execute()
+
+  return {
+    success: true,
+    message: `Added ${members.length} members to project`,
+  }
+}
+
+export async function removeProjectMembers(
+  c: Context,
+  projectId: string,
+  memberIds: string[]
+) {
+  // Validate that all memberIds exist in the project
+  for (const memberId of memberIds) {
+    const existingMember = await c
+      .get("db")
+      .selectFrom("projectMembers")
+      .select(["userId", "isOwner"])
+      .where((eb) =>
+        eb.and([eb("projectId", "=", projectId), eb("userId", "=", memberId)])
+      )
+      .executeTakeFirst()
+
+    if (!existingMember) {
+      throw new Error(`User ${memberId} is not a member of this project`)
+    }
+  }
+
+  // Check if we're trying to remove all owners
+  const owners = await c
+    .get("db")
+    .selectFrom("projectMembers")
+    .select("userId")
+    .where((eb) =>
+      eb.and([eb("projectId", "=", projectId), eb("isOwner", "=", true)])
+    )
+    .execute()
+
+  const remainingOwners = owners.filter(
+    (owner) => !memberIds.includes(owner.userId)
+  )
+
+  if (remainingOwners.length === 0) {
+    throw new Error(
+      "Cannot remove all owners from project. At least one owner must remain."
+    )
+  }
+
+  // Remove the members from the project
+  await c
+    .get("db")
+    .deleteFrom("projectMembers")
+    .where((eb) =>
+      eb.and([eb("projectId", "=", projectId), eb("userId", "in", memberIds)])
+    )
+    .execute()
+
+  return {
+    success: true,
+    message: `Removed ${memberIds.length} members from project`,
+  }
+}
+
+export async function addProjectChecklistItem(
+  c: Context,
+  projectId: string,
+  checklistItem: { text: string; checked?: boolean; order?: number }
+) {
+  // Get current project to access existing checklist
+  const project = await c
+    .get("db")
+    .selectFrom("projects")
+    .select(["checklist"])
+    .where("id", "=", projectId)
+    .executeTakeFirst()
+
+  if (!project) {
+    throw new Error("Project not found")
+  }
+
+  // Generate unique ID for the checklist item
+  const itemId = crypto.randomUUID()
+
+  // Create new checklist item
+  const newItem = {
+    id: itemId,
+    text: checklistItem.text,
+    checked: checklistItem.checked ?? false,
+    order: checklistItem.order ?? project.checklist.length + 1,
+    createdAt: new Date().toISOString(),
+  }
+
+  // Add item to existing checklist
+  const updatedChecklist = [...project.checklist, newItem]
+
+  // Update project with new checklist and timestamp
+  await c
+    .get("db")
+    .updateTable("projects")
+    .set({
+      checklist: JSON.stringify(updatedChecklist),
+      updatedAt: new Date().toISOString(),
+    })
+    .where("id", "=", projectId)
+    .execute()
+
+  return {
+    success: true,
+    message: "Checklist item added successfully",
+    item: newItem,
+  }
+}
+
+export async function updateProjectChecklistItem(
+  c: Context,
+  projectId: string,
+  checklistId: string,
+  updateData: { text?: string; checked?: boolean; order?: number }
+) {
+  // Get current project to access existing checklist
+  const project = await c
+    .get("db")
+    .selectFrom("projects")
+    .select(["checklist"])
+    .where("id", "=", projectId)
+    .executeTakeFirst()
+
+  if (!project) {
+    throw new Error("Project not found")
+  }
+
+  // Find the checklist item to update
+  const checklistItemIndex = project.checklist.findIndex(
+    (item) => item.id === checklistId
+  )
+  if (checklistItemIndex === -1) {
+    throw new Error("Checklist item not found")
+  }
+
+  // Update the checklist item
+  const updatedChecklist = [...project.checklist]
+  const existingItem = updatedChecklist[checklistItemIndex]
+
+  updatedChecklist[checklistItemIndex] = {
+    ...existingItem,
+    text: updateData.text ?? existingItem.text,
+    checked: updateData.checked ?? existingItem.checked,
+    order: updateData.order ?? existingItem.order,
+  }
+
+  // Update project with modified checklist and timestamp
+  await c
+    .get("db")
+    .updateTable("projects")
+    .set({
+      checklist: JSON.stringify(updatedChecklist),
+      updatedAt: new Date().toISOString(),
+    })
+    .where("id", "=", projectId)
+    .execute()
+
+  return {
+    success: true,
+    message: "Checklist item updated successfully",
+    item: updatedChecklist[checklistItemIndex],
+  }
+}
+
+export async function removeProjectChecklistItems(
+  c: Context,
+  projectId: string,
+  checklistIds: string[]
+) {
+  // Get current project to access existing checklist
+  const project = await c
+    .get("db")
+    .selectFrom("projects")
+    .select(["checklist"])
+    .where("id", "=", projectId)
+    .executeTakeFirst()
+
+  if (!project) {
+    throw new Error("Project not found")
+  }
+
+  // Validate that all checklist IDs exist
+  const existingIds = project.checklist.map((item) => item.id)
+  const nonExistentIds = checklistIds.filter((id) => !existingIds.includes(id))
+
+  if (nonExistentIds.length > 0) {
+    throw new Error(`Checklist items not found: ${nonExistentIds.join(", ")}`)
+  }
+
+  // Filter out the checklist items to be removed
+  const updatedChecklist = project.checklist.filter(
+    (item) => !checklistIds.includes(item.id)
+  )
+
+  // Update project with filtered checklist and timestamp
+  await c
+    .get("db")
+    .updateTable("projects")
+    .set({
+      checklist: JSON.stringify(updatedChecklist),
+      updatedAt: new Date().toISOString(),
+    })
+    .where("id", "=", projectId)
+    .execute()
+
+  return {
+    success: true,
+    message: `Successfully removed ${checklistIds.length} checklist item${checklistIds.length === 1 ? "" : "s"}`,
+    removedCount: checklistIds.length,
+  }
+}
+
 export async function getTaskById(c: Context, taskId: string) {
   const task = await buildTaskQuery(c)
     .where("tasks.id", "=", taskId)
@@ -389,6 +675,370 @@ export async function getTasks(c: Context, userId: string): Promise<Task[]> {
 
     return []
   })
+}
+
+export async function createTask(
+  c: Context,
+  taskData: {
+    projectId: string
+    name: string
+    description?: string
+    taskOrder?: number
+    assignedTo?: string[]
+    startDate?: string
+    endDate?: string
+    parentTaskId?: string
+    statusId?: string
+    priorityId?: string
+    labelsTags?: string[]
+    refUrls?: object[]
+    attachments?: object[]
+    acceptanceCriteria?: object[]
+    checklist?: object[]
+  },
+  userId: string
+) {
+  // Generate unique ID for the task
+  const taskId = crypto.randomUUID()
+
+  // Create the task
+  await c
+    .get("db")
+    .insertInto("tasks")
+    .values({
+      id: taskId,
+      name: taskData.name,
+      description: taskData.description || "",
+      taskOrder: taskData.taskOrder || 0,
+      projectId: taskData.projectId,
+      statusId: taskData.statusId || "",
+      priorityId: taskData.priorityId || "",
+      startDate: taskData.startDate || null,
+      endDate: taskData.endDate || null,
+      parentTaskId: taskData.parentTaskId || null,
+      acceptanceCriteria: JSON.stringify(taskData.acceptanceCriteria || []),
+      checklist: JSON.stringify(taskData.checklist || []),
+      refUrls: JSON.stringify(taskData.refUrls || []),
+      labelsTags: JSON.stringify(taskData.labelsTags || []),
+      attachments: JSON.stringify(taskData.attachments || []),
+      completed: false,
+      createdBy: userId,
+      updatedBy: userId,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    })
+    .execute()
+
+  // Handle task assignments if provided
+  if (taskData.assignedTo && taskData.assignedTo.length > 0) {
+    const assignments = taskData.assignedTo.map((assigneeId) => ({
+      taskId,
+      userId: assigneeId,
+      assignedAt: new Date(),
+    }))
+
+    await c
+      .get("db")
+      .insertInto("taskAssignments")
+      .values(assignments)
+      .execute()
+  }
+
+  return {
+    success: true,
+    message: "Task created successfully",
+    taskId,
+    name: taskData.name,
+  }
+}
+
+export async function updateTask(
+  c: Context,
+  taskId: string,
+  updateData: {
+    name?: string
+    description?: string
+    taskOrder?: number
+    statusId?: string
+    priorityId?: string
+    startDate?: string
+    endDate?: string
+    parentTaskId?: string
+    labelsTags?: string[]
+    refUrls?: object[]
+    attachments?: object[]
+    acceptanceCriteria?: object[]
+    assignedTo?: string[]
+  },
+  userId: string
+) {
+  // Check if task exists
+  const existingTask = await c
+    .get("db")
+    .selectFrom("tasks")
+    .select("id")
+    .where("id", "=", taskId)
+    .executeTakeFirst()
+
+  if (!existingTask) {
+    throw new Error("Task not found")
+  }
+
+  // Prepare update data
+  const updateFields: any = {
+    updatedBy: userId,
+    updatedAt: new Date().toISOString(),
+  }
+
+  if (updateData.name !== undefined) updateFields.name = updateData.name
+  if (updateData.description !== undefined)
+    updateFields.description = updateData.description
+  if (updateData.taskOrder !== undefined)
+    updateFields.taskOrder = updateData.taskOrder
+  if (updateData.statusId !== undefined)
+    updateFields.statusId = updateData.statusId
+  if (updateData.priorityId !== undefined)
+    updateFields.priorityId = updateData.priorityId
+  if (updateData.startDate !== undefined)
+    updateFields.startDate = updateData.startDate
+      ? new Date(updateData.startDate)
+      : null
+  if (updateData.endDate !== undefined)
+    updateFields.endDate = updateData.endDate
+      ? new Date(updateData.endDate)
+      : null
+  if (updateData.parentTaskId !== undefined)
+    updateFields.parentTaskId = updateData.parentTaskId
+  if (updateData.labelsTags !== undefined)
+    updateFields.labelsTags = JSON.stringify(updateData.labelsTags)
+  if (updateData.refUrls !== undefined)
+    updateFields.refUrls = JSON.stringify(updateData.refUrls)
+  if (updateData.attachments !== undefined)
+    updateFields.attachments = JSON.stringify(updateData.attachments)
+  if (updateData.acceptanceCriteria !== undefined)
+    updateFields.acceptanceCriteria = JSON.stringify(
+      updateData.acceptanceCriteria
+    )
+
+  // Update the task
+  await c
+    .get("db")
+    .updateTable("tasks")
+    .set(updateFields)
+    .where("id", "=", taskId)
+    .execute()
+
+  // Handle assignment updates if provided
+  if (updateData.assignedTo !== undefined) {
+    // Remove existing assignments
+    await c
+      .get("db")
+      .deleteFrom("taskAssignments")
+      .where("taskId", "=", taskId)
+      .execute()
+
+    // Add new assignments
+    if (updateData.assignedTo.length > 0) {
+      const assignments = updateData.assignedTo.map((assigneeId) => ({
+        taskId,
+        userId: assigneeId,
+        assignedAt: new Date(),
+      }))
+
+      await c
+        .get("db")
+        .insertInto("taskAssignments")
+        .values(assignments)
+        .execute()
+    }
+  }
+
+  return {
+    success: true,
+    message: "Task updated successfully",
+  }
+}
+
+export async function deleteTask(c: Context, taskId: string) {
+  // Check if task exists
+  const existingTask = await c
+    .get("db")
+    .selectFrom("tasks")
+    .select("id")
+    .where("id", "=", taskId)
+    .executeTakeFirst()
+
+  if (!existingTask) {
+    throw new Error("Task not found")
+  }
+
+  // Delete task assignments first (foreign key constraint)
+  await c
+    .get("db")
+    .deleteFrom("taskAssignments")
+    .where("taskId", "=", taskId)
+    .execute()
+
+  // Delete the task
+  await c.get("db").deleteFrom("tasks").where("id", "=", taskId).execute()
+
+  return {
+    success: true,
+    message: "Task deleted successfully",
+  }
+}
+
+export async function addTaskChecklistItem(
+  c: Context,
+  taskId: string,
+  checklistItem: { text: string; checked?: boolean; order?: number }
+) {
+  // Get current task to access existing checklist
+  const task = await c
+    .get("db")
+    .selectFrom("tasks")
+    .select(["checklist"])
+    .where("id", "=", taskId)
+    .executeTakeFirst()
+
+  if (!task) {
+    throw new Error("Task not found")
+  }
+
+  // Generate unique ID for the checklist item
+  const itemId = crypto.randomUUID()
+
+  // Create new checklist item
+  const newItem = {
+    id: itemId,
+    text: checklistItem.text,
+    checked: checklistItem.checked ?? false,
+    order: checklistItem.order ?? task.checklist.length + 1,
+    createdAt: new Date().toISOString(),
+  }
+
+  // Add item to existing checklist
+  const updatedChecklist = [...task.checklist, newItem]
+
+  // Update task with new checklist and timestamp
+  await c
+    .get("db")
+    .updateTable("tasks")
+    .set({
+      checklist: JSON.stringify(updatedChecklist),
+      updatedAt: new Date().toISOString(),
+    })
+    .where("id", "=", taskId)
+    .execute()
+
+  return {
+    success: true,
+    message: "Checklist item added successfully",
+    item: newItem,
+  }
+}
+
+export async function updateTaskChecklistItem(
+  c: Context,
+  taskId: string,
+  checklistId: string,
+  updateData: { text?: string; checked?: boolean; order?: number }
+) {
+  // Get current task to access existing checklist
+  const task = await c
+    .get("db")
+    .selectFrom("tasks")
+    .select(["checklist"])
+    .where("id", "=", taskId)
+    .executeTakeFirst()
+
+  if (!task) {
+    throw new Error("Task not found")
+  }
+
+  // Find the checklist item to update
+  const checklistItemIndex = task.checklist.findIndex(
+    (item) => item.id === checklistId
+  )
+  if (checklistItemIndex === -1) {
+    throw new Error("Checklist item not found")
+  }
+
+  // Update the checklist item
+  const updatedChecklist = [...task.checklist]
+  const existingItem = updatedChecklist[checklistItemIndex]
+
+  updatedChecklist[checklistItemIndex] = {
+    ...existingItem,
+    text: updateData.text ?? existingItem.text,
+    checked: updateData.checked ?? existingItem.checked,
+    order: updateData.order ?? existingItem.order,
+  }
+
+  // Update task with modified checklist and timestamp
+  await c
+    .get("db")
+    .updateTable("tasks")
+    .set({
+      checklist: JSON.stringify(updatedChecklist),
+      updatedAt: new Date().toISOString(),
+    })
+    .where("id", "=", taskId)
+    .execute()
+
+  return {
+    success: true,
+    message: "Checklist item updated successfully",
+    item: updatedChecklist[checklistItemIndex],
+  }
+}
+
+export async function removeTaskChecklistItems(
+  c: Context,
+  taskId: string,
+  checklistIds: string[]
+) {
+  // Get current task to access existing checklist
+  const task = await c
+    .get("db")
+    .selectFrom("tasks")
+    .select(["checklist"])
+    .where("id", "=", taskId)
+    .executeTakeFirst()
+
+  if (!task) {
+    throw new Error("Task not found")
+  }
+
+  // Validate that all checklist IDs exist
+  const existingIds = task.checklist.map((item) => item.id)
+  const nonExistentIds = checklistIds.filter((id) => !existingIds.includes(id))
+
+  if (nonExistentIds.length > 0) {
+    throw new Error(`Checklist items not found: ${nonExistentIds.join(", ")}`)
+  }
+
+  // Filter out the checklist items to be removed
+  const updatedChecklist = task.checklist.filter(
+    (item) => !checklistIds.includes(item.id)
+  )
+
+  // Update task with filtered checklist and timestamp
+  await c
+    .get("db")
+    .updateTable("tasks")
+    .set({
+      checklist: JSON.stringify(updatedChecklist),
+      updatedAt: new Date().toISOString(),
+    })
+    .where("id", "=", taskId)
+    .execute()
+
+  return {
+    success: true,
+    message: `Successfully removed ${checklistIds.length} checklist item${checklistIds.length === 1 ? "" : "s"}`,
+    removedCount: checklistIds.length,
+  }
 }
 
 function buildTaskQuery(c: Context) {
