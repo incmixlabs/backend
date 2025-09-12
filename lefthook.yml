@@ -5,6 +5,8 @@
 pre-commit:
   parallel: false
   commands:
+    install:
+      run: pnpm install
     lint:
       run: pnpm run lint:fix
       stage_fixed: true
