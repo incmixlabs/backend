@@ -619,3 +619,236 @@ export function canUserManageFeatureFlags(
   // This can be extended later with more granular permissions
   return isUserSuperUser(c, userId)
 }
+
+export async function getRolesWithPermissions(c: Context, orgId: string) {
+  const db = getDb(c)
+  return await db
+    .selectFrom("roles")
+    .leftJoin("rolePermissions", "roles.id", "rolePermissions.roleId")
+    .leftJoin("permissions", "rolePermissions.permissionId", "permissions.id")
+    .select((eb) => [
+      "roles.id",
+      "roles.name",
+      "roles.description",
+      "roles.orgId",
+      "roles.isSystemRole",
+      "roles.scope",
+      jsonArrayFrom(
+        eb
+          .selectFrom("rolePermissions as rp")
+          .innerJoin("permissions as p", "rp.permissionId", "p.id")
+          .select([
+            "p.id as permissionId",
+            "p.action",
+            "p.resourceType as subject",
+          ])
+          .whereRef("rp.roleId", "=", "roles.id")
+      ).as("permissions"),
+    ])
+    .where((eb) =>
+      eb.or([eb("roles.orgId", "=", orgId), eb("roles.orgId", "is", null)])
+    )
+    .groupBy("roles.id")
+    .execute()
+}
+
+export async function createRoleWithPermissions(
+  c: Context,
+  orgId: string,
+  name: string,
+  permissions: Array<{ action: string; subject: string }>
+) {
+  const db = getDb(c)
+  return await db.transaction().execute(async (tx) => {
+    const newRole = await tx
+      .insertInto("roles")
+      .values({
+        name,
+        orgId,
+        isSystemRole: false,
+        scope: "org" as any,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      })
+      .returningAll()
+      .executeTakeFirstOrThrow()
+
+    if (permissions.length > 0) {
+      const rolePermissions = []
+      for (const perm of permissions) {
+        let permission = await tx
+          .selectFrom("permissions")
+          .selectAll()
+          .where("resourceType", "=", perm.subject as any)
+          .where("action", "=", perm.action as any)
+          .executeTakeFirst()
+
+        if (!permission) {
+          permission = await tx
+            .insertInto("permissions")
+            .values({
+              name: `${perm.action} ${perm.subject}`,
+              resourceType: perm.subject,
+              action: perm.action as any,
+              createdAt: new Date().toISOString(),
+              updatedAt: new Date().toISOString(),
+            })
+            .returningAll()
+            .executeTakeFirstOrThrow()
+        }
+
+        rolePermissions.push({
+          roleId: newRole.id,
+          permissionId: permission.id,
+          createdAt: new Date().toISOString(),
+        })
+      }
+
+      await tx.insertInto("rolePermissions").values(rolePermissions).execute()
+    }
+
+    return newRole
+  })
+}
+
+export async function updateRoleWithPermissions(
+  c: Context,
+  roleId: number,
+  name?: string,
+  permissions?: Array<{ action: string; subject: string }>
+) {
+  const db = getDb(c)
+  return await db.transaction().execute(async (tx) => {
+    const updates: any = {}
+    if (name) updates.name = name
+
+    if (Object.keys(updates).length > 0) {
+      await tx
+        .updateTable("roles")
+        .set(updates)
+        .where("id", "=", roleId)
+        .execute()
+    }
+
+    if (permissions) {
+      await tx
+        .deleteFrom("rolePermissions")
+        .where("roleId", "=", roleId)
+        .execute()
+
+      if (permissions.length > 0) {
+        const rolePermissions = []
+        for (const perm of permissions) {
+          let permission = await tx
+            .selectFrom("permissions")
+            .selectAll()
+            .where("resourceType", "=", perm.subject as any)
+            .where("action", "=", perm.action as any)
+            .executeTakeFirst()
+
+          if (!permission) {
+            permission = await tx
+              .insertInto("permissions")
+              .values({
+                name: `${perm.action} ${perm.subject}`,
+                resourceType: perm.subject,
+                action: perm.action as any,
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString(),
+              })
+              .returningAll()
+              .executeTakeFirstOrThrow()
+          }
+
+          rolePermissions.push({
+            roleId: roleId,
+            permissionId: permission.id,
+            createdAt: new Date().toISOString(),
+          })
+        }
+
+        await tx.insertInto("rolePermissions").values(rolePermissions).execute()
+      }
+    }
+
+    return { success: true }
+  })
+}
+
+export async function addPermissionToRole(
+  c: Context,
+  roleId: number,
+  action: string,
+  subject: string
+) {
+  const db = getDb(c)
+  return await db.transaction().execute(async (tx) => {
+    let permission = await tx
+      .selectFrom("permissions")
+      .selectAll()
+      .where("resourceType", "=", subject as any)
+      .where("action", "=", action as any)
+      .executeTakeFirst()
+
+    if (!permission) {
+      permission = await tx
+        .insertInto("permissions")
+        .values({
+          name: `${action} ${subject}`,
+          resourceType: subject,
+          action: action as any,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        })
+        .returningAll()
+        .executeTakeFirstOrThrow()
+    }
+
+    const existing = await tx
+      .selectFrom("rolePermissions")
+      .selectAll()
+      .where("roleId", "=", roleId)
+      .where("permissionId", "=", permission.id)
+      .executeTakeFirst()
+
+    if (!existing) {
+      await tx
+        .insertInto("rolePermissions")
+        .values({
+          roleId,
+          permissionId: permission.id,
+          createdAt: new Date().toISOString(),
+        })
+        .execute()
+    }
+
+    return { success: true }
+  })
+}
+
+export async function removePermissionFromRole(
+  c: Context,
+  roleId: number,
+  action: string,
+  subject: string
+) {
+  const db = getDb(c)
+  return await db.transaction().execute(async (tx) => {
+    const permission = await tx
+      .selectFrom("permissions")
+      .selectAll()
+      .where("resourceType", "=", subject as any)
+      .where("action", "=", action as any)
+      .executeTakeFirst()
+
+    if (permission) {
+      await tx
+        .deleteFrom("rolePermissions")
+        .where("roleId", "=", roleId)
+        .where("permissionId", "=", permission.id)
+        .execute()
+    }
+
+    return { success: true }
+  })
+}

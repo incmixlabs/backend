@@ -5,6 +5,14 @@ import {
 } from "@incmix-api/utils/fastify-middleware/auth"
 import { requireOrgPermission } from "@incmix-api/utils/fastify-middleware/rbac"
 import type { FastifyInstance } from "fastify"
+import {
+  addPermissionToRole,
+  createRoleWithPermissions,
+  deleteRoleById,
+  getRolesWithPermissions,
+  removePermissionFromRole,
+  updateRoleWithPermissions,
+} from "../../lib/db"
 
 export const setupPermissionRoutes = async (app: FastifyInstance) => {
   // Setup authentication middleware
@@ -91,9 +99,9 @@ export const setupPermissionRoutes = async (app: FastifyInstance) => {
         },
       },
     },
-    async (_request, _reply) => {
-      // TODO: Implement Get org roles logic
-      return []
+    async (request, _reply) => {
+      const { orgId } = request.params as { orgId: string }
+      return await getRolesWithPermissions(request, orgId)
     }
   )
 
@@ -172,10 +180,15 @@ export const setupPermissionRoutes = async (app: FastifyInstance) => {
         { name, permissions }
       )
 
-      // TODO: Implement actual create role logic in database
-      return {
-        id: "temp-id",
+      const newRole = await createRoleWithPermissions(
+        request,
+        orgId,
         name,
+        permissions
+      )
+      return {
+        id: newRole.id.toString(),
+        name: newRole.name,
         message: "Role created successfully",
       }
     }
@@ -254,7 +267,13 @@ export const setupPermissionRoutes = async (app: FastifyInstance) => {
         body
       )
 
-      // TODO: Implement actual update role logic in database
+      const { name, permissions } = body
+      await updateRoleWithPermissions(
+        request,
+        parseInt(roleId, 10),
+        name,
+        permissions
+      )
       return { message: "Role updated successfully" }
     }
   )
@@ -306,7 +325,7 @@ export const setupPermissionRoutes = async (app: FastifyInstance) => {
       // Log the mutation
       await auditLogger.logMutation(request, "DELETE", "Role", roleId, orgId)
 
-      // TODO: Implement actual delete role logic in database
+      await deleteRoleById(request, parseInt(roleId, 10))
       return { message: "Role deleted successfully" }
     }
   )
@@ -375,7 +394,12 @@ export const setupPermissionRoutes = async (app: FastifyInstance) => {
         { action: "add", permission }
       )
 
-      // TODO: Implement actual add permission logic in database
+      await addPermissionToRole(
+        request,
+        parseInt(roleId, 10),
+        permission.action,
+        permission.subject
+      )
       return { message: "Permission added to role successfully" }
     }
   )
@@ -444,7 +468,12 @@ export const setupPermissionRoutes = async (app: FastifyInstance) => {
         { action: "remove", permission }
       )
 
-      // TODO: Implement actual remove permission logic in database
+      await removePermissionFromRole(
+        request,
+        parseInt(roleId, 10),
+        permission.action,
+        permission.subject
+      )
       return { message: "Permission removed from role successfully" }
     }
   )
