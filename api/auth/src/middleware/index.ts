@@ -15,10 +15,10 @@ function _getCookieFromHeader(request: any, cookieName: string): string | null {
   }
   return null
 }
-export const setupMiddleware = async (app: FastifyInstance) => {
+export const setupMiddleware = (app: FastifyInstance) => {
   // Basic request logging
 
-  app.addHook("onRequest", async (request, reply) => {
+  app.addHook("onRequest", (request, reply) => {
     const incoming = request.headers["x-request-id"] as string | undefined
     const requestId = incoming ?? request.id ?? randomUUID()
     reply.header("X-Request-Id", requestId)

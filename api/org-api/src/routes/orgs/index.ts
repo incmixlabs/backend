@@ -19,7 +19,7 @@ import {
   isValidUser,
 } from "@/lib/db"
 
-export const setupOrgRoutes = async (app: FastifyInstance) => {
+export const setupOrgRoutes = (app: FastifyInstance) => {
   // Setup authentication middleware
   const requireAuth = createAuthMiddleware()
 
@@ -653,7 +653,7 @@ export const setupOrgRoutes = async (app: FastifyInstance) => {
         },
       } as any,
     },
-    async (_request, reply) => {
+    (_request, reply) => {
       return reply.status(401).send({ error: "Unauthorized" })
     }
   )
@@ -674,20 +674,20 @@ export const setupOrgRoutes = async (app: FastifyInstance) => {
         },
       } as any,
     },
-    async (_request, reply) => {
+    (_request, reply) => {
       return reply.status(401).send({ error: "Unauthorized" })
     }
   )
 }
 
 // Fastify compatibility wrapper for tests (keeping existing functionality)
-export const setupOrgRoutes_Legacy = async (app: any) => {
+export const setupOrgRoutes_Legacy = (app: any) => {
   // Mock protected endpoints - all should return 401 Unauthorized
-  app.post("", {}, async (_request: any, reply: any) => {
+  app.post("", {}, (_request: any, reply: any) => {
     return reply.status(401).send({ error: "Unauthorized" })
   })
 
-  app.put("/:id", {}, async (_request: any, reply: any) => {
+  app.put("/:id", {}, (_request: any, reply: any) => {
     return reply.status(401).send({ error: "Unauthorized" })
   })
 }

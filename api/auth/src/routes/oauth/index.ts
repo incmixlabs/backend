@@ -24,7 +24,7 @@ export const setupOAuthRoutes = (app: FastifyInstance) => {
         },
       },
     },
-    async (request, reply) => {
+    (request, reply) => {
       try {
         const clientType = request.headers["x-client-type"]
         const google = initializeGoogleAuth(request as any, {

@@ -1,6 +1,6 @@
 import type { FastifyInstance } from "fastify"
 
-export const setupCommentsRoutes = async (app: FastifyInstance) => {
+export const setupCommentsRoutes = (app: FastifyInstance) => {
   // Get comments for a project
   app.get(
     "/projects/:projectId/comments",
@@ -31,7 +31,7 @@ export const setupCommentsRoutes = async (app: FastifyInstance) => {
         },
       },
     },
-    async (request, _reply) => {
+    (request, _reply) => {
       const { projectId } = request.params as { projectId: string }
       // TODO: Implement project comments logic
       return [
@@ -75,7 +75,7 @@ export const setupCommentsRoutes = async (app: FastifyInstance) => {
         },
       },
     },
-    async (request, _reply) => {
+    (request, _reply) => {
       const { taskId } = request.params as { taskId: string }
       // TODO: Implement task comments logic
       return [
@@ -119,7 +119,7 @@ export const setupCommentsRoutes = async (app: FastifyInstance) => {
         },
       },
     },
-    async (request, reply) => {
+    (request, reply) => {
       const { content } = request.body as { content: string }
       // TODO: Implement add comment logic
       const comment = {

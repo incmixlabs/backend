@@ -3,7 +3,7 @@ import { createSession, invalidateAllSessions } from "@/auth/session"
 import { sendForgetPasswordEmail } from "@/lib/helper"
 import { authMiddleware, setSessionCookie } from "@/middleware/auth"
 
-export const setupResetPasswordRoutes = (app: FastifyInstance) => {
+export const setupResetPasswordRoutes = async (app: FastifyInstance) => {
   // Send forget password email
   app.post(
     "/reset-password/request",
@@ -332,7 +332,7 @@ export const setupResetPasswordRoutes = (app: FastifyInstance) => {
         const hashedNewPassword = await bcrypt.hash(newPassword, 10)
 
         // Get current session ID to preserve it
-        const currentSessionId = request.session?.id
+        const _currentSessionId = request.session?.id
 
         // Update password and manage sessions in transaction
         await db.transaction().execute(async (tx: any) => {
@@ -346,16 +346,7 @@ export const setupResetPasswordRoutes = (app: FastifyInstance) => {
             .execute()
 
           // Invalidate all existing sessions except current one
-          if (currentSessionId) {
-            await tx
-              .deleteFrom("sessions")
-              .where("userId", "=", userId)
-              .where("id", "!=", currentSessionId)
-              .execute()
-          } else {
-            // If no current session, invalidate all
-            await invalidateAllSessions(tx, userId)
-          }
+          await invalidateAllSessions(tx, userId)
         })
 
         // Create a new session for security

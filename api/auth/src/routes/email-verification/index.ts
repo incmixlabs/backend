@@ -8,7 +8,7 @@ import {
 } from "@/lib/helper"
 import { setSessionCookie } from "@/middleware/auth"
 
-export const setupEmailVerificationRoutes = (app: FastifyInstance) => {
+export const setupEmailVerificationRoutes = async (app: FastifyInstance) => {
   // Send verification email endpoint
   app.post(
     "/verification-email/send",

@@ -281,28 +281,54 @@ export async function createProject(
     .execute()
 
   // Parse and add additional members if provided
+  // Parse and add additional members if provided
   if (projectData.members) {
     try {
       const membersData = JSON.parse(projectData.members)
       if (Array.isArray(membersData) && membersData.length > 0) {
-        // Filter out the creator to avoid duplicate entry
+        // Filter out creator and duplicates
+        const seen = new Set<string>()
         const additionalMembers = membersData.filter(
-          (m: any) => m.id !== userId
+          (m: any) =>
+            m.id && m.id !== userId && !seen.has(m.id) && (seen.add(m.id), true)
         )
-
+        // Validate each user exists and is org member
+        for (const m of additionalMembers) {
+          const user = await c
+            .get("db")
+            .selectFrom("userProfiles")
+            .select("id")
+            .where("id", "=", m.id)
+            .executeTakeFirst()
+          if (!user) throw new Error(`User ${m.id} not found`)
+          const orgMember = await c
+            .get("db")
+            .selectFrom("members")
+            .select("userId")
+            .where((eb) =>
+              eb.and([
+                eb("orgId", "=", projectData.orgId),
+                eb("userId", "=", m.id),
+              ])
+            )
+            .executeTakeFirst()
+          if (!orgMember)
+            throw new Error(
+              `User ${m.id} is not a member of org ${projectData.orgId}`
+            )
+        }
         if (additionalMembers.length > 0) {
           const membersToInsert = additionalMembers.map((member: any) => ({
             projectId,
             userId: member.id,
-            role: member.role || "member",
-            roleId: member.role === "admin" ? 2 : 3,
+            role: (member.role || "member").toLowerCase(),
+            roleId: (member.role || "member").toLowerCase() === "admin" ? 2 : 3,
             isOwner: false,
             createdBy: userId,
             updatedBy: userId,
             createdAt: new Date().toISOString(),
             updatedAt: new Date().toISOString(),
           }))
-
           await c
             .get("db")
             .insertInto("projectMembers")
@@ -425,37 +451,34 @@ export async function deleteProject(c: Context, projectId: string) {
   // Note: If Kysely transaction support is not available, perform deletions in order
 
   // 1. Delete task assignments for all tasks in the project
-  await c
-    .get("db")
-    .deleteFrom("taskAssignments")
-    .where((eb) =>
-      eb.exists(
-        eb
-          .selectFrom("tasks")
-          .select("tasks.id")
-          .whereRef("tasks.id", "=", "taskAssignments.taskId")
-          .where("tasks.projectId", "=", projectId)
+  const db = c.get("db")
+  await db.transaction().execute(async (trx) => {
+    // 1. Delete task assignments for all tasks in the project
+    await trx
+      .deleteFrom("taskAssignments")
+      .where((eb) =>
+        eb.exists(
+          eb
+            .selectFrom("tasks")
+            .select("tasks.id")
+            .whereRef("tasks.id", "=", "taskAssignments.taskId")
+            .where("tasks.projectId", "=", projectId)
+        )
       )
-    )
-    .execute()
+      .execute()
 
-  // 2. Delete all tasks in the project
-  await c
-    .get("db")
-    .deleteFrom("tasks")
-    .where("projectId", "=", projectId)
-    .execute()
+    // 2. Delete all tasks in the project
+    await trx.deleteFrom("tasks").where("projectId", "=", projectId).execute()
 
-  // 3. Delete all project members
-  await c
-    .get("db")
-    .deleteFrom("projectMembers")
-    .where("projectId", "=", projectId)
-    .execute()
+    // 3. Delete all project members
+    await trx
+      .deleteFrom("projectMembers")
+      .where("projectId", "=", projectId)
+      .execute()
 
-  // 4. Delete the project itself
-  await c.get("db").deleteFrom("projects").where("id", "=", projectId).execute()
-
+    // 4. Delete the project itself
+    await trx.deleteFrom("projects").where("id", "=", projectId).execute()
+  })
   return {
     success: true,
     message: "Project and all related data deleted successfully",

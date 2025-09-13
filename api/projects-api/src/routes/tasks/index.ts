@@ -781,7 +781,7 @@ export const setupTasksRoutes = (app: FastifyInstance) => {
         },
       },
     },
-    async (request, _reply) => {
+    (request, _reply) => {
       try {
         // Check if user is authenticated
         if (!request.user?.id) {

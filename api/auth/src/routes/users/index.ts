@@ -2,7 +2,7 @@ import type { FastifyInstance } from "fastify"
 import { invalidateAllSessions } from "@/auth/session"
 import { authMiddleware } from "@/middleware/auth"
 
-export const setupUsersRoutes = (app: FastifyInstance) => {
+export const setupUsersRoutes = async (app: FastifyInstance) => {
   // Get all users (admin only)
   app.get(
     "/users/list",
@@ -213,10 +213,16 @@ export const setupUsersRoutes = (app: FastifyInstance) => {
         }
 
         // Get updated profile
+
         const updatedProfile = await db
           .selectFrom("userProfiles")
-          .select(["id", "fullName", "email"])
-          .where("id", "=", userId)
+          .innerJoin("users", "users.id", "userProfiles.id")
+          .select([
+            "userProfiles.id as id",
+            "userProfiles.fullName as fullName",
+            "users.email as email",
+          ])
+          .where("userProfiles.id", "=", userId)
           .executeTakeFirst()
 
         return {

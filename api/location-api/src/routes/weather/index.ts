@@ -1,6 +1,6 @@
 import type { FastifyInstance } from "fastify"
 
-export const setupWeatherRoutes = async (app: FastifyInstance) => {
+export const setupWeatherRoutes = (app: FastifyInstance) => {
   app.get(
     "/weather",
     {
@@ -24,7 +24,7 @@ export const setupWeatherRoutes = async (app: FastifyInstance) => {
         },
       },
     },
-    async (_request, _reply) => {
+    (_request, _reply) => {
       // TODO: Implement weather forecast logic
       return { message: "Weather route placeholder - to be implemented" }
     }

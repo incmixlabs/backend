@@ -1,6 +1,6 @@
 import type { FastifyInstance } from "fastify"
 
-export const setupNewsRoutes = async (app: FastifyInstance) => {
+export const setupNewsRoutes = (app: FastifyInstance) => {
   app.get(
     "/news",
     {
@@ -17,7 +17,7 @@ export const setupNewsRoutes = async (app: FastifyInstance) => {
         },
       },
     },
-    async (_request, _reply) => {
+    (_request, _reply) => {
       // TODO: Implement news logic
       return { message: "News route placeholder - to be implemented" }
     }

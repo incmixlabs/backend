@@ -84,7 +84,7 @@ const ExtendedRegisterRequestSchema = {
   ],
 }
 
-export const setupAuthRoutes = (app: FastifyInstance) => {
+export const setupAuthRoutes = async (app: FastifyInstance) => {
   // Get current user endpoint
   app.get(
     "/me",
@@ -428,7 +428,7 @@ export const setupAuthRoutes = (app: FastifyInstance) => {
     },
     async (request, reply) => {
       try {
-        const { fullName, email, password, firstName, lastName } =
+        const { fullName, firstName, lastName, email, password } =
           request.body as ExtendedRegisterRequest
 
         if (!request.context?.db) {

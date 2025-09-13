@@ -44,9 +44,13 @@ export async function createTestClient() {
 
   const { app } = service
 
-  // Manually set up middleware and routes for testing since we're not calling startServer
-  await setupMiddleware(app)
-  await setupRoutes(app)
+  // Don't actually start the server, just initialize middleware and routes
+  if (setupMiddleware) {
+    await setupMiddleware(app)
+  }
+  if (setupRoutes) {
+    await setupRoutes(app)
+  }
 
   return {
     request: async (url: string, options: RequestInit = {}) => {

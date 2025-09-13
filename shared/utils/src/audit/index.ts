@@ -124,7 +124,7 @@ export function createAuditMiddleware(db: KyselyDb) {
 
   return {
     auditLogger,
-    middleware: async (request: FastifyRequest) => {
+    middleware: (request: FastifyRequest) => {
       ;(request as any).audit = auditLogger
     },
   }

@@ -6,7 +6,7 @@ import { setupCommentsRoutes } from "./comments"
 export const setupRoutes = async (app: FastifyInstance) => {
   // Add a direct test route to verify routing works at all
   if (envVars.NODE_ENV === "test") {
-    app.get("/api/comments/test-direct", async (_request, _reply) => {
+    app.get("/api/comments/test-direct", (_request, _reply) => {
       return { message: "Direct route works!" }
     })
   }
@@ -15,7 +15,7 @@ export const setupRoutes = async (app: FastifyInstance) => {
     async (fastify) => {
       // Add a simple test route to verify routing works
       if (envVars.NODE_ENV === "test") {
-        fastify.get("/test", async (_request, _reply) => {
+        fastify.get("/test", (_request, _reply) => {
           return { message: "Test route works!" }
         })
       }
