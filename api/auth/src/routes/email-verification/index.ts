@@ -1,5 +1,4 @@
 import type { FastifyInstance } from "fastify"
-import { setSessionCookie } from "@/auth/cookies"
 import { createSession, invalidateAllSessions } from "@/auth/session"
 import { findUserByEmail } from "@/lib/db"
 import {
@@ -7,6 +6,7 @@ import {
   sendVerificationEmail,
   verifyVerificationCode,
 } from "@/lib/helper"
+import { setSessionCookie } from "@/middleware/auth"
 
 export const setupEmailVerificationRoutes = (app: FastifyInstance) => {
   // Send verification email endpoint
@@ -47,13 +47,18 @@ export const setupEmailVerificationRoutes = (app: FastifyInstance) => {
         if (!request.context?.db) {
           throw new Error("Database not available")
         }
-
-        const user = await findUserByEmail(request as any, email)
-
+        let user: Awaited<ReturnType<typeof findUserByEmail>> | null = null
+        try {
+          user = await findUserByEmail(request as any, email)
+        } catch {
+          // Avoid user enumeration
+          return {
+            message: "If the account exists, a verification email was sent",
+          }
+        }
         if (user.emailVerifiedAt) {
           return { message: "Email already verified" }
         }
-
         const verificationCode = await generateVerificationCode(
           request as any,
           user.id,
@@ -68,8 +73,9 @@ export const setupEmailVerificationRoutes = (app: FastifyInstance) => {
           verificationCode,
           user.id
         )
-
-        return { message: "Verification email sent" }
+        return {
+          message: "If the account exists, a verification email was sent",
+        }
       } catch (error) {
         console.error("Send verification email error:", error)
         throw error
@@ -166,11 +172,7 @@ export const setupEmailVerificationRoutes = (app: FastifyInstance) => {
         const session = await createSession(db, user.id)
 
         // Set session cookie
-        setSessionCookie(
-          request as any,
-          session.id,
-          new Date(session.expiresAt)
-        )
+        setSessionCookie(reply, session.id, new Date(session.expiresAt))
 
         return { message: "Email verified successfully" }
       } catch (error) {

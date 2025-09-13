@@ -66,8 +66,9 @@ export const setupUsersRoutes = (app: FastifyInstance) => {
           orderBy?: string
           order?: "asc" | "desc"
         }
-
-        const offset = (page - 1) * limit
+        const safeOrder = order === "asc" ? "asc" : "desc"
+        const safeLimit = Math.min(Math.max(limit, 1), 100)
+        const offset = (page - 1) * safeLimit
 
         // Build query
         let query = db
@@ -112,15 +113,15 @@ export const setupUsersRoutes = (app: FastifyInstance) => {
 
         // Apply sorting
         if (orderBy === "email") {
-          query = query.orderBy("users.email", order)
+          query = query.orderBy("users.email", safeOrder)
         } else if (orderBy === "name") {
-          query = query.orderBy("userProfiles.fullName", order)
+          query = query.orderBy("userProfiles.fullName", safeOrder)
         } else {
-          query = query.orderBy("users.id", order)
+          query = query.orderBy("users.id", safeOrder)
         }
 
         // Apply pagination
-        query = query.limit(limit).offset(offset)
+        query = query.limit(safeLimit).offset(offset)
 
         const users = await query.execute()
 
@@ -188,6 +189,13 @@ export const setupUsersRoutes = (app: FastifyInstance) => {
         }
 
         const { fullName } = request.body as { fullName: string }
+        const newFullName = (fullName ?? "").trim()
+        if (!newFullName) {
+          return reply
+            .status(400)
+            .send({ message: "Full name cannot be empty" })
+        }
+
         const userId = request.user.id
         const db = request.context.db
 
@@ -195,7 +203,7 @@ export const setupUsersRoutes = (app: FastifyInstance) => {
         const result = await db
           .updateTable("userProfiles")
           .set({
-            fullName: fullName.trim(),
+            fullName: newFullName,
           })
           .where("id", "=", userId)
           .executeTakeFirst()

@@ -1,9 +1,9 @@
 import { generateCodeVerifier, generateState, OAuth2RequestError } from "arctic"
 import type { FastifyInstance } from "fastify"
-import { setSessionCookie } from "@/auth/cookies"
 import { createSession } from "@/auth/session"
 import { insertOAuthUser } from "@/lib/helper"
 import { initializeGoogleAuth } from "@/lib/oauth"
+import { setSessionCookie } from "@/middleware/auth"
 import { envVars } from "../../env-vars"
 
 export const setupOAuthRoutes = (app: FastifyInstance) => {
@@ -199,11 +199,7 @@ export const setupOAuthRoutes = (app: FastifyInstance) => {
           const session = await createSession(request.context.db, user.id)
 
           // Set session cookie
-          setSessionCookie(
-            request as any,
-            session.id,
-            new Date(session.expiresAt)
-          )
+          setSessionCookie(reply, session.id, new Date(session.expiresAt))
 
           return {
             id: user.id,

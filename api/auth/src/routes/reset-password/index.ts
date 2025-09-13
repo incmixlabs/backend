@@ -1,8 +1,7 @@
 import type { FastifyInstance } from "fastify"
-import { setSessionCookie } from "@/auth/cookies"
 import { createSession, invalidateAllSessions } from "@/auth/session"
 import { sendForgetPasswordEmail } from "@/lib/helper"
-import { authMiddleware } from "@/middleware/auth"
+import { authMiddleware, setSessionCookie } from "@/middleware/auth"
 
 export const setupResetPasswordRoutes = (app: FastifyInstance) => {
   // Send forget password email
@@ -363,11 +362,7 @@ export const setupResetPasswordRoutes = (app: FastifyInstance) => {
         const newSession = await createSession(db, userId)
 
         // Set new session cookie
-        setSessionCookie(
-          request as any,
-          newSession.id,
-          new Date(newSession.expiresAt)
-        )
+        setSessionCookie(reply, newSession.id, new Date(newSession.expiresAt))
 
         return {
           message: "Password reset successfully",
