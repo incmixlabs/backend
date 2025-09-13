@@ -1,44 +1,43 @@
 /**
- * Projects API Routes - Implemented Logic
+ * Projects API Routes - Fully Implemented
  *
  * This file contains the complete business logic for project management endpoints,
  * adapted from the Hono reference implementation to work with Fastify.
  *
- * FULLY IMPLEMENTED ROUTES:
+ * ALL ROUTES ARE FULLY IMPLEMENTED:
  * - GET /projects-reference - Returns project reference data (statuses, roles, priorities)
  * - GET /orgs/:orgId - Lists projects for an organization (with auth & membership checks)
+ * - POST / - Create project (with createProject function handling duplicate names, member creation)
+ * - PUT /:id - Update project (with updateProject function handling data updates)
+ * - DELETE /:id - Delete project (with deleteProject function handling cascade deletions)
  * - GET /:id/members - Gets project members (with auth & membership checks)
  * - POST /:id/members - Add project members (with validation and duplicate checks)
  * - DELETE /:id/members - Remove project members (with owner protection)
- * - POST /:id/checklist - Add checklist item (fully implemented with addProjectChecklistItem function)
- * - PUT /:projectId/checklist/:checklistId - Update checklist item (fully implemented with updateProjectChecklistItem function)
- * - DELETE /:id/checklist - Remove checklist items (fully implemented with removeProjectChecklistItems function)
- *
- * PARTIALLY IMPLEMENTED ROUTES (Logic implemented, but missing database functions):
- * - POST / - Create project (needs createProject function in db.ts)
- * - PUT /:id - Update project (needs updateProject function in db.ts)
- * - DELETE /:id - Delete project (needs deleteProject function in db.ts)
+ * - POST /:id/checklist - Add checklist item (with addProjectChecklistItem function)
+ * - PUT /:projectId/checklist/:checklistId - Update checklist item (with updateProjectChecklistItem function)
+ * - DELETE /:id/checklist - Remove checklist items (with removeProjectChecklistItems function)
  *
  * All routes include:
  * - Authentication checks (request.user?.id)
  * - Authorization checks (org membership validation)
  * - Proper error handling with appropriate HTTP status codes
  * - Input validation where applicable
- *
- * TO COMPLETE THE IMPLEMENTATION:
- * Add the missing database functions in src/lib/db.ts as indicated by the TODO comments.
+ * - Complete database operations with all necessary functions in db.ts
  */
 
 import type { FastifyInstance } from "fastify"
 import {
   addProjectChecklistItem,
   addProjectMembers,
+  createProject,
+  deleteProject,
   getProjectById,
   getProjectMembers,
   getUserProjects,
   isOrgMember,
   removeProjectChecklistItems,
   removeProjectMembers,
+  updateProject,
   updateProjectChecklistItem,
 } from "@/lib/db"
 
@@ -232,15 +231,16 @@ export const setupProjectRoutes = (app: FastifyInstance) => {
             .send({ error: "Not a member of this organization" })
         }
 
-        // TODO: Implement actual project creation in database
-        // This requires createProject function in db.ts with:
-        // - Insert into projects table
-        // - Add creator as project member with owner role
-        // - Handle potential duplicate names within org
+        // Create project in database
+        const newProject = await createProject(
+          request as any,
+          projectData,
+          request.user.id
+        )
 
         const payload = {
-          id: "temp-id", // Should be generated ID from database
-          name: projectData.name,
+          id: newProject.id,
+          name: newProject.name,
           message: "Project created successfully",
         }
         return reply.code(201).send(payload)
@@ -317,10 +317,9 @@ export const setupProjectRoutes = (app: FastifyInstance) => {
             .send({ error: "Not authorized to update this project" })
         }
 
-        // TODO: Implement actual project update in database
-        // This requires updateProject function in db.ts with:
-        // - Update projects table with new data
-        // - Update updatedBy and updatedAt fields
+        // Update project in database
+        const updateData = request.body as any
+        await updateProject(request as any, id, updateData, request.user.id)
 
         return { message: "Project updated successfully" }
       } catch (error) {
@@ -383,11 +382,8 @@ export const setupProjectRoutes = (app: FastifyInstance) => {
             .send({ error: "Not authorized to delete this project" })
         }
 
-        // TODO: Implement actual project deletion in database
-        // This requires deleteProject function in db.ts with:
-        // - Delete from projectMembers table
-        // - Delete from projects table
-        // - Handle cascade deletions for tasks, etc.
+        // Delete project from database
+        await deleteProject(request as any, id)
 
         return { message: "Project deleted successfully" }
       } catch (error) {
