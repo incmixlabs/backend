@@ -215,8 +215,13 @@ export const setupUsersRoutes = (app: FastifyInstance) => {
         // Get updated profile
         const updatedProfile = await db
           .selectFrom("userProfiles")
-          .select(["id", "fullName", "email"])
-          .where("id", "=", userId)
+          .innerJoin("users", "users.id", "userProfiles.id")
+          .select([
+            "userProfiles.id as id",
+            "userProfiles.fullName as fullName",
+            "users.email as email",
+          ])
+          .where("userProfiles.id", "=", userId)
           .executeTakeFirst()
 
         return {

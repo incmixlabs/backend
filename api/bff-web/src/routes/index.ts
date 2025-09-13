@@ -60,11 +60,11 @@ export const setupRoutes = async (app: FastifyInstance) => {
   })
 
   // Timestamp endpoints for compatibility
-  app.get("/api/timestamp", async (_request, reply) => {
+  app.get("/api/timestamp", (_request, reply) => {
     return reply.send({ time: Date.now() })
   })
 
-  app.get("/api/timestamp-nano", async (_request, reply) => {
+  app.get("/api/timestamp-nano", (_request, reply) => {
     const ns = process.hrtime.bigint()
     return reply.send({ time: ns.toString(), monotonic: true })
   })
@@ -88,12 +88,12 @@ export const setupRoutes = async (app: FastifyInstance) => {
   // Custom reference endpoints that serve Scalar UI with corrected server URLs
   // IMPORTANT: These must be registered AFTER proxy to override the proxy routes
   for (const [_serviceName, config] of Object.entries(MIGRATED_SERVICES)) {
-    app.get(`${config.prefix}/reference`, async (_request, reply) => {
+    app.get(`${config.prefix}/reference`, (_request, reply) => {
       // Redirect to reference/ with trailing slash
       return reply.code(301).redirect(`${config.prefix}/reference/`)
     })
 
-    app.get(`${config.prefix}/reference/`, async (_request, reply) => {
+    app.get(`${config.prefix}/reference/`, (_request, reply) => {
       const html = `<!doctype html>
 <html>
   <head>
@@ -112,7 +112,7 @@ export const setupRoutes = async (app: FastifyInstance) => {
         "_integration": "fastify",
         "layout": "modern",
         "showSidebar": true,
-        "searchHotKey": "k", 
+        "searchHotKey": "k",
         "darkMode": true,
         "spec": {
           "url": "${config.prefix}/docs/json"
@@ -137,7 +137,7 @@ export const setupRoutes = async (app: FastifyInstance) => {
   }
 
   // Catch-all for non-migrated services - return 503 Service Unavailable
-  app.all("/api/*", async (request, reply) => {
+  app.all("/api/*", (request, reply) => {
     const path = request.url
     const availableServices = Object.keys(MIGRATED_SERVICES).join(", ")
 
