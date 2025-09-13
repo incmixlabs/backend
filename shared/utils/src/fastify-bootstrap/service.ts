@@ -16,16 +16,15 @@ export interface APIServices {
   setupMiddleware?: (app: FastifyInstance) => Promise<void>
 }
 
-export const defaultSetupMiddleware = (app: FastifyInstance) => {
+export const defaultSetupMiddleware = async (app: FastifyInstance) => {
   // Basic request logging
 
-  app.addHook("onRequest", (request, reply) => {
+  app.addHook("onRequest", async (request, reply) => {
     const incoming = request.headers["x-request-id"] as string | undefined
     const requestId = incoming ?? request.id ?? randomUUID()
     reply.header("X-Request-Id", requestId)
   })
 }
-
 export function createAPIService({
   name,
   setupRoutes,
