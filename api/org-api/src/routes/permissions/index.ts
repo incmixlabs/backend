@@ -34,14 +34,44 @@ export const setupPermissionRoutes = (app: FastifyInstance) => {
               actions: {
                 type: "array",
                 items: { type: "string" },
+                description: "Available actions in the permission system",
               },
               subjects: {
                 type: "array",
                 items: { type: "string" },
+                description:
+                  "Available subjects (resources) in the permission system",
               },
               roles: {
                 type: "array",
                 items: { type: "string" },
+                description: "Available user roles",
+              },
+              roleDefinitions: {
+                type: "object",
+                description:
+                  "Detailed definitions of each role with capabilities",
+                additionalProperties: {
+                  type: "object",
+                  properties: {
+                    description: { type: "string" },
+                    level: { type: "number" },
+                    capabilities: {
+                      type: "array",
+                      items: { type: "string" },
+                    },
+                  },
+                },
+              },
+              actionDescriptions: {
+                type: "object",
+                description: "Descriptions of what each action allows",
+                additionalProperties: { type: "string" },
+              },
+              subjectDescriptions: {
+                type: "object",
+                description: "Descriptions of what each subject represents",
+                additionalProperties: { type: "string" },
               },
             },
           },
@@ -49,11 +79,86 @@ export const setupPermissionRoutes = (app: FastifyInstance) => {
       },
     },
     async (_request, _reply) => {
-      // TODO: Implement permissions reference logic
+      // Import the actual permission constants from the utils package
+      const { actions, subjects } = await import("@incmix/utils/types")
+      const { UserRoles, USER_ROLES } = await import("@incmix/utils/types")
+
+      // Build comprehensive reference data from the actual system constants
       const referenceData = {
-        actions: ["create", "read", "update", "delete", "manage"],
-        subjects: ["User", "Project", "Task", "org"],
-        roles: ["owner", "admin", "member", "viewer"],
+        actions: [...actions],
+        subjects: [...subjects],
+        roles: USER_ROLES.map((role) =>
+          role.replace("ROLE_", "").toLowerCase()
+        ),
+        roleDefinitions: {
+          owner: {
+            description: "Full access to organization and all resources",
+            level: 1,
+            capabilities: [
+              "manage all resources",
+              "billing access",
+              "member management",
+            ],
+          },
+          admin: {
+            description: "Administrative access to organization resources",
+            level: 2,
+            capabilities: [
+              "create/edit/delete resources",
+              "member management",
+              "project oversight",
+            ],
+          },
+          editor: {
+            description: "Can create and edit content",
+            level: 3,
+            capabilities: ["create/edit resources", "project participation"],
+          },
+          member: {
+            description: "Basic access to assigned resources",
+            level: 4,
+            capabilities: [
+              "read assigned resources",
+              "comment and collaborate",
+            ],
+          },
+          viewer: {
+            description: "Read-only access to permitted resources",
+            level: 5,
+            capabilities: ["read permitted resources"],
+          },
+          commenter: {
+            description: "Can view and comment on permitted resources",
+            level: 6,
+            capabilities: ["read and comment on permitted resources"],
+          },
+          guest: {
+            description: "Limited temporary access",
+            level: 7,
+            capabilities: ["read specific shared resources"],
+          },
+        },
+        actionDescriptions: {
+          manage: "Full control over the resource including all other actions",
+          create: "Create new instances of the resource",
+          read: "View and access the resource",
+          update: "Modify existing instances of the resource",
+          delete: "Remove instances of the resource",
+        },
+        subjectDescriptions: {
+          all: "All resources in the system",
+          Organisation: "Organization-level settings and configuration",
+          Member: "Organization members and their roles",
+          Project: "Projects within the organization",
+          Task: "Tasks within projects",
+          Comment: "Comments on various resources",
+          Document: "Documents and files",
+          Folder: "Folder organization and structure",
+          File: "Individual files and attachments",
+          ProjectMember: "Project-specific member roles and permissions",
+          Role: "Custom roles and permission sets",
+          Permission: "Individual permission definitions",
+        },
       }
 
       return referenceData

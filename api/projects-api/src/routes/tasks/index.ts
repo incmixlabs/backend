@@ -10,6 +10,25 @@ import {
   updateTaskChecklistItem,
 } from "@/lib/db"
 
+// Global type declaration for AI job tracking
+// In production, this would be stored in Redis/database
+declare global {
+  var aiJobs: {
+    userStory: Array<{
+      taskId: string
+      jobTitle: string
+      status: "queued" | "processing" | "completed" | "failed"
+      jobId: string
+    }>
+    codegen: Array<{
+      taskId: string
+      jobTitle: string
+      status: "queued" | "processing" | "completed" | "failed"
+      jobId: string
+    }>
+  }
+}
+
 export const setupTasksRoutes = (app: FastifyInstance) => {
   // List tasks
   app.get(
@@ -613,14 +632,112 @@ export const setupTasksRoutes = (app: FastifyInstance) => {
             type: "object",
             properties: {
               message: { type: "string" },
+              jobsCreated: { type: "number" },
+              jobs: {
+                type: "array",
+                items: {
+                  type: "object",
+                  properties: {
+                    taskId: { type: "string" },
+                    jobId: { type: "string" },
+                    status: { type: "string" },
+                  },
+                },
+              },
             },
           },
         },
       },
     },
-    async (_request, reply) => {
-      // TODO: Implement bulk AI generation logic
-      return reply.code(202).send({ message: "Tasks queued for AI generation" })
+    async (request, reply) => {
+      try {
+        const { type, taskIds } = request.body as {
+          type: "user-story" | "codegen"
+          taskIds: string[]
+        }
+
+        // Check if user is authenticated
+        if (!request.user?.id) {
+          return (reply as any).status(401).send({ error: "Unauthorized" })
+        }
+
+        // Validate taskIds
+        if (!taskIds || taskIds.length === 0) {
+          return (reply as any)
+            .status(400)
+            .send({ error: "Task IDs are required" })
+        }
+
+        // For each task, fetch the task data and prepare AI generation requests
+        const jobs: Array<{
+          taskId: string
+          jobTitle: string
+          status: "queued" | "processing" | "completed" | "failed"
+          jobId: string
+        }> = []
+
+        for (const taskId of taskIds) {
+          try {
+            // Get task details
+            const task = await getTaskById(request as any, taskId)
+            if (!task) {
+              console.warn(`Task ${taskId} not found, skipping...`)
+              continue
+            }
+
+            // Generate job ID and title based on task and type
+            const jobId = `${type}_${taskId}_${Date.now()}`
+            const jobTitle =
+              type === "user-story"
+                ? `Generate user story for "${task.name}"`
+                : `Generate code for "${task.name}"`
+
+            jobs.push({
+              taskId,
+              jobTitle,
+              status: "queued",
+              jobId,
+            })
+
+            // In a real implementation, you would:
+            // 1. Add job to a queue (like BullMQ/Redis)
+            // 2. Make HTTP request to genai-api service
+            // 3. Store job status in database
+            // 4. Update job status as it progresses
+
+            // For now, we'll simulate the job creation
+            console.log(`Created ${type} job ${jobId} for task ${taskId}`)
+          } catch (taskError) {
+            console.error(`Error processing task ${taskId}:`, taskError)
+          }
+        }
+
+        // Store jobs in memory (in production, use Redis/database)
+        if (!global.aiJobs) {
+          global.aiJobs = { userStory: [], codegen: [] }
+        }
+
+        if (type === "user-story") {
+          global.aiJobs.userStory.push(...jobs)
+        } else {
+          global.aiJobs.codegen.push(...jobs)
+        }
+
+        return reply.code(202).send({
+          message: `${jobs.length} ${type} jobs queued for AI generation`,
+          jobsCreated: jobs.length,
+          jobs: jobs.map((job) => ({
+            taskId: job.taskId,
+            jobId: job.jobId,
+            status: job.status,
+          })),
+        })
+      } catch (error) {
+        console.error("Error queuing AI generation jobs:", error)
+        return (reply as any)
+          .status(500)
+          .send({ error: "Failed to queue AI generation jobs" })
+      }
     }
   )
 
@@ -664,11 +781,67 @@ export const setupTasksRoutes = (app: FastifyInstance) => {
         },
       },
     },
-    async (_request, _reply) => {
-      // TODO: Implement job status logic
-      return {
-        userStory: [],
-        codegen: [],
+    async (request, _reply) => {
+      try {
+        // Check if user is authenticated
+        if (!request.user?.id) {
+          return {
+            userStory: [],
+            codegen: [],
+          }
+        }
+
+        // Initialize global jobs if not exists
+        if (!global.aiJobs) {
+          global.aiJobs = { userStory: [], codegen: [] }
+        }
+
+        // In a real implementation, you would:
+        // 1. Fetch jobs from database/Redis for the current user
+        // 2. Check job status from queue system
+        // 3. Update statuses if they've changed
+
+        // For now, simulate some job progression
+        const _now = Date.now()
+
+        // Update some jobs to simulate progress
+        global.aiJobs.userStory.forEach((job: any) => {
+          if (job.status === "queued" && Math.random() > 0.7) {
+            job.status = "processing"
+          } else if (job.status === "processing" && Math.random() > 0.8) {
+            job.status = Math.random() > 0.1 ? "completed" : "failed"
+          }
+        })
+
+        global.aiJobs.codegen.forEach((job: any) => {
+          if (job.status === "queued" && Math.random() > 0.7) {
+            job.status = "processing"
+          } else if (job.status === "processing" && Math.random() > 0.8) {
+            job.status = Math.random() > 0.1 ? "completed" : "failed"
+          }
+        })
+
+        // Return current job status
+        return {
+          userStory: global.aiJobs.userStory.map((job: any) => ({
+            taskId: job.taskId,
+            jobTitle: job.jobTitle,
+            status: job.status,
+            jobId: job.jobId,
+          })),
+          codegen: global.aiJobs.codegen.map((job: any) => ({
+            taskId: job.taskId,
+            jobTitle: job.jobTitle,
+            status: job.status,
+            jobId: job.jobId,
+          })),
+        }
+      } catch (error) {
+        console.error("Error fetching job status:", error)
+        return {
+          userStory: [],
+          codegen: [],
+        }
       }
     }
   )

@@ -1,6 +1,14 @@
 import type { FastifyInstance } from "fastify"
+import { setSessionCookie } from "@/auth/cookies"
+import { createSession, invalidateAllSessions } from "@/auth/session"
+import { findUserByEmail } from "@/lib/db"
+import {
+  generateVerificationCode,
+  sendVerificationEmail,
+  verifyVerificationCode,
+} from "@/lib/helper"
 
-export const setupEmailVerificationRoutes = async (app: FastifyInstance) => {
+export const setupEmailVerificationRoutes = (app: FastifyInstance) => {
   // Send verification email endpoint
   app.post(
     "/verification-email/send",
@@ -40,13 +48,26 @@ export const setupEmailVerificationRoutes = async (app: FastifyInstance) => {
           throw new Error("Database not available")
         }
 
-        // TODO: Implement findUserByEmail and verification logic
-        // const user = await findUserByEmail(email)
-        // if (user.emailVerifiedAt) {
-        //   return { message: "Email already verified" }
-        // }
-        // const verificationCode = await generateVerificationCode(user.id, email, "email_verification")
-        // await sendVerificationEmail(email, verificationCode, user.id)
+        const user = await findUserByEmail(request as any, email)
+
+        if (user.emailVerifiedAt) {
+          return { message: "Email already verified" }
+        }
+
+        const verificationCode = await generateVerificationCode(
+          request as any,
+          user.id,
+          email,
+          "email_verification",
+          request.context.db
+        )
+
+        await sendVerificationEmail(
+          request as any,
+          email,
+          verificationCode,
+          user.id
+        )
 
         return { message: "Verification email sent" }
       } catch (error) {
@@ -94,7 +115,7 @@ export const setupEmailVerificationRoutes = async (app: FastifyInstance) => {
         },
       },
     },
-    async (request, _reply) => {
+    async (request, reply) => {
       try {
         const { code, email } = request.body as { code: string; email: string }
 
@@ -102,18 +123,54 @@ export const setupEmailVerificationRoutes = async (app: FastifyInstance) => {
           throw new Error("Database not available")
         }
 
-        // TODO: Implement verification logic
-        // const user = await findUserByEmail(email)
-        // if (!user) {
-        //   return reply.status(404).send({ message: "User not found" })
-        // }
-        // const validCode = await verifyVerificationCode(user, code, "email_verification")
-        // if (!validCode) {
-        //   return reply.status(401).send({ message: "Invalid code" })
-        // }
-        // await invalidateAllSessions(user.id)
-        // const session = await createSession(user.id)
-        // await updateUserEmailVerified(user.id)
+        const db = request.context.db
+
+        // Find user by email
+        const user = await db
+          .selectFrom("users")
+          .selectAll()
+          .where("email", "=", email)
+          .executeTakeFirst()
+
+        if (!user) {
+          return reply.status(404).send({ message: "User not found" })
+        }
+
+        // Verify the code
+        const validCode = await verifyVerificationCode(
+          request as any,
+          { id: user.id, email: user.email },
+          code,
+          "email_verification"
+        )
+
+        if (!validCode) {
+          return reply
+            .status(401)
+            .send({ message: "Invalid or expired verification code" })
+        }
+
+        // Invalidate all existing sessions
+        await invalidateAllSessions(db, user.id)
+
+        // Update user's email verification status
+        await db
+          .updateTable("users")
+          .set({
+            emailVerifiedAt: new Date().toISOString(),
+          })
+          .where("id", "=", user.id)
+          .execute()
+
+        // Create new session
+        const session = await createSession(db, user.id)
+
+        // Set session cookie
+        setSessionCookie(
+          request as any,
+          session.id,
+          new Date(session.expiresAt)
+        )
 
         return { message: "Email verified successfully" }
       } catch (error) {

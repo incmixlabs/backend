@@ -179,6 +179,289 @@ export async function getProjectById(
   }
 }
 
+export async function createProject(
+  c: Context,
+  projectData: {
+    id?: string
+    name: string
+    orgId: string
+    description?: string
+    status?: string
+    startDate?: string
+    endDate?: string
+    company?: string
+    budget?: number
+    acceptanceCriteria?: string
+    checklist?: string
+    members?: string
+    logo?: string
+  },
+  userId: string
+) {
+  // Generate unique ID for the project if not provided
+  const projectId = projectData.id || crypto.randomUUID()
+
+  // Check if a project with the same name already exists in the org
+  const existingProject = await c
+    .get("db")
+    .selectFrom("projects")
+    .select("id")
+    .where((eb) =>
+      eb.and([
+        eb("orgId", "=", projectData.orgId),
+        eb("name", "=", projectData.name),
+      ])
+    )
+    .executeTakeFirst()
+
+  if (existingProject) {
+    throw new Error(
+      `A project with the name "${projectData.name}" already exists in this organization`
+    )
+  }
+
+  // Parse checklist if provided as string
+  let checklistArray = []
+  if (projectData.checklist) {
+    try {
+      checklistArray = JSON.parse(projectData.checklist)
+    } catch {
+      // If not valid JSON, treat as a single item
+      checklistArray = [
+        {
+          id: crypto.randomUUID(),
+          text: projectData.checklist,
+          checked: false,
+          order: 1,
+          createdAt: new Date().toISOString(),
+        },
+      ]
+    }
+  }
+
+  // Create the project
+  await c
+    .get("db")
+    .insertInto("projects")
+    .values({
+      id: projectId,
+      name: projectData.name,
+      orgId: projectData.orgId,
+      description: projectData.description || "",
+      status: (projectData.status as any) || "started",
+      startDate: projectData.startDate || null,
+      endDate: projectData.endDate || null,
+      company: projectData.company || "",
+      budget: projectData.budget || 0,
+      logo: projectData.logo || "",
+      acceptanceCriteria: projectData.acceptanceCriteria || "",
+      checklist: JSON.stringify(checklistArray),
+      createdBy: userId,
+      updatedBy: userId,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    })
+    .execute()
+
+  // Add the creator as a project member with owner role
+  await c
+    .get("db")
+    .insertInto("projectMembers")
+    .values({
+      projectId,
+      userId,
+      role: "owner",
+      roleId: 1, // Owner role ID
+      isOwner: true,
+      createdBy: userId,
+      updatedBy: userId,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    })
+    .execute()
+
+  // Parse and add additional members if provided
+  if (projectData.members) {
+    try {
+      const membersData = JSON.parse(projectData.members)
+      if (Array.isArray(membersData) && membersData.length > 0) {
+        // Filter out the creator to avoid duplicate entry
+        const additionalMembers = membersData.filter(
+          (m: any) => m.id !== userId
+        )
+
+        if (additionalMembers.length > 0) {
+          const membersToInsert = additionalMembers.map((member: any) => ({
+            projectId,
+            userId: member.id,
+            role: member.role || "member",
+            roleId: member.role === "admin" ? 2 : 3,
+            isOwner: false,
+            createdBy: userId,
+            updatedBy: userId,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+          }))
+
+          await c
+            .get("db")
+            .insertInto("projectMembers")
+            .values(membersToInsert)
+            .execute()
+        }
+      }
+    } catch (e) {
+      // If members parsing fails, continue without adding additional members
+      console.warn("Failed to parse members data:", e)
+    }
+  }
+
+  return {
+    id: projectId,
+    name: projectData.name,
+    orgId: projectData.orgId,
+  }
+}
+
+export async function updateProject(
+  c: Context,
+  projectId: string,
+  updateData: {
+    name?: string
+    description?: string
+    status?: string
+    startDate?: string
+    endDate?: string
+    budget?: number
+    company?: string
+    logo?: string
+    acceptanceCriteria?: string
+  },
+  userId: string
+) {
+  // Check if project exists
+  const existingProject = await c
+    .get("db")
+    .selectFrom("projects")
+    .select(["id", "name", "orgId"])
+    .where("id", "=", projectId)
+    .executeTakeFirst()
+
+  if (!existingProject) {
+    throw new Error("Project not found")
+  }
+
+  // If updating name, check for duplicates within the same org
+  if (updateData.name && updateData.name !== existingProject.name) {
+    const duplicateProject = await c
+      .get("db")
+      .selectFrom("projects")
+      .select("id")
+      .where((eb) =>
+        eb.and([
+          eb("orgId", "=", existingProject.orgId),
+          eb("name", "=", updateData.name!),
+          eb("id", "!=", projectId),
+        ])
+      )
+      .executeTakeFirst()
+
+    if (duplicateProject) {
+      throw new Error(
+        `A project with the name "${updateData.name}" already exists in this organization`
+      )
+    }
+  }
+
+  // Prepare update fields
+  const updateFields: any = {
+    updatedBy: userId,
+    updatedAt: new Date().toISOString(),
+  }
+
+  if (updateData.name !== undefined) updateFields.name = updateData.name
+  if (updateData.description !== undefined)
+    updateFields.description = updateData.description
+  if (updateData.status !== undefined) updateFields.status = updateData.status
+  if (updateData.startDate !== undefined)
+    updateFields.startDate = updateData.startDate || null
+  if (updateData.endDate !== undefined)
+    updateFields.endDate = updateData.endDate || null
+  if (updateData.budget !== undefined) updateFields.budget = updateData.budget
+  if (updateData.company !== undefined)
+    updateFields.company = updateData.company
+  if (updateData.logo !== undefined) updateFields.logo = updateData.logo
+  if (updateData.acceptanceCriteria !== undefined)
+    updateFields.acceptanceCriteria = updateData.acceptanceCriteria
+
+  // Update the project
+  await c
+    .get("db")
+    .updateTable("projects")
+    .set(updateFields)
+    .where("id", "=", projectId)
+    .execute()
+
+  return {
+    success: true,
+    message: "Project updated successfully",
+  }
+}
+
+export async function deleteProject(c: Context, projectId: string) {
+  // Check if project exists
+  const existingProject = await c
+    .get("db")
+    .selectFrom("projects")
+    .select("id")
+    .where("id", "=", projectId)
+    .executeTakeFirst()
+
+  if (!existingProject) {
+    throw new Error("Project not found")
+  }
+
+  // Start a transaction to ensure all deletions are atomic
+  // Note: If Kysely transaction support is not available, perform deletions in order
+
+  // 1. Delete task assignments for all tasks in the project
+  await c
+    .get("db")
+    .deleteFrom("taskAssignments")
+    .where((eb) =>
+      eb.exists(
+        eb
+          .selectFrom("tasks")
+          .select("tasks.id")
+          .whereRef("tasks.id", "=", "taskAssignments.taskId")
+          .where("tasks.projectId", "=", projectId)
+      )
+    )
+    .execute()
+
+  // 2. Delete all tasks in the project
+  await c
+    .get("db")
+    .deleteFrom("tasks")
+    .where("projectId", "=", projectId)
+    .execute()
+
+  // 3. Delete all project members
+  await c
+    .get("db")
+    .deleteFrom("projectMembers")
+    .where("projectId", "=", projectId)
+    .execute()
+
+  // 4. Delete the project itself
+  await c.get("db").deleteFrom("projects").where("id", "=", projectId).execute()
+
+  return {
+    success: true,
+    message: "Project and all related data deleted successfully",
+  }
+}
+
 export async function getUserProjects(
   c: Context,
   memberId: string,
