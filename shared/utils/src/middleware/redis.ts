@@ -4,6 +4,7 @@
 import type { OpenAPIHono } from "@hono/zod-openapi"
 import type { FastifyInstance, FastifyPluginAsync } from "fastify"
 import fp from "fastify-plugin"
+import rateLimit from "@fastify/rate-limit"
 import type { Env as HonoEnv } from "hono"
 import { createClient, type RedisClientType } from "redis"
 import { envVars } from "../env-config"
@@ -205,6 +206,12 @@ export function setupRedisMiddleware<T extends Env>(
  */
 const redisPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
   try {
+    // Register rate limiting plugin
+    await fastify.register(rateLimit, {
+      // Restrict to e.g. 5 requests per minute from each IP to the endpoints using default global (can be overridden per route)
+      max: 5,
+      timeWindow: "1 minute"
+    })
     const redisUrl = envVars.REDIS_URL
 
     if (!redisUrl) {
@@ -243,7 +250,7 @@ const redisPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
     }
 
     // Add health check route
-    fastify.get("/health/redis", async (_request, reply) => {
+    fastify.get("/health/redis", { config: { rateLimit: { max: 5, timeWindow: '1 minute' } } }, async (_request, reply) => {
       const status = getRedisStatus()
       const isHealthy = await checkRedisHealth()
 

@@ -105,7 +105,8 @@
     "kysely": "catalog:",
     "pg": "catalog:",
     "redis": "catalog:",
-    "zod": "catalog:"
+    "zod": "catalog:",
+    "@fastify/rate-limit": "^10.3.0"
   },
   "devDependencies": {
     "@casl/ability": "catalog:",
