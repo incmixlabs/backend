@@ -89,7 +89,10 @@ export const setupRoutes = async (app: FastifyInstance) => {
     )
 
     if (!config.upstream) {
-      console.warn(`Skipping proxy for ${serviceName}: upstream not configured`)
+      app.log.warn(
+        { serviceName, prefix: config.prefix },
+        "Skipping proxy registration: upstream URL not configured"
+      )
       continue
     }
 
@@ -104,7 +107,14 @@ export const setupRoutes = async (app: FastifyInstance) => {
 
   // Custom reference endpoints that serve Scalar UI with corrected server URLs
   // IMPORTANT: These must be registered AFTER proxy to override the proxy routes
-  for (const [_serviceName, config] of Object.entries(MIGRATED_SERVICES)) {
+  for (const [serviceName, config] of Object.entries(MIGRATED_SERVICES)) {
+    if (!config.upstream) {
+      app.log.warn(
+        { serviceName, prefix: config.prefix },
+        "Skipping reference endpoints: upstream URL not configured"
+      )
+      continue
+    }
     app.get(`${config.prefix}/reference`, (_request, reply) => {
       // Redirect to reference/ with trailing slash
       return reply.code(301).redirect(`${config.prefix}/reference/`)

@@ -116,25 +116,23 @@ export const setupWeatherRoutes = (app: FastifyInstance) => {
           searchParams.append("location", `${lat},${lon}`)
         }
 
-        // Redis caching
-        let redis: any
+        // Redis caching (read)
         const cacheKey = `weather:${searchParams.toString()}`
-
+        let redisRead: import("redis").RedisClientType | undefined
         try {
           if (envVars.REDIS_URL) {
-            redis = createClient({ url: envVars.REDIS_URL })
-            await redis.connect()
-
-            const cache = await redis.get(cacheKey)
+            redisRead = createClient({ url: envVars.REDIS_URL })
+            await redisRead.connect()
+            const cache = await redisRead.get(cacheKey)
             if (cache) {
               console.log("weather:cache hit")
-              const data = JSON.parse(cache) as WeatherForecast
-              await redis.quit()
-              return reply.send(data)
+              return reply.send(JSON.parse(cache) as WeatherForecast)
             }
           }
         } catch (redisError) {
           console.warn("Redis error, continuing without cache:", redisError)
+        } finally {
+          if (redisRead?.isOpen) await redisRead.quit()
         }
 
         // Fetch weather data from API
@@ -171,14 +169,17 @@ export const setupWeatherRoutes = (app: FastifyInstance) => {
             address?.city || weatherForecast.location?.name || "Unknown",
         }
 
-        // Cache the result
-        if (redis?.isOpen) {
+        // Cache the result (write)
+        if (envVars.REDIS_URL) {
+          let redisWrite: import("redis").RedisClientType | undefined
           try {
-            const cacheKeyWithoutApiKey = `weather:${searchParams.toString().replace(/apikey=[^&]+/, "")}`
-            await redis.setEx(cacheKeyWithoutApiKey, 3600, JSON.stringify(data)) // Cache for 1 hour
-            await redis.quit()
+            redisWrite = createClient({ url: envVars.REDIS_URL })
+            await redisWrite.connect()
+            await redisWrite.setEx(cacheKey, 3600, JSON.stringify(data)) // 1 hour
           } catch (cacheError) {
             console.warn("Failed to cache weather result:", cacheError)
+          } finally {
+            if (redisWrite?.isOpen) await redisWrite.quit()
           }
         }
 

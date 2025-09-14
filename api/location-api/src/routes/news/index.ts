@@ -67,29 +67,26 @@ export const setupNewsRoutes = (app: FastifyInstance) => {
           searchParams.append("gl", location.country_code.toLowerCase())
         }
 
-        // Redis caching
-        let redis: any
+        // Redis caching (read)
+        const cacheKey = `news:topics:${searchParams.toString()}`
+        let redisRead: import("redis").RedisClientType | undefined
         try {
           if (envVars.REDIS_URL) {
-            redis = createClient({ url: envVars.REDIS_URL })
-            await redis.connect()
-
-            const key = `news:topics:${searchParams.toString()}`
-            const cache = await redis.get(key)
-
+            redisRead = createClient({ url: envVars.REDIS_URL })
+            await redisRead.connect()
+            const cache = await redisRead.get(cacheKey)
             if (cache) {
               console.log("news:topics cache hit")
-              const parsedCache = JSON.parse(cache) as TopicApiResponse[]
-              await redis.quit()
-
               return reply.send({
-                topics: parsedCache,
+                topics: JSON.parse(cache) as TopicApiResponse[],
                 country: searchParams.get("gl") ?? "us",
               })
             }
           }
         } catch (redisError) {
           console.warn("Redis error, continuing without cache:", redisError)
+        } finally {
+          if (redisRead?.isOpen) await redisRead.quit()
         }
 
         // Fetch from API
@@ -106,14 +103,17 @@ export const setupNewsRoutes = (app: FastifyInstance) => {
         const data = (await res.json()) as { menu_links: TopicApiResponse[] }
         const topics = data.menu_links || []
 
-        // Cache the result
-        if (redis?.isOpen) {
+        // Cache the result (write)
+        if (envVars.REDIS_URL) {
+          let redisWrite: import("redis").RedisClientType | undefined
           try {
-            const key = `news:topics:${searchParams.toString().replace(/api_key=[^&]+/, "")}`
-            await redis.setEx(key, 3600, JSON.stringify(topics)) // Cache for 1 hour
-            await redis.quit()
+            redisWrite = createClient({ url: envVars.REDIS_URL })
+            await redisWrite.connect()
+            await redisWrite.setEx(cacheKey, 3600, JSON.stringify(topics)) // 1 hour
           } catch (cacheError) {
             console.warn("Failed to cache result:", cacheError)
+          } finally {
+            if (redisWrite?.isOpen) await redisWrite.quit()
           }
         }
 
@@ -235,25 +235,23 @@ export const setupNewsRoutes = (app: FastifyInstance) => {
           searchParams.append("gl", location.country_code.toLowerCase())
         }
 
-        // Redis caching
-        let redis: any
+        // Redis caching (read)
+        const cacheKey = `news:${searchParams.toString()}`
+        let redisRead: import("redis").RedisClientType | undefined
         try {
           if (envVars.REDIS_URL) {
-            redis = createClient({ url: envVars.REDIS_URL })
-            await redis.connect()
-
-            const key = `news:${searchParams.toString()}`
-            const cache = await redis.get(key)
-
+            redisRead = createClient({ url: envVars.REDIS_URL })
+            await redisRead.connect()
+            const cache = await redisRead.get(cacheKey)
             if (cache) {
               console.log("news cache hit")
-              const parsedCache = JSON.parse(cache) as NewsResponse
-              await redis.quit()
-              return reply.send(parsedCache)
+              return reply.send(JSON.parse(cache) as NewsResponse)
             }
           }
         } catch (redisError) {
           console.warn("Redis error, continuing without cache:", redisError)
+        } finally {
+          if (redisRead?.isOpen) await redisRead.quit()
         }
 
         // Fetch from API
@@ -285,14 +283,21 @@ export const setupNewsRoutes = (app: FastifyInstance) => {
           })
         )
 
-        // Cache the result
-        if (redis?.isOpen) {
+        // Cache the result (write)
+        if (envVars.REDIS_URL) {
+          let redisWrite: import("redis").RedisClientType | undefined
           try {
-            const key = `news:${searchParams.toString().replace(/api_key=[^&]+/, "")}`
-            await redis.setEx(key, 1800, JSON.stringify(formattedNews)) // Cache for 30 minutes
-            await redis.quit()
+            redisWrite = createClient({ url: envVars.REDIS_URL })
+            await redisWrite.connect()
+            await redisWrite.setEx(
+              cacheKey,
+              1800,
+              JSON.stringify(formattedNews)
+            ) // 30 minutes
           } catch (cacheError) {
             console.warn("Failed to cache result:", cacheError)
+          } finally {
+            if (redisWrite?.isOpen) await redisWrite.quit()
           }
         }
 
