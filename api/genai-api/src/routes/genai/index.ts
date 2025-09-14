@@ -1,12 +1,7 @@
-import { OpenAPIHono } from "@hono/zod-openapi"
 import { ERROR_UNAUTHORIZED } from "@incmix-api/utils"
-import {
-  processError,
-  UnauthorizedError,
-  zodError,
-} from "@incmix-api/utils/errors"
+import { processError, UnauthorizedError } from "@incmix-api/utils/errors"
 import { useTranslation } from "@incmix-api/utils/middleware"
-import { streamSSE } from "hono/streaming"
+import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify"
 import { FigmaService } from "@/lib/figma"
 import {
   generateMultipleUserStories as aiGenerateMultipleUserStories,
@@ -16,294 +11,564 @@ import {
   generateUserStoryFromImage,
 } from "@/lib/services"
 import {
-  generateCodeFromFigma,
-  generateMultipleUserStories,
-  generateProject,
-  generateProjectHierarchy,
-  generateUserStory,
-  generateUserStoryFromFigma,
-  getFigmaImage,
-} from "@/routes/genai/openapi"
-import type { HonoApp } from "@/types"
+  errorResponseSchema,
+  figmaSchema,
+  generateCodeFromFigmaSchema,
+  generateMultipleUserStoriesSchema,
+  generateProjectHierarchySchema,
+  generateUserStorySchema,
+  getFigmaImageResponseSchema,
+  getFigmaImageSchema,
+  multipleUserStoriesResponseSchema,
+  sseCodeDataSchema,
+  sseDataSchema,
+  userStoryResponseSchema,
+} from "./schemas"
 
-const genaiRoutes = new OpenAPIHono<HonoApp>({
-  defaultHook: zodError,
-})
-
-genaiRoutes.openapi(generateProject, async (c) => {
-  try {
-    const user = c.get("user")
-    const t = await useTranslation(c)
-    if (!user) {
-      const msg = await t.text(ERROR_UNAUTHORIZED)
-      throw new UnauthorizedError(msg)
-    }
-
-    const { prompt, userTier, templateId } = c.req.valid("json")
-
-    const template = await c
-      .get("db")
-      .selectFrom("storyTemplates")
-      .selectAll()
-      .where("id", "=", templateId)
-      .executeTakeFirst()
-
-    return streamSSE(c, async (stream) => {
-      const result = aiGenerateProject(c, prompt, template, userTier)
-      for await (const chunk of result.partialObjectStream) {
-        stream.writeSSE({
-          data: JSON.stringify(chunk),
-        })
-      }
-      stream.close()
-    })
-  } catch (error) {
-    return await processError<typeof generateUserStory>(c, error, [
-      "{{ default }}",
-      "generate-user-story",
-    ])
+const getDb = (request: FastifyRequest) => {
+  if (!request.context?.db) {
+    throw new Error("Database not available")
   }
-})
-genaiRoutes.openapi(generateProjectHierarchy, async (c) => {
-  try {
-    const user = c.get("user")
-    const t = await useTranslation(c)
-    if (!user) {
-      const msg = await t.text(ERROR_UNAUTHORIZED)
-      throw new UnauthorizedError(msg)
-    }
+  return request.context.db
+}
 
-    const { projectDescription, userTier, templateId } = c.req.valid("json")
+const streamSSE = async (
+  reply: FastifyReply,
+  streamFn: (stream: any) => Promise<void>
+) => {
+  reply.raw.setHeader("Content-Type", "text/event-stream")
+  reply.raw.setHeader("Cache-Control", "no-cache")
+  reply.raw.setHeader("Connection", "keep-alive")
 
-    let template: any
-    if (templateId) {
-      template = await c
-        .get("db")
-        .selectFrom("storyTemplates")
-        .selectAll()
-        .where("id", "=", templateId)
-        .executeTakeFirst()
-    }
+  const stream = {
+    writeSSE: async (data: { data?: string; event?: string }) => {
+      if (data.event) {
+        reply.raw.write(`event: ${data.event}\n`)
+      }
+      if (data.data) {
+        reply.raw.write(`data: ${data.data}\n\n`)
+      }
+    },
+    close: () => {
+      reply.raw.end()
+    },
+  }
 
-    return streamSSE(c, async (stream) => {
+  await streamFn(stream)
+}
+
+export const setupGenaiRoutes = async (app: FastifyInstance) => {
+  app.post(
+    "/generate-project",
+    {
+      schema: {
+        description:
+          "Generate a project description, checklist, milestones, initial tasks",
+        tags: ["Project"],
+        security: [{ cookieAuth: [] }],
+        body: generateUserStorySchema,
+        response: {
+          200: {
+            description: "Returns the generated user story in markdown format",
+            content: {
+              "text/event-stream": {
+                schema: sseDataSchema,
+              },
+            },
+          },
+          400: {
+            description: "Error response when user story generation fails",
+            ...errorResponseSchema,
+          },
+          401: {
+            description: "Error response when not authenticated",
+            ...errorResponseSchema,
+          },
+          500: {
+            description: "Internal Server Error",
+            ...errorResponseSchema,
+          },
+        },
+      },
+    },
+    async (request: FastifyRequest, reply) => {
       try {
-        const result = aiGenerateProjectHierarchy(
-          c,
-          projectDescription,
-          template,
-          userTier
+        const user = request.user
+        const t = await useTranslation(request as any)
+        if (!user) {
+          const msg = await t.text(ERROR_UNAUTHORIZED)
+          throw new UnauthorizedError(msg)
+        }
+
+        const { prompt, userTier, templateId } = request.body as any
+
+        const template = await getDb(request)
+          .selectFrom("storyTemplates")
+          .selectAll()
+          .where("id", "=", templateId)
+          .executeTakeFirst()
+
+        return streamSSE(reply, async (stream) => {
+          const result = aiGenerateProject(
+            request as any,
+            prompt,
+            template,
+            userTier
+          )
+          for await (const chunk of result.partialObjectStream) {
+            await stream.writeSSE({
+              data: JSON.stringify(chunk),
+            })
+          }
+          stream.close()
+        })
+      } catch (error) {
+        return await processError(request as any, error, [
+          "{{ default }}",
+          "generate-user-story",
+        ])
+      }
+    }
+  )
+
+  app.post(
+    "/generate-project-hierarchy",
+    {
+      schema: {
+        description:
+          "Generate comprehensive project hierarchy with epics, features, and user stories from a project description",
+        tags: ["Project"],
+        security: [{ cookieAuth: [] }],
+        body: generateProjectHierarchySchema,
+        response: {
+          200: {
+            description:
+              "Streams the generated project hierarchy with epics, features, and stories",
+            content: {
+              "text/event-stream": {
+                schema: sseDataSchema,
+              },
+            },
+          },
+          400: {
+            description:
+              "Error response when project hierarchy generation fails",
+            ...errorResponseSchema,
+          },
+          401: {
+            description: "Error response when not authenticated",
+            ...errorResponseSchema,
+          },
+          500: {
+            description: "Internal Server Error",
+            ...errorResponseSchema,
+          },
+        },
+      },
+    },
+    async (request: FastifyRequest, reply) => {
+      try {
+        const user = request.user
+        const t = await useTranslation(request as any)
+        if (!user) {
+          const msg = await t.text(ERROR_UNAUTHORIZED)
+          throw new UnauthorizedError(msg)
+        }
+
+        const { projectDescription, userTier, templateId } = request.body as any
+
+        let template: any
+        if (templateId) {
+          template = await getDb(request)
+            .selectFrom("storyTemplates")
+            .selectAll()
+            .where("id", "=", templateId)
+            .executeTakeFirst()
+        }
+
+        return streamSSE(reply, async (stream) => {
+          try {
+            const result = aiGenerateProjectHierarchy(
+              request as any,
+              projectDescription,
+              template,
+              userTier
+            )
+            for await (const chunk of result.partialObjectStream) {
+              await stream.writeSSE({
+                data: JSON.stringify(chunk),
+              })
+            }
+            stream.close()
+          } catch (_error) {
+            await stream.writeSSE({
+              event: "error",
+              data: JSON.stringify({ error: "Stream processing failed" }),
+            })
+            stream.close()
+          }
+        })
+      } catch (error) {
+        return await processError(request as any, error, [
+          "{{ default }}",
+          "generate-project-hierarchy",
+        ])
+      }
+    }
+  )
+
+  app.post(
+    "/generate-user-story",
+    {
+      schema: {
+        description:
+          "Generate a user story from a prompt using AI (Claude for paid users, Gemini for free)",
+        tags: ["Tasks"],
+        security: [{ cookieAuth: [] }],
+        body: generateUserStorySchema,
+        response: {
+          200: {
+            description: "Returns the generated user story in markdown format",
+            content: {
+              "text/event-stream": {
+                schema: sseDataSchema,
+              },
+            },
+          },
+          400: {
+            description: "Error response when user story generation fails",
+            ...errorResponseSchema,
+          },
+          401: {
+            description: "Error response when not authenticated",
+            ...errorResponseSchema,
+          },
+          500: {
+            description: "Internal Server Error",
+            ...errorResponseSchema,
+          },
+        },
+      },
+    },
+    async (request: FastifyRequest, reply) => {
+      try {
+        const user = request.user
+        const t = await useTranslation(request as any)
+        if (!user) {
+          const msg = await t.text(ERROR_UNAUTHORIZED)
+          throw new UnauthorizedError(msg)
+        }
+
+        const { prompt, userTier, templateId } = request.body as any
+
+        const template = await getDb(request)
+          .selectFrom("storyTemplates")
+          .selectAll()
+          .where("id", "=", templateId)
+          .executeTakeFirst()
+
+        return streamSSE(reply, async (stream) => {
+          const result = aiGenerateUserStory(prompt, template, userTier)
+          for await (const chunk of result.partialObjectStream) {
+            await stream.writeSSE({
+              data: JSON.stringify(chunk),
+            })
+          }
+          stream.close()
+        })
+      } catch (error) {
+        return await processError(request as any, error, [
+          "{{ default }}",
+          "generate-user-story",
+        ])
+      }
+    }
+  )
+
+  app.post(
+    "/generate/figma",
+    {
+      schema: {
+        description:
+          "Generate a task from Figma URL using AI (Claude for paid users, Gemini for free)",
+        tags: ["Tasks"],
+        security: [{ cookieAuth: [] }],
+        body: figmaSchema,
+        response: {
+          200: {
+            description: "Returns the generated Story",
+            ...userStoryResponseSchema,
+          },
+          400: {
+            description: "Error response when task generation fails",
+            ...errorResponseSchema,
+          },
+          401: {
+            description: "Error response when not authenticated",
+            ...errorResponseSchema,
+          },
+          500: {
+            description: "Internal Server Error",
+            ...errorResponseSchema,
+          },
+        },
+      },
+    },
+    async (request: FastifyRequest, reply) => {
+      try {
+        const user = request.user
+        const t = await useTranslation(request as any)
+        if (!user) {
+          const msg = await t.text(ERROR_UNAUTHORIZED)
+          throw new UnauthorizedError(msg)
+        }
+
+        const { url, prompt, userTier, templateId } = request.body as any
+        const figmaService = new FigmaService()
+        const figmaImage = await figmaService.getFigmaImage(url)
+
+        const template = await getDb(request)
+          .selectFrom("storyTemplates")
+          .selectAll()
+          .where("id", "=", templateId)
+          .executeTakeFirst()
+
+        const userStory = await generateUserStoryFromImage(
+          figmaImage,
+          prompt,
+          userTier,
+          template
         )
-        for await (const chunk of result.partialObjectStream) {
-          await stream.writeSSE({
-            data: JSON.stringify(chunk),
-          })
-        }
-        stream.close()
-      } catch (_error) {
-        await stream.writeSSE({
-          event: "error",
-          data: JSON.stringify({ error: "Stream processing failed" }),
-        })
-        stream.close()
+
+        return reply.code(200).send({ ...userStory, imageUrl: figmaImage })
+      } catch (error) {
+        return await processError(request as any, error, [
+          "{{ default }}",
+          "generate-user-story-from-figma",
+        ])
       }
-    })
-  } catch (error) {
-    return await processError<typeof generateProjectHierarchy>(c, error, [
-      "{{ default }}",
-      "generate-project-hierarchy",
-    ])
-  }
-})
-
-genaiRoutes.openapi(generateUserStory, async (c) => {
-  try {
-    const user = c.get("user")
-    const t = await useTranslation(c)
-    if (!user) {
-      const msg = await t.text(ERROR_UNAUTHORIZED)
-      throw new UnauthorizedError(msg)
     }
+  )
 
-    const { prompt, userTier, templateId } = c.req.valid("json")
-
-    const template = await c
-      .get("db")
-      .selectFrom("storyTemplates")
-      .selectAll()
-      .where("id", "=", templateId)
-      .executeTakeFirst()
-
-    return streamSSE(c, async (stream) => {
-      const result = aiGenerateUserStory(prompt, template, userTier)
-      for await (const chunk of result.partialObjectStream) {
-        stream.writeSSE({
-          data: JSON.stringify(chunk),
-        })
-      }
-      stream.close()
-    })
-  } catch (error) {
-    return await processError<typeof generateUserStory>(c, error, [
-      "{{ default }}",
-      "generate-user-story",
-    ])
-  }
-})
-
-genaiRoutes.openapi(generateUserStoryFromFigma, async (c) => {
-  try {
-    const user = c.get("user")
-    const t = await useTranslation(c)
-    if (!user) {
-      const msg = await t.text(ERROR_UNAUTHORIZED)
-      throw new UnauthorizedError(msg)
-    }
-
-    const { url, prompt, userTier, templateId } = c.req.valid("json")
-    const figmaService = new FigmaService()
-    const figmaImage = await figmaService.getFigmaImage(url)
-
-    const template = await c
-      .get("db")
-      .selectFrom("storyTemplates")
-      .selectAll()
-      .where("id", "=", templateId)
-      .executeTakeFirst()
-
-    const userStory = await generateUserStoryFromImage(
-      figmaImage,
-      prompt,
-      userTier,
-      template
-    )
-
-    return c.json({ ...userStory, imageUrl: figmaImage }, 200)
-  } catch (error) {
-    return await processError<typeof generateUserStoryFromFigma>(c, error, [
-      "{{ default }}",
-      "generate-user-story-from-figma",
-    ])
-  }
-})
-
-genaiRoutes.openapi(generateCodeFromFigma, async (c) => {
-  try {
-    const user = c.get("user")
-    const t = await useTranslation(c)
-    if (!user) {
-      const msg = await t.text(ERROR_UNAUTHORIZED)
-      throw new UnauthorizedError(msg)
-    }
-
-    const {
-      url,
-      userTier,
-      framework,
-      styling,
-      typescript,
-      responsive,
-      accessibility,
-      componentLibrary,
-    } = c.req.valid("json")
-
-    const figmaService = new FigmaService()
-
-    // Create code generation options
-    const options = {
-      framework,
-      styling,
-      typescript,
-      responsive,
-      accessibility,
-      componentLibrary,
-    }
-
-    const result = await figmaService.generateReactFromFigma(
-      url,
-      userTier,
-      options
-    )
-
-    return streamSSE(c, async (stream) => {
+  app.post(
+    "/generate/code",
+    {
+      schema: {
+        description:
+          "Generate production-ready code from Figma designs with advanced features",
+        tags: ["Code Generation"],
+        security: [{ cookieAuth: [] }],
+        body: generateCodeFromFigmaSchema,
+        response: {
+          200: {
+            description: "Streams generated code with status updates",
+            content: {
+              "text/event-stream": {
+                schema: sseCodeDataSchema,
+              },
+            },
+          },
+          400: {
+            description: "Error response when code generation fails",
+            ...errorResponseSchema,
+          },
+          401: {
+            description: "Error response when not authenticated",
+            ...errorResponseSchema,
+          },
+          413: {
+            description:
+              "Design data too large - consider using a smaller design or specific node",
+            ...errorResponseSchema,
+          },
+          500: {
+            description: "Internal Server Error",
+            ...errorResponseSchema,
+          },
+        },
+      },
+    },
+    async (request: FastifyRequest, reply) => {
       try {
-        for await (const chunk of result.partialObjectStream) {
-          stream.writeSSE({
-            data: JSON.stringify(chunk),
-          })
+        const user = request.user
+        const t = await useTranslation(request as any)
+        if (!user) {
+          const msg = await t.text(ERROR_UNAUTHORIZED)
+          throw new UnauthorizedError(msg)
         }
-        stream.close()
-      } catch (_error) {
-        stream.writeSSE({
-          event: "error",
-          data: JSON.stringify({ error: "Stream processing failed" }),
+
+        const {
+          url,
+          userTier,
+          framework,
+          styling,
+          typescript,
+          responsive,
+          accessibility,
+          componentLibrary,
+        } = request.body as any
+
+        const figmaService = new FigmaService()
+
+        // Create code generation options
+        const options = {
+          framework,
+          styling,
+          typescript,
+          responsive,
+          accessibility,
+          componentLibrary,
+        }
+
+        const result = await figmaService.generateReactFromFigma(
+          url,
+          userTier,
+          options
+        )
+
+        return streamSSE(reply, async (stream) => {
+          try {
+            for await (const chunk of result.partialObjectStream) {
+              await stream.writeSSE({
+                data: JSON.stringify(chunk),
+              })
+            }
+            stream.close()
+          } catch (_error) {
+            await stream.writeSSE({
+              event: "error",
+              data: JSON.stringify({ error: "Stream processing failed" }),
+            })
+            stream.close()
+          }
         })
-        stream.close()
+      } catch (error) {
+        return await processError(request as any, error, [
+          "{{ default }}",
+          "generate-code-from-figma",
+        ])
       }
-    })
-  } catch (error) {
-    return await processError<typeof generateCodeFromFigma>(c, error, [
-      "{{ default }}",
-      "generate-code-from-figma",
-    ])
-  }
-})
-
-genaiRoutes.openapi(getFigmaImage, async (c) => {
-  try {
-    const user = c.get("user")
-    const t = await useTranslation(c)
-    if (!user) {
-      const msg = await t.text(ERROR_UNAUTHORIZED)
-      throw new UnauthorizedError(msg)
     }
+  )
 
-    const { url } = c.req.valid("json")
-    const figmaService = new FigmaService()
-    const figmaImage = await figmaService.getFigmaImage(url)
-    return c.json({ image: figmaImage }, 200)
-  } catch (error) {
-    return await processError<typeof getFigmaImage>(c, error, [
-      "{{ default }}",
-      "get-figma-image",
-    ])
-  }
-})
+  app.post(
+    "/get-figma-image",
+    {
+      schema: {
+        description: "Get Figma Image",
+        tags: ["Tasks"],
+        security: [{ cookieAuth: [] }],
+        body: getFigmaImageSchema,
+        response: {
+          200: {
+            description: "Returns the generated image",
+            ...getFigmaImageResponseSchema,
+          },
+          400: {
+            description: "Error response when image generation fails",
+            ...errorResponseSchema,
+          },
+          401: {
+            description: "Error response when not authenticated",
+            ...errorResponseSchema,
+          },
+          500: {
+            description: "Internal Server Error",
+            ...errorResponseSchema,
+          },
+        },
+      },
+    },
+    async (request: FastifyRequest, reply) => {
+      try {
+        const user = request.user
+        const t = await useTranslation(request as any)
+        if (!user) {
+          const msg = await t.text(ERROR_UNAUTHORIZED)
+          throw new UnauthorizedError(msg)
+        }
 
-genaiRoutes.openapi(generateMultipleUserStories, async (c) => {
-  try {
-    const user = c.get("user")
-    const t = await useTranslation(c)
-    if (!user) {
-      const msg = await t.text(ERROR_UNAUTHORIZED)
-      throw new UnauthorizedError(msg)
+        const { url } = request.body as any
+        const figmaService = new FigmaService()
+        const figmaImage = await figmaService.getFigmaImage(url)
+        return reply.code(200).send({ image: figmaImage })
+      } catch (error) {
+        return await processError(request as any, error, [
+          "{{ default }}",
+          "get-figma-image",
+        ])
+      }
     }
+  )
 
-    const { description, successCriteria, checklist, userTier, templateId } =
-      c.req.valid("json")
+  app.post(
+    "/generate-multiple-user-stories",
+    {
+      schema: {
+        description:
+          "Generate 3 user stories from project description, success criteria, and checklist using AI (Claude for paid users, Gemini for free)",
+        tags: ["Tasks"],
+        security: [{ cookieAuth: [] }],
+        body: generateMultipleUserStoriesSchema,
+        response: {
+          200: {
+            description: "Returns an array of 3 generated user stories",
+            ...multipleUserStoriesResponseSchema,
+          },
+          400: {
+            description: "Error response when user story generation fails",
+            ...errorResponseSchema,
+          },
+          401: {
+            description: "Error response when not authenticated",
+            ...errorResponseSchema,
+          },
+          500: {
+            description: "Internal Server Error",
+            ...errorResponseSchema,
+          },
+        },
+      },
+    },
+    async (request: FastifyRequest, reply) => {
+      try {
+        const user = request.user
+        const t = await useTranslation(request as any)
+        if (!user) {
+          const msg = await t.text(ERROR_UNAUTHORIZED)
+          throw new UnauthorizedError(msg)
+        }
 
-    const template = await c
-      .get("db")
-      .selectFrom("storyTemplates")
-      .selectAll()
-      .where("id", "=", templateId)
-      .executeTakeFirst()
+        const {
+          description,
+          successCriteria,
+          checklist,
+          userTier,
+          templateId,
+        } = request.body as any
 
-    const userStories = await aiGenerateMultipleUserStories(
-      c,
-      description,
-      successCriteria,
-      checklist,
-      userTier,
-      template
-    )
+        const template = await getDb(request)
+          .selectFrom("storyTemplates")
+          .selectAll()
+          .where("id", "=", templateId)
+          .executeTakeFirst()
 
-    return c.json({ userStories }, 200)
-  } catch (error) {
-    return await processError(c, error, [
-      "{{ default }}",
-      "generate-multiple-user-stories",
-    ])
-  }
-})
+        const userStories = await aiGenerateMultipleUserStories(
+          request as any,
+          description,
+          successCriteria,
+          checklist,
+          userTier,
+          template
+        )
 
-export default genaiRoutes
+        return reply.code(200).send({ userStories })
+      } catch (error) {
+        return await processError(request as any, error, [
+          "{{ default }}",
+          "generate-multiple-user-stories",
+        ])
+      }
+    }
+  )
+}

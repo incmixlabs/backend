@@ -1,19 +1,22 @@
-import { z } from "zod"
+export interface StoryTemplate {
+  id: number
+  name: string
+  content: string
+  createdAt: Date
+  updatedAt: Date
+  createdBy?: string
+}
 
-export const storyTemplateSchema = z.object({
-  id: z.number(),
-  name: z.string(),
-  content: z.string(),
-  createdAt: z.date(),
-  updatedAt: z.date(),
-})
+export interface NewStoryTemplate {
+  name: string
+  content: string
+}
 
-export type StoryTemplate = z.infer<typeof storyTemplateSchema>
-
-export const newStoryTemplateSchema = storyTemplateSchema.omit({
-  id: true,
-  createdAt: true,
-  updatedAt: true,
-})
-
-export const updatedStoryTemplateSchema = storyTemplateSchema.partial()
+export interface UpdateStoryTemplate {
+  id?: number
+  name?: string
+  content?: string
+  createdAt?: Date
+  updatedAt?: Date
+  createdBy?: string
+}

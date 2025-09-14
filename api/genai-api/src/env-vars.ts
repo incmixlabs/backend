@@ -1,5 +1,6 @@
 import { createEnvConfig, type GenAIEnv } from "@incmix-api/utils/env-config"
 
+export { Services } from "@incmix-api/utils/env-config"
 // Use the new env-config system with dotenv-mono
 // This will automatically merge:
 // 1. Root .env file

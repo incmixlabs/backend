@@ -2,16 +2,67 @@ import { createAnthropic } from "@ai-sdk/anthropic"
 import { createGoogleGenerativeAI } from "@ai-sdk/google"
 import type { StoryTemplate } from "@incmix-api/utils/db-schema"
 import { generateText, streamObject } from "ai"
+import { z } from "zod"
 import { envVars } from "@/env-vars"
-import {
-  type MultipleUserStoriesResponse,
-  MultipleUserStoriesResponseSchema,
-  ProjectHierarchyResponseSchema,
-  type UserStoryResponse,
-  UserStoryResponseSchema,
+import type {
+  MultipleUserStoriesResponse,
+  UserStoryResponse,
 } from "@/routes/genai/types"
 import type { Context } from "@/types"
 import { type AIModel, MODEL_MAP } from "./constants"
+
+// Zod schemas for AI SDK - required by streamObject
+const UserStoryResponseSchema = z.object({
+  userStory: z.object({
+    description: z.string(),
+    acceptanceCriteria: z.array(z.string()),
+    checklist: z.array(z.string()),
+  }),
+  imageUrl: z.string().url().optional(),
+})
+
+const MultipleUserStoriesResponseSchema = z.object({
+  userStories: z
+    .array(
+      z.object({
+        title: z.string(),
+        description: z.string(),
+        acceptanceCriteria: z.array(z.string()),
+        checklist: z.array(z.string()),
+      })
+    )
+    .length(3),
+})
+
+const ProjectHierarchyResponseSchema = z.object({
+  project: z.object({
+    title: z.string(),
+    description: z.string(),
+    epics: z.array(
+      z.object({
+        id: z.string(),
+        title: z.string(),
+        description: z.string(),
+        features: z.array(
+          z.object({
+            id: z.string(),
+            title: z.string(),
+            description: z.string(),
+            stories: z.array(
+              z.object({
+                id: z.string(),
+                title: z.string(),
+                description: z.string(),
+                acceptanceCriteria: z.array(z.string()),
+                estimatedPoints: z.number().optional(),
+              })
+            ),
+          })
+        ),
+      })
+    ),
+  }),
+})
 
 const anthropic = createAnthropic({
   apiKey: envVars.ANTHROPIC_API_KEY,

@@ -1,14 +1,11 @@
-import { createService } from "@incmix-api/utils"
 import { initDb } from "@incmix-api/utils/db-schema"
+import { createAPIService } from "@incmix-api/utils/fastify-bootstrap"
 import { startUserStoryWorker } from "@incmix-api/utils/queue"
 import type { ChecklistItem } from "@incmix-api/utils/zod-schema"
 import type { DeepPartial } from "ai"
 import { nanoid } from "nanoid"
-import { BASE_PATH } from "@/lib/constants"
-import { middlewares } from "@/middleware"
-import { routes } from "@/routes"
-import type { HonoApp } from "@/types"
-import { envVars } from "./env-vars"
+import { setupRoutes } from "@/routes"
+import { envVars, Services } from "./env-vars"
 import { generateUserStory } from "./lib/services"
 
 const mapToChecklistItems = (items: (string | undefined)[]): ChecklistItem[] =>
@@ -130,15 +127,9 @@ const worker = startUserStoryWorker(envVars, async (job) => {
 
 worker.run()
 
-const service = createService<HonoApp["Bindings"], HonoApp["Variables"]>({
-  name: "genai-api",
-  port: envVars.PORT,
-  basePath: BASE_PATH,
-  setupMiddleware: (app) => {
-    middlewares(app)
-  },
-  setupRoutes: (app) => routes(app),
-  bindings: envVars,
+const service = createAPIService({
+  name: Services.genai,
+  setupRoutes,
 })
 
 const { app, startServer } = service

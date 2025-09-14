@@ -1,11 +1,14 @@
-import { OpenAPIHono } from "@hono/zod-openapi"
+import fastify, { type FastifyInstance } from "fastify"
 import { beforeEach, describe, expect, it, vi } from "vitest"
-import type { HonoApp } from "../src/types"
 
 // Mock environment variables
 vi.mock("../src/env-vars", () => ({
   envVars: {
     DATABASE_URL: "postgresql://test",
+    AUTH_API_URL: "http://localhost:3000",
+    COOKIE_NAME: "test-cookie",
+    DOMAIN: "test.com",
+    INTL_API_URL: "http://localhost:3001",
   },
 }))
 
@@ -17,68 +20,11 @@ vi.mock("@incmix-api/utils/db-schema", () => ({
   initDb: mockInitDb,
 }))
 
-// Mock the setupHealthCheck function
-const mockSetupHealthCheck = vi.fn((app, config) => {
-  // Simulate the healthcheck routes
-  app.get("/healthcheck", (c) => {
-    return c.json({
-      status: "ok",
-      service: config.serviceName,
-      version: config.version,
-      timestamp: new Date().toISOString(),
-    })
-  })
-
-  app.get("/healthcheck/live", (c) => {
-    return c.json({
-      status: "ok",
-      service: config.serviceName,
-      version: config.version,
-      timestamp: new Date().toISOString(),
-    })
-  })
-
-  app.get("/healthcheck/ready", async (c) => {
-    const checks: any = {}
-
-    if (config.checks) {
-      for (const [name, check] of Object.entries(config.checks)) {
-        try {
-          const result = await (check as any)()
-          checks[name] = { status: result ? "healthy" : "unhealthy" }
-        } catch {
-          checks[name] = { status: "unhealthy" }
-        }
-      }
-    }
-
-    const hasUnhealthy = Object.values(checks).some(
-      (check: any) => check.status === "unhealthy"
-    )
-    const status = hasUnhealthy ? "error" : "ok"
-
-    return c.json(
-      {
-        status,
-        service: config.serviceName,
-        version: config.version,
-        checks,
-        timestamp: new Date().toISOString(),
-      },
-      hasUnhealthy ? 503 : 200
-    )
-  })
-})
-
-vi.mock("@incmix-api/utils", () => ({
-  setupHealthCheck: mockSetupHealthCheck,
-}))
-
 describe("Healthcheck Routes", () => {
-  let app: OpenAPIHono<HonoApp>
+  let app: FastifyInstance
   let mockDb: any
 
-  beforeEach(() => {
+  beforeEach(async () => {
     vi.clearAllMocks()
 
     // Setup mock database
@@ -94,82 +40,55 @@ describe("Healthcheck Routes", () => {
 
     mockInitDb.mockReturnValue(mockDb)
 
-    // Create a new app instance for each test
-    app = new OpenAPIHono<HonoApp>()
+    // Create a new Fastify app instance for each test
+    app = fastify({ logger: false })
 
-    // Call setupHealthCheck with the app
-    mockSetupHealthCheck(app, {
-      serviceName: "genai-api",
-      version: "1.0.0",
-      checks: {
-        database: async () => {
-          try {
-            const db = mockInitDb("postgresql://test")
-            if (!db) {
-              return false
-            }
-            await db.selectFrom("templates").selectAll().limit(1).execute()
-            return true
-          } catch {
-            return false
-          }
-        },
-      },
+    // Add context decorator
+    app.decorateRequest("context", null)
+
+    // Add middleware to set up context
+    app.addHook("preHandler", async (request) => {
+      request.context = { db: mockDb }
     })
+
+    // Import and setup healthcheck routes
+    const { setupHealthcheckRoutes } = await import("../src/routes/healthcheck")
+    await setupHealthcheckRoutes(app)
+
+    await app.ready()
+  })
+
+  afterEach(async () => {
+    if (app) {
+      await app.close()
+    }
   })
 
   describe("GET /healthcheck", () => {
-    it("should return 200 OK with basic health info", async () => {
-      const response = await app.request("/healthcheck", {
+    it("should return 200 OK with health info", async () => {
+      const response = await app.inject({
         method: "GET",
+        url: "/healthcheck",
       })
 
-      expect(response.status).toBe(200)
-      const data = await response.json()
-      expect(data).toHaveProperty("status", "ok")
+      expect(response.statusCode).toBe(200)
+      const data = JSON.parse(response.payload)
+      expect(data).toHaveProperty("status")
       expect(data).toHaveProperty("service", "genai-api")
-      expect(data).toHaveProperty("version", "1.0.0")
       expect(data).toHaveProperty("timestamp")
-    })
-  })
-
-  describe("GET /healthcheck/live", () => {
-    it("should return 200 OK for liveness check", async () => {
-      const response = await app.request("/healthcheck/live", {
-        method: "GET",
-      })
-
-      expect(response.status).toBe(200)
-      const data = await response.json()
-      expect(data).toHaveProperty("status", "ok")
-      expect(data).toHaveProperty("service", "genai-api")
-      expect(data).toHaveProperty("version", "1.0.0")
-      expect(data).toHaveProperty("timestamp")
-    })
-
-    it("should have correct content-type header", async () => {
-      const response = await app.request("/healthcheck/live", {
-        method: "GET",
-      })
-
-      expect(response.headers.get("content-type")).toContain("application/json")
-    })
-  })
-
-  describe("GET /healthcheck/ready", () => {
-    it("should return 200 OK when database is healthy", async () => {
-      const response = await app.request("/healthcheck/ready", {
-        method: "GET",
-      })
-
-      expect(response.status).toBe(200)
-      const data = await response.json()
-      expect(data).toHaveProperty("status", "ok")
-      expect(data).toHaveProperty("service", "genai-api")
-      expect(data).toHaveProperty("version", "1.0.0")
       expect(data).toHaveProperty("checks")
-      expect(data.checks).toHaveProperty("database")
-      expect(data.checks.database).toHaveProperty("status", "healthy")
+    })
+
+    it("should return 200 when database is healthy", async () => {
+      const response = await app.inject({
+        method: "GET",
+        url: "/healthcheck",
+      })
+
+      expect(response.statusCode).toBe(200)
+      const data = JSON.parse(response.payload)
+      expect(data.status).toBe("UP")
+      expect(data.checks.database).toBe(true)
     })
 
     it("should return 503 when database check fails", async () => {
@@ -182,68 +101,81 @@ describe("Healthcheck Routes", () => {
         }),
       }))
 
-      const response = await app.request("/healthcheck/ready", {
+      const response = await app.inject({
         method: "GET",
+        url: "/healthcheck",
       })
 
-      expect(response.status).toBe(503)
-      const data = await response.json()
-      expect(data).toHaveProperty("status", "error")
-      expect(data.checks.database).toHaveProperty("status", "unhealthy")
+      expect(response.statusCode).toBe(503)
+      const data = JSON.parse(response.payload)
+      expect(data.status).toBe("DOWN")
+      expect(data.checks.database).toBe(false)
     })
 
-    it("should return 503 when database is null", async () => {
-      mockInitDb.mockReturnValueOnce(null)
-
-      const response = await app.request("/healthcheck/ready", {
+    it("should have correct content-type header", async () => {
+      const response = await app.inject({
         method: "GET",
+        url: "/healthcheck",
       })
 
-      expect(response.status).toBe(503)
-      const data = await response.json()
-      expect(data).toHaveProperty("status", "error")
-      expect(data.checks.database).toHaveProperty("status", "unhealthy")
+      expect(response.headers["content-type"]).toContain("application/json")
     })
   })
 
   describe("Response format validation", () => {
     it("should include timestamp in ISO format", async () => {
-      const response = await app.request("/healthcheck", {
+      const response = await app.inject({
         method: "GET",
+        url: "/healthcheck",
       })
 
-      const data = await response.json()
+      const data = JSON.parse(response.payload)
       expect(data.timestamp).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/)
 
       const date = new Date(data.timestamp)
       expect(date.toString()).not.toBe("Invalid Date")
     })
 
-    it("should have proper checks structure in ready endpoint", async () => {
-      const response = await app.request("/healthcheck/ready", {
+    it("should have proper checks structure", async () => {
+      const response = await app.inject({
         method: "GET",
+        url: "/healthcheck",
       })
 
-      const data = await response.json()
+      const data = JSON.parse(response.payload)
       expect(data.checks).toBeTypeOf("object")
-      expect(data.checks.database).toBeTypeOf("object")
-      expect(["healthy", "unhealthy"]).toContain(data.checks.database.status)
+      expect(typeof data.checks.database).toBe("boolean")
+      expect(typeof data.checks.envVars).toBe("boolean")
     })
   })
 
   describe("Error scenarios", () => {
     it("should handle database connection errors gracefully", async () => {
-      mockInitDb.mockImplementationOnce(() => {
-        throw new Error("Connection failed")
+      // Create a new app instance for this test to avoid hook conflicts
+      const testApp = fastify({ logger: false })
+      testApp.decorateRequest("context", null)
+
+      // Mock database to be unavailable
+      testApp.addHook("preHandler", async (request) => {
+        request.context = { db: null }
       })
 
-      const response = await app.request("/healthcheck/ready", {
+      const { setupHealthcheckRoutes } = await import(
+        "../src/routes/healthcheck"
+      )
+      await setupHealthcheckRoutes(testApp)
+      await testApp.ready()
+
+      const response = await testApp.inject({
         method: "GET",
+        url: "/healthcheck",
       })
 
-      expect(response.status).toBe(503)
-      const data = await response.json()
-      expect(data.status).toBe("error")
+      expect(response.statusCode).toBe(503)
+      const data = JSON.parse(response.payload)
+      expect(data.status).toBe("DOWN")
+
+      await testApp.close()
     })
 
     it("should handle unexpected errors in database query", async () => {
@@ -251,14 +183,15 @@ describe("Healthcheck Routes", () => {
         throw new Error("Unexpected error")
       })
 
-      const response = await app.request("/healthcheck/ready", {
+      const response = await app.inject({
         method: "GET",
+        url: "/healthcheck",
       })
 
-      expect(response.status).toBe(503)
-      const data = await response.json()
-      expect(data.status).toBe("error")
-      expect(data.checks.database.status).toBe("unhealthy")
+      expect(response.statusCode).toBe(503)
+      const data = JSON.parse(response.payload)
+      expect(data.status).toBe("DOWN")
+      expect(data.checks.database).toBe(false)
     })
   })
 })
