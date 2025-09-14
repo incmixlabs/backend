@@ -51,6 +51,7 @@ export const setupLocaleRoutes = (app: FastifyInstance) => {
             type: "object",
             properties: {
               code: { type: "string" },
+              name: { type: "string" },
               isDefault: { type: "boolean" },
             },
           },
@@ -106,6 +107,7 @@ export const setupLocaleRoutes = (app: FastifyInstance) => {
             type: "object",
             properties: {
               code: { type: "string" },
+              name: { type: "string" },
               isDefault: { type: "boolean" },
             },
           },
@@ -167,6 +169,7 @@ export const setupLocaleRoutes = (app: FastifyInstance) => {
             type: "object",
             properties: {
               code: { type: "string" },
+              name: { type: "string" },
               isDefault: { type: "boolean" },
             },
           },

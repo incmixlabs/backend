@@ -9,13 +9,21 @@ import type { IntlMessage, Locale } from "../types"
 // 2. Root .env.{NODE_ENV} file
 // 3. Service-specific .env file (if exists)
 // 4. Service-specific .env.{NODE_ENV} file (if exists)
-const envVars = createEnvConfig("intl")
+let envVars: any = null
+
+function getEnvVars() {
+  if (!envVars) {
+    envVars = createEnvConfig("intl")
+  }
+  return envVars
+}
 
 type Env = {
   Bindings: { INTL_API_URL: string; COOKIE_NAME: string }
 }
 export async function getDefaultLocale() {
-  const res = await fetch(`${envVars["INTL_API_URL"]}/locales/default`, {
+  const vars = getEnvVars()
+  const res = await fetch(`${vars["INTL_API_URL"]}/locales/default`, {
     method: "get",
   })
 
@@ -26,7 +34,8 @@ export async function getDefaultLocale() {
 }
 export async function getAllMessages(c: Context<Env>) {
   const locale = c.get("locale")
-  const res = await fetch(`${envVars["INTL_API_URL"]}/messages/${locale}`, {
+  const vars = getEnvVars()
+  const res = await fetch(`${vars["INTL_API_URL"]}/messages/${locale}`, {
     method: "get",
   })
 
@@ -35,7 +44,8 @@ export async function getAllMessages(c: Context<Env>) {
   return data as IntlMessage[]
 }
 export async function getDefaultMessages() {
-  const res = await fetch(`${envVars["INTL_API_URL"]}/messages/default`, {
+  const vars = getEnvVars()
+  const res = await fetch(`${vars["INTL_API_URL"]}/messages/default`, {
     method: "get",
   })
 

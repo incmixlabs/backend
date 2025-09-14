@@ -14,7 +14,7 @@ import {
   updateRoleWithPermissions,
 } from "../../lib/db"
 
-export const setupPermissionRoutes = (app: FastifyInstance) => {
+export const setupPermissionRoutes = async (app: FastifyInstance) => {
   // Setup authentication middleware
   const requireAuth = createAuthMiddleware()
   const optionalAuth = createOptionalAuthMiddleware()

@@ -88,6 +88,11 @@ export const setupRoutes = async (app: FastifyInstance) => {
       `Registering proxy for ${serviceName}: ${config.prefix} -> ${config.upstream}`
     )
 
+    if (!config.upstream) {
+      console.warn(`Skipping proxy for ${serviceName}: upstream not configured`)
+      continue
+    }
+
     await app.register(import("@fastify/http-proxy"), {
       upstream: config.upstream,
       prefix: config.prefix,
