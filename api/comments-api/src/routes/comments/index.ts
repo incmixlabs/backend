@@ -4,6 +4,7 @@ import {
   getCommentById,
   getProjectById,
   getTaskById,
+  isOrgMember,
   listProjectComments,
   listTaskComments,
 } from "@/lib/db"
@@ -132,6 +133,27 @@ export const setupCommentsRoutes = (app: FastifyInstance): void => {
         return reply.code(404).send({ message: "Task not found" })
       }
 
+      // Get the project to check organization membership
+      const project = await getProjectById(
+        context as any,
+        existingTask.projectId
+      )
+      if (!project) {
+        return reply.code(404).send({ message: "Project not found" })
+      }
+
+      // Check if user is member of the project's organization
+      const isMember = await isOrgMember(
+        context as any,
+        project.orgId,
+        authRequest.user.id
+      )
+      if (!isMember) {
+        return reply
+          .code(403)
+          .send({ message: "Not authorized to view task comments" })
+      }
+
       const comments = await listTaskComments(context as any, taskId)
       return comments
     }
@@ -203,7 +225,7 @@ export const setupCommentsRoutes = (app: FastifyInstance): void => {
             .values({
               id: commentId,
               content,
-              createdBy: authRequest.user!.id,
+              createdBy: authRequest.user?.id,
               createdAt: now,
             })
             .execute()
