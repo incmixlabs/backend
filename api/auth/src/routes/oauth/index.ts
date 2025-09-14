@@ -201,6 +201,21 @@ export const setupOAuthRoutes = (app: FastifyInstance) => {
           // Set session cookie
           setSessionCookie(reply, session.id, new Date(session.expiresAt))
 
+          // Clear ephemeral OAuth cookies
+          {
+            const domain = envVars.DOMAIN
+            const isIp = domain ? /^\d{1,3}(\.\d{1,3}){3}$/.test(domain) : false
+            const domainPart =
+              domain && !/localhost/i.test(domain) && !isIp
+                ? `; Domain=${domain}`
+                : ""
+            const securePart = envVars.NODE_ENV === "prod" ? "; Secure" : ""
+            reply.header("Set-Cookie", [
+              `state=; Path=/; HttpOnly; SameSite=None; Max-Age=0${securePart}${domainPart}`,
+              `code_verifier=; Path=/; HttpOnly; SameSite=None; Max-Age=0${securePart}${domainPart}`,
+            ])
+          }
+
           return {
             id: user.id,
             email: user.email,

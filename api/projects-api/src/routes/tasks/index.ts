@@ -19,12 +19,14 @@ declare global {
       jobTitle: string
       status: "queued" | "processing" | "completed" | "failed"
       jobId: string
+      userId: string
     }>
     codegen: Array<{
       taskId: string
       jobTitle: string
       status: "queued" | "processing" | "completed" | "failed"
       jobId: string
+      userId: string
     }>
   }
 }
@@ -674,6 +676,7 @@ export const setupTasksRoutes = (app: FastifyInstance) => {
           jobTitle: string
           status: "queued" | "processing" | "completed" | "failed"
           jobId: string
+          userId: string
         }> = []
 
         for (const taskId of taskIds) {
@@ -697,6 +700,7 @@ export const setupTasksRoutes = (app: FastifyInstance) => {
               jobTitle,
               status: "queued",
               jobId,
+              userId: request.user.id,
             })
 
             // In a real implementation, you would:
@@ -781,7 +785,7 @@ export const setupTasksRoutes = (app: FastifyInstance) => {
         },
       },
     },
-    async (request, _reply) => {
+    (request, _reply) => {
       try {
         // Check if user is authenticated
         if (!request.user?.id) {
@@ -823,18 +827,22 @@ export const setupTasksRoutes = (app: FastifyInstance) => {
 
         // Return current job status
         return {
-          userStory: global.aiJobs.userStory.map((job: any) => ({
-            taskId: job.taskId,
-            jobTitle: job.jobTitle,
-            status: job.status,
-            jobId: job.jobId,
-          })),
-          codegen: global.aiJobs.codegen.map((job: any) => ({
-            taskId: job.taskId,
-            jobTitle: job.jobTitle,
-            status: job.status,
-            jobId: job.jobId,
-          })),
+          userStory: global.aiJobs.userStory
+            .filter((job: any) => job.userId === request.user?.id)
+            .map((job: any) => ({
+              taskId: job.taskId,
+              jobTitle: job.jobTitle,
+              status: job.status,
+              jobId: job.jobId,
+            })),
+          codegen: global.aiJobs.codegen
+            .filter((job: any) => job.userId === request.user?.id)
+            .map((job: any) => ({
+              taskId: job.taskId,
+              jobTitle: job.jobTitle,
+              status: job.status,
+              jobId: job.jobId,
+            })),
         }
       } catch (error) {
         console.error("Error fetching job status:", error)
