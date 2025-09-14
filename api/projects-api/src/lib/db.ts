@@ -238,110 +238,113 @@ export async function createProject(
       ]
     }
   }
-
+  const db = c.get("db")
   // Create the project
-  await c
-    .get("db")
-    .insertInto("projects")
-    .values({
-      id: projectId,
-      name: projectData.name,
-      orgId: projectData.orgId,
-      description: projectData.description || "",
-      status: (projectData.status as any) || "started",
-      startDate: projectData.startDate || null,
-      endDate: projectData.endDate || null,
-      company: projectData.company || "",
-      budget: projectData.budget || 0,
-      logo: projectData.logo || "",
-      acceptanceCriteria: projectData.acceptanceCriteria || "",
-      checklist: JSON.stringify(checklistArray),
-      createdBy: userId,
-      updatedBy: userId,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    })
-    .execute()
 
-  // Add the creator as a project member with owner role
-  await c
-    .get("db")
-    .insertInto("projectMembers")
-    .values({
-      projectId,
-      userId,
-      role: "owner",
-      roleId: 1, // Owner role ID
-      isOwner: true,
-      createdBy: userId,
-      updatedBy: userId,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    })
-    .execute()
+  await db.transaction().execute(async (trx) => {
+    // Create the project
+    await trx
+      .insertInto("projects")
+      .values({
+        id: projectId,
+        name: projectData.name,
+        orgId: projectData.orgId,
+        description: projectData.description || "",
+        status: (projectData.status as any) || "started",
+        startDate: projectData.startDate || null,
+        endDate: projectData.endDate || null,
+        company: projectData.company || "",
+        budget: projectData.budget || 0,
+        logo: projectData.logo || "",
+        acceptanceCriteria: projectData.acceptanceCriteria || "",
+        checklist: JSON.stringify(checklistArray),
+        createdBy: userId,
+        updatedBy: userId,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      })
+      .execute()
 
-  // Parse and add additional members if provided
-  // Parse and add additional members if provided
-  if (projectData.members) {
-    try {
-      const membersData = JSON.parse(projectData.members)
-      if (Array.isArray(membersData) && membersData.length > 0) {
-        // Filter out creator and duplicates
-        const seen = new Set<string>()
-        const additionalMembers = membersData.filter(
-          (m: any) =>
-            m.id && m.id !== userId && !seen.has(m.id) && (seen.add(m.id), true)
-        )
-        // Validate each user exists and is org member
-        for (const m of additionalMembers) {
-          const user = await c
-            .get("db")
-            .selectFrom("userProfiles")
-            .select("id")
-            .where("id", "=", m.id)
-            .executeTakeFirst()
-          if (!user) throw new Error(`User ${m.id} not found`)
-          const orgMember = await c
-            .get("db")
-            .selectFrom("members")
-            .select("userId")
-            .where((eb) =>
-              eb.and([
-                eb("orgId", "=", projectData.orgId),
-                eb("userId", "=", m.id),
-              ])
-            )
-            .executeTakeFirst()
-          if (!orgMember)
-            throw new Error(
-              `User ${m.id} is not a member of org ${projectData.orgId}`
-            )
+    // Add the creator as a project member with owner role
+    await trx
+      .insertInto("projectMembers")
+      .values({
+        projectId,
+        userId,
+        role: "owner",
+        roleId: 1, // Owner role ID
+        isOwner: true,
+        createdBy: userId,
+        updatedBy: userId,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      })
+      .execute()
+
+    // Parse and add additional members if provided
+    // Parse and add additional members if provided
+    if (projectData.members) {
+      try {
+        const membersData = JSON.parse(projectData.members)
+        if (Array.isArray(membersData) && membersData.length > 0) {
+          // Filter out creator and duplicates
+          const seen = new Set<string>()
+          const additionalMembers = membersData.filter(
+            (m: any) =>
+              m.id &&
+              m.id !== userId &&
+              !seen.has(m.id) &&
+              (seen.add(m.id), true)
+          )
+          // Validate each user exists and is org member
+          for (const m of additionalMembers) {
+            const user = await trx
+              .selectFrom("userProfiles")
+              .select("id")
+              .where("id", "=", m.id)
+              .executeTakeFirst()
+            if (!user) throw new Error(`User ${m.id} not found`)
+            const orgMember = await c
+              .get("db")
+              .selectFrom("members")
+              .select("userId")
+              .where((eb) =>
+                eb.and([
+                  eb("orgId", "=", projectData.orgId),
+                  eb("userId", "=", m.id),
+                ])
+              )
+              .executeTakeFirst()
+            if (!orgMember)
+              throw new Error(
+                `User ${m.id} is not a member of org ${projectData.orgId}`
+              )
+          }
+          if (additionalMembers.length > 0) {
+            const membersToInsert = additionalMembers.map((member: any) => ({
+              projectId,
+              userId: member.id,
+              role: (member.role || "member").toLowerCase(),
+              roleId:
+                (member.role || "member").toLowerCase() === "admin" ? 2 : 3,
+              isOwner: false,
+              createdBy: userId,
+              updatedBy: userId,
+              createdAt: new Date().toISOString(),
+              updatedAt: new Date().toISOString(),
+            }))
+            await trx
+              .insertInto("projectMembers")
+              .values(membersToInsert)
+              .execute()
+          }
         }
-        if (additionalMembers.length > 0) {
-          const membersToInsert = additionalMembers.map((member: any) => ({
-            projectId,
-            userId: member.id,
-            role: (member.role || "member").toLowerCase(),
-            roleId: (member.role || "member").toLowerCase() === "admin" ? 2 : 3,
-            isOwner: false,
-            createdBy: userId,
-            updatedBy: userId,
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
-          }))
-          await c
-            .get("db")
-            .insertInto("projectMembers")
-            .values(membersToInsert)
-            .execute()
-        }
+      } catch (e) {
+        // If members parsing fails, continue without adding additional members
+        console.warn("Failed to parse members data:", e)
       }
-    } catch (e) {
-      // If members parsing fails, continue without adding additional members
-      console.warn("Failed to parse members data:", e)
     }
-  }
-
+  })
   return {
     id: projectId,
     name: projectData.name,
