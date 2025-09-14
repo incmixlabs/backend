@@ -1,6 +1,6 @@
 import type { FastifyInstance } from "fastify"
 
-export const setupLocaleRoutes = async (app: FastifyInstance) => {
+export const setupLocaleRoutes = (app: FastifyInstance) => {
   // Get all locales
   app.get(
     "/locales",

@@ -15,6 +15,14 @@ const MIGRATED_SERVICES = {
     prefix: "/api/projects",
     upstream: envVars.PROJECTS_API_URL?.replace("/api/projects", "") ?? "",
   },
+  intl: {
+    prefix: "/api/intl",
+    upstream: envVars.INTL_API_URL?.replace("/api/intl", "") ?? "",
+  },
+  location: {
+    prefix: "/api/location",
+    upstream: envVars.LOCATION_API_URL?.replace("/api/location", "") ?? "",
+  },
 } as const
 
 export const setupRoutes = async (app: FastifyInstance) => {

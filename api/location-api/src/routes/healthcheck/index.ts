@@ -1,7 +1,7 @@
 import type { FastifyInstance } from "fastify"
 import { envVars } from "@/env-vars"
 
-export const setupHealthcheckRoutes = async (app: FastifyInstance) => {
+export const setupHealthcheckRoutes = (app: FastifyInstance) => {
   app.get(
     "/healthcheck",
     {
@@ -42,7 +42,7 @@ export const setupHealthcheckRoutes = async (app: FastifyInstance) => {
         },
       },
     },
-    async (_request, reply) => {
+    (_request, reply) => {
       const checks = {
         redis: false,
         envVars: false,
