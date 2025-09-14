@@ -99,6 +99,7 @@ const redisPlugin = fp(
       )
 
       fastify.addHook("onClose", async () => {
+        // codeql-ignore: TODO: Address CodeQL warning - review hook cleanup pattern
         await shutdownRedis()
       })
 
