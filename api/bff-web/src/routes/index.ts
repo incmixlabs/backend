@@ -27,6 +27,10 @@ const MIGRATED_SERVICES = {
     prefix: "/api/comments",
     upstream: envVars.COMMENTS_API_URL?.replace("/api/comments", "") ?? "",
   },
+  email: {
+    prefix: "/api/email",
+    upstream: envVars.EMAIL_API_URL?.replace("/api/email", "") ?? "",
+  },
 } as const
 
 export const setupRoutes = async (app: FastifyInstance) => {
