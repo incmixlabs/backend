@@ -23,7 +23,7 @@ interface AuthenticatedRequest extends FastifyRequest {
 }
 
 // Create a context wrapper that matches what the db functions expect
-function createContext(request: AuthenticatedRequest) {
+function createContext(request: AuthenticatedRequest): any {
   return {
     get(key: string) {
       if (key === "db" && request.context?.db) {
@@ -77,13 +77,13 @@ export const setupCommentsRoutes = (app: FastifyInstance): void => {
       }
 
       const context = createContext(authRequest)
-      const existingProject = await getProjectById(context as any, projectId)
+      const existingProject = await getProjectById(context, projectId)
 
       if (!existingProject) {
         return reply.code(404).send({ message: "Project not found" })
       }
 
-      const comments = await listProjectComments(context as any, projectId)
+      const comments = await listProjectComments(context, projectId)
       return comments
     }
   )
@@ -127,24 +127,21 @@ export const setupCommentsRoutes = (app: FastifyInstance): void => {
       }
 
       const context = createContext(authRequest)
-      const existingTask = await getTaskById(context as any, taskId)
+      const existingTask = await getTaskById(context, taskId)
 
       if (!existingTask) {
         return reply.code(404).send({ message: "Task not found" })
       }
 
       // Get the project to check organization membership
-      const project = await getProjectById(
-        context as any,
-        existingTask.projectId
-      )
+      const project = await getProjectById(context, existingTask.projectId)
       if (!project) {
         return reply.code(404).send({ message: "Project not found" })
       }
 
       // Check if user is member of the project's organization
       const isMember = await isOrgMember(
-        context as any,
+        context,
         project.orgId,
         authRequest.user.id
       )
@@ -154,7 +151,7 @@ export const setupCommentsRoutes = (app: FastifyInstance): void => {
           .send({ message: "Not authorized to view task comments" })
       }
 
-      const comments = await listTaskComments(context as any, taskId)
+      const comments = await listTaskComments(context, taskId)
       return comments
     }
   )
@@ -212,7 +209,7 @@ export const setupCommentsRoutes = (app: FastifyInstance): void => {
 
       try {
         await db.transaction().execute(async (trx: any) => {
-          const txContext = {
+          const txContext: any = {
             get(key: string) {
               if (key === "db") return trx
               if (key === "user") return authRequest.user
@@ -232,7 +229,7 @@ export const setupCommentsRoutes = (app: FastifyInstance): void => {
 
           // Associate with project or task if provided
           if (projectId) {
-            const project = await getProjectById(txContext as any, projectId)
+            const project = await getProjectById(txContext, projectId)
             if (!project) {
               throw new Error("Project not found")
             }
@@ -247,7 +244,7 @@ export const setupCommentsRoutes = (app: FastifyInstance): void => {
           }
 
           if (taskId) {
-            const task = await getTaskById(txContext as any, taskId)
+            const task = await getTaskById(txContext, taskId)
             if (!task) {
               throw new Error("Task not found")
             }
@@ -263,7 +260,7 @@ export const setupCommentsRoutes = (app: FastifyInstance): void => {
         })
 
         // Fetch the created comment with user details
-        const createdComment = await getCommentById(context as any, commentId)
+        const createdComment = await getCommentById(context, commentId)
 
         if (!createdComment) {
           return reply.code(500).send({ message: "Failed to create comment" })
