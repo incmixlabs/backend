@@ -272,10 +272,9 @@ const redisPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
       }
     )
 
-    // Graceful shutdown hook
-    // CodeQL: This is a lifecycle hook for graceful shutdown, not a route handler - rate limiting is not applicable
+    // CodeQL [js/missing-rate-limiting] - TODO: This is a lifecycle hook for graceful shutdown, not a route handler
+    // Rate limiting is not applicable here. Will review cleanup pattern in future iteration.
     fastify.addHook("onClose", async () => {
-      // codeql-ignore: TODO: Address CodeQL warning - review hook cleanup pattern
       await shutdownRedis()
     })
 

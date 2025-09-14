@@ -98,8 +98,9 @@ const redisPlugin = fp(
         }
       )
 
+      // CodeQL [js/missing-rate-limiting] - TODO: This is a lifecycle hook for cleanup, not a route handler
+      // Rate limiting is not applicable here. Will review cleanup pattern in future iteration.
       fastify.addHook("onClose", async () => {
-        // codeql-ignore: TODO: Address CodeQL warning - review hook cleanup pattern
         await shutdownRedis()
       })
 
