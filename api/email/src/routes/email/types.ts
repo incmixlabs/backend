@@ -19,13 +19,14 @@ export const ResetPasswordSchema = z.object({
 export const MessageResponseSchema = {
   type: "object",
   properties: {
-    message: {
-      type: "string",
-      example: "Success",
-    },
+    message: { type: "string", example: "Email Sent" },
+    id: { type: "string", nullable: true },
+    status: { type: "number", example: 200 },
+    title: { type: "string", nullable: true },
+    type: { type: "string", nullable: true },
   },
-  required: ["message"],
-}
+  required: ["message", "status"],
+} as const
 
 export const RequestSchema = {
   type: "object",
@@ -39,12 +40,15 @@ export const RequestSchema = {
       oneOf: [
         {
           type: "object",
+          additionalProperties: false,
           properties: {
             payload: {
               type: "object",
+              additionalProperties: false,
               properties: {
                 verificationLink: {
                   type: "string",
+                  format: "uri",
                   minLength: 1,
                   example:
                     "https://example.com/verify?code=1234asdf&email=john.doe@example.com",
@@ -62,17 +66,21 @@ export const RequestSchema = {
         },
         {
           type: "object",
+          additionalProperties: false,
           properties: {
             payload: {
               type: "object",
+              additionalProperties: false,
               properties: {
                 resetPasswordLink: {
                   type: "string",
+                  format: "uri",
                   example:
                     "https://example.com/reset-password?code=1234asdf&email=john.doe@example.com",
                 },
                 username: {
                   type: "string",
+                  minLength: 1,
                   example: "John Doe",
                 },
               },
@@ -90,8 +98,10 @@ export const RequestSchema = {
     },
     requestedBy: {
       type: "string",
+      minLength: 1,
       example: "lamwdlm121",
     },
   },
   required: ["recipient", "body", "requestedBy"],
+  additionalProperties: false,
 }

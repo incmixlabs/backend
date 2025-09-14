@@ -265,7 +265,7 @@ importers:
         version: 5.7.3
       vite-tsconfig-paths:
         specifier: 'catalog:'
-        version: 5.1.4(typescript@5.7.3)(vite@7.1.5(@types/node@22.10.1)(jiti@2.5.1)(tsx@4.19.3)(yaml@2.8.1))
+        version: 5.1.4(typescript@5.7.3)(vite@6.3.6(@types/node@22.10.1)(jiti@2.5.1)(tsx@4.19.3)(yaml@2.8.1))
       vitest:
         specifier: 'catalog:'
         version: 3.1.2(@types/node@22.10.1)(jiti@2.5.1)(tsx@4.19.3)(yaml@2.8.1)
@@ -1014,6 +1014,9 @@ importers:
       '@casl/ability':
         specifier: 'catalog:'
         version: 6.7.3
+      '@fastify/rate-limit':
+        specifier: ^10.3.0
+        version: 10.3.0
       '@fastify/swagger':
         specifier: ^9.5.1
         version: 9.5.1
@@ -1658,6 +1661,9 @@ packages:
 
   '@fastify/proxy-addr@5.0.0':
     resolution: {integrity: sha512-37qVVA1qZ5sgH7KpHkkC4z9SK6StIsIcOmpjvMPXNb3vx2GQxhZocogVYbr2PbbeLCQxYIPDok307xEvRZOzGA==}
+
+  '@fastify/rate-limit@10.3.0':
+    resolution: {integrity: sha512-eIGkG9XKQs0nyynatApA3EVrojHOuq4l6fhB4eeCk4PIOeadvOJz9/4w3vGI44Go17uaXOWEcPkaD8kuKm7g6Q==}
 
   '@fastify/reply-from@12.3.1':
     resolution: {integrity: sha512-uaeijLjIceeU+T+9P50rMSOkLeKfBpv9blvw3kbK9+8ZJxTjGAgDkveW20ZiWMerWKd7WVHx6NiMPvQJ55eBLQ==}
@@ -6194,6 +6200,12 @@ snapshots:
       '@fastify/forwarded': 3.0.0
       ipaddr.js: 2.2.0
 
+  '@fastify/rate-limit@10.3.0':
+    dependencies:
+      '@lukeed/ms': 2.0.2
+      fastify-plugin: 5.0.1
+      toad-cache: 3.7.0
+
   '@fastify/reply-from@12.3.1':
     dependencies:
       '@fastify/error': 4.2.0
@@ -9925,6 +9937,17 @@ snapshots:
       - terser
       - tsx
       - yaml
+
+  vite-tsconfig-paths@5.1.4(typescript@5.7.3)(vite@6.3.6(@types/node@22.10.1)(jiti@2.5.1)(tsx@4.19.3)(yaml@2.8.1)):
+    dependencies:
+      debug: 4.4.1
+      globrex: 0.1.2
+      tsconfck: 3.1.6(typescript@5.7.3)
+    optionalDependencies:
+      vite: 6.3.6(@types/node@22.10.1)(jiti@2.5.1)(tsx@4.19.3)(yaml@2.8.1)
+    transitivePeerDependencies:
+      - supports-color
+      - typescript
 
   vite-tsconfig-paths@5.1.4(typescript@5.7.3)(vite@7.1.5(@types/node@22.10.1)(jiti@2.5.1)(tsx@4.19.3)(yaml@2.8.1)):
     dependencies:

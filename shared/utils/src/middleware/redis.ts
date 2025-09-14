@@ -1,10 +1,11 @@
 // TODO: Refactor REDIS as a common service
 // Currently Redis is implemented separately for Hono (here) and Fastify (location-api/plugins/redis.ts)
 // Consider creating a shared Redis service in shared/utils that can be used by both frameworks
+
+import rateLimit from "@fastify/rate-limit"
 import type { OpenAPIHono } from "@hono/zod-openapi"
 import type { FastifyInstance, FastifyPluginAsync } from "fastify"
 import fp from "fastify-plugin"
-import rateLimit from "@fastify/rate-limit"
 import type { Env as HonoEnv } from "hono"
 import { createClient, type RedisClientType } from "redis"
 import { envVars } from "../env-config"
@@ -210,7 +211,7 @@ const redisPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
     await fastify.register(rateLimit, {
       // Restrict to e.g. 5 requests per minute from each IP to the endpoints using default global (can be overridden per route)
       max: 5,
-      timeWindow: "1 minute"
+      timeWindow: "1 minute",
     })
     const redisUrl = envVars.REDIS_URL
 
@@ -250,22 +251,26 @@ const redisPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
     }
 
     // Add health check route
-    fastify.get("/health/redis", { config: { rateLimit: { max: 5, timeWindow: '1 minute' } } }, async (_request, reply) => {
-      const status = getRedisStatus()
-      const isHealthy = await checkRedisHealth()
+    fastify.get(
+      "/health/redis",
+      { config: { rateLimit: { max: 5, timeWindow: "1 minute" } } },
+      async (_request, reply) => {
+        const status = getRedisStatus()
+        const isHealthy = await checkRedisHealth()
 
-      if (isHealthy) {
-        return reply.code(200).send({
-          status: "healthy",
-          ...status,
-        })
-      } else {
-        return reply.code(503).send({
-          status: "unhealthy",
-          ...status,
-        })
+        if (isHealthy) {
+          return reply.code(200).send({
+            status: "healthy",
+            ...status,
+          })
+        } else {
+          return reply.code(503).send({
+            status: "unhealthy",
+            ...status,
+          })
+        }
       }
-    })
+    )
 
     // Graceful shutdown hook
     fastify.addHook("onClose", async () => {
