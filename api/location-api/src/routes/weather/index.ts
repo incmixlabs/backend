@@ -1,5 +1,4 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify"
-import { createClient } from "redis"
 import { envVars } from "../../env-vars"
 import { getAddressFromLocation, getLocationFromIp } from "../../lib/helper"
 import type { Address } from "../../types"
@@ -118,21 +117,10 @@ export const setupWeatherRoutes = (app: FastifyInstance) => {
 
         // Redis caching (read)
         const cacheKey = `weather:${searchParams.toString()}`
-        let redisRead: import("redis").RedisClientType | undefined
-        try {
-          if (envVars.REDIS_URL) {
-            redisRead = createClient({ url: envVars.REDIS_URL })
-            await redisRead.connect()
-            const cache = await redisRead.get(cacheKey)
-            if (cache) {
-              console.log("weather:cache hit")
-              return reply.send(JSON.parse(cache) as WeatherForecast)
-            }
-          }
-        } catch (redisError) {
-          console.warn("Redis error, continuing without cache:", redisError)
-        } finally {
-          if (redisRead?.isOpen) await redisRead.quit()
+        const cache = await app.redis.get(cacheKey)
+        if (cache) {
+          console.log("weather:cache hit")
+          return reply.send(JSON.parse(cache) as WeatherForecast)
         }
 
         // Fetch weather data from API
@@ -170,18 +158,7 @@ export const setupWeatherRoutes = (app: FastifyInstance) => {
         }
 
         // Cache the result (write)
-        if (envVars.REDIS_URL) {
-          let redisWrite: import("redis").RedisClientType | undefined
-          try {
-            redisWrite = createClient({ url: envVars.REDIS_URL })
-            await redisWrite.connect()
-            await redisWrite.setEx(cacheKey, 3600, JSON.stringify(data)) // 1 hour
-          } catch (cacheError) {
-            console.warn("Failed to cache weather result:", cacheError)
-          } finally {
-            if (redisWrite?.isOpen) await redisWrite.quit()
-          }
-        }
+        await app.redis.setEx(cacheKey, 3600, JSON.stringify(data)) // 1 hour
 
         return reply.send(data)
       } catch (error) {

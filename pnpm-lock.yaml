@@ -84,6 +84,9 @@ catalogs:
     fastify:
       specifier: 5.6.0
       version: 5.6.0
+    fastify-plugin:
+      specifier: 5.0.1
+      version: 5.0.1
     hono:
       specifier: 4.9.7
       version: 4.9.7
@@ -713,12 +716,18 @@ importers:
       fastify:
         specifier: 'catalog:'
         version: 5.6.0
+      fastify-plugin:
+        specifier: 'catalog:'
+        version: 5.0.1
       kysely:
         specifier: 'catalog:'
         version: 0.27.5
       pg:
         specifier: 'catalog:'
         version: 8.13.3
+      redis:
+        specifier: 'catalog:'
+        version: 5.8.2
     devDependencies:
       '@incmix-api/config':
         specifier: workspace:^

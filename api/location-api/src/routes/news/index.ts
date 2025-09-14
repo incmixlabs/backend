@@ -1,5 +1,4 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify"
-import { createClient } from "redis"
 import { envVars } from "../../env-vars"
 import { fetchWithTimeout, getLocationFromIp } from "../../lib/helper"
 import type { NewsApiResponse, NewsResponse, TopicApiResponse } from "./types"
@@ -68,24 +67,13 @@ export const setupNewsRoutes = (app: FastifyInstance) => {
 
         // Redis caching (read)
         const cacheKey = `news:topics:${searchParams.toString()}`
-        let redisRead: import("redis").RedisClientType | undefined
-        try {
-          if (envVars.REDIS_URL) {
-            redisRead = createClient({ url: envVars.REDIS_URL })
-            await redisRead.connect()
-            const cache = await redisRead.get(cacheKey)
-            if (cache) {
-              console.log("news:topics cache hit")
-              return reply.send({
-                topics: JSON.parse(cache) as TopicApiResponse[],
-                country: searchParams.get("gl") ?? "us",
-              })
-            }
-          }
-        } catch (redisError) {
-          console.warn("Redis error, continuing without cache:", redisError)
-        } finally {
-          if (redisRead?.isOpen) await redisRead.quit()
+        const cache = await app.redis.get(cacheKey)
+        if (cache) {
+          console.log("news:topics cache hit")
+          return reply.send({
+            topics: JSON.parse(cache) as TopicApiResponse[],
+            country: searchParams.get("gl") ?? "us",
+          })
         }
 
         // Fetch from API
@@ -103,18 +91,7 @@ export const setupNewsRoutes = (app: FastifyInstance) => {
         const topics = data.menu_links || []
 
         // Cache the result (write)
-        if (envVars.REDIS_URL) {
-          let redisWrite: import("redis").RedisClientType | undefined
-          try {
-            redisWrite = createClient({ url: envVars.REDIS_URL })
-            await redisWrite.connect()
-            await redisWrite.setEx(cacheKey, 3600, JSON.stringify(topics)) // 1 hour
-          } catch (cacheError) {
-            console.warn("Failed to cache result:", cacheError)
-          } finally {
-            if (redisWrite?.isOpen) await redisWrite.quit()
-          }
-        }
+        await app.redis.setEx(cacheKey, 3600, JSON.stringify(topics)) // 1 hour
 
         return reply.send({
           topics,
@@ -236,21 +213,10 @@ export const setupNewsRoutes = (app: FastifyInstance) => {
 
         // Redis caching (read)
         const cacheKey = `news:${searchParams.toString()}`
-        let redisRead: import("redis").RedisClientType | undefined
-        try {
-          if (envVars.REDIS_URL) {
-            redisRead = createClient({ url: envVars.REDIS_URL })
-            await redisRead.connect()
-            const cache = await redisRead.get(cacheKey)
-            if (cache) {
-              console.log("news cache hit")
-              return reply.send(JSON.parse(cache) as NewsResponse)
-            }
-          }
-        } catch (redisError) {
-          console.warn("Redis error, continuing without cache:", redisError)
-        } finally {
-          if (redisRead?.isOpen) await redisRead.quit()
+        const cache = await app.redis.get(cacheKey)
+        if (cache) {
+          console.log("news cache hit")
+          return reply.send(JSON.parse(cache) as NewsResponse)
         }
 
         // Fetch from API
@@ -283,22 +249,7 @@ export const setupNewsRoutes = (app: FastifyInstance) => {
         )
 
         // Cache the result (write)
-        if (envVars.REDIS_URL) {
-          let redisWrite: import("redis").RedisClientType | undefined
-          try {
-            redisWrite = createClient({ url: envVars.REDIS_URL })
-            await redisWrite.connect()
-            await redisWrite.setEx(
-              cacheKey,
-              1800,
-              JSON.stringify(formattedNews)
-            ) // 30 minutes
-          } catch (cacheError) {
-            console.warn("Failed to cache result:", cacheError)
-          } finally {
-            if (redisWrite?.isOpen) await redisWrite.quit()
-          }
-        }
+        await app.redis.setEx(cacheKey, 1800, JSON.stringify(formattedNews)) // 30 minutes
 
         return reply.send(formattedNews)
       } catch (error) {
