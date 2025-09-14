@@ -1,16 +1,21 @@
+// Force NODE_ENV to test before any imports
+process.env.NODE_ENV = "test"
+
 import type {
   Database,
   NewSession,
   NewUser,
   User,
 } from "@incmix-api/utils/db-schema"
-import { createFastifyService } from "@incmix-api/utils/fastify-bootstrap"
+import {
+  createFastifyService,
+  defaultSetupMiddleware as setupMiddleware,
+} from "@incmix-api/utils/fastify-bootstrap"
 import type { Kysely } from "kysely"
 import { expect } from "vitest"
 import type { Session } from "@/auth/types"
 import { envVars } from "@/env-vars"
 import { BASE_PATH } from "../../src/lib/constants"
-import { setupMiddleware } from "../../src/middleware"
 import { setupRoutes } from "../../src/routes"
 
 type Credentials = {
@@ -27,6 +32,12 @@ type SignupData = {
 }
 
 export async function createTestClient() {
+  // Ensure NODE_ENV is test in bindings
+  const testEnvVars = {
+    ...envVars,
+    NODE_ENV: "test" as const,
+  }
+
   const service = createFastifyService({
     name: "auth-api-test",
     port: 0, // Use random available port for testing
@@ -35,7 +46,7 @@ export async function createTestClient() {
     setupRoutes,
     needDb: true,
     needSwagger: false, // Disable swagger for tests
-    bindings: envVars,
+    bindings: testEnvVars,
     cors: {
       origin: true,
       credentials: true,
@@ -44,7 +55,7 @@ export async function createTestClient() {
 
   const { app } = service
 
-  // Manually set up middleware and routes for testing since we're not calling startServer
+  // Manually call setupMiddleware and setupRoutes since we're not calling startServer
   await setupMiddleware(app)
   await setupRoutes(app)
 
@@ -73,16 +84,17 @@ export async function createTestClient() {
 export type TestAgent = Awaited<ReturnType<typeof createTestClient>>
 
 export function createUser(overrides: Partial<User> = {}) {
+  const now = Date.now()
   return {
-    id: `user-${Date.now()}`,
-    email: `test-${Date.now()}@example.com`,
+    id: `user-${now}`,
+    email: `test-${now}@example.com`,
     fullName: "Test User",
     hashedPassword: "$2b$10$test.hash.for.password",
-    emailVerifiedAt: new Date().toISOString(),
+    emailVerifiedAt: now,
     isActive: true,
     isSuperAdmin: false,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
+    createdAt: now,
+    updatedAt: now,
     ...overrides,
   }
 }
@@ -134,12 +146,15 @@ export async function loginUser(client: TestAgent, credentials: Credentials) {
     throw new Error(`Login failed with status ${response.status}`)
   }
 
-  const sessionCookie = response.headers.get("set-cookie")
-  if (!sessionCookie || typeof sessionCookie !== "string") {
+  const setCookieHeader = response.headers.get("set-cookie")
+  const raw = Array.isArray(setCookieHeader)
+    ? setCookieHeader[0]
+    : setCookieHeader
+  if (!raw || typeof raw !== "string") {
     throw new Error("No session cookie received")
   }
 
-  return sessionCookie.split(";")[0] // Extract just the cookie value
+  return raw.split(";")[0] // Extract just the cookie value
 }
 
 export async function signupUser(client: TestAgent, userData: SignupData) {
@@ -249,15 +264,9 @@ export async function findSessionById(db: Kysely<Database>, sessionId: string) {
 }
 
 export async function deleteUserFromDb(db: Kysely<Database>, userId: string) {
-  return await db
-    .deleteFrom("users")
-    .where("id", "=", userId)
-    .executeTakeFirst()
+  return await db.deleteFrom("users").where("id", "=", userId).execute()
 }
 
 export async function deleteSession(db: Kysely<Database>, sessionId: string) {
-  return await db
-    .deleteFrom("sessions")
-    .where("id", "=", sessionId)
-    .executeTakeFirst()
+  return await db.deleteFrom("sessions").where("id", "=", sessionId).execute()
 }

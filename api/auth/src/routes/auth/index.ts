@@ -1,7 +1,28 @@
-import type { FastifyInstance } from "fastify"
+import type { FastifyInstance, FastifyReply } from "fastify"
+// Use the Fastify-compatible version from middleware instead of cookies
+// import { deleteSessionCookie } from "@/auth/cookies"
+import {
+  invalidateAllSessions,
+  invalidateSession,
+  validateSession,
+} from "@/auth/session"
 import { generateRandomId } from "@/auth/utils"
+import { findUserByEmail } from "@/lib/db"
+import { generateVerificationCode, sendVerificationEmail } from "@/lib/helper"
 import { authMiddleware } from "@/middleware/auth"
 import { envVars } from "../../env-vars"
+
+// Fastify-compatible version of deleteSessionCookie
+function deleteSessionCookie(reply: FastifyReply): void {
+  const domain = envVars.DOMAIN
+  const isIp = domain ? /^\d{1,3}(\.\d{1,3}){3}$/.test(domain) : false
+  const domainPart =
+    domain && !/localhost/i.test(domain) && !isIp ? `; Domain=${domain}` : ""
+  const secure = envVars.NODE_ENV === "prod" ? "; Secure" : ""
+
+  const cookieValue = `${envVars.COOKIE_NAME}=; Path=/; HttpOnly; SameSite=None; Max-Age=0; Expires=Thu, 01 Jan 1970 00:00:00 GMT${secure}${domainPart}`
+  reply.header("Set-Cookie", cookieValue)
+}
 
 // Extended register request to include fullName
 interface ExtendedRegisterRequest {
@@ -63,7 +84,7 @@ const ExtendedRegisterRequestSchema = {
   ],
 }
 
-export const setupAuthRoutes = async (app: FastifyInstance) => {
+export const setupAuthRoutes = (app: FastifyInstance) => {
   // Get current user endpoint
   app.get(
     "/me",
@@ -112,7 +133,7 @@ export const setupAuthRoutes = async (app: FastifyInstance) => {
       },
       preHandler: authMiddleware,
     },
-    async (request, reply) => {
+    (request, reply) => {
       if (!request.user) {
         return reply.status(401).send({ message: "Unauthorized" })
       }
@@ -170,9 +191,53 @@ export const setupAuthRoutes = async (app: FastifyInstance) => {
         },
       },
     },
-    async (_request, reply) => {
-      // TODO: Add auth middleware to get user and session from request
-      return reply.status(401).send({ message: "Unauthorized" })
+    async (request, reply) => {
+      try {
+        // Get session cookie
+        const cookies = request.headers.cookie
+        if (!cookies) {
+          return reply.status(401).send({ message: "Unauthorized" })
+        }
+
+        const cookieName = envVars.COOKIE_NAME
+        const sessionId = cookies
+          .split("; ")
+          .find((row) => row.startsWith(`${cookieName}=`))
+          ?.split("=")[1]
+
+        if (!sessionId || !request.context?.db) {
+          return reply.status(401).send({ message: "Unauthorized" })
+        }
+
+        // Validate session
+        const session = await validateSession(request.context.db, sessionId)
+        if (!session) {
+          return reply.status(401).send({ message: "Unauthorized" })
+        }
+
+        // Get user details
+        const user = await request.context.db
+          .selectFrom("users")
+          .select(["id", "email"])
+          .where("id", "=", session.userId)
+          .executeTakeFirst()
+
+        if (!user) {
+          return reply.status(401).send({ message: "Unauthorized" })
+        }
+
+        return {
+          id: user.id,
+          email: user.email,
+          session: {
+            id: session.id,
+            expiresAt: session.expiresAt,
+          },
+        }
+      } catch (error) {
+        console.error("Validate session error:", error)
+        return reply.status(401).send({ message: "Unauthorized" })
+      }
     }
   )
 
@@ -429,9 +494,20 @@ export const setupAuthRoutes = async (app: FastifyInstance) => {
         })
 
         if (envVars.NODE_ENV !== "test") {
-          // TODO: Implement verification email sending
-          // const verificationCode = await generateVerificationCode(userId, email, "email_verification")
-          // await sendVerificationEmail(email, verificationCode, userId)
+          // Send verification email
+          const verificationCode = await generateVerificationCode(
+            request as any,
+            userId,
+            email,
+            "email_verification",
+            db
+          )
+          await sendVerificationEmail(
+            request as any,
+            email,
+            verificationCode,
+            userId
+          )
         }
 
         return reply.code(201).send({
@@ -664,8 +740,23 @@ export const setupAuthRoutes = async (app: FastifyInstance) => {
           return reply.code(401).send({ message: "Unauthorized" })
         }
 
-        // TODO: Validate session and invalidate it
-        // For now, return success if cookie exists
+        // Get session ID from cookie
+        const cookieName = envVars.COOKIE_NAME
+        const sessionId = cookies
+          .split("; ")
+          .find((row) => row.startsWith(`${cookieName}=`))
+          ?.split("=")[1]
+
+        if (!sessionId || !request.context?.db) {
+          return reply.code(401).send({ message: "Unauthorized" })
+        }
+
+        // Invalidate session
+        await invalidateSession(request.context.db, sessionId)
+
+        // Delete session cookie
+        deleteSessionCookie(reply)
+
         return { message: "Logged out successfully" }
       } catch (error) {
         console.error("Logout error:", error)
@@ -711,7 +802,41 @@ export const setupAuthRoutes = async (app: FastifyInstance) => {
           return reply.code(401).send({ message: "Unauthorized" })
         }
 
-        // TODO: Get user from auth middleware and implement deletion
+        // Get session ID from cookie
+        const cookieName = envVars.COOKIE_NAME
+        const sessionId = cookies
+          .split("; ")
+          .find((row) => row.startsWith(`${cookieName}=`))
+          ?.split("=")[1]
+
+        if (!sessionId || !request.context?.db) {
+          return reply.code(401).send({ message: "Unauthorized" })
+        }
+
+        // Validate session and get user
+        const session = await validateSession(request.context.db, sessionId)
+        if (!session) {
+          return reply.code(401).send({ message: "Unauthorized" })
+        }
+
+        const userId = session.userId
+        const db = request.context.db
+
+        // Delete user data in transaction
+        await db.transaction().execute(async (tx) => {
+          // Delete user profile
+          await tx.deleteFrom("userProfiles").where("id", "=", userId).execute()
+
+          // Invalidate all user sessions
+          await invalidateAllSessions(tx, userId)
+
+          // Delete user
+          await tx.deleteFrom("users").where("id", "=", userId).execute()
+        })
+
+        // Delete session cookie
+        deleteSessionCookie(reply)
+
         return { message: "User deleted successfully" }
       } catch (error) {
         console.error("Delete user error:", error)
@@ -770,11 +895,8 @@ export const setupAuthRoutes = async (app: FastifyInstance) => {
           throw new Error("Database not available")
         }
 
-        // TODO: Implement findUserByEmail for Fastify context
-        // const user = await findUserByEmail(email)
-        // return { isEmailVerified: !!user.emailVerifiedAt }
-
-        return { isEmailVerified: false }
+        const user = await findUserByEmail(request as any, email)
+        return { isEmailVerified: !!user.emailVerifiedAt }
       } catch (error) {
         console.error("Check email verification error:", error)
         return reply.code(404).send({ message: "User not found" })

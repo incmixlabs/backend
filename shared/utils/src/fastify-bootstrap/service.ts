@@ -19,13 +19,12 @@ export interface APIServices {
 export const defaultSetupMiddleware = (app: FastifyInstance) => {
   // Basic request logging
 
-  app.addHook("onRequest", (request, reply) => {
+  app.addHook("onRequest", async (request, reply) => {
     const incoming = request.headers["x-request-id"] as string | undefined
     const requestId = incoming ?? request.id ?? randomUUID()
     reply.header("X-Request-Id", requestId)
   })
 }
-
 export function createAPIService({
   name,
   setupRoutes,
@@ -33,25 +32,20 @@ export function createAPIService({
 }: APIServices) {
   const service = services[name]
   const envVars = createEnvConfig(name)
-  const params = {
-    name: name,
-    port: service.port,
-    basePath: `/api/${service.dir}`,
-    bindings: envVars,
-  }
-  console.log("params", params)
-  return createFastifyService({
+  console.log(`Starting `, service)
+  const conf: FastifyServiceConfig = {
     name: service.dir,
     port: service.port,
     setupRoutes,
     setupMiddleware: setupMiddleware ?? defaultSetupMiddleware,
-    basePath: `/api/${service.dir}`,
+    basePath: `/api/${name}`,
     bindings: envVars,
-  })
+  }
+  const config: FastifyServiceConfig = { ...defaults, ...conf }
+  return createFastifyService(config)
 }
 export function createFastifyService(conf: FastifyServiceConfig) {
   const config: FastifyServiceConfig = { ...defaults, ...conf }
-  console.log("config ", config)
   const app: FastifyInstance = fastify({
     logger: {
       level: process.env.NODE_ENV === NodeEnvs.prod ? "info" : "debug",
@@ -65,6 +59,9 @@ export function createFastifyService(conf: FastifyServiceConfig) {
       },
     },
   })
+
+  // Attach bindings to app for access in routes
+  ;(app as any).bindings = config.bindings
 
   // Setup error handler
   app.setErrorHandler(createErrorHandler())
