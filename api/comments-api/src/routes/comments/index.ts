@@ -190,20 +190,27 @@ export const setupCommentsRoutes = (app: FastifyInstance): void => {
 
       try {
         await db.transaction().execute(async (trx: any) => {
+          const txContext = {
+            get(key: string) {
+              if (key === "db") return trx
+              if (key === "user") return authRequest.user
+              return undefined
+            },
+          }
           // Insert the comment
           await trx
             .insertInto("comments")
             .values({
               id: commentId,
               content,
-              createdBy: authRequest.user?.id || "",
+              createdBy: authRequest.user!.id,
               createdAt: now,
             })
             .execute()
 
           // Associate with project or task if provided
           if (projectId) {
-            const project = await getProjectById(context as any, projectId)
+            const project = await getProjectById(txContext as any, projectId)
             if (!project) {
               throw new Error("Project not found")
             }
@@ -218,7 +225,7 @@ export const setupCommentsRoutes = (app: FastifyInstance): void => {
           }
 
           if (taskId) {
-            const task = await getTaskById(context as any, taskId)
+            const task = await getTaskById(txContext as any, taskId)
             if (!task) {
               throw new Error("Task not found")
             }
