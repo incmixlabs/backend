@@ -46,11 +46,22 @@ vi.mock("@incmix-api/utils/errors", () => ({
       this.name = "UnauthorizedError"
     }
   },
-  processError: vi.fn((_request, error) => {
-    if (error.name === "UnauthorizedError") {
-      return { error: error.message, statusCode: 401 }
+  processError: vi.fn(async (context, error) => {
+    // Since the real code uses request as any, context might have a reply
+    // If it does, use it to send the actual response
+    if (context.reply && typeof context.reply.code === "function") {
+      if (error.name === "UnauthorizedError") {
+        return context.reply.code(401).send({ message: error.message })
+      }
+      return context.reply.code(500).send({ message: "Internal server error" })
     }
-    return { error: "Internal server error", statusCode: 500 }
+
+    // Otherwise return something that will cause the route to fail properly
+    // This shouldn't happen in practice but we need a fallback
+    const errorResponse = new Error(error.message || "Internal server error")
+    ;(errorResponse as any).statusCode =
+      error.name === "UnauthorizedError" ? 401 : 500
+    throw errorResponse
   }),
 }))
 
@@ -92,9 +103,11 @@ describe("generateProjectHierarchy endpoint", () => {
     app.decorateRequest("user", null)
 
     // Add middleware to set up context
-    app.addHook("preHandler", async (request) => {
+    app.addHook("preHandler", async (request, reply) => {
       request.context = { db: mockDb }
       request.user = { id: "user-123", email: "test@example.com" }
+      // Attach reply to request for processError to work
+      ;(request as any).reply = reply
     })
 
     // Import and setup genai routes
@@ -151,9 +164,11 @@ describe("generateProjectHierarchy endpoint", () => {
       appWithoutUser.decorateRequest("context", null)
       appWithoutUser.decorateRequest("user", null)
 
-      appWithoutUser.addHook("preHandler", async (request) => {
+      appWithoutUser.addHook("preHandler", async (request, reply) => {
         request.context = { db: mockDb }
         // No user set
+        // Attach reply to request for processError to work
+        ;(request as any).reply = reply
       })
 
       // Import and setup genai routes
@@ -175,7 +190,7 @@ describe("generateProjectHierarchy endpoint", () => {
 
       expect(response.statusCode).toBe(401)
       const data = JSON.parse(response.payload)
-      expect(data).toHaveProperty("error")
+      expect(data).toHaveProperty("message")
 
       await appWithoutUser.close()
     })
@@ -239,7 +254,7 @@ describe("generateProjectHierarchy endpoint", () => {
 
       expect(response.statusCode).toBe(500)
       const data = JSON.parse(response.payload)
-      expect(data).toHaveProperty("error")
+      expect(data).toHaveProperty("message")
     })
   })
 })
