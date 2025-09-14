@@ -22,7 +22,7 @@ export const setupRoutes = async (app: FastifyInstance) => {
       }
 
       setupHealthcheckRoutes(fastify)
-      await setupLocaleRoutes(fastify)
+      setupLocaleRoutes(fastify)
       setupMessageRoutes(fastify)
     },
     { prefix: "/api/intl" }

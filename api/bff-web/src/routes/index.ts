@@ -15,6 +15,18 @@ const MIGRATED_SERVICES = {
     prefix: "/api/projects",
     upstream: envVars.PROJECTS_API_URL?.replace("/api/projects", "") ?? "",
   },
+  intl: {
+    prefix: "/api/intl",
+    upstream: envVars.INTL_API_URL?.replace("/api/intl", "") ?? "",
+  },
+  location: {
+    prefix: "/api/location",
+    upstream: envVars.LOCATION_API_URL?.replace("/api/location", "") ?? "",
+  },
+  comments: {
+    prefix: "/api/comments",
+    upstream: envVars.COMMENTS_API_URL?.replace("/api/comments", "") ?? "",
+  },
 } as const
 
 export const setupRoutes = async (app: FastifyInstance) => {
@@ -76,6 +88,14 @@ export const setupRoutes = async (app: FastifyInstance) => {
       `Registering proxy for ${serviceName}: ${config.prefix} -> ${config.upstream}`
     )
 
+    if (!config.upstream) {
+      app.log.warn(
+        { serviceName, prefix: config.prefix },
+        "Skipping proxy registration: upstream URL not configured"
+      )
+      continue
+    }
+
     await app.register(import("@fastify/http-proxy"), {
       upstream: config.upstream,
       prefix: config.prefix,
@@ -87,7 +107,14 @@ export const setupRoutes = async (app: FastifyInstance) => {
 
   // Custom reference endpoints that serve Scalar UI with corrected server URLs
   // IMPORTANT: These must be registered AFTER proxy to override the proxy routes
-  for (const [_serviceName, config] of Object.entries(MIGRATED_SERVICES)) {
+  for (const [serviceName, config] of Object.entries(MIGRATED_SERVICES)) {
+    if (!config.upstream) {
+      app.log.warn(
+        { serviceName, prefix: config.prefix },
+        "Skipping reference endpoints: upstream URL not configured"
+      )
+      continue
+    }
     app.get(`${config.prefix}/reference`, (_request, reply) => {
       // Redirect to reference/ with trailing slash
       return reply.code(301).redirect(`${config.prefix}/reference/`)

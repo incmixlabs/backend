@@ -1,6 +1,6 @@
 import type { FastifyInstance } from "fastify"
 
-export const setupRateLimitRoutes = async (app: FastifyInstance) => {
+export const setupRateLimitRoutes = (app: FastifyInstance) => {
   app.get(
     "/rate-limits",
     {
@@ -18,11 +18,11 @@ export const setupRateLimitRoutes = async (app: FastifyInstance) => {
         },
       },
     },
-    async (_request, _reply) => {
-      return {
+    (_request, reply) => {
+      return reply.code(200).send({
         time: 100,
         limit: 100,
-      }
+      })
     }
   )
 }

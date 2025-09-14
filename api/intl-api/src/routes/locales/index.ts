@@ -1,6 +1,6 @@
 import type { FastifyInstance } from "fastify"
 
-export const setupLocaleRoutes = async (app: FastifyInstance) => {
+export const setupLocaleRoutes = (app: FastifyInstance) => {
   // Get all locales
   app.get(
     "/locales",
@@ -51,6 +51,7 @@ export const setupLocaleRoutes = async (app: FastifyInstance) => {
             type: "object",
             properties: {
               code: { type: "string" },
+              name: { type: "string" },
               isDefault: { type: "boolean" },
             },
           },
@@ -106,6 +107,7 @@ export const setupLocaleRoutes = async (app: FastifyInstance) => {
             type: "object",
             properties: {
               code: { type: "string" },
+              name: { type: "string" },
               isDefault: { type: "boolean" },
             },
           },
@@ -167,6 +169,7 @@ export const setupLocaleRoutes = async (app: FastifyInstance) => {
             type: "object",
             properties: {
               code: { type: "string" },
+              name: { type: "string" },
               isDefault: { type: "boolean" },
             },
           },

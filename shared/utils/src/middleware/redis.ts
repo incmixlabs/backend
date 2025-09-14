@@ -1,3 +1,6 @@
+// TODO: Refactor REDIS as a common service
+// Currently Redis is implemented separately for Hono (here) and Fastify (location-api/plugins/redis.ts)
+// Consider creating a shared Redis service in shared/utils that can be used by both frameworks
 import type { OpenAPIHono } from "@hono/zod-openapi"
 import type { Env as HonoEnv } from "hono"
 import { createClient, type RedisClientType } from "redis"

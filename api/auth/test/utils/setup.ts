@@ -1,3 +1,5 @@
+// Load shared SSR globals before other imports
+import "../../../../shared/utils/vitest.setup"
 import { mockApi, mockFetch, resetMocks, testDb } from "@incmix-api/test-utils"
 import { afterAll, afterEach, beforeAll, beforeEach, vi } from "vitest"
 

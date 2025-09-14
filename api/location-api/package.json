@@ -17,8 +17,10 @@
     "ajv": "catalog:",
     "ajv-formats": "catalog:",
     "fastify": "catalog:",
+    "fastify-plugin": "catalog:",
     "kysely": "catalog:",
-    "pg": "catalog:"
+    "pg": "catalog:",
+    "redis": "catalog:"
   },
   "devDependencies": {
     "@incmix-api/config": "workspace:^",
