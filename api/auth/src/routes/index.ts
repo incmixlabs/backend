@@ -8,8 +8,11 @@ import { setupResetPasswordRoutes } from "@/routes/reset-password"
 import { setupUsersRoutes } from "./users"
 
 export const setupRoutes = async (app: FastifyInstance) => {
+  // Get NODE_ENV from the app context bindings if available, otherwise from envVars
+  const nodeEnv = (app as any).bindings?.NODE_ENV || envVars.NODE_ENV
+
   // Add a direct test route to verify routing works at all
-  if (envVars.NODE_ENV === "test") {
+  if (nodeEnv === "test") {
     app.get("/api/auth/test-direct", async (_request, _reply) => {
       return { message: "Direct route works!" }
     })
@@ -18,7 +21,7 @@ export const setupRoutes = async (app: FastifyInstance) => {
   await app.register(
     async (fastify) => {
       // Add a simple test route to verify routing works
-      if (envVars.NODE_ENV === "test") {
+      if (nodeEnv === "test") {
         fastify.get("/test", async (_request, _reply) => {
           return { message: "Test route works!" }
         })

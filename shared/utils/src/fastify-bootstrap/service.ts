@@ -46,7 +46,6 @@ export function createAPIService({
 }
 export function createFastifyService(conf: FastifyServiceConfig) {
   const config: FastifyServiceConfig = { ...defaults, ...conf }
-  console.log("config ", config)
   const app: FastifyInstance = fastify({
     logger: {
       level: process.env.NODE_ENV === NodeEnvs.prod ? "info" : "debug",
@@ -60,6 +59,9 @@ export function createFastifyService(conf: FastifyServiceConfig) {
       },
     },
   })
+
+  // Attach bindings to app for access in routes
+  ;(app as any).bindings = config.bindings
 
   // Setup error handler
   app.setErrorHandler(createErrorHandler())

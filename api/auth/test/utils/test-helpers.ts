@@ -1,3 +1,6 @@
+// Force NODE_ENV to test before any imports
+process.env.NODE_ENV = "test"
+
 import type {
   Database,
   NewSession,
@@ -29,6 +32,12 @@ type SignupData = {
 }
 
 export async function createTestClient() {
+  // Ensure NODE_ENV is test in bindings
+  const testEnvVars = {
+    ...envVars,
+    NODE_ENV: "test" as const,
+  }
+
   const service = createFastifyService({
     name: "auth-api-test",
     port: 0, // Use random available port for testing
@@ -37,7 +46,7 @@ export async function createTestClient() {
     setupRoutes,
     needDb: true,
     needSwagger: false, // Disable swagger for tests
-    bindings: envVars,
+    bindings: testEnvVars,
     cors: {
       origin: true,
       credentials: true,
@@ -46,7 +55,7 @@ export async function createTestClient() {
 
   const { app } = service
 
-  // Manually set up middleware and routes for testing since we're not calling startServer
+  // Manually call setupMiddleware and setupRoutes since we're not calling startServer
   await setupMiddleware(app)
   await setupRoutes(app)
 

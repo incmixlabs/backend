@@ -1,12 +1,12 @@
 import { generateCodeVerifier, generateState, OAuth2RequestError } from "arctic"
-import type { FastifyInstance, FastifyRequest } from "fastify"
+import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify"
 import { createSession } from "@/auth/session"
 import { insertOAuthUser } from "@/lib/helper"
 import { initializeGoogleAuth } from "@/lib/oauth"
 import { setSessionCookie } from "@/middleware/auth"
 import { envVars } from "../../env-vars"
 
-function getOauthCookies(request: FastifyRequest) {
+export function getOauthCookies(request: FastifyRequest) {
   const cookies: string = request.headers.cookie ?? ""
   const clientTypeCookie =
     cookies
@@ -19,8 +19,8 @@ function getOauthCookies(request: FastifyRequest) {
   return { cookies, clientTypeCookie, google }
 }
 
-function setOauthCookie(
-  reply: any,
+export function setOauthCookie(
+  reply: FastifyReply,
   name: string,
   value: string,
   maxAgeSec: number
