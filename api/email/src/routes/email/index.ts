@@ -33,20 +33,25 @@ export const setupEmailRoutes = (app: FastifyInstance) => {
         }
 
         if (request.context?.db) {
-          await request.context.db
-            .insertInto("emailQueue")
-            .values({
-              recipient: params.recipient,
-              template: params.body.template,
-              payload: JSON.stringify(params.body.payload),
-              status,
-              userId: params.requestedBy,
-              resendId: res.id ?? null,
-              shouldRetry,
-              createdAt: new Date().toISOString(),
-              updatedAt: new Date().toISOString(),
-            })
-            .execute()
+          try {
+            await request.context.db
+              .insertInto("emailQueue")
+              .values({
+                recipient: params.recipient,
+                template: params.body.template,
+                payload: JSON.stringify(params.body.payload),
+                status,
+                userId: params.requestedBy,
+                resendId: res.id ?? null,
+                shouldRetry,
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString(),
+              })
+              .execute()
+          } catch (dbErr) {
+            request.log?.error?.({ err: dbErr }, "emailQueue insert failed")
+            // proceed without failing the original request
+          }
         }
 
         const statusCode =
