@@ -16,7 +16,7 @@ export interface APIServices {
   setupMiddleware?: (app: FastifyInstance) => Promise<void>
 }
 
-export const defaultSetupMiddleware = async (app: FastifyInstance) => {
+export const defaultSetupMiddleware = (app: FastifyInstance) => {
   // Basic request logging
 
   app.addHook("onRequest", async (request, reply) => {
@@ -32,21 +32,17 @@ export function createAPIService({
 }: APIServices) {
   const service = services[name]
   const envVars = createEnvConfig(name)
-  const params = {
-    name: name,
-    port: service.port,
-    basePath: `/api/${service.dir}`,
-    bindings: envVars,
-  }
-  console.log("params", params)
-  return createFastifyService({
+  console.log(`Starting `, service)
+  const conf: FastifyServiceConfig = {
     name: service.dir,
     port: service.port,
     setupRoutes,
     setupMiddleware: setupMiddleware ?? defaultSetupMiddleware,
-    basePath: `/api/${service.dir}`,
+    basePath: `/api/${name}`,
     bindings: envVars,
-  })
+  }
+  const config: FastifyServiceConfig = { ...defaults, ...conf }
+  return createFastifyService(config)
 }
 export function createFastifyService(conf: FastifyServiceConfig) {
   const config: FastifyServiceConfig = { ...defaults, ...conf }

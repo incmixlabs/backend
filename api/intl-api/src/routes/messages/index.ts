@@ -1,6 +1,6 @@
 import type { FastifyInstance } from "fastify"
 
-export const setupMessageRoutes = async (app: FastifyInstance) => {
+export const setupMessageRoutes = (app: FastifyInstance) => {
   // Get messages by locale
   app.get(
     "/messages/:locale",
