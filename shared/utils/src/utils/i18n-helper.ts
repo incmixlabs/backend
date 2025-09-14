@@ -1,6 +1,6 @@
-import { createEnvConfig } from "@incmix-api/utils/env-config"
-import { ServerError } from "@incmix-api/utils/errors"
 import type { Context } from "hono"
+import { createEnvConfig } from "../env-config"
+import { ServerError } from "../errors"
 import type { IntlMessage, Locale } from "../types"
 
 // Use the new env-config system with dotenv-mono
@@ -18,7 +18,11 @@ function getEnvVars() {
   return envVars
 }
 
-async function fetchWithTimeout(url: string, init?: RequestInit, ms = 8000) {
+export async function fetchWithTimeout(
+  url: string,
+  init?: RequestInit,
+  ms = 8000
+) {
   const controller = new AbortController()
   const timeoutId = setTimeout(() => controller.abort(), ms)
 

@@ -1,7 +1,7 @@
 import type { AuthUser, SubjectTuple } from "@incmix/utils/types"
-import { PermissionService } from "@incmix-api/utils/authorization"
-import type { KyselyDb, PermissionAction } from "@incmix-api/utils/db-schema"
 import type { FastifyReply, FastifyRequest } from "fastify"
+import { PermissionService } from "../authorization"
+import type { KyselyDb, PermissionAction } from "../db-schema"
 
 declare module "fastify" {
   interface FastifyRequest {

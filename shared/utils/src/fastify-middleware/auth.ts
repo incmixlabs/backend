@@ -1,6 +1,6 @@
 import type { AuthUser } from "@incmix/utils/types"
-import { envVars } from "@incmix-api/utils/env-config"
 import type { FastifyReply, FastifyRequest } from "fastify"
+import { envVars } from "../env-config"
 
 export interface AuthContext {
   userId?: string

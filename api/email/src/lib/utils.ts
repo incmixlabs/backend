@@ -14,7 +14,7 @@ export const emailSender = {
     const resend = new Resend(apiKey)
 
     const result = await resend.emails.send({
-      from: envVars.EMAIL_FROM,
+      from: envVars.EMAIL_FROM as string,
       to: [to],
       subject,
       html,

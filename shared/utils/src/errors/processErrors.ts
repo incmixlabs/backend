@@ -1,7 +1,7 @@
 import type { RouteConfig, RouteConfigToTypedResponse } from "@hono/zod-openapi"
-import { useTranslation } from "@incmix-api/utils/middleware"
 import type { Context, TypedResponse } from "hono"
 import { ZodError } from "zod"
+import { useTranslation } from "../middleware"
 import { ERROR_FORBIDDEN, ERROR_SERVER_ERROR } from "../utils/constants"
 import {
   BadRequestError,

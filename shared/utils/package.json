@@ -79,6 +79,10 @@
     "./fastify-middleware/rbac": {
       "types": "./dist/src/fastify-middleware/rbac.d.ts",
       "default": "./dist/src/fastify-middleware/rbac.js"
+    },
+    "./utils": {
+      "types": "./dist/src/utils/index.d.ts",
+      "default": "./dist/src/utils/index.js"
     }
   },
   "dependencies": {
@@ -93,25 +97,26 @@
     "@scalar/hono-api-reference": "catalog:",
     "@sentry/utils": "8.42.0",
     "add": "2.0.6",
-    "ajv": "^8.17.1",
-    "ajv-formats": "^3.0.1",
+    "ajv": "catalog:",
+    "ajv-formats": "catalog:",
     "bullmq": "catalog:",
     "dotenv": "catalog:",
     "dotenv-expand": "catalog:",
     "dotenv-mono": "catalog:",
-    "fastify": "^5.6.0",
+    "fastify": "catalog:",
+    "fastify-plugin": "catalog:",
     "hono": "catalog:",
     "kysely": "catalog:",
     "pg": "catalog:",
     "redis": "catalog:",
-    "zod": "catalog:"
+    "zod": "catalog:",
+    "@fastify/rate-limit": "catalog:"
   },
   "devDependencies": {
     "@casl/ability": "catalog:",
     "@incmix-api/config": "workspace:^",
     "@types/node": "catalog:",
     "@types/pg": "catalog:",
-    "fastify": "^5.6.0",
     "tsc-alias": "catalog:",
     "tsx": "catalog:",
     "typescript": "catalog:",

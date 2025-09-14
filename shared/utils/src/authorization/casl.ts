@@ -5,13 +5,9 @@ import type {
   SubjectTuple,
   AuthUser as User,
 } from "@incmix/utils/types"
-import type {
-  KyselyDb,
-  PermissionAction,
-  RoleScope,
-} from "@incmix-api/utils/db-schema"
-import { UnauthorizedError } from "@incmix-api/utils/errors"
 import type { Context } from "hono"
+import type { KyselyDb, PermissionAction, RoleScope } from "../db-schema"
+import { UnauthorizedError } from "../errors"
 
 declare module "hono" {
   interface ContextVariableMap {

@@ -1,8 +1,8 @@
 import type { AuthUser } from "@incmix/utils/types"
-import { generateSentryHeaders } from "@incmix-api/utils"
 import type { MiddlewareHandler } from "hono"
 import { getCookie } from "hono/cookie"
 import { envVars } from "../env-config"
+import { generateSentryHeaders } from "../utils/sentry"
 
 declare module "hono" {
   interface ContextVariableMap {

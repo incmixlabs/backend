@@ -67,12 +67,7 @@ export const setupEmailVerificationRoutes = (app: FastifyInstance) => {
           request.context.db
         )
 
-        await sendVerificationEmail(
-          request as any,
-          email,
-          verificationCode,
-          user.id
-        )
+        await sendVerificationEmail(request, email, verificationCode, user.id)
         return {
           message: "If the account exists, a verification email was sent",
         }

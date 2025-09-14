@@ -502,12 +502,7 @@ export const setupAuthRoutes = (app: FastifyInstance) => {
             "email_verification",
             db
           )
-          await sendVerificationEmail(
-            request as any,
-            email,
-            verificationCode,
-            userId
-          )
+          await sendVerificationEmail(request, email, verificationCode, userId)
         }
 
         return reply.code(201).send({

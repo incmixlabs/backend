@@ -1,4 +1,8 @@
-import { createEnvConfig, type EmailEnv } from "@incmix-api/utils/env-config"
+import {
+  createEnvConfig,
+  type EmailEnv,
+  Services,
+} from "@incmix-api/utils/env-config"
 
 // Use the new env-config system with dotenv-mono
 // This will automatically merge:
@@ -6,5 +10,6 @@ import { createEnvConfig, type EmailEnv } from "@incmix-api/utils/env-config"
 // 2. Root .env.{NODE_ENV} file
 // 3. Service-specific .env file (if exists)
 // 4. Service-specific .env.{NODE_ENV} file (if exists)
-export const envVars = createEnvConfig("email") as EmailEnv
+export const envVars = createEnvConfig(Services.email)
 export type Env = EmailEnv
+export { Services }

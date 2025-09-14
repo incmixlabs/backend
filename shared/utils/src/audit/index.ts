@@ -1,6 +1,6 @@
 import type { AuthUser } from "@incmix/utils/types"
-import type { KyselyDb } from "@incmix-api/utils/db-schema"
 import type { FastifyRequest } from "fastify"
+import type { KyselyDb } from "../db-schema"
 
 export interface AuditLogEntry {
   userId: string

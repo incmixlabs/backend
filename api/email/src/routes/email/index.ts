@@ -1,55 +1,68 @@
-import { OpenAPIHono, type RouteConfigToTypedResponse } from "@hono/zod-openapi"
 import type { Status } from "@incmix-api/utils/db-schema"
-import { processError, zodError } from "@incmix-api/utils/errors"
-import type { ContentfulStatusCode } from "hono/utils/http-status"
+import type { FastifyInstance } from "fastify"
 import { envVars } from "@/env-vars"
 import { sendEmail } from "@/lib/helper"
-import type { HonoApp } from "@/types"
-import { sendMail } from "./openapi"
+import { MessageResponseSchema, RequestSchema } from "./types"
 
-const emailRoutes = new OpenAPIHono<HonoApp>({
-  defaultHook: zodError,
-})
+export const setupEmailRoutes = (app: FastifyInstance) => {
+  app.post(
+    "/",
+    {
+      schema: {
+        description: "Send Email based on the template provided",
+        tags: ["email"],
+        body: RequestSchema,
+        response: {
+          200: MessageResponseSchema,
+          400: MessageResponseSchema,
+          500: MessageResponseSchema,
+        },
+      },
+    },
+    async (request, reply) => {
+      try {
+        const params = request.body as any
 
-emailRoutes.openapi(sendMail, async (c) => {
-  try {
-    const params = c.req.valid("json")
+        const res = await sendEmail(envVars.RESEND_API_KEY as string, params)
 
-    const res = await sendEmail(envVars.RESEND_API_KEY, params)
+        let status: Status = "pending"
+        let shouldRetry = false
+        if (res.status !== 200) {
+          status = "failed"
+          shouldRetry = res.status >= 500
+        }
 
-    let status: Status = "pending"
-    let shouldRetry = false
-    if (res.status !== 200) {
-      status = "failed"
-      shouldRetry = res.status >= 500
+        if (request.context?.db) {
+          try {
+            await request.context.db
+              .insertInto("emailQueue")
+              .values({
+                recipient: params.recipient,
+                template: params.body.template,
+                payload: JSON.stringify(params.body.payload),
+                status,
+                userId: params.requestedBy,
+                resendId: res.id ?? null,
+                shouldRetry,
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString(),
+              })
+              .execute()
+          } catch (dbErr) {
+            request.log?.error?.({ err: dbErr }, "emailQueue insert failed")
+            // proceed without failing the original request
+          }
+        }
+
+        const statusCode =
+          res.status === 200 ? 200 : res.status >= 500 ? 500 : 400
+        return reply.code(statusCode).send({ message: res.message })
+      } catch (error) {
+        console.error("Email sending error:", error)
+        return reply.code(500).send({
+          message: "Internal server error while sending email",
+        })
+      }
     }
-
-    await c
-      .get("db")
-      .insertInto("emailQueue")
-      .values({
-        recipient: params.recipient,
-        template: params.body.template,
-        payload: JSON.stringify(params.body.payload),
-        status,
-        userId: params.requestedBy,
-        resendId: res.id ?? null,
-        shouldRetry,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      })
-      .execute()
-
-    return c.json(
-      { message: res.message },
-      res.status as ContentfulStatusCode
-    ) as RouteConfigToTypedResponse<typeof sendMail>
-  } catch (error) {
-    return await processError<typeof sendMail>(c, error, [
-      "{{ default }}",
-      "send-mail",
-    ])
-  }
-})
-
-export default emailRoutes
+  )
+}

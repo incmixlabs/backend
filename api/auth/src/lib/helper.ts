@@ -156,14 +156,23 @@ export async function generateVerificationCode(
 }
 
 export const sendVerificationEmail = async (
-  c: Context,
+  request: any,
   recipient: string,
   verificationCode: string,
   requestedBy: string
 ) => {
   const verificationLink = `${envVars.FRONTEND_URL}/email-verification?code=${encodeURIComponent(verificationCode)}&email=${encodeURIComponent(recipient)}`
   const emailUrl = String(envVars.EMAIL_API_URL)
-  const sentryHeaders = generateSentryHeaders(c)
+
+  let sentryHeaders = {}
+  try {
+    sentryHeaders = generateSentryHeaders({
+      get: (key: string) => request.headers[key],
+    } as any)
+  } catch (_error) {
+    // Skip sentry headers if they fail
+  }
+
   await fetch(emailUrl, {
     method: "POST",
     body: JSON.stringify({
@@ -182,7 +191,7 @@ export const sendVerificationEmail = async (
 }
 
 export const sendForgetPasswordEmail = async (
-  c: Context,
+  request: any,
   recipient: string,
   verificationCode: string,
   requestedBy: string
@@ -190,8 +199,17 @@ export const sendForgetPasswordEmail = async (
   const emailUrl = envVars.EMAIL_API_URL as string
   const [username] = recipient.split("@")
   const resetPasswordLink = `${envVars.FRONTEND_URL}/reset-password?code=${encodeURIComponent(verificationCode)}&email=${encodeURIComponent(recipient)}`
-  const sentryHeaders = generateSentryHeaders(c)
-  const request = new Request(emailUrl, {
+
+  let sentryHeaders = {}
+  try {
+    sentryHeaders = generateSentryHeaders({
+      get: (key: string) => request.headers[key],
+    } as any)
+  } catch (_error) {
+    // Skip sentry headers if they fail
+  }
+
+  const emailRequest = new Request(emailUrl, {
     method: "POST",
     body: JSON.stringify({
       body: {
@@ -206,7 +224,7 @@ export const sendForgetPasswordEmail = async (
       ...sentryHeaders,
     },
   })
-  const res = await fetch(request)
+  const res = await fetch(emailRequest)
 
   if (!res.ok) throw new ServerError()
 }
