@@ -75,16 +75,17 @@ export async function createTestClient() {
 export type TestAgent = Awaited<ReturnType<typeof createTestClient>>
 
 export function createUser(overrides: Partial<User> = {}) {
+  const now = Date.now()
   return {
-    id: `user-${Date.now()}`,
-    email: `test-${Date.now()}@example.com`,
+    id: `user-${now}`,
+    email: `test-${now}@example.com`,
     fullName: "Test User",
     hashedPassword: "$2b$10$test.hash.for.password",
-    emailVerifiedAt: new Date().toISOString(),
+    emailVerifiedAt: now,
     isActive: true,
     isSuperAdmin: false,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
+    createdAt: now,
+    updatedAt: now,
     ...overrides,
   }
 }
@@ -254,15 +255,9 @@ export async function findSessionById(db: Kysely<Database>, sessionId: string) {
 }
 
 export async function deleteUserFromDb(db: Kysely<Database>, userId: string) {
-  return await db
-    .deleteFrom("users")
-    .where("id", "=", userId)
-    .executeTakeFirst()
+  return await db.deleteFrom("users").where("id", "=", userId).execute()
 }
 
 export async function deleteSession(db: Kysely<Database>, sessionId: string) {
-  return await db
-    .deleteFrom("sessions")
-    .where("id", "=", sessionId)
-    .executeTakeFirst()
+  return await db.deleteFrom("sessions").where("id", "=", sessionId).execute()
 }
