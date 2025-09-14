@@ -1,7 +1,7 @@
 import type { FastifyInstance } from "fastify"
 import { envVars } from "@/env-vars"
 
-export const setupHealthcheckRoutes = async (app: FastifyInstance) => {
+export const setupHealthcheckRoutes = (app: FastifyInstance) => {
   app.get(
     "/healthcheck",
     {
@@ -53,7 +53,7 @@ export const setupHealthcheckRoutes = async (app: FastifyInstance) => {
         if (request.context?.db) {
           await request.context.db
             .selectFrom("emailQueue")
-            .selectAll()
+            .select("id")
             .limit(1)
             .execute()
           checks.database = true
@@ -64,7 +64,7 @@ export const setupHealthcheckRoutes = async (app: FastifyInstance) => {
 
       // Check environment variables
       try {
-        const requiredEnvVars = [
+        const requiredEnvVars: Array<keyof typeof envVars> = [
           "DATABASE_URL",
           "INTL_API_URL",
           "COOKIE_NAME",
@@ -72,7 +72,7 @@ export const setupHealthcheckRoutes = async (app: FastifyInstance) => {
         ]
 
         checks.envVars = requiredEnvVars.every((varName) => {
-          const value = (envVars as any)[varName]
+          const value = envVars[varName]
           return value !== undefined && value !== ""
         })
       } catch (error) {

@@ -4,7 +4,7 @@ import { envVars } from "@/env-vars"
 import { sendEmail } from "@/lib/helper"
 import { MessageResponseSchema, RequestSchema } from "./types"
 
-export const setupEmailRoutes = async (app: FastifyInstance) => {
+export const setupEmailRoutes = (app: FastifyInstance) => {
   app.post(
     "/",
     {
@@ -23,7 +23,7 @@ export const setupEmailRoutes = async (app: FastifyInstance) => {
       try {
         const params = request.body as any
 
-        const res = await sendEmail(envVars.RESEND_API_KEY, params)
+        const res = await sendEmail(envVars.RESEND_API_KEY as string, params)
 
         let status: Status = "pending"
         let shouldRetry = false

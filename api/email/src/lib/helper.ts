@@ -2,7 +2,7 @@ import { render } from "@react-email/render"
 import { emailTemplateMap } from "@/types"
 import { emailSender } from "./utils"
 
-export type SendEmailReponse = {
+export type SendEmailResponse = {
   message: string
   id?: string
   status: number
@@ -10,19 +10,24 @@ export type SendEmailReponse = {
   type?: string
 }
 
+type VerificationBody = {
+  template: "VerificationEmail"
+  payload: { verificationLink: string }
+}
+type ResetPasswordBody = {
+  template: "ResetPasswordEmail"
+  payload: { resetPasswordLink: string; username: string }
+}
 type EmailParams = {
   recipient: string
-  body: {
-    template: "VerificationEmail" | "ResetPasswordEmail"
-    payload: any
-  }
+  body: VerificationBody | ResetPasswordBody
   requestedBy: string
 }
 
 export async function sendEmail(
   RESEND_API_KEY: string,
   params: EmailParams
-): Promise<SendEmailReponse> {
+): Promise<SendEmailResponse> {
   const { recipient, body } = params
 
   const type = body.template
