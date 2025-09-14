@@ -373,12 +373,12 @@ importers:
 
   api/email:
     dependencies:
-      '@hono/zod-openapi':
+      '@fastify/swagger':
         specifier: 'catalog:'
-        version: 1.1.0(hono@4.9.7)(zod@4.1.1)
-      '@hono/zod-validator':
+        version: 9.5.1
+      '@fastify/swagger-ui':
         specifier: 'catalog:'
-        version: 0.7.2(hono@4.9.7)(zod@4.1.1)
+        version: 5.2.3
       '@incmix-api/utils':
         specifier: workspace:^
         version: link:../../shared/utils
@@ -439,12 +439,21 @@ importers:
       '@react-email/text':
         specifier: 0.1.0
         version: 0.1.0(react@19.1.0)
+      '@scalar/fastify-api-reference':
+        specifier: 'catalog:'
+        version: 1.35.2(typescript@5.7.3)
       add:
         specifier: 2.0.6
         version: 2.0.6
-      hono:
+      ajv:
         specifier: 'catalog:'
-        version: 4.9.7
+        version: 8.17.1
+      ajv-formats:
+        specifier: 'catalog:'
+        version: 3.0.1(ajv@8.17.1)
+      fastify:
+        specifier: 'catalog:'
+        version: 5.6.0
       kysely:
         specifier: 'catalog:'
         version: 0.27.5
@@ -749,7 +758,7 @@ importers:
         version: 5.7.3
       vite-tsconfig-paths:
         specifier: 'catalog:'
-        version: 5.1.4(typescript@5.7.3)(vite@6.3.6(@types/node@22.10.1)(jiti@2.5.1)(tsx@4.19.3)(yaml@2.8.1))
+        version: 5.1.4(typescript@5.7.3)(vite@7.1.5(@types/node@22.10.1)(jiti@2.5.1)(tsx@4.19.3)(yaml@2.8.1))
       vitest:
         specifier: 'catalog:'
         version: 3.1.2(@types/node@22.10.1)(jiti@2.5.1)(tsx@4.19.3)(yaml@2.8.1)
@@ -9916,17 +9925,6 @@ snapshots:
       - terser
       - tsx
       - yaml
-
-  vite-tsconfig-paths@5.1.4(typescript@5.7.3)(vite@6.3.6(@types/node@22.10.1)(jiti@2.5.1)(tsx@4.19.3)(yaml@2.8.1)):
-    dependencies:
-      debug: 4.4.1
-      globrex: 0.1.2
-      tsconfck: 3.1.6(typescript@5.7.3)
-    optionalDependencies:
-      vite: 6.3.6(@types/node@22.10.1)(jiti@2.5.1)(tsx@4.19.3)(yaml@2.8.1)
-    transitivePeerDependencies:
-      - supports-color
-      - typescript
 
   vite-tsconfig-paths@5.1.4(typescript@5.7.3)(vite@7.1.5(@types/node@22.10.1)(jiti@2.5.1)(tsx@4.19.3)(yaml@2.8.1)):
     dependencies:

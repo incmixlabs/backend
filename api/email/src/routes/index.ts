@@ -1,12 +1,15 @@
-import type { OpenAPIHono } from "@hono/zod-openapi"
-import { BASE_PATH } from "@/lib/constants"
-import type { HonoApp } from "@/types"
-import emailRoutes from "./email"
-import healthcheckRoutes from "./healthcheck"
-// import webhookRoutes from "./webhook"
+import type { FastifyInstance } from "fastify"
+import { setupEmailRoutes } from "./email"
+import { setupHealthcheckRoutes } from "./healthcheck"
+// import { setupWebhookRoutes } from "./webhook"
 
-export const routes = (app: OpenAPIHono<HonoApp>) => {
-  app.route(`${BASE_PATH}`, emailRoutes)
-  // app.route(`${BASE_PATH}/webhooks`, webhookRoutes)
-  app.route(`${BASE_PATH}/healthcheck`, healthcheckRoutes)
+export const setupRoutes = async (app: FastifyInstance) => {
+  await app.register(
+    async (fastify) => {
+      await setupEmailRoutes(fastify)
+      await setupHealthcheckRoutes(fastify)
+      // await setupWebhookRoutes(fastify)
+    },
+    { prefix: "/api/email" }
+  )
 }

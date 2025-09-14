@@ -1,19 +1,27 @@
 import { render } from "@react-email/render"
-import type { StatusCode } from "hono/utils/http-status"
-import type { z } from "zod"
-import type { RequestSchema } from "@/routes/email/types"
 import { emailTemplateMap } from "@/types"
 import { emailSender } from "./utils"
+
 export type SendEmailReponse = {
   message: string
   id?: string
-  status: StatusCode
+  status: number
   title?: string
   type?: string
 }
+
+type EmailParams = {
+  recipient: string
+  body: {
+    template: "VerificationEmail" | "ResetPasswordEmail"
+    payload: any
+  }
+  requestedBy: string
+}
+
 export async function sendEmail(
   RESEND_API_KEY: string,
-  params: z.infer<typeof RequestSchema>
+  params: EmailParams
 ): Promise<SendEmailReponse> {
   const { recipient, body } = params
 

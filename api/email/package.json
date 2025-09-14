@@ -9,8 +9,12 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
-    "@hono/zod-openapi": "catalog:",
-    "@hono/zod-validator": "catalog:",
+    "@fastify/swagger": "catalog:",
+    "@fastify/swagger-ui": "catalog:",
+    "@scalar/fastify-api-reference": "catalog:",
+    "ajv": "catalog:",
+    "ajv-formats": "catalog:",
+    "fastify": "catalog:",
     "@incmix-api/utils": "workspace:^",
     "@incmix/utils": "catalog:",
     "@react-email/body": "0.0.11",
@@ -32,7 +36,6 @@
     "@react-email/tailwind": "1.0.4",
     "@react-email/text": "0.1.0",
     "add": "2.0.6",
-    "hono": "catalog:",
     "kysely": "catalog:",
     "kysely-ctl": "catalog:",
     "pg": "catalog:",

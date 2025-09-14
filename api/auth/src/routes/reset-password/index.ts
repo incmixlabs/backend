@@ -95,7 +95,7 @@ export const setupResetPasswordRoutes = (app: FastifyInstance) => {
         // Send forget password email
         try {
           await sendForgetPasswordEmail(
-            request as any,
+            request,
             user.email,
             verificationCode,
             user.id
