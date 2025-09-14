@@ -18,7 +18,11 @@ function getEnvVars() {
   return envVars
 }
 
-async function fetchWithTimeout(url: string, init?: RequestInit, ms = 8000) {
+export async function fetchWithTimeout(
+  url: string,
+  init?: RequestInit,
+  ms = 8000
+) {
   const controller = new AbortController()
   const timeoutId = setTimeout(() => controller.abort(), ms)
 

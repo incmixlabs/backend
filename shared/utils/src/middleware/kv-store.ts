@@ -1,6 +1,6 @@
 import type { OpenAPIHono } from "@hono/zod-openapi"
-import { KVStore } from "@incmix-api/utils/kv-store"
 import type { Env } from "hono"
+import { KVStore } from "../kv-store"
 
 export function setupKvStore<T extends Env>(
   app: OpenAPIHono<T>,

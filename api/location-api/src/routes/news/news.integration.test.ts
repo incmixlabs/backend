@@ -1,8 +1,6 @@
-import {
-  setupRedisFastifyPlugin,
-  shutdownRedis,
-} from "@incmix-api/utils/middleware"
+import rateLimit from "@fastify/rate-limit"
 import fastify, { type FastifyInstance } from "fastify"
+import fp from "fastify-plugin"
 import { createClient, type RedisClientType } from "redis"
 import {
   afterAll,
@@ -14,6 +12,108 @@ import {
   vi,
 } from "vitest"
 import { setupNewsRoutes } from "./index"
+
+// Temporary workaround - inline Redis plugin and shutdown function
+// TODO: Fix import from @incmix-api/utils/middleware once module resolution is fixed
+
+declare module "fastify" {
+  interface FastifyInstance {
+    redis: RedisClientType
+  }
+}
+
+let redisClient: RedisClientType | null = null
+
+async function shutdownRedis(): Promise<void> {
+  if (redisClient) {
+    try {
+      await redisClient.quit()
+      console.log("Redis client shutdown successfully")
+    } catch (error) {
+      console.error("Error shutting down Redis client:", error)
+    } finally {
+      redisClient = null
+    }
+  }
+}
+
+const redisPlugin = fp(
+  async (fastify: FastifyInstance) => {
+    try {
+      // Register rate limiting plugin with higher limits for tests
+      await fastify.register(rateLimit, {
+        max: 100, // Higher limit for tests
+        timeWindow: "1 minute",
+      })
+      
+      const redisUrl = process.env.REDIS_URL || "redis://localhost:6379"
+      
+      if (!redisUrl) {
+        fastify.log.warn("REDIS_URL not configured, skipping Redis setup")
+        return
+      }
+
+      // Create Redis client
+      redisClient = createClient({
+        url: redisUrl,
+        socket: {
+          reconnectStrategy: (retries = 3) => {
+            if (retries > 10) {
+              console.error("Redis max reconnection attempts reached")
+              return new Error("Redis max reconnection attempts reached")
+            }
+            return Math.min(retries * 100, 3000)
+          },
+          connectTimeout: 10000,
+        },
+      })
+
+      redisClient.on("error", (error: unknown) => {
+        console.error("Redis client error:", error)
+      })
+
+      await redisClient.connect()
+      fastify.decorate("redis", redisClient)
+
+      // Add health check route
+      fastify.get(
+        "/health/redis",
+        { config: { rateLimit: { max: 5, timeWindow: "1 minute" } } },
+        async (_request, reply) => {
+          const isHealthy = redisClient?.isOpen ?? false
+          
+          if (isHealthy) {
+            return reply.code(200).send({
+              status: "healthy",
+              isConnected: true,
+              hasClient: true,
+            })
+          } else {
+            return reply.code(503).send({
+              status: "unhealthy",
+              isConnected: false,
+              hasClient: redisClient !== null,
+            })
+          }
+        }
+      )
+
+      fastify.addHook("onClose", async () => {
+        await shutdownRedis()
+      })
+
+      fastify.log.info("Redis plugin initialized successfully")
+    } catch (error) {
+      fastify.log.error({ err: error }, "Failed to setup Redis plugin")
+    }
+  },
+  {
+    name: "redis-middleware",
+    fastify: "5.x",
+  }
+)
+
+const setupRedisFastifyPlugin = redisPlugin
 
 // Skip these tests if Redis is not available
 const SKIP_INTEGRATION = process.env.SKIP_INTEGRATION_TESTS === "true"
@@ -28,8 +128,15 @@ vi.mock("../../env-vars", () => ({
   },
 }))
 
-// Mock the fetch helper to avoid real API calls
+// Mock helper functions
 vi.mock("../../lib/helper", () => ({
+  getLocationFromIp: vi.fn().mockResolvedValue({
+    country_code: "US",
+  }),
+}))
+
+// Mock fetchWithTimeout from @incmix-api/utils
+vi.mock("@incmix-api/utils", () => ({
   fetchWithTimeout: vi.fn().mockImplementation((url: string) => {
     // Parse the URL to determine what to return
     if (url.includes("topic_token=")) {
@@ -65,9 +172,6 @@ vi.mock("../../lib/helper", () => ({
         }),
       })
     }
-  }),
-  getLocationFromIp: vi.fn().mockResolvedValue({
-    country_code: "US",
   }),
 }))
 

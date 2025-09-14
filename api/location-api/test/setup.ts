@@ -8,12 +8,13 @@ process.env.REDIS_URL =
 process.env.SERP_API_KEY = "test-api-key"
 process.env.SERP_NEWS_URL = "https://api.example.com/news"
 
-// Mock console to reduce noise in tests
-global.console = {
-  ...console,
-  log: vi.fn(),
-  debug: vi.fn(),
-  info: vi.fn(),
-  warn: vi.fn(),
-  error: vi.fn(),
-}
+// Don't mock console in integration tests - we need to see the output
+// Uncomment below to mock console in unit tests if needed
+// global.console = {
+//   ...console,
+//   log: vi.fn(),
+//   debug: vi.fn(),
+//   info: vi.fn(),
+//   warn: vi.fn(),
+//   error: vi.fn(),
+// }

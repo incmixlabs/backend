@@ -1,7 +1,11 @@
+import { fetchWithTimeout } from "@incmix-api/utils"
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify"
 import { envVars } from "../../env-vars"
-import { fetchWithTimeout, getLocationFromIp } from "../../lib/helper"
+import { getLocationFromIp } from "../../lib/helper"
 import type { NewsApiResponse, NewsResponse, TopicApiResponse } from "./types"
+
+const NEWS_TTL_SECONDS = 1800
+
 export const setupNewsRoutes = (app: FastifyInstance) => {
   // Get news topics endpoint
   app.get(
@@ -58,7 +62,7 @@ export const setupNewsRoutes = (app: FastifyInstance) => {
         })
 
         if (country) {
-          searchParams.append("gl", country)
+          searchParams.append("gl", country.toLowerCase())
         } else {
           const location = await getLocationFromIp(request)
           searchParams.append("gl", location.country_code.toLowerCase())
@@ -97,7 +101,11 @@ export const setupNewsRoutes = (app: FastifyInstance) => {
 
         // Cache the result (write) - with error handling
         try {
-          await app.redis.setEx(cacheKey, 3600, JSON.stringify(topics)) // 1 hour
+          await app.redis.setEx(
+            cacheKey,
+            NEWS_TTL_SECONDS,
+            JSON.stringify(topics)
+          )
         } catch (error) {
           console.warn("Redis setEx error, continuing without caching:", error)
         }

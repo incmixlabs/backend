@@ -27,10 +27,14 @@ vi.mock("../../env-vars", () => ({
 
 // Mock helper functions
 vi.mock("../../lib/helper", () => ({
-  fetchWithTimeout: vi.fn(),
   getLocationFromIp: vi.fn().mockResolvedValue({
     country_code: "US",
   }),
+}))
+
+// Mock fetchWithTimeout from @incmix-api/utils
+vi.mock("@incmix-api/utils", () => ({
+  fetchWithTimeout: vi.fn(),
 }))
 
 describe("News Routes with Redis Caching", () => {
@@ -119,7 +123,7 @@ describe("News Routes with Redis Caching", () => {
 
       ;(mockRedisClient.get as any).mockResolvedValue(null)
 
-      const { fetchWithTimeout } = await import("../../lib/helper")
+      const { fetchWithTimeout } = await import("@incmix-api/utils")
       ;(fetchWithTimeout as any).mockResolvedValue({
         ok: true,
         json: async () => ({ menu_links: apiTopics }),
@@ -137,7 +141,7 @@ describe("News Routes with Redis Caching", () => {
       expect(mockRedisClient.get).toHaveBeenCalled()
       expect(mockRedisClient.setEx).toHaveBeenCalledWith(
         expect.stringContaining("news:topics:"),
-        3600,
+        1800,
         JSON.stringify(apiTopics)
       )
     })
@@ -145,9 +149,8 @@ describe("News Routes with Redis Caching", () => {
     it("should use IP-based location when country not provided", async () => {
       ;(mockRedisClient.get as any).mockResolvedValue(null)
 
-      const { fetchWithTimeout, getLocationFromIp } = await import(
-        "../../lib/helper"
-      )
+      const { getLocationFromIp } = await import("../../lib/helper")
+      const { fetchWithTimeout } = await import("@incmix-api/utils")
       ;(getLocationFromIp as any).mockResolvedValue({ country_code: "CA" })
       ;(fetchWithTimeout as any).mockResolvedValue({
         ok: true,
@@ -168,7 +171,7 @@ describe("News Routes with Redis Caching", () => {
     it("should handle API errors gracefully", async () => {
       ;(mockRedisClient.get as any).mockResolvedValue(null)
 
-      const { fetchWithTimeout } = await import("../../lib/helper")
+      const { fetchWithTimeout } = await import("@incmix-api/utils")
       ;(fetchWithTimeout as any).mockResolvedValue({
         ok: false,
         json: async () => ({ error: "API limit exceeded" }),
@@ -187,7 +190,7 @@ describe("News Routes with Redis Caching", () => {
     it("should handle fetch errors gracefully", async () => {
       ;(mockRedisClient.get as any).mockResolvedValue(null)
 
-      const { fetchWithTimeout } = await import("../../lib/helper")
+      const { fetchWithTimeout } = await import("@incmix-api/utils")
       ;(fetchWithTimeout as any).mockRejectedValue(new Error("Network error"))
 
       const response = await app.inject({
@@ -262,7 +265,7 @@ describe("News Routes with Redis Caching", () => {
 
       ;(mockRedisClient.get as any).mockResolvedValue(null)
 
-      const { fetchWithTimeout } = await import("../../lib/helper")
+      const { fetchWithTimeout } = await import("@incmix-api/utils")
       ;(fetchWithTimeout as any).mockResolvedValue({
         ok: true,
         json: async () => apiNews,
@@ -297,7 +300,7 @@ describe("News Routes with Redis Caching", () => {
     it("should handle missing news_results gracefully", async () => {
       ;(mockRedisClient.get as any).mockResolvedValue(null)
 
-      const { fetchWithTimeout } = await import("../../lib/helper")
+      const { fetchWithTimeout } = await import("@incmix-api/utils")
       ;(fetchWithTimeout as any).mockResolvedValue({
         ok: true,
         json: async () => ({}), // Empty response
@@ -329,7 +332,7 @@ describe("News Routes with Redis Caching", () => {
 
       ;(mockRedisClient.get as any).mockResolvedValue(null)
 
-      const { fetchWithTimeout } = await import("../../lib/helper")
+      const { fetchWithTimeout } = await import("@incmix-api/utils")
       ;(fetchWithTimeout as any).mockResolvedValue({
         ok: true,
         json: async () => apiNews,
