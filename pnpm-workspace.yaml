@@ -22,10 +22,10 @@ catalog:
   '@types/node': 22.10.1
   '@types/pg': 8.11.11
   '@types/react': 19.0.12
-  'arctic': 3.7.0
-  bcrypt: 6.0.0
   ajv: 8.17.1
   ajv-formats: 3.0.1
+  arctic: 3.7.0
+  bcrypt: 6.0.0
   bullmq: 5.56.10
   dotenv: 16.5.0
   dotenv-expand: 12.0.2

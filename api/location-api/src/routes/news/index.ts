@@ -16,7 +16,6 @@ export const setupNewsRoutes = (app: FastifyInstance) => {
             country: {
               type: "string",
               description: "Country code (e.g., us, uk, ca)",
-              example: "us",
             },
           },
         },
@@ -65,9 +64,15 @@ export const setupNewsRoutes = (app: FastifyInstance) => {
           searchParams.append("gl", location.country_code.toLowerCase())
         }
 
-        // Redis caching (read)
+        // Redis caching (read) - with error handling
         const cacheKey = `news:topics:${searchParams.toString()}`
-        const cache = await app.redis.get(cacheKey)
+        let cache: string | null = null
+        try {
+          cache = await app.redis.get(cacheKey)
+        } catch (error) {
+          console.warn("Redis get error, continuing without cache:", error)
+        }
+
         if (cache) {
           console.log("news:topics cache hit")
           return reply.send({
@@ -90,8 +95,12 @@ export const setupNewsRoutes = (app: FastifyInstance) => {
         const data = (await res.json()) as { menu_links: TopicApiResponse[] }
         const topics = data.menu_links || []
 
-        // Cache the result (write)
-        await app.redis.setEx(cacheKey, 3600, JSON.stringify(topics)) // 1 hour
+        // Cache the result (write) - with error handling
+        try {
+          await app.redis.setEx(cacheKey, 3600, JSON.stringify(topics)) // 1 hour
+        } catch (error) {
+          console.warn("Redis setEx error, continuing without caching:", error)
+        }
 
         return reply.send({
           topics,
@@ -211,9 +220,15 @@ export const setupNewsRoutes = (app: FastifyInstance) => {
           searchParams.append("gl", location.country_code.toLowerCase())
         }
 
-        // Redis caching (read)
+        // Redis caching (read) - with error handling
         const cacheKey = `news:${searchParams.toString()}`
-        const cache = await app.redis.get(cacheKey)
+        let cache: string | null = null
+        try {
+          cache = await app.redis.get(cacheKey)
+        } catch (error) {
+          console.warn("Redis get error, continuing without cache:", error)
+        }
+
         if (cache) {
           console.log("news cache hit")
           return reply.send(JSON.parse(cache) as NewsResponse)
@@ -248,8 +263,12 @@ export const setupNewsRoutes = (app: FastifyInstance) => {
           })
         )
 
-        // Cache the result (write)
-        await app.redis.setEx(cacheKey, 1800, JSON.stringify(formattedNews)) // 30 minutes
+        // Cache the result (write) - with error handling
+        try {
+          await app.redis.setEx(cacheKey, 1800, JSON.stringify(formattedNews)) // 30 minutes
+        } catch (error) {
+          console.warn("Redis setEx error, continuing without caching:", error)
+        }
 
         return reply.send(formattedNews)
       } catch (error) {

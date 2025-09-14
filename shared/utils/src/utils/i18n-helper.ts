@@ -1,6 +1,6 @@
-import { createEnvConfig } from "@incmix-api/utils/env-config"
-import { ServerError } from "@incmix-api/utils/errors"
 import type { Context } from "hono"
+import { createEnvConfig } from "../env-config"
+import { ServerError } from "../errors"
 import type { IntlMessage, Locale } from "../types"
 
 // Use the new env-config system with dotenv-mono

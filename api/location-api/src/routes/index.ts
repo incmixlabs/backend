@@ -1,15 +1,15 @@
+import { setupRedisFastifyPlugin } from "@incmix-api/utils/middleware"
 import type { FastifyInstance } from "fastify"
 import { envVars } from "@/env-vars"
 import { BASE_PATH } from "@/lib/constants"
-import redisPlugin from "@/plugins/redis"
 import { setupHealthcheckRoutes } from "./healthcheck"
 import { setupNewsRoutes } from "./news"
 import { setupRateLimitRoutes } from "./rate-limits"
 import { setupWeatherRoutes } from "./weather"
 
 export const setupRoutes = async (app: FastifyInstance) => {
-  // Register Redis plugin
-  await app.register(redisPlugin)
+  // Register Redis plugin from shared utils
+  await app.register(setupRedisFastifyPlugin)
 
   // Add a direct test route to verify routing works at all
   if (envVars.NODE_ENV === "test") {

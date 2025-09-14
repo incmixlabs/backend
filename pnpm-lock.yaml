@@ -265,7 +265,7 @@ importers:
         version: 5.7.3
       vite-tsconfig-paths:
         specifier: 'catalog:'
-        version: 5.1.4(typescript@5.7.3)(vite@6.3.6(@types/node@22.10.1)(jiti@2.5.1)(tsx@4.19.3)(yaml@2.8.1))
+        version: 5.1.4(typescript@5.7.3)(vite@7.1.5(@types/node@22.10.1)(jiti@2.5.1)(tsx@4.19.3)(yaml@2.8.1))
       vitest:
         specifier: 'catalog:'
         version: 3.1.2(@types/node@22.10.1)(jiti@2.5.1)(tsx@4.19.3)(yaml@2.8.1)
@@ -747,6 +747,9 @@ importers:
       typescript:
         specifier: 'catalog:'
         version: 5.7.3
+      vite-tsconfig-paths:
+        specifier: 'catalog:'
+        version: 5.1.4(typescript@5.7.3)(vite@6.3.6(@types/node@22.10.1)(jiti@2.5.1)(tsx@4.19.3)(yaml@2.8.1))
       vitest:
         specifier: 'catalog:'
         version: 3.1.2(@types/node@22.10.1)(jiti@2.5.1)(tsx@4.19.3)(yaml@2.8.1)
@@ -1053,6 +1056,9 @@ importers:
       fastify:
         specifier: ^5.6.0
         version: 5.6.0
+      fastify-plugin:
+        specifier: 'catalog:'
+        version: 5.0.1
       hono:
         specifier: 'catalog:'
         version: 4.9.7
@@ -9922,6 +9928,17 @@ snapshots:
       - supports-color
       - typescript
 
+  vite-tsconfig-paths@5.1.4(typescript@5.7.3)(vite@7.1.5(@types/node@22.10.1)(jiti@2.5.1)(tsx@4.19.3)(yaml@2.8.1)):
+    dependencies:
+      debug: 4.4.1
+      globrex: 0.1.2
+      tsconfck: 3.1.6(typescript@5.7.3)
+    optionalDependencies:
+      vite: 7.1.5(@types/node@22.10.1)(jiti@2.5.1)(tsx@4.19.3)(yaml@2.8.1)
+    transitivePeerDependencies:
+      - supports-color
+      - typescript
+
   vite-tsconfig-paths@5.1.4(typescript@5.7.3)(vite@7.1.5(@types/node@24.3.0)(jiti@2.5.1)(tsx@4.19.3)(yaml@2.8.1)):
     dependencies:
       debug: 4.4.1
@@ -9962,6 +9979,22 @@ snapshots:
       jiti: 2.5.1
       tsx: 4.19.3
       yaml: 2.8.1
+
+  vite@7.1.5(@types/node@22.10.1)(jiti@2.5.1)(tsx@4.19.3)(yaml@2.8.1):
+    dependencies:
+      esbuild: 0.25.9
+      fdir: 6.5.0(picomatch@4.0.3)
+      picomatch: 4.0.3
+      postcss: 8.5.6
+      rollup: 4.48.0
+      tinyglobby: 0.2.15
+    optionalDependencies:
+      '@types/node': 22.10.1
+      fsevents: 2.3.3
+      jiti: 2.5.1
+      tsx: 4.19.3
+      yaml: 2.8.1
+    optional: true
 
   vite@7.1.5(@types/node@24.3.0)(jiti@2.5.1)(tsx@4.19.3)(yaml@2.8.1):
     dependencies:

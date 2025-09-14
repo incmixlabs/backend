@@ -2,12 +2,20 @@
 // Currently Redis is implemented separately for Hono (here) and Fastify (location-api/plugins/redis.ts)
 // Consider creating a shared Redis service in shared/utils that can be used by both frameworks
 import type { OpenAPIHono } from "@hono/zod-openapi"
+import type { FastifyInstance, FastifyPluginAsync } from "fastify"
+import fp from "fastify-plugin"
 import type { Env as HonoEnv } from "hono"
 import { createClient, type RedisClientType } from "redis"
 import { envVars } from "../env-config"
 
 declare module "hono" {
   interface ContextVariableMap {
+    redis: RedisClientType
+  }
+}
+
+declare module "fastify" {
+  interface FastifyInstance {
     redis: RedisClientType
   }
 }
@@ -143,7 +151,7 @@ async function checkRedisHealth(): Promise<boolean> {
 }
 
 /**
- * Setup Redis middleware with singleton client
+ * Setup Redis middleware for Hono with singleton client
  * Uses a shared Redis connection instead of creating per-request clients
  */
 export function setupRedisMiddleware<T extends Env>(
@@ -190,6 +198,87 @@ export function setupRedisMiddleware<T extends Env>(
     }
   })
 }
+
+/**
+ * Fastify Redis plugin with singleton client
+ * Uses a shared Redis connection instead of creating per-request clients
+ */
+const redisPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
+  try {
+    const redisUrl = envVars.REDIS_URL
+
+    if (!redisUrl) {
+      fastify.log.warn("REDIS_URL not configured, skipping Redis setup")
+      return
+    }
+
+    // Get the singleton Redis client
+    const redis = await getRedisClient(redisUrl)
+
+    // Verify client health
+    if (!(await checkRedisHealth())) {
+      fastify.log.warn(
+        "Redis client unhealthy, attempting to recreate connection"
+      )
+      // Gracefully shutdown existing client before recreating
+      if (redisClient) {
+        try {
+          await redisClient.quit()
+          fastify.log.info("Existing Redis client shutdown successfully")
+        } catch (error) {
+          fastify.log.warn(
+            { err: error },
+            "Error shutting down existing Redis client"
+          )
+        } finally {
+          redisClient = null
+        }
+      }
+
+      // Create new healthy connection after old client is closed
+      const healthyRedis = await getRedisClient(redisUrl)
+      fastify.decorate("redis", healthyRedis)
+    } else {
+      fastify.decorate("redis", redis)
+    }
+
+    // Add health check route
+    fastify.get("/health/redis", async (_request, reply) => {
+      const status = getRedisStatus()
+      const isHealthy = await checkRedisHealth()
+
+      if (isHealthy) {
+        return reply.code(200).send({
+          status: "healthy",
+          ...status,
+        })
+      } else {
+        return reply.code(503).send({
+          status: "unhealthy",
+          ...status,
+        })
+      }
+    })
+
+    // Graceful shutdown hook
+    fastify.addHook("onClose", async () => {
+      await shutdownRedis()
+    })
+
+    fastify.log.info("Redis plugin initialized successfully")
+  } catch (error) {
+    fastify.log.error({ err: error }, "Failed to setup Redis plugin")
+    // Continue without Redis - the application can handle missing Redis gracefully
+  }
+}
+
+/**
+ * Export the Fastify plugin wrapped with fastify-plugin
+ */
+export const setupRedisFastifyPlugin = fp(redisPlugin, {
+  name: "redis-middleware",
+  fastify: "5.x",
+})
 
 /**
  * Gracefully shutdown Redis client
