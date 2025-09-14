@@ -11,6 +11,11 @@ import {
 } from "vitest"
 import { setupNewsRoutes } from "./index"
 
+declare module "fastify" {
+  interface FastifyInstance {
+    redis: RedisClientType
+  }
+}
 // Mock environment variables
 vi.mock("../../env-vars", () => ({
   envVars: {
@@ -48,7 +53,7 @@ describe("News Routes with Redis Caching", () => {
     app = fastify({ logger: false })
 
     // Mock the Redis plugin to inject our mock client
-    app.decorate("redis", mockRedisClient as any)
+    app.decorate("redis", mockRedisClient as RedisClientType)
 
     // Setup news routes
     setupNewsRoutes(app)
