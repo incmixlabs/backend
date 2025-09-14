@@ -136,12 +136,15 @@ export async function loginUser(client: TestAgent, credentials: Credentials) {
     throw new Error(`Login failed with status ${response.status}`)
   }
 
-  const sessionCookie = response.headers.get("set-cookie")
-  if (!sessionCookie || typeof sessionCookie !== "string") {
+  const setCookieHeader = response.headers.get("set-cookie")
+  const raw = Array.isArray(setCookieHeader)
+    ? setCookieHeader[0]
+    : setCookieHeader
+  if (!raw || typeof raw !== "string") {
     throw new Error("No session cookie received")
   }
 
-  return sessionCookie.split(";")[0] // Extract just the cookie value
+  return raw.split(";")[0] // Extract just the cookie value
 }
 
 export async function signupUser(client: TestAgent, userData: SignupData) {
