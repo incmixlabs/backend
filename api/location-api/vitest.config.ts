@@ -25,11 +25,11 @@ export default defineConfig({
       "@": path.resolve(__dirname, "./src"),
       "@incmix-api/utils/middleware": path.resolve(
         __dirname,
-        "../../shared/utils/dist/src/middleware"
+        "../../shared/utils/src/middleware"
       ),
       "@incmix-api/utils": path.resolve(
         __dirname,
-        "../../shared/utils/dist/src"
+        "../../shared/utils/src"
       ),
     },
   },
