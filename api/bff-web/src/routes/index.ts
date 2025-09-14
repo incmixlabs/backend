@@ -23,6 +23,10 @@ const MIGRATED_SERVICES = {
     prefix: "/api/location",
     upstream: envVars.LOCATION_API_URL?.replace("/api/location", "") ?? "",
   },
+  comments: {
+    prefix: "/api/comments",
+    upstream: envVars.COMMENTS_API_URL?.replace("/api/comments", "") ?? "",
+  },
 } as const
 
 export const setupRoutes = async (app: FastifyInstance) => {
