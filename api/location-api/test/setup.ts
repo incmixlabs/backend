@@ -1,5 +1,3 @@
-import { vi } from "vitest"
-
 // Setup test environment variables
 process.env.NODE_ENV = "test"
 // Use Redis URL with authentication from .env.test

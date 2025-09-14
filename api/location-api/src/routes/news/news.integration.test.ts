@@ -45,9 +45,9 @@ const redisPlugin = fp(
         max: 100, // Higher limit for tests
         timeWindow: "1 minute",
       })
-      
+
       const redisUrl = process.env.REDIS_URL || "redis://localhost:6379"
-      
+
       if (!redisUrl) {
         fastify.log.warn("REDIS_URL not configured, skipping Redis setup")
         return
@@ -81,7 +81,7 @@ const redisPlugin = fp(
         { config: { rateLimit: { max: 5, timeWindow: "1 minute" } } },
         async (_request, reply) => {
           const isHealthy = redisClient?.isOpen ?? false
-          
+
           if (isHealthy) {
             return reply.code(200).send({
               status: "healthy",
