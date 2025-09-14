@@ -1,12 +1,21 @@
+import { randomBytes } from "node:crypto"
 import { generateSentryHeaders } from "@incmix-api/utils"
 import type { KyselyDb, Provider, TokenType } from "@incmix-api/utils/db-schema"
 import { ServerError } from "@incmix-api/utils/errors"
-import { createDate, isWithinExpirationDate, TimeSpan } from "oslo"
-import { alphabet, generateRandomString } from "oslo/crypto"
 import { generateRandomId } from "@/auth/utils"
 import type { Context } from "@/types"
 import { envVars } from "../env-vars"
 import { insertUser } from "./db"
+
+function generateRandomString(length: number): string {
+  const chars = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+  let result = ""
+  const bytes = randomBytes(length)
+  for (let i = 0; i < length; i++) {
+    result += chars[bytes[i] % chars.length]
+  }
+  return result
+}
 
 export async function verifyVerificationCode(
   c: Context,
@@ -32,7 +41,7 @@ export async function verifyVerificationCode(
     return false
   }
 
-  if (!isWithinExpirationDate(new Date(databaseCode.expiresAt))) {
+  if (new Date(databaseCode.expiresAt) < new Date()) {
     await c
       .get("db")
       .deleteFrom("verificationCodes")
@@ -140,13 +149,13 @@ export async function generateVerificationCode(
     )
     .execute()
 
-  const code = generateRandomString(8, alphabet("0-9", "a-z", "A-Z"))
+  const code = generateRandomString(8)
   await db
     .insertInto("verificationCodes")
     .values({
       userId,
       email,
-      expiresAt: createDate(new TimeSpan(7, "d")).toISOString(),
+      expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
       code,
       codeType: type,
     })

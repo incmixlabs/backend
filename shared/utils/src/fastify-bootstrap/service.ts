@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto"
-import { type FastifyInstance, fastify } from "fastify"
+import { type FastifyInstance, type FastifyReply, fastify } from "fastify"
+import type { FastifyRequest } from "fastify/types/request"
 import { initDb } from "../db-schema"
 import {
   createEnvConfig,
@@ -15,14 +16,52 @@ export interface APIServices {
   setupRoutes?: (app: FastifyInstance) => Promise<void>
   setupMiddleware?: (app: FastifyInstance) => Promise<void>
 }
+export const getDb = (request: FastifyRequest) => {
+  if (!request.context?.db) {
+    throw new Error("Database not available")
+  }
+  return request.context.db
+}
+
+export function setStreamingHeaders(reply: FastifyReply): void {
+  reply.raw.setHeader("Content-Type", "text/event-stream; charset=utf-8")
+  reply.raw.setHeader("Cache-Control", "no-cache, no-transform")
+  reply.raw.setHeader("Connection", "keep-alive")
+  reply.raw.setHeader("X-Accel-Buffering", "no")
+  reply.hijack()
+}
+
+export const streamSSE = async (
+  reply: FastifyReply,
+  streamFn: (stream: any) => Promise<void>
+) => {
+  setStreamingHeaders(reply)
+
+  const stream = {
+    writeSSE: (data: { data?: string; event?: string }) => {
+      if (data.event) {
+        reply.raw.write(`event: ${data.event}\n`)
+      }
+      if (data.data) {
+        reply.raw.write(`data: ${data.data}\n\n`)
+      }
+    },
+    close: () => {
+      reply.raw.end()
+    },
+  }
+
+  await streamFn(stream)
+}
 
 export const defaultSetupMiddleware = (app: FastifyInstance) => {
   // Basic request logging
 
-  app.addHook("onRequest", async (request, reply) => {
+  app.addHook("onRequest", (request, reply, done) => {
     const incoming = request.headers["x-request-id"] as string | undefined
     const requestId = incoming ?? request.id ?? randomUUID()
     reply.header("X-Request-Id", requestId)
+    done()
   })
 }
 export function createAPIService({
@@ -79,11 +118,12 @@ export function createFastifyService(conf: FastifyServiceConfig) {
 
     const db = initDb(config.bindings.DATABASE_URL)
 
-    app.addHook("onRequest", async (request, _reply) => {
+    app.addHook("onRequest", (request, _reply, done) => {
       if (!request.context) {
         request.context = {}
       }
       request.context.db = db
+      done()
     })
 
     // Close DB pool gracefully

@@ -17,7 +17,7 @@
     "@incmix-api/utils": "workspace:^",
     "@incmix/utils": "catalog:",
     "@scalar/fastify-api-reference": "catalog:",
-    "ai": "5.0.23",
+    "ai": "catalog:",
     "ajv": "catalog:",
     "ajv-formats": "catalog:",
     "fastify": "catalog:",

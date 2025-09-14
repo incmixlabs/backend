@@ -1,7 +1,8 @@
 import { ERROR_UNAUTHORIZED } from "@incmix-api/utils"
 import { processError, UnauthorizedError } from "@incmix-api/utils/errors"
+import { getDb, streamSSE } from "@incmix-api/utils/fastify-bootstrap"
 import { useTranslation } from "@incmix-api/utils/middleware"
-import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify"
+import type { FastifyInstance, FastifyRequest } from "fastify"
 import { FigmaService } from "@/lib/figma"
 import {
   generateMultipleUserStories as aiGenerateMultipleUserStories,
@@ -10,6 +11,7 @@ import {
   generateUserStory as aiGenerateUserStory,
   generateUserStoryFromImage,
 } from "@/lib/services"
+
 import {
   errorResponseSchema,
   figmaSchema,
@@ -25,39 +27,7 @@ import {
   userStoryResponseSchema,
 } from "./schemas"
 
-const getDb = (request: FastifyRequest) => {
-  if (!request.context?.db) {
-    throw new Error("Database not available")
-  }
-  return request.context.db
-}
-
-const streamSSE = async (
-  reply: FastifyReply,
-  streamFn: (stream: any) => Promise<void>
-) => {
-  reply.raw.setHeader("Content-Type", "text/event-stream")
-  reply.raw.setHeader("Cache-Control", "no-cache")
-  reply.raw.setHeader("Connection", "keep-alive")
-
-  const stream = {
-    writeSSE: async (data: { data?: string; event?: string }) => {
-      if (data.event) {
-        reply.raw.write(`event: ${data.event}\n`)
-      }
-      if (data.data) {
-        reply.raw.write(`data: ${data.data}\n\n`)
-      }
-    },
-    close: () => {
-      reply.raw.end()
-    },
-  }
-
-  await streamFn(stream)
-}
-
-export const setupGenaiRoutes = async (app: FastifyInstance) => {
+export const setupGenaiRoutes = (app: FastifyInstance) => {
   app.post(
     "/generate-project",
     {

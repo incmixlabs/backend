@@ -136,7 +136,7 @@ const { app, startServer } = service
 
 startServer()
 
-const shutdown = async (signal: NodeJS.Signals) => {
+const shutdown = async (signal: string) => {
   console.log(`Received ${signal}. Shutting down gracefully...`)
   try {
     await worker.close()
@@ -147,6 +147,11 @@ const shutdown = async (signal: NodeJS.Signals) => {
     await globalDb.destroy()
   } catch (e) {
     console.error("Error closing DB:", e)
+  }
+  try {
+    await app.close()
+  } catch (e) {
+    console.error("Error closing Fastify app:", e)
   }
 }
 
