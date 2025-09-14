@@ -18,36 +18,68 @@ function getEnvVars() {
   return envVars
 }
 
+async function fetchWithTimeout(url: string, init?: RequestInit, ms = 8000) {
+  const controller = new AbortController()
+  const timeoutId = setTimeout(() => controller.abort(), ms)
+
+  try {
+    const response = await fetch(url, {
+      ...init,
+      signal: controller.signal,
+    })
+    return response
+  } catch (error) {
+    if (error instanceof Error && error.name === "AbortError") {
+      throw new ServerError(`Request timeout after ${ms}ms: ${url}`)
+    }
+    throw error
+  } finally {
+    clearTimeout(timeoutId)
+  }
+}
+
 type Env = {
   Bindings: { INTL_API_URL: string; COOKIE_NAME: string }
 }
+
 export async function getDefaultLocale() {
   const vars = getEnvVars()
-  const res = await fetch(`${vars["INTL_API_URL"]}/locales/default`, {
-    method: "get",
-  })
+  const res = await fetchWithTimeout(
+    `${vars["INTL_API_URL"]}/locales/default`,
+    {
+      method: "get",
+    }
+  )
 
   const data = await res.json()
 
   if (!res.ok) throw new ServerError((data as { message: string }).message)
   return data as Locale
 }
+
 export async function getAllMessages(c: Context<Env>) {
   const locale = c.get("locale")
   const vars = getEnvVars()
-  const res = await fetch(`${vars["INTL_API_URL"]}/messages/${locale}`, {
-    method: "get",
-  })
+  const res = await fetchWithTimeout(
+    `${vars["INTL_API_URL"]}/messages/${locale}`,
+    {
+      method: "get",
+    }
+  )
 
   const data = await res.json()
   if (!res.ok) throw new ServerError((data as { message: string }).message)
   return data as IntlMessage[]
 }
+
 export async function getDefaultMessages() {
   const vars = getEnvVars()
-  const res = await fetch(`${vars["INTL_API_URL"]}/messages/default`, {
-    method: "get",
-  })
+  const res = await fetchWithTimeout(
+    `${vars["INTL_API_URL"]}/messages/default`,
+    {
+      method: "get",
+    }
+  )
 
   const data = await res.json()
   if (!res.ok) throw new ServerError((data as { message: string }).message)

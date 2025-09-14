@@ -1,10 +1,7 @@
 // Vitest setup file to handle SSR globals
 export {}
 declare global {
-  var __vite_ssr_exportName__: (
-    name: string,
-    value: any
-  ) => Record<string, any>
+  var __vite_ssr_exportName__: (name: string, value: any) => Record<string, any>
   var __vite_ssr_importName__: (mod: any, name: string) => any
   var __vite_ssr_importDefaultName__: (mod: any) => any
   var __vite_ssr_dynamic_import__: (url: string) => Promise<any>

@@ -1,9 +1,8 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify"
 import { createClient } from "redis"
 import { envVars } from "../../env-vars"
-import { getLocationFromIp } from "../../lib/helper"
+import { fetchWithTimeout, getLocationFromIp } from "../../lib/helper"
 import type { NewsApiResponse, NewsResponse, TopicApiResponse } from "./types"
-
 export const setupNewsRoutes = (app: FastifyInstance) => {
   // Get news topics endpoint
   app.get(
@@ -91,7 +90,7 @@ export const setupNewsRoutes = (app: FastifyInstance) => {
 
         // Fetch from API
         searchParams.append("api_key", envVars.SERP_API_KEY)
-        const res = await fetch(
+        const res = await fetchWithTimeout(
           `${envVars.SERP_NEWS_URL}?${searchParams.toString()}`
         )
 
@@ -256,7 +255,7 @@ export const setupNewsRoutes = (app: FastifyInstance) => {
 
         // Fetch from API
         searchParams.append("api_key", envVars.SERP_API_KEY)
-        const res = await fetch(
+        const res = await fetchWithTimeout(
           `${envVars.SERP_NEWS_URL}?${searchParams.toString()}`
         )
 

@@ -104,3 +104,17 @@ export const getAddressFromLocation = async (location: {
 
   return address
 }
+
+export const fetchWithTimeout = async (
+  url: string,
+  ms = 8000,
+  init?: RequestInit
+) => {
+  const controller = new AbortController()
+  const id = setTimeout(() => controller.abort(), ms)
+  try {
+    return await fetch(url, { ...init, signal: controller.signal })
+  } finally {
+    clearTimeout(id)
+  }
+}
