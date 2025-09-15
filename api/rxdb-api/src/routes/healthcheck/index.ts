@@ -1,35 +1,91 @@
-import { createHealthCheckRoute } from "@incmix-api/utils"
+import type { Database } from "@incmix-api/utils/db-schema"
+import { getDb } from "@incmix-api/utils/fastify-bootstrap"
+import type { FastifyInstance } from "fastify"
 import { envVars } from "@/env-vars"
-import { BASE_PATH } from "@/lib/constants"
-import type { HonoApp } from "@/types"
 
-const healthcheckRoutes = createHealthCheckRoute<HonoApp>({
-  // Pass all environment variables to check
-  envVars: {
-    AUTH_API_URL: envVars.AUTH_API_URL,
-    COOKIE_NAME: envVars.COOKIE_NAME,
-    DOMAIN: envVars.DOMAIN,
-    INTL_API_URL: envVars.INTL_API_URL,
-    DATABASE_URL: envVars.DATABASE_URL,
-  },
-
-  basePath: BASE_PATH,
-
-  // Add service-specific checks
-  checks: [
+export const setupHealthcheckRoutes = async (app: FastifyInstance) => {
+  app.get(
+    "/healthcheck",
     {
-      name: "Database",
-      check: async (c) => {
-        try {
-          // Simple query to check database connectivity
-          await c.get("db").selectFrom("tasks").selectAll().limit(1).execute()
-          return true
-        } catch (_error) {
-          return false
-        }
+      schema: {
+        description: "Health check endpoint",
+        tags: ["healthcheck"],
+        response: {
+          200: {
+            type: "object",
+            properties: {
+              status: { type: "string" },
+              timestamp: { type: "string" },
+              checks: {
+                type: "object",
+                properties: {
+                  database: { type: "boolean" },
+                  envVars: {
+                    type: "object",
+                    additionalProperties: { type: "boolean" },
+                  },
+                },
+              },
+            },
+          },
+          503: {
+            type: "object",
+            properties: {
+              status: { type: "string" },
+              timestamp: { type: "string" },
+              checks: {
+                type: "object",
+                properties: {
+                  database: { type: "boolean" },
+                  envVars: {
+                    type: "object",
+                    additionalProperties: { type: "boolean" },
+                  },
+                },
+              },
+            },
+          },
+        },
       },
     },
-  ],
-})
+    async (request, reply) => {
+      const checks = {
+        database: false,
+        envVars: {
+          AUTH_API_URL: !!envVars.AUTH_API_URL,
+          COOKIE_NAME: !!envVars.COOKIE_NAME,
+          DOMAIN: !!envVars.DOMAIN,
+          INTL_API_URL: !!envVars.INTL_API_URL,
+          DATABASE_URL: !!envVars.DATABASE_URL,
+        },
+      }
 
-export default healthcheckRoutes
+      // Check database connectivity
+      try {
+        const db = getDb<Database>(request)
+        await db.selectFrom("tasks").selectAll().limit(1).execute()
+        checks.database = true
+      } catch (_error) {
+        checks.database = false
+      }
+
+      const allChecksPass =
+        checks.database &&
+        Object.values(checks.envVars).every((v) => v === true)
+
+      if (!allChecksPass) {
+        return reply.code(503).send({
+          status: "unhealthy",
+          timestamp: new Date().toISOString(),
+          checks,
+        })
+      }
+
+      return reply.code(200).send({
+        status: "healthy",
+        timestamp: new Date().toISOString(),
+        checks,
+      })
+    }
+  )
+}
