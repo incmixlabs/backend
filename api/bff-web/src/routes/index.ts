@@ -35,6 +35,10 @@ const MIGRATED_SERVICES = {
     prefix: "/api/genai",
     upstream: envVars.GENAI_API_URL?.replace("/api/genai", "") ?? "",
   },
+  rxdb: {
+    prefix: "/api/rxdb",
+    upstream: envVars.RXDB_API_URL?.replace("/api/rxdb", "") ?? "",
+  },
 } as const
 
 export const setupRoutes = async (app: FastifyInstance) => {

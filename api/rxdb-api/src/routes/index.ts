@@ -1,14 +1,18 @@
-import type { OpenAPIHono } from "@hono/zod-openapi"
-import { BASE_PATH } from "@/lib/constants"
-import healthcheckRoutes from "@/routes/healthcheck"
-import labelsRoutes from "@/routes/labels"
-import projectsRoutes from "@/routes/projects"
-import tasksRoutes from "@/routes/tasks"
-import type { HonoApp } from "@/types"
+import type { FastifyInstance } from "fastify"
+import { setupHealthcheckRoutes } from "@/routes/healthcheck"
+import { setupLabelsRoutes } from "@/routes/labels"
+import { setupProjectsRoutes } from "@/routes/projects"
+import { setupTasksRoutes } from "@/routes/tasks"
 
-export const routes = (app: OpenAPIHono<HonoApp>) => {
-  app.route(`${BASE_PATH}/healthcheck`, healthcheckRoutes)
-  app.route(`${BASE_PATH}/labels`, labelsRoutes)
-  app.route(`${BASE_PATH}/projects`, projectsRoutes)
-  app.route(`${BASE_PATH}/tasks`, tasksRoutes)
+export const setupRoutes = async (app: FastifyInstance) => {
+  // Register all routes with the base path prefix
+  await app.register(
+    async (fastify) => {
+      await setupHealthcheckRoutes(fastify)
+      await setupLabelsRoutes(fastify)
+      await setupProjectsRoutes(fastify)
+      await setupTasksRoutes(fastify)
+    },
+    { prefix: "/api/rxdb" }
+  )
 }

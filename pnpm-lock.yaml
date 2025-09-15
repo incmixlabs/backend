@@ -919,21 +919,15 @@ importers:
 
   api/rxdb-api:
     dependencies:
-      '@hono/zod-openapi':
-        specifier: 'catalog:'
-        version: 1.1.0(hono@4.9.7)(zod@4.1.1)
-      '@hono/zod-validator':
-        specifier: 'catalog:'
-        version: 0.7.2(hono@4.9.7)(zod@4.1.1)
       '@incmix-api/utils':
         specifier: workspace:^
         version: link:../../shared/utils
       '@incmix/utils':
         specifier: 'catalog:'
         version: 0.51.0(zod@4.1.1)
-      hono:
+      fastify:
         specifier: 'catalog:'
-        version: 4.9.7
+        version: 5.6.0
       kysely:
         specifier: 'catalog:'
         version: 0.27.5

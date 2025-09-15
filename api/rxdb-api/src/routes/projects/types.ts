@@ -21,8 +21,16 @@ export const ProjectSchemaWithTimeStamps = RxdbProjectSchema.extend({
   endDate: z.number().nullish(),
   createdAt: z.number(),
   updatedAt: z.number(),
-  createdBy: z.string(),
-  updatedBy: z.string(),
+  createdBy: z.object({
+    id: z.string(),
+    name: z.string(),
+    image: z.string().optional(),
+  }),
+  updatedBy: z.object({
+    id: z.string(),
+    name: z.string(),
+    image: z.string().optional(),
+  }),
 })
 
 export type ProjectWithTimeStamps = z.infer<typeof ProjectSchemaWithTimeStamps>
