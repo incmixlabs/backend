@@ -1,7 +1,7 @@
 import { ERROR_UNAUTHORIZED } from "@incmix-api/utils"
 import type { Database, Label } from "@incmix-api/utils/db-schema"
 import { BadRequestError, ServerError } from "@incmix-api/utils/errors"
-import { getDb, responseSchema } from "@incmix-api/utils/fastify-bootstrap"
+import { errorResponseSchema, getDb } from "@incmix-api/utils/fastify-bootstrap"
 import { useTranslation } from "@incmix-api/utils/middleware"
 import type { FastifyInstance } from "fastify"
 import { getUserProjectIds } from "../lib/db"
@@ -37,12 +37,15 @@ export const setupLabelsRoutes = (app: FastifyInstance) => {
               },
             },
           },
-          401: { ...responseSchema[401] },
+          401: { ...errorResponseSchema },
           500: {
-            ...responseSchema[500],
+            ...errorResponseSchema,
           },
           400: {
-            ...responseSchema[400],
+            ...errorResponseSchema,
+          },
+          409: {
+            ...errorResponseSchema,
           },
         },
       },
@@ -176,11 +179,14 @@ export const setupLabelsRoutes = (app: FastifyInstance) => {
         tags: ["labels"],
         body: PushLabelsBodySchema,
         response: {
-          200: { ...responseSchema[200] },
           500: {
-            ...responseSchema[500],
+            ...errorResponseSchema,
           },
-          401: { ...responseSchema[401] },
+          401: { ...errorResponseSchema },
+          409: {
+            type: "array",
+            items: LabelWithTimeStampsSchema,
+          },
         },
       },
     },
@@ -370,7 +376,7 @@ export const setupLabelsRoutes = (app: FastifyInstance) => {
         // }
 
         // Return conflicts to the client
-        return reply.code(200).send(conflicts)
+        return reply.code(409).send(conflicts)
       } catch (error) {
         let message = "Failed to sync labels from client"
         if (error instanceof Error) message = error.message

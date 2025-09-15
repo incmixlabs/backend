@@ -5,13 +5,6 @@ export const errorResponseSchema = {
     success: { type: "boolean" },
   },
 }
-export const responseSchema = {
-  200: { ...errorResponseSchema },
-  400: { ...errorResponseSchema },
-  401: { ...errorResponseSchema },
-  404: { ...errorResponseSchema },
-  500: { ...errorResponseSchema },
-}
 export const UserSchema = {
   type: "object",
   properties: {
