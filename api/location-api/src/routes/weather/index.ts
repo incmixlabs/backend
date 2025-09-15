@@ -108,7 +108,7 @@ export const setupWeatherRoutes = (app: FastifyInstance) => {
         if (!lat || !lon) {
           // Get location from IP if coordinates not provided
           address = await getLocationFromIp(request)
-          searchParams.append("location", `${address.lat},${address.lon}`)
+          searchParams.append("location", `${address?.lat},${address?.lon}`)
         } else {
           // Get address from coordinates
           address = await getAddressFromLocation({ lat, lon })
@@ -145,7 +145,7 @@ export const setupWeatherRoutes = (app: FastifyInstance) => {
         // Transform the data to match our schema
         const data: WeatherForecast = {
           temperatureUnit: "c",
-          days: weatherForecast.timelines.daily.map((day) => ({
+          days: weatherForecast.timelines.daily.map((day: any) => ({
             time: day.time,
             temperatureMax: day.values.temperatureMax,
             temperatureMin: day.values.temperatureMin,

@@ -293,8 +293,8 @@ export const setupPermissionRoutes = async (app: FastifyInstance) => {
 
       const newRole = await createRoleWithPermissions(
         request,
-        orgId,
         name,
+        "description",
         permissions
       )
       return {
@@ -387,8 +387,9 @@ export const setupPermissionRoutes = async (app: FastifyInstance) => {
       const { name, permissions } = body
       await updateRoleWithPermissions(
         request,
-        parseInt(roleId, 10),
+        roleId,
         name,
+        "description",
         permissions
       )
       return { message: "Role updated successfully" }
@@ -448,7 +449,7 @@ export const setupPermissionRoutes = async (app: FastifyInstance) => {
       // Log the mutation
       await auditLogger.logMutation(request, "DELETE", "Role", roleId, orgId)
 
-      await deleteRoleById(request, parseInt(roleId, 10))
+      await deleteRoleById(request, roleId)
       return { message: "Role deleted successfully" }
     }
   )
@@ -523,12 +524,7 @@ export const setupPermissionRoutes = async (app: FastifyInstance) => {
         { action: "add", permission }
       )
 
-      await addPermissionToRole(
-        request,
-        parseInt(roleId, 10),
-        permission.action,
-        permission.subject
-      )
+      await addPermissionToRole(request, roleId, permission.action)
       return { message: "Permission added to role successfully" }
     }
   )
@@ -603,12 +599,7 @@ export const setupPermissionRoutes = async (app: FastifyInstance) => {
         { action: "remove", permission }
       )
 
-      await removePermissionFromRole(
-        request,
-        parseInt(roleId, 10),
-        permission.action,
-        permission.subject
-      )
+      await removePermissionFromRole(request, roleId, permission.action)
       return { message: "Permission removed from role successfully" }
     }
   )

@@ -1,12 +1,13 @@
+import type { AuthUser } from "@incmix/utils/types"
 import type { KyselyDb } from "@incmix-api/utils/db-schema"
-import type { Context as HonoContext } from "hono"
-import type { Env } from "./env-vars"
+import type { FastifyRequest } from "fastify"
 
-export type Bindings = Env
-
-export type Variables = {
-  db: KyselyDb
+declare module "fastify" {
+  interface FastifyRequest {
+    user?: AuthUser | null
+    db: KyselyDb
+    locale?: string
+  }
 }
 
-export type HonoApp = { Bindings: Bindings; Variables: Variables }
-export type Context = HonoContext<HonoApp>
+export type Context = FastifyRequest

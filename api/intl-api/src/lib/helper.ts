@@ -1,8 +1,7 @@
 import type { Context } from "@/types"
 
 export async function getDefaultLocale(c: Context) {
-  const locale = await c
-    .get("db")
+  const locale = await c.db
     .selectFrom("locales")
     .selectAll()
     .where("isDefault", "=", true)
@@ -11,10 +10,10 @@ export async function getDefaultLocale(c: Context) {
   if (!locale) return { code: "en", isDefault: true }
   return { code: locale.code, isDefault: true }
 }
+
 export async function getAllMessages(c: Context) {
-  const locale = c.get("locale")
-  const dbLocale = await c
-    .get("db")
+  const locale = c.locale || "en" // Fallback to "en" if locale not set
+  const dbLocale = await c.db
     .selectFrom("locales")
     .selectAll()
     .where("code", "=", locale)
@@ -22,8 +21,7 @@ export async function getAllMessages(c: Context) {
 
   if (!dbLocale) return []
 
-  const messages = await c
-    .get("db")
+  const messages = await c.db
     .selectFrom("translations")
     .selectAll()
     .where("localeId", "=", dbLocale.id)
@@ -31,9 +29,9 @@ export async function getAllMessages(c: Context) {
 
   return messages
 }
+
 export async function getDefaultMessages(c: Context) {
-  const dbLocale = await c
-    .get("db")
+  const dbLocale = await c.db
     .selectFrom("locales")
     .where("isDefault", "=", true)
     .selectAll()
@@ -41,8 +39,7 @@ export async function getDefaultMessages(c: Context) {
 
   if (!dbLocale) return []
 
-  const messages = await c
-    .get("db")
+  const messages = await c.db
     .selectFrom("translations")
     .selectAll()
     .where("localeId", "=", dbLocale.id)
