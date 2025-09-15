@@ -1,4 +1,4 @@
-import { randomBytes } from "node:crypto"
+import { randomInt } from "node:crypto"
 import { generateSentryHeaders } from "@incmix-api/utils"
 import type { KyselyDb, Provider, TokenType } from "@incmix-api/utils/db-schema"
 import { ServerError } from "@incmix-api/utils/errors"
@@ -7,14 +7,14 @@ import type { Context } from "@/types"
 import { envVars } from "../env-vars"
 import { insertUser } from "./db"
 
+// TODO Remove this
 function generateRandomString(length: number): string {
   const chars = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
-  let result = ""
-  const bytes = randomBytes(length)
+  let out = ""
   for (let i = 0; i < length; i++) {
-    result += chars[bytes[i] % chars.length]
+    out += chars[randomInt(chars.length)]
   }
-  return result
+  return out
 }
 
 export async function verifyVerificationCode(

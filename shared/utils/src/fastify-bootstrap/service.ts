@@ -8,9 +8,11 @@ import {
   type Service,
   services,
 } from "../env-config"
+import { processError } from "../errors"
 import { createCorsMiddleware, createErrorHandler } from "../fastify-middleware"
 import type { FastifyServiceConfig } from "./types"
 import { defaults } from "./types"
+
 export interface APIServices {
   name: Service
   setupRoutes?: (app: FastifyInstance) => Promise<void>
@@ -52,6 +54,30 @@ export const streamSSE = async (
   }
 
   await streamFn(stream)
+}
+
+export async function sendProcessError(
+  request: FastifyRequest,
+  reply: FastifyReply,
+  error: unknown,
+  fp: string[]
+) {
+  const out = await processError(request as any, error, fp)
+  // Hono Response path
+  if (
+    out &&
+    typeof (out as any).json === "function" &&
+    "status" in (out as any)
+  ) {
+    const body = await (out as any).json()
+    return reply.code((out as any).status ?? 500).send(body)
+  }
+  // Mock/plain object path
+  if (out && typeof out === "object") {
+    const status = (out as any).statusCode ?? (out as any).status ?? 500
+    return reply.code(status).send(out)
+  }
+  return reply.code(500).send({ message: "Internal server error" })
 }
 
 export const defaultSetupMiddleware = (app: FastifyInstance) => {
@@ -322,7 +348,7 @@ export function createFastifyService(conf: FastifyServiceConfig) {
   }
 
   // Health check endpoint
-  app.get(`${config.basePath}/health`, async (_request, _reply) => {
+  app.get(`${config.basePath}/health`, (_request, _reply) => {
     return {
       status: "ok",
       service: config.name,
@@ -353,7 +379,6 @@ export function createFastifyService(conf: FastifyServiceConfig) {
       if (config.onAfterStart) {
         await config.onAfterStart()
       }
-
       // Setup graceful shutdown
       const gracefulShutdown = async (signal: string) => {
         app.log.info({ signal }, "Starting graceful shutdown")
@@ -365,7 +390,6 @@ export function createFastifyService(conf: FastifyServiceConfig) {
           app.log.error({ err: error }, "Error during graceful shutdown")
         }
       }
-
       // Handle shutdown signals
       process.on("SIGTERM", () => gracefulShutdown("SIGTERM"))
       process.on("SIGINT", () => gracefulShutdown("SIGINT"))

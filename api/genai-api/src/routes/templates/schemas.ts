@@ -48,13 +48,3 @@ export const generateStoryTemplateResponseSchema = {
   required: ["template"],
   additionalProperties: false,
 }
-
-export const errorResponseSchema = {
-  type: "object",
-  properties: {
-    message: { type: "string" },
-    status: { type: "number" },
-  },
-  required: ["message"],
-  additionalProperties: false,
-}

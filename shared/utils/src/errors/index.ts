@@ -1,6 +1,14 @@
 import { ForbiddenError as CaslError } from "@casl/ability"
 import type { ContentfulStatusCode } from "hono/utils/http-status"
-
+export const errorResponseSchema = {
+  type: "object",
+  properties: {
+    message: { type: "string" },
+    status: { type: "number" },
+  },
+  required: ["message"],
+  additionalProperties: false,
+}
 class NotFoundError extends Error {
   public status: ContentfulStatusCode = 404
 }

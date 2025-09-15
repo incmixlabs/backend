@@ -1,5 +1,5 @@
 import fastify, { type FastifyInstance } from "fastify"
-import { beforeEach, describe, expect, it, vi } from "vitest"
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 // Mock environment variables
 vi.mock("../src/env-vars", () => ({
@@ -40,6 +40,15 @@ vi.mock("../src/lib/services", () => ({
 
 // Mock error processing
 vi.mock("@incmix-api/utils/errors", () => ({
+  errorResponseSchema: {
+    type: "object",
+    properties: {
+      message: { type: "string" },
+      status: { type: "number" },
+    },
+    required: ["message"],
+    additionalProperties: false,
+  },
   UnauthorizedError: class UnauthorizedError extends Error {
     constructor(message: string) {
       super(message)

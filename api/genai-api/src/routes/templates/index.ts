@@ -1,6 +1,7 @@
 import { ERROR_UNAUTHORIZED } from "@incmix-api/utils"
 import {
   ConflictError,
+  errorResponseSchema,
   processError,
   UnauthorizedError,
 } from "@incmix-api/utils/errors"
@@ -9,7 +10,6 @@ import type { FastifyInstance, FastifyRequest } from "fastify"
 import { ERROR_TEMPLATE_ALREADY_EXISTS } from "@/lib/constants"
 import { generateTemplate } from "@/lib/services"
 import {
-  errorResponseSchema,
   generateStoryTemplateResponseSchema,
   generateStoryTemplateSchema,
   newStoryTemplateSchema,
@@ -24,7 +24,7 @@ const getDb = (request: FastifyRequest) => {
   return request.context.db
 }
 
-export const setupTemplateRoutes = async (app: FastifyInstance) => {
+export const setupTemplateRoutes = (app: FastifyInstance) => {
   // Get all story templates
   app.get(
     "",

@@ -11,10 +11,13 @@ import { findUserByEmail } from "@/lib/db"
 import { generateVerificationCode, sendVerificationEmail } from "@/lib/helper"
 import { authMiddleware } from "@/middleware/auth"
 
-// import { envVars } from "../../env-vars" // Use app.bindings instead for test compatibility
+import { envVars as defEnvVars } from "../../env-vars" // Use app.bindings instead for test compatibility
 
 // Fastify-compatible version of deleteSessionCookie
-function deleteSessionCookie(reply: FastifyReply, envVars: any): void {
+function deleteSessionCookie(
+  reply: FastifyReply,
+  envVars: any = defEnvVars
+): void {
   const domain = envVars.DOMAIN
   const isIp = domain ? /^\d{1,3}(\.\d{1,3}){3}$/.test(domain) : false
   const domainPart =
@@ -86,7 +89,12 @@ const ExtendedRegisterRequestSchema = {
 }
 
 export const setupAuthRoutes = (app: FastifyInstance) => {
-  const envVars = (app as any).bindings
+  type AuthEnvBindings = {
+    COOKIE_NAME: string
+    DOMAIN?: string
+    NODE_ENV?: "dev" | "prod" | "test"
+  }
+  const envVars = (app as any).bindings as AuthEnvBindings
 
   // Get current user endpoint
   app.get(

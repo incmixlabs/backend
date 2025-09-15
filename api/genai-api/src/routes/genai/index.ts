@@ -1,6 +1,13 @@
 import { ERROR_UNAUTHORIZED } from "@incmix-api/utils"
-import { processError, UnauthorizedError } from "@incmix-api/utils/errors"
-import { getDb, streamSSE } from "@incmix-api/utils/fastify-bootstrap"
+import {
+  errorResponseSchema,
+  UnauthorizedError,
+} from "@incmix-api/utils/errors"
+import {
+  getDb,
+  sendProcessError,
+  streamSSE,
+} from "@incmix-api/utils/fastify-bootstrap"
 import { useTranslation } from "@incmix-api/utils/middleware"
 import type { FastifyInstance, FastifyRequest } from "fastify"
 import { FigmaService } from "@/lib/figma"
@@ -13,7 +20,6 @@ import {
 } from "@/lib/services"
 
 import {
-  errorResponseSchema,
   figmaSchema,
   generateCodeFromFigmaSchema,
   generateMultipleUserStoriesSchema,
@@ -93,7 +99,7 @@ export const setupGenaiRoutes = (app: FastifyInstance) => {
           stream.close()
         })
       } catch (error) {
-        return await processError(request as any, error, [
+        return await sendProcessError(request, reply, error, [
           "{{ default }}",
           "generate-user-story",
         ])
@@ -179,7 +185,7 @@ export const setupGenaiRoutes = (app: FastifyInstance) => {
           }
         })
       } catch (error) {
-        return await processError(request as any, error, [
+        return await sendProcessError(request, reply, error, [
           "{{ default }}",
           "generate-project-hierarchy",
         ])
@@ -247,7 +253,7 @@ export const setupGenaiRoutes = (app: FastifyInstance) => {
           stream.close()
         })
       } catch (error) {
-        return await processError(request as any, error, [
+        return await sendProcessError(request, reply, error, [
           "{{ default }}",
           "generate-user-story",
         ])
@@ -312,7 +318,7 @@ export const setupGenaiRoutes = (app: FastifyInstance) => {
 
         return reply.code(200).send({ ...userStory, imageUrl: figmaImage })
       } catch (error) {
-        return await processError(request as any, error, [
+        return await sendProcessError(request, reply, error, [
           "{{ default }}",
           "generate-user-story-from-figma",
         ])
@@ -413,7 +419,7 @@ export const setupGenaiRoutes = (app: FastifyInstance) => {
           }
         })
       } catch (error) {
-        return await processError(request as any, error, [
+        return await sendProcessError(request, reply, error, [
           "{{ default }}",
           "generate-code-from-figma",
         ])
@@ -463,7 +469,7 @@ export const setupGenaiRoutes = (app: FastifyInstance) => {
         const figmaImage = await figmaService.getFigmaImage(url)
         return reply.code(200).send({ image: figmaImage })
       } catch (error) {
-        return await processError(request as any, error, [
+        return await sendProcessError(request, reply, error, [
           "{{ default }}",
           "get-figma-image",
         ])
@@ -534,7 +540,7 @@ export const setupGenaiRoutes = (app: FastifyInstance) => {
 
         return reply.code(200).send({ userStories })
       } catch (error) {
-        return await processError(request as any, error, [
+        return await sendProcessError(request, reply, error, [
           "{{ default }}",
           "generate-multiple-user-stories",
         ])

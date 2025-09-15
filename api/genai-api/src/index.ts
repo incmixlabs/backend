@@ -136,26 +136,4 @@ const { app, startServer } = service
 
 startServer()
 
-const shutdown = async (signal: string) => {
-  console.log(`Received ${signal}. Shutting down gracefully...`)
-  try {
-    await worker.close()
-  } catch (e) {
-    console.error("Error closing worker:", e)
-  }
-  try {
-    await globalDb.destroy()
-  } catch (e) {
-    console.error("Error closing DB:", e)
-  }
-  try {
-    await app.close()
-  } catch (e) {
-    console.error("Error closing Fastify app:", e)
-  }
-}
-
-process.on("SIGINT", shutdown)
-process.on("SIGTERM", shutdown)
-
 export default app

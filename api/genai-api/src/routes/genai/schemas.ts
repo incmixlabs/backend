@@ -269,21 +269,6 @@ export const getFigmaImageResponseSchema = {
   additionalProperties: false,
 }
 
-// Common error response schema
-export const errorResponseSchema = {
-  type: "object",
-  properties: {
-    message: {
-      type: "string",
-    },
-    status: {
-      type: "number",
-    },
-  },
-  required: ["message"],
-  additionalProperties: false,
-}
-
 // SSE streaming response schemas
 export const sseDataSchema = {
   type: "object",
