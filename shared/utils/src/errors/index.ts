@@ -1,5 +1,7 @@
 import { ForbiddenError as CaslError } from "@casl/ability"
 import type { ContentfulStatusCode } from "hono/utils/http-status"
+
+export * from "../error-constants"
 export const errorResponseSchema = {
   type: "object",
   properties: {

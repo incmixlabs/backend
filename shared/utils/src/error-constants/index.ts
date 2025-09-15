@@ -110,3 +110,43 @@ export const commonErrors = {
     key: "service_unavailable",
   },
 }
+
+export type ErrorCode = 404 | 401 | 403 | 400 | 409 | 412 | 422 | 500
+interface ErrorStatus {
+  code: number
+  message: string
+}
+export const errorStatuses: Record<string, ErrorStatus> = {
+  NotFound: {
+    code: 404,
+    message: "NotFound",
+  },
+  Unauthorized: {
+    code: 401,
+    message: "Unauthorized",
+  },
+  Forbidden: {
+    code: 403,
+    message: "Forbidden",
+  },
+  BadRequest: {
+    code: 400,
+    message: "BadRequest",
+  },
+  Conflict: {
+    code: 409,
+    message: "Conflict",
+  },
+  PreconditionFailed: {
+    code: 412,
+    message: "PreconditionFailed",
+  },
+  UnprocessableEntity: {
+    code: 422,
+    message: "UnprocessableEntity",
+  },
+  ServerError: {
+    code: 500,
+    message: "ServerError",
+  },
+}
