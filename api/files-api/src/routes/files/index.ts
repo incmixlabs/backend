@@ -11,11 +11,16 @@ import { getSignedUrl } from "@aws-sdk/s3-request-presigner"
 import { ERROR_NOT_IMPL, ERROR_UNAUTHORIZED } from "@incmix-api/utils"
 import {
   BadRequestError,
+  ErrorConstants,
+  errorStatuses,
   NotFoundError,
   ServerError,
   UnauthorizedError,
 } from "@incmix-api/utils/errors"
-import { useTranslation } from "@incmix-api/utils/middleware"
+import { useFastifyTranslation } from "@incmix-api/utils/fastify-bootstrap"
+
+const _errorConstants = new ErrorConstants()
+
 import type { FastifyInstance } from "fastify"
 import { envVars } from "@/env-vars"
 import {
@@ -33,7 +38,7 @@ import {
   QueryFileNameSchema,
 } from "./schema"
 
-export const setupFilesRoutes = async (app: FastifyInstance) => {
+export const setupFilesRoutes = (app: FastifyInstance) => {
   // Upload file endpoint
   app.put(
     "/upload",
@@ -52,7 +57,7 @@ export const setupFilesRoutes = async (app: FastifyInstance) => {
     },
     async (request, reply) => {
       try {
-        const t = await useTranslation(request as any)
+        const t = await useFastifyTranslation(request as any)
         if (!envVars.PORT) {
           const msg = await t.text(ERROR_NOT_IMPL)
           throw new ServerError(msg)
@@ -67,14 +72,14 @@ export const setupFilesRoutes = async (app: FastifyInstance) => {
         const contentType =
           request.headers["content-type"] || "application/octet-stream"
 
-        const body = await request.raw.read()
+        const _body = await request.raw.read()
 
         const upload = new Upload({
           client: S3,
           params: {
             Bucket: envVars.BUCKET_NAME,
             Key: fileName,
-            Body: new Blob([body]),
+            Body: request.raw,
             ContentType: contentType,
           },
           queueSize: 4,
@@ -113,6 +118,7 @@ export const setupFilesRoutes = async (app: FastifyInstance) => {
         querystring: QueryFileNameSchema,
         response: {
           400: MessageResponseSchema,
+          401: MessageResponseSchema,
           404: MessageResponseSchema,
           500: MessageResponseSchema,
           501: MessageResponseSchema,
@@ -121,7 +127,7 @@ export const setupFilesRoutes = async (app: FastifyInstance) => {
     },
     async (request, reply) => {
       try {
-        const t = await useTranslation(request as any)
+        const t = await useFastifyTranslation(request as any)
         if (!envVars.PORT) {
           const msg = await t.text(ERROR_NOT_IMPL)
           throw new ServerError(msg)
@@ -139,13 +145,20 @@ export const setupFilesRoutes = async (app: FastifyInstance) => {
           Key: fileName,
         })
 
-        const file = await S3.send(command)
-
-        if (!file.Body) {
-          const msg = await t.text(ERROR_FILE_NOT_FOUND)
-          throw new NotFoundError(msg)
+        let file: any
+        try {
+          file = await S3.send(command)
+        } catch (e: any) {
+          const notFound =
+            e?.$metadata?.httpStatusCode === errorStatuses.NotFound.code ||
+            e?.name === "NoSuchKey" ||
+            e?.Code === "NoSuchKey"
+          if (notFound) {
+            const msg = await t.text(ERROR_FILE_NOT_FOUND)
+            throw new NotFoundError(msg)
+          }
+          throw e
         }
-
         reply.header("Content-Type", "application/octet-stream")
         reply.header(
           "Content-Disposition",
@@ -156,7 +169,7 @@ export const setupFilesRoutes = async (app: FastifyInstance) => {
         const stream = file.Body as Readable
         return reply.send(stream)
       } catch (error) {
-        const _t = await useTranslation(request as any)
+        const _t = await useFastifyTranslation(request as any)
         if (error instanceof BadRequestError) {
           return reply.code(400).send({ message: error.message })
         }
@@ -164,7 +177,7 @@ export const setupFilesRoutes = async (app: FastifyInstance) => {
           return reply.code(404).send({ message: error.message })
         }
         if (error instanceof ServerError) {
-          return reply.code(501).send({ message: error.message })
+          return reply.code(500).send({ message: error.message })
         }
         return reply.code(500).send({ message: "Internal Server Error" })
       }
@@ -191,7 +204,7 @@ export const setupFilesRoutes = async (app: FastifyInstance) => {
     },
     async (request, reply) => {
       try {
-        const t = await useTranslation(request as any)
+        const t = await useFastifyTranslation(request as any)
         if (!envVars.PORT) {
           const msg = await t.text(ERROR_NOT_IMPL)
           throw new ServerError(msg)
@@ -214,11 +227,18 @@ export const setupFilesRoutes = async (app: FastifyInstance) => {
           Bucket: envVars.BUCKET_NAME,
           Key: fileName,
         })
-
-        const file = await S3.send(command)
-        if (!file.ContentLength) {
-          const msg = await t.text(ERROR_FILE_NOT_FOUND)
-          throw new NotFoundError(msg)
+        try {
+          await S3.send(command)
+        } catch (e: any) {
+          const notFound =
+            e?.$metadata?.httpStatusCode === errorStatuses.NotFound.code ||
+            e?.name === "NoSuchKey" ||
+            e?.Code === "NoSuchKey"
+          if (notFound) {
+            const msg = await t.text(ERROR_FILE_NOT_FOUND)
+            throw new NotFoundError(msg)
+          }
+          throw e
         }
 
         const deletedFile = await S3.send(
@@ -234,7 +254,7 @@ export const setupFilesRoutes = async (app: FastifyInstance) => {
         const msg = await t.text(FILE_DELETE_SUCCESS)
         return reply.code(200).send({ message: msg })
       } catch (error) {
-        const _t = await useTranslation(request as any)
+        const _t = await useFastifyTranslation(request as any)
         if (error instanceof BadRequestError) {
           return reply.code(400).send({ message: error.message })
         }
@@ -261,6 +281,7 @@ export const setupFilesRoutes = async (app: FastifyInstance) => {
         tags: ["files"],
         response: {
           200: ListFilesResponseSchema,
+          400: MessageResponseSchema,
           401: MessageResponseSchema,
           500: MessageResponseSchema,
           501: MessageResponseSchema,
@@ -269,7 +290,7 @@ export const setupFilesRoutes = async (app: FastifyInstance) => {
     },
     async (request, reply) => {
       try {
-        const t = await useTranslation(request as any)
+        const t = await useFastifyTranslation(request as any)
         if (!envVars.PORT) {
           const msg = await t.text(ERROR_NOT_IMPL)
           throw new ServerError(msg)
@@ -295,12 +316,15 @@ export const setupFilesRoutes = async (app: FastifyInstance) => {
 
         return reply.code(200).send({ files })
       } catch (error) {
-        const _t = await useTranslation(request as any)
+        const _t = await useFastifyTranslation(request as any)
+        if (error instanceof BadRequestError) {
+          return reply.code(400).send({ message: error.message })
+        }
         if (error instanceof UnauthorizedError) {
           return reply.code(401).send({ message: error.message })
         }
         if (error instanceof ServerError) {
-          return reply.code(501).send({ message: error.message })
+          return reply.code(500).send({ message: error.message })
         }
         return reply.code(500).send({ message: "Internal Server Error" })
       }
@@ -326,7 +350,7 @@ export const setupFilesRoutes = async (app: FastifyInstance) => {
     async (request, reply) => {
       try {
         const user = (request as any).user
-        const t = await useTranslation(request as any)
+        const t = await useFastifyTranslation(request as any)
         if (!user) {
           const msg = await t.text(ERROR_UNAUTHORIZED)
           throw new UnauthorizedError(msg)
@@ -347,7 +371,7 @@ export const setupFilesRoutes = async (app: FastifyInstance) => {
 
         return reply.code(200).send({ url })
       } catch (error) {
-        const _t = await useTranslation(request as any)
+        const _t = await useFastifyTranslation(request as any)
         if (error instanceof BadRequestError) {
           return reply.code(400).send({ message: error.message })
         }
@@ -378,7 +402,7 @@ export const setupFilesRoutes = async (app: FastifyInstance) => {
     async (request, reply) => {
       try {
         const user = (request as any).user
-        const t = await useTranslation(request as any)
+        const t = await useFastifyTranslation(request as any)
         if (!user) {
           const msg = await t.text(ERROR_UNAUTHORIZED)
           throw new UnauthorizedError(msg)
@@ -399,14 +423,16 @@ export const setupFilesRoutes = async (app: FastifyInstance) => {
 
         return reply.code(200).send({ url })
       } catch (error) {
-        const _t = await useTranslation(request as any)
+        const _t = await useFastifyTranslation(request as any)
         if (error instanceof BadRequestError) {
           return reply.code(400).send({ message: error.message })
         }
         if (error instanceof UnauthorizedError) {
           return reply.code(401).send({ message: error.message })
         }
-        return reply.code(500).send({ message: "Internal Server Error" })
+        return reply
+          .code(500)
+          .send({ message: errorStatuses.ServerError.message })
       }
     }
   )
@@ -430,7 +456,7 @@ export const setupFilesRoutes = async (app: FastifyInstance) => {
     async (request, reply) => {
       try {
         const user = (request as any).user
-        const t = await useTranslation(request as any)
+        const t = await useFastifyTranslation(request as any)
         if (!user) {
           const msg = await t.text(ERROR_UNAUTHORIZED)
           throw new UnauthorizedError(msg)
@@ -459,14 +485,16 @@ export const setupFilesRoutes = async (app: FastifyInstance) => {
 
         return reply.code(200).send({ url })
       } catch (error) {
-        const _t = await useTranslation(request as any)
+        const _t = await useFastifyTranslation(request as any)
         if (error instanceof BadRequestError) {
           return reply.code(400).send({ message: error.message })
         }
         if (error instanceof UnauthorizedError) {
           return reply.code(401).send({ message: error.message })
         }
-        return reply.code(500).send({ message: "Internal Server Error" })
+        return reply
+          .code(500)
+          .send({ message: errorStatuses.ServerError.message })
       }
     }
   )
