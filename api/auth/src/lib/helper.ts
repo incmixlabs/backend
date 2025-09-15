@@ -27,7 +27,6 @@ export async function verifyVerificationCode(
     .get("db")
     .selectFrom("verificationCodes")
     .selectAll()
-    // @ts-expect-error
     .where((eb) =>
       eb.and([
         eb("userId", "=", user.id),
@@ -46,7 +45,6 @@ export async function verifyVerificationCode(
     await c
       .get("db")
       .deleteFrom("verificationCodes")
-      // @ts-expect-error
       .where((eb) =>
         eb.and([
           eb("userId", "=", user.id),
@@ -61,7 +59,6 @@ export async function verifyVerificationCode(
   await c
     .get("db")
     .deleteFrom("verificationCodes")
-    // @ts-expect-error
     .where((eb) =>
       eb.and([
         eb("userId", "=", user.id),
@@ -91,7 +88,6 @@ export async function insertOAuthUser(
     .get("db")
     .selectFrom("accounts")
     .selectAll()
-    // @ts-expect-error
     .where((eb) =>
       eb.and([eb("accountId", "=", accountId), eb("provider", "=", provider)])
     )
@@ -144,7 +140,6 @@ export async function generateVerificationCode(
   const db = dbInstance ?? c.get("db")
   await db
     .deleteFrom("verificationCodes")
-    // @ts-expect-error
     .where((eb) =>
       eb.and([
         eb("userId", "=", userId),

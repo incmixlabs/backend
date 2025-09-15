@@ -87,7 +87,6 @@ export async function useFastifyTranslation(
 
   if (!kv || !locale) {
     // If kvStore or locale are not available, return fallback translation
-    // @ts-expect-error
     return createFallbackTranslationContext(fallback)
   }
 
@@ -153,7 +152,6 @@ export async function useFastifyTranslation(
     }
   } catch (error) {
     console.warn("Translation initialization failed, using fallbacks:", error)
-    // @ts-expect-error
     return createFallbackTranslationContext(
       fallback
     ) as FastifyTranslationContext
@@ -221,7 +219,7 @@ async function initializeTranslationForRequest(
 }
 
 // Fastify plugin to add translation support
-function translationPlugin(
+export function translationPlugin(
   fastify: FastifyInstance,
   options: TranslationPluginOptions = {}
 ) {

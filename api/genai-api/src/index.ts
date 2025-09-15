@@ -1,5 +1,8 @@
 import { initDb } from "@incmix-api/utils/db-schema"
-import { createAPIService } from "@incmix-api/utils/fastify-bootstrap"
+import {
+  createAPIService,
+  translationPlugin,
+} from "@incmix-api/utils/fastify-bootstrap"
 import { startUserStoryWorker } from "@incmix-api/utils/queue"
 import type { ChecklistItem } from "@incmix-api/utils/zod-schema"
 import type { DeepPartial } from "ai"
@@ -129,7 +132,13 @@ worker.run()
 
 const service = createAPIService({
   name: Services.genai,
-  setupRoutes,
+  setupRoutes: async (app: any) => {
+    // Register translation plugin first
+    await app.register(translationPlugin)
+
+    // Then register your routes
+    await setupRoutes(app)
+  },
 })
 
 const { app, startServer } = service
