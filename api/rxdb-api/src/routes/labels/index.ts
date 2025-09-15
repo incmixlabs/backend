@@ -1,11 +1,7 @@
 import { ERROR_UNAUTHORIZED } from "@incmix-api/utils"
 import type { Database, Label } from "@incmix-api/utils/db-schema"
-import {
-  BadRequestError,
-  ServerError,
-  UnauthorizedError,
-} from "@incmix-api/utils/errors"
-import { getDb } from "@incmix-api/utils/fastify-bootstrap"
+import { BadRequestError, ServerError } from "@incmix-api/utils/errors"
+import { getDb, responseSchema } from "@incmix-api/utils/fastify-bootstrap"
 import { useTranslation } from "@incmix-api/utils/middleware"
 import type { FastifyInstance } from "fastify"
 import { getUserProjectIds } from "../lib/db"
@@ -16,7 +12,7 @@ import {
 } from "./schema"
 import { LabelSchemaWithTimeStamps, type LabelWithTimeStamps } from "./types"
 
-export const setupLabelsRoutes = async (app: FastifyInstance) => {
+export const setupLabelsRoutes = (app: FastifyInstance) => {
   // Pull labels endpoint
   app.post(
     "/labels/pull",
@@ -41,12 +37,12 @@ export const setupLabelsRoutes = async (app: FastifyInstance) => {
               },
             },
           },
+          401: { ...responseSchema[401] },
           500: {
-            type: "object",
-            properties: {
-              message: { type: "string" },
-              success: { type: "boolean" },
-            },
+            ...responseSchema[500],
+          },
+          400: {
+            ...responseSchema[400],
           },
         },
       },
@@ -58,15 +54,19 @@ export const setupLabelsRoutes = async (app: FastifyInstance) => {
 
         if (!user) {
           const msg = await t.text(ERROR_UNAUTHORIZED)
-          throw new Error(msg)
+          return reply.code(401).send({ message: msg, success: false })
         }
-
-        // Get lastPulledAt timestamp to pull only new/updated labels
         const { lastPulledAt } = request.query as { lastPulledAt?: string }
-        // Convert lastPulledAt string to a valid date if it exists
-        const lastPulledAtDate = lastPulledAt
-          ? new Date(Number(lastPulledAt))
-          : new Date(0)
+        let lastPulledAtDate = new Date(0)
+        if (lastPulledAt !== undefined) {
+          const ms = Number(lastPulledAt)
+          if (!Number.isFinite(ms)) {
+            return reply
+              .code(400)
+              .send({ message: "Invalid lastPulledAt", success: false })
+          }
+          lastPulledAtDate = new Date(ms)
+        }
 
         const projectIds = await getUserProjectIds(request as any, user.id)
 
@@ -176,16 +176,11 @@ export const setupLabelsRoutes = async (app: FastifyInstance) => {
         tags: ["labels"],
         body: PushLabelsBodySchema,
         response: {
-          200: {
-            type: "array",
-          },
+          200: { ...responseSchema[200] },
           500: {
-            type: "object",
-            properties: {
-              message: { type: "string" },
-              success: { type: "boolean" },
-            },
+            ...responseSchema[500],
           },
+          401: { ...responseSchema[401] },
         },
       },
     },
@@ -193,10 +188,9 @@ export const setupLabelsRoutes = async (app: FastifyInstance) => {
       try {
         const user = (request as any).user
         const t = await useTranslation(request as any)
-
         if (!user) {
           const msg = await t.text(ERROR_UNAUTHORIZED)
-          throw new UnauthorizedError(msg)
+          return reply.code(401).send({ message: msg, success: false })
         }
 
         // Get change rows from the client
@@ -250,7 +244,12 @@ export const setupLabelsRoutes = async (app: FastifyInstance) => {
               "labels.createdBy",
               "labels.updatedBy",
             ])
-            .where("labels.id", "=", newDoc.id)
+            .where((eb) =>
+              eb.and([
+                eb("labels.id", "=", newDoc.id),
+                eb("projectMembers.userId", "=", user.id),
+              ])
+            )
             .executeTakeFirst()
 
           // Check if the user has permission to modify this label
@@ -267,8 +266,9 @@ export const setupLabelsRoutes = async (app: FastifyInstance) => {
             (realMasterState && !changeRow.assumedMasterState) ||
             (realMasterState &&
               changeRow.assumedMasterState &&
-              realMasterState.updatedAt >
-                new Date(changeRow.assumedMasterState.updatedAt))
+              new Date(
+                realMasterState.updatedAt as unknown as string
+              ).getTime() > Number(changeRow.assumedMasterState.updatedAt))
           ) {
             // We have a conflict - return the current server state
             conflicts.push(realMasterState)

@@ -1,3 +1,4 @@
+import { auditSchema } from "@incmix-api/utils/fastify-bootstrap"
 export const PullLabelsQuerySchema = {
   type: "object",
   properties: {
@@ -14,10 +15,7 @@ export const LabelWithTimeStampsSchema = {
     "name",
     "color",
     "order",
-    "createdAt",
-    "updatedAt",
-    "createdBy",
-    "updatedBy",
+    [...auditSchema.required],
   ],
   properties: {
     id: { type: "string" },
@@ -27,26 +25,7 @@ export const LabelWithTimeStampsSchema = {
     description: { type: ["string", "null"] },
     color: { type: "string" },
     order: { type: "number" },
-    createdAt: { type: "number" },
-    updatedAt: { type: "number" },
-    createdBy: {
-      type: "object",
-      properties: {
-        id: { type: "string" },
-        name: { type: "string" },
-        image: { type: "string" },
-      },
-      required: ["id", "name"],
-    },
-    updatedBy: {
-      type: "object",
-      properties: {
-        id: { type: "string" },
-        name: { type: "string" },
-        image: { type: "string" },
-      },
-      required: ["id", "name"],
-    },
+    ...auditSchema.properties,
   },
 }
 
