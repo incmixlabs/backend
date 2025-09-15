@@ -5,9 +5,9 @@ import type {
 } from "@incmix-api/utils/db-schema"
 import { NotFoundError, ServerError } from "@incmix-api/utils/errors"
 import { useTranslation } from "@incmix-api/utils/middleware"
+import type { Context, TXN } from "@incmix-api/utils/types"
 import { hashPassword } from "@/auth/utils"
 import { ERROR_USER_NOT_FOUND } from "@/lib/constants"
-import type { Context } from "@/types"
 
 export async function findUserByEmail(c: Context, email: string) {
   const user = await c
@@ -113,7 +113,7 @@ export async function deleteUserById(c: Context, id: string) {
   const deletedUser = await c
     .get("db")
     .transaction()
-    .execute(async (tx) => {
+    .execute(async (tx: TXN) => {
       await tx.deleteFrom("userProfiles").where("id", "=", id).execute()
       return await tx
         .deleteFrom("users")

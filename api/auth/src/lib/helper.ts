@@ -2,12 +2,12 @@ import { randomInt } from "node:crypto"
 import { generateSentryHeaders } from "@incmix-api/utils"
 import type { KyselyDb, Provider, TokenType } from "@incmix-api/utils/db-schema"
 import { ServerError } from "@incmix-api/utils/errors"
+import type { Context } from "@incmix-api/utils/types"
 import { generateRandomId } from "@/auth/utils"
-import type { Context } from "@/types"
 import { envVars } from "../env-vars"
 import { insertUser } from "./db"
 
-// TODO Remove this
+// TODO remove ts-ignore and strongly type the eb param
 function generateRandomString(length: number): string {
   const chars = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
   let out = ""
@@ -27,6 +27,7 @@ export async function verifyVerificationCode(
     .get("db")
     .selectFrom("verificationCodes")
     .selectAll()
+    // @ts-expect-error
     .where((eb) =>
       eb.and([
         eb("userId", "=", user.id),
@@ -45,6 +46,7 @@ export async function verifyVerificationCode(
     await c
       .get("db")
       .deleteFrom("verificationCodes")
+      // @ts-expect-error
       .where((eb) =>
         eb.and([
           eb("userId", "=", user.id),
@@ -59,6 +61,7 @@ export async function verifyVerificationCode(
   await c
     .get("db")
     .deleteFrom("verificationCodes")
+    // @ts-expect-error
     .where((eb) =>
       eb.and([
         eb("userId", "=", user.id),
@@ -88,6 +91,7 @@ export async function insertOAuthUser(
     .get("db")
     .selectFrom("accounts")
     .selectAll()
+    // @ts-expect-error
     .where((eb) =>
       eb.and([eb("accountId", "=", accountId), eb("provider", "=", provider)])
     )
@@ -140,6 +144,7 @@ export async function generateVerificationCode(
   const db = dbInstance ?? c.get("db")
   await db
     .deleteFrom("verificationCodes")
+    // @ts-expect-error
     .where((eb) =>
       eb.and([
         eb("userId", "=", userId),

@@ -1,7 +1,6 @@
 import { BadRequestError, ServerError } from "@incmix-api/utils/errors"
+import type { Context, OC } from "@incmix-api/utils/types"
 import type { MessageResponse } from "@/routes/types"
-import type { Context } from "@/types"
-
 export type ProfileDTO = {
   id: string
   email: string
@@ -65,7 +64,7 @@ export async function createUserProfile(
         onboardingCompleted: false,
         localeId,
       })
-      .onConflict((oc) => oc.column("id").doNothing())
+      .onConflict((oc: OC) => oc.column("id").doNothing())
       .execute()
   } catch (error) {
     console.error("Error creating user profile:", error)

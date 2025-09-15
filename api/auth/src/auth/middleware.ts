@@ -1,7 +1,7 @@
+import type { Context } from "@incmix-api/utils/types"
 import { getCookie } from "hono/cookie"
 import { findUserById } from "@/lib/db"
 import { envVars } from "../env-vars"
-import type { Context } from "../types"
 import { deleteSessionCookie, setSessionCookie } from "./cookies"
 import { validateSession } from "./session"
 

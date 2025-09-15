@@ -119,6 +119,7 @@ export const setupTemplateRoutes = (app: FastifyInstance) => {
   )
 
   // Insert a new story template
+  // Insert a new story template
   app.post(
     "/insert",
     {
@@ -156,17 +157,7 @@ export const setupTemplateRoutes = (app: FastifyInstance) => {
         }
         const { name, content } = request.body as any
 
-        const existingTemplate = await getDb(request)
-          .selectFrom("storyTemplates")
-          .selectAll()
-          .where("name", "=", name)
-          .executeTakeFirst()
-
-        if (existingTemplate) {
-          const msg = await t.text(ERROR_TEMPLATE_ALREADY_EXISTS)
-          throw new ConflictError(msg)
-        }
-
+        // Insert with conflict handling - no race condition
         const template = await getDb(request)
           .insertInto("storyTemplates")
           .values({
@@ -176,8 +167,16 @@ export const setupTemplateRoutes = (app: FastifyInstance) => {
             createdAt: new Date().toISOString(),
             updatedAt: new Date().toISOString(),
           })
+          .onConflict((oc) => oc.column("name").doNothing())
           .returningAll()
-          .executeTakeFirstOrThrow()
+          .executeTakeFirst()
+
+        // If no row was inserted, it means there was a conflict
+        if (!template) {
+          const msg = await t.text(ERROR_TEMPLATE_ALREADY_EXISTS)
+          throw new ConflictError(msg)
+        }
+
         return reply.code(201).send(template)
       } catch (error) {
         return await processError(request as any, error)

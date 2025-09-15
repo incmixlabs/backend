@@ -1,5 +1,5 @@
 import type { KyselyDb, NewSession } from "@incmix-api/utils/db-schema"
-import type { Session } from "./types"
+import type { Session } from "@incmix-api/utils/types"
 import { generateSessionId } from "./utils"
 
 const SESSION_EXPIRY_DAYS = 30
