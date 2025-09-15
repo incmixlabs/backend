@@ -14,15 +14,14 @@ vi.mock("@/env-vars", () => ({
   },
 }))
 
-import filesRoutes from "@/routes/files"
+import { setupFilesRoutes } from "@/routes/files"
 
 describe("Files Routes", () => {
   it("should be defined", () => {
-    expect(filesRoutes).toBeDefined()
+    expect(setupFilesRoutes).toBeDefined()
   })
 
-  it("should have multiple routes", () => {
-    expect(filesRoutes.routes).toBeDefined()
-    expect(Array.isArray(filesRoutes.routes)).toBe(true)
+  it("should be a function", () => {
+    expect(typeof setupFilesRoutes).toBe("function")
   })
 })

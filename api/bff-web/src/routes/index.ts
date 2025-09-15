@@ -1,5 +1,5 @@
 import type { FastifyInstance } from "fastify"
-import { envVars } from "../env-vars"
+import { envVars } from "@/env-vars"
 
 // Only include services that have been migrated to Fastify+AJV
 const MIGRATED_SERVICES = {
@@ -39,9 +39,14 @@ const MIGRATED_SERVICES = {
     prefix: "/api/rxdb",
     upstream: envVars.RXDB_API_URL?.replace("/api/rxdb", "") ?? "",
   },
+  files: {
+    prefix: "/api/files",
+    upstream: envVars.FILES_API_URL?.replace("/api/files", "") ?? "",
+  },
 } as const
 
 export const setupRoutes = async (app: FastifyInstance) => {
+  // Register all routes with the base path prefix (already handled by createAPIService)
   // Health check endpoint
   app.get("/api/healthcheck", async (_request, reply) => {
     const healthChecks = await Promise.allSettled(

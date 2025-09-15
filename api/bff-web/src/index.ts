@@ -1,21 +1,10 @@
-import { createFastifyService } from "@incmix-api/utils/fastify-bootstrap"
-import { envVars } from "./env-vars"
-import { setupMiddleware } from "./middleware"
-import { setupRoutes } from "./routes"
+import { Services } from "@incmix-api/utils/env-config"
+import { createAPIService } from "@incmix-api/utils/fastify-bootstrap"
+import { setupRoutes } from "@/routes"
 
-const service = createFastifyService({
-  name: "bff-web",
-  port: envVars.PORT,
-  basePath: "/api",
-  setupMiddleware,
+const service = createAPIService({
+  name: Services.bff,
   setupRoutes,
-  needDb: false,
-  needSwagger: false,
-  bindings: envVars,
-  cors: {
-    origin: true,
-    credentials: true,
-  },
 })
 
 const { app, startServer } = service
