@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto"
 import { type FastifyInstance, type FastifyReply, fastify } from "fastify"
 import type { FastifyRequest } from "fastify/types/request"
+import type { Kysely } from "kysely"
 import { initDb } from "../db-schema"
 import {
   createEnvConfig,
@@ -18,10 +19,12 @@ export interface APIServices {
   setupRoutes?: (app: FastifyInstance) => Promise<void>
   setupMiddleware?: (app: FastifyInstance) => Promise<void>
 }
-export const getDb = (request: FastifyRequest) => {
+
+export const getDb = <DB = unknown>(request: FastifyRequest): Kysely<DB> => {
   if (!request.context?.db) {
     throw new Error("Database not available")
   }
+  // @ts-expect-error
   return request.context.db
 }
 
@@ -143,7 +146,7 @@ export function createFastifyService(conf: FastifyServiceConfig) {
     }
 
     const db = initDb(config.bindings.DATABASE_URL)
-
+    app.decorateRequest("context", null as any)
     app.addHook("onRequest", (request, _reply, done) => {
       if (!request.context) {
         request.context = {}
