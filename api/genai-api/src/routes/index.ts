@@ -1,12 +1,34 @@
-import type { OpenAPIHono } from "@hono/zod-openapi"
-import { BASE_PATH } from "@/lib/constants"
-import genaiRoutes from "@/routes/genai"
-import healthcheckRoutes from "@/routes/healthcheck"
-import type { HonoApp } from "@/types"
-import templateRoutes from "./templates"
+import type { FastifyInstance } from "fastify"
+import { envVars } from "@/env-vars"
+import { setupGenaiRoutes } from "@/routes/genai"
+import { setupHealthcheckRoutes } from "@/routes/healthcheck"
+import { setupTemplateRoutes } from "./templates"
 
-export const routes = (app: OpenAPIHono<HonoApp>) => {
-  app.route(`${BASE_PATH}/healthcheck`, healthcheckRoutes)
-  app.route(`${BASE_PATH}/templates`, templateRoutes)
-  app.route(BASE_PATH, genaiRoutes)
+export const setupRoutes = async (app: FastifyInstance) => {
+  // Get NODE_ENV from the app context bindings if available, otherwise from envVars
+  const nodeEnv = (app as any).bindings?.NODE_ENV || envVars.NODE_ENV
+
+  // Add a direct test route to verify routing works at all
+  if (nodeEnv === "test") {
+    app.get("/api/genai/test-direct", async (_request, _reply) => {
+      return { message: "Direct route works!" }
+    })
+  }
+
+  // Register all routes with the base path prefix
+  await app.register(
+    async (fastify) => {
+      // Add a simple test route to verify routing works
+      if (nodeEnv === "test") {
+        fastify.get("/test", async (_request, _reply) => {
+          return { message: "Test route works!" }
+        })
+      }
+
+      await setupHealthcheckRoutes(fastify)
+      await setupTemplateRoutes(fastify)
+      await setupGenaiRoutes(fastify)
+    },
+    { prefix: "/api/genai" }
+  )
 }

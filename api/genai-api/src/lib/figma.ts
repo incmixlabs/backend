@@ -7,7 +7,7 @@ import { z } from "zod"
 import { envVars } from "@/env-vars"
 import { type AIModel, MODEL_MAP } from "./constants"
 
-// Shared schema for AI model responses
+// Zod schema for AI SDK streamObject - required by AI SDK
 const FilesSchema = z.object({
   files: z.array(
     z.object({
@@ -17,6 +17,15 @@ const FilesSchema = z.object({
     })
   ),
 })
+
+// TypeScript interface for AI model responses
+interface FilesResponse {
+  files: {
+    name: string
+    content: string
+    fileType: string
+  }[]
+}
 
 type FigmaNode = Node
 

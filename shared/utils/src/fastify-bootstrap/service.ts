@@ -1,5 +1,7 @@
 import { randomUUID } from "node:crypto"
-import { type FastifyInstance, fastify } from "fastify"
+import { type FastifyInstance, type FastifyReply, fastify } from "fastify"
+import type { FastifyRequest } from "fastify/types/request"
+import type { Kysely } from "kysely"
 import { initDb } from "../db-schema"
 import {
   createEnvConfig,
@@ -7,22 +9,88 @@ import {
   type Service,
   services,
 } from "../env-config"
+import { processError } from "../errors"
 import { createCorsMiddleware, createErrorHandler } from "../fastify-middleware"
 import type { FastifyServiceConfig } from "./types"
 import { defaults } from "./types"
+
 export interface APIServices {
   name: Service
   setupRoutes?: (app: FastifyInstance) => Promise<void>
   setupMiddleware?: (app: FastifyInstance) => Promise<void>
 }
 
+export const getDb = <DB = unknown>(request: FastifyRequest): Kysely<DB> => {
+  if (!request.context?.db) {
+    throw new Error("Database not available")
+  }
+  // @ts-expect-error
+  return request.context.db
+}
+
+export function setStreamingHeaders(reply: FastifyReply): void {
+  reply.raw.setHeader("Content-Type", "text/event-stream; charset=utf-8")
+  reply.raw.setHeader("Cache-Control", "no-cache, no-transform")
+  reply.raw.setHeader("Connection", "keep-alive")
+  reply.raw.setHeader("X-Accel-Buffering", "no")
+  reply.hijack()
+}
+
+export const streamSSE = async (
+  reply: FastifyReply,
+  streamFn: (stream: any) => Promise<void>
+) => {
+  setStreamingHeaders(reply)
+
+  const stream = {
+    writeSSE: (data: { data?: string; event?: string }) => {
+      if (data.event) {
+        reply.raw.write(`event: ${data.event}\n`)
+      }
+      if (data.data) {
+        reply.raw.write(`data: ${data.data}\n\n`)
+      }
+    },
+    close: () => {
+      reply.raw.end()
+    },
+  }
+
+  await streamFn(stream)
+}
+
+export async function sendProcessError(
+  request: FastifyRequest,
+  reply: FastifyReply,
+  error: unknown,
+  fp: string[]
+) {
+  const out = await processError(request as any, error, fp)
+  // Hono Response path
+  if (
+    out &&
+    typeof (out as any).json === "function" &&
+    "status" in (out as any)
+  ) {
+    const body = await (out as any).json()
+    return reply.code((out as any).status ?? 500).send(body)
+  }
+  // Mock/plain object path
+  if (out && typeof out === "object") {
+    const status = (out as any).statusCode ?? (out as any).status ?? 500
+    return reply.code(status).send(out)
+  }
+  return reply.code(500).send({ message: "Internal server error" })
+}
+
 export const defaultSetupMiddleware = (app: FastifyInstance) => {
   // Basic request logging
 
-  app.addHook("onRequest", async (request, reply) => {
+  app.addHook("onRequest", (request, reply, done) => {
     const incoming = request.headers["x-request-id"] as string | undefined
     const requestId = incoming ?? request.id ?? randomUUID()
     reply.header("X-Request-Id", requestId)
+    done()
   })
 }
 export function createAPIService({
@@ -78,12 +146,13 @@ export function createFastifyService(conf: FastifyServiceConfig) {
     }
 
     const db = initDb(config.bindings.DATABASE_URL)
-
-    app.addHook("onRequest", async (request, _reply) => {
+    app.decorateRequest("context", null as any)
+    app.addHook("onRequest", (request, _reply, done) => {
       if (!request.context) {
         request.context = {}
       }
       request.context.db = db
+      done()
     })
 
     // Close DB pool gracefully
@@ -282,7 +351,7 @@ export function createFastifyService(conf: FastifyServiceConfig) {
   }
 
   // Health check endpoint
-  app.get(`${config.basePath}/health`, async (_request, _reply) => {
+  app.get(`${config.basePath}/health`, (_request, _reply) => {
     return {
       status: "ok",
       service: config.name,
@@ -313,7 +382,6 @@ export function createFastifyService(conf: FastifyServiceConfig) {
       if (config.onAfterStart) {
         await config.onAfterStart()
       }
-
       // Setup graceful shutdown
       const gracefulShutdown = async (signal: string) => {
         app.log.info({ signal }, "Starting graceful shutdown")
@@ -325,7 +393,6 @@ export function createFastifyService(conf: FastifyServiceConfig) {
           app.log.error({ err: error }, "Error during graceful shutdown")
         }
       }
-
       // Handle shutdown signals
       process.on("SIGTERM", () => gracefulShutdown("SIGTERM"))
       process.on("SIGINT", () => gracefulShutdown("SIGINT"))

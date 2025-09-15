@@ -334,3 +334,15 @@ export type ProjectsEnv = BaseEnv & z.infer<typeof serviceSchemas.projects>
 
 export type RxdbEnv = BaseEnv & z.infer<typeof serviceSchemas.rxdb>
 export const envVars = createEnvConfig() as BaseEnv
+export type Env =
+  | AuthEnv
+  | EmailEnv
+  | GenAIEnv
+  | BffEnv
+  | FilesEnv
+  | LocationEnv
+  | CommentsEnv
+  | IntlEnv
+  | OrgEnv
+  | ProjectsEnv
+  | RxdbEnv

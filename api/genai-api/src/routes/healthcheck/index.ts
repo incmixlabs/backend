@@ -1,40 +1,95 @@
-import { createHealthCheckRoute } from "@incmix-api/utils"
+import type { FastifyInstance } from "fastify"
 import { envVars } from "@/env-vars"
-import { BASE_PATH } from "@/lib/constants"
-import type { HonoApp } from "@/types"
 
-const healthcheckRoutes = createHealthCheckRoute<HonoApp>({
-  // Pass all environment variables to check
-  envVars: {
-    AUTH_API_URL: envVars.AUTH_API_URL,
-    COOKIE_NAME: envVars.COOKIE_NAME,
-    DOMAIN: envVars.DOMAIN,
-    INTL_API_URL: envVars.INTL_API_URL,
-    DATABASE_URL: envVars.DATABASE_URL,
-  },
-
-  basePath: BASE_PATH,
-
-  // Add service-specific checks
-  checks: [
+export const setupHealthcheckRoutes = (app: FastifyInstance) => {
+  app.get(
+    "/healthcheck",
     {
-      name: "Database",
-      check: async (c) => {
-        try {
-          // Simple query to check database connectivity
-          await c
-            .get("db")
+      schema: {
+        description: "Health check endpoint",
+        tags: ["healthcheck"],
+        response: {
+          200: {
+            type: "object",
+            properties: {
+              status: { type: "string", enum: ["UP", "DOWN"] },
+              service: { type: "string" },
+              timestamp: { type: "string" },
+              checks: {
+                type: "object",
+                properties: {
+                  database: { type: "boolean" },
+                  envVars: { type: "boolean" },
+                },
+              },
+            },
+          },
+          503: {
+            type: "object",
+            properties: {
+              status: { type: "string", enum: ["UP", "DOWN"] },
+              service: { type: "string" },
+              timestamp: { type: "string" },
+              checks: {
+                type: "object",
+                properties: {
+                  database: { type: "boolean" },
+                  envVars: { type: "boolean" },
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+    async (request, reply) => {
+      const checks = {
+        database: false,
+        envVars: false,
+      }
+
+      // Check database connectivity
+      try {
+        if (request.context?.db) {
+          await request.context.db
             .selectFrom("storyTemplates")
             .selectAll()
             .limit(1)
             .execute()
-          return true
-        } catch (_error) {
-          return false
+          checks.database = true
         }
-      },
-    },
-  ],
-})
+      } catch (error) {
+        console.error("Database health check failed:", error)
+      }
 
-export default healthcheckRoutes
+      // Check environment variables
+      try {
+        const requiredEnvVars = [
+          "AUTH_API_URL",
+          "COOKIE_NAME",
+          "DOMAIN",
+          "INTL_API_URL",
+          "DATABASE_URL",
+        ]
+
+        checks.envVars = requiredEnvVars.every((varName) => {
+          const value = (envVars as any)[varName]
+          return value !== undefined && value !== ""
+        })
+      } catch (error) {
+        console.error("Environment variables check failed:", error)
+      }
+
+      const allChecksPass = Object.values(checks).every(Boolean)
+
+      const status = allChecksPass ? "UP" : "DOWN"
+      const body = {
+        status,
+        service: "genai-api",
+        timestamp: new Date().toISOString(),
+        checks,
+      }
+      return reply.code(allChecksPass ? 200 : 503).send(body)
+    }
+  )
+}

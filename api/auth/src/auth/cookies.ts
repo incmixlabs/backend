@@ -1,5 +1,5 @@
+import type { Context } from "@incmix-api/utils/types"
 import { envVars } from "@/env-vars"
-import type { Context } from "@/types"
 
 const COOKIE_NAME = envVars.COOKIE_NAME
 const COOKIE_PATH = "/"

@@ -1,9 +1,8 @@
 import type { KyselyDb } from "@incmix-api/utils/db-schema"
+import type { AuthUser, Session } from "@incmix-api/utils/types"
 import type { FastifyReply, FastifyRequest } from "fastify"
 import { validateSession } from "@/auth/session"
-import type { Session } from "@/auth/types"
 import { envVars } from "@/env-vars"
-import type { AuthUser } from "@/types"
 
 // Extend Fastify request to include auth properties
 declare module "fastify" {

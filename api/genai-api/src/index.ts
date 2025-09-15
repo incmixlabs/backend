@@ -1,14 +1,14 @@
-import { createService } from "@incmix-api/utils"
 import { initDb } from "@incmix-api/utils/db-schema"
+import {
+  createAPIService,
+  translationPlugin,
+} from "@incmix-api/utils/fastify-bootstrap"
 import { startUserStoryWorker } from "@incmix-api/utils/queue"
 import type { ChecklistItem } from "@incmix-api/utils/zod-schema"
 import type { DeepPartial } from "ai"
 import { nanoid } from "nanoid"
-import { BASE_PATH } from "@/lib/constants"
-import { middlewares } from "@/middleware"
-import { routes } from "@/routes"
-import type { HonoApp } from "@/types"
-import { envVars } from "./env-vars"
+import { setupRoutes } from "@/routes"
+import { envVars, Services } from "./env-vars"
 import { generateUserStory } from "./lib/services"
 
 const mapToChecklistItems = (items: (string | undefined)[]): ChecklistItem[] =>
@@ -130,36 +130,19 @@ const worker = startUserStoryWorker(envVars, async (job) => {
 
 worker.run()
 
-const service = createService<HonoApp["Bindings"], HonoApp["Variables"]>({
-  name: "genai-api",
-  port: envVars.PORT,
-  basePath: BASE_PATH,
-  setupMiddleware: (app) => {
-    middlewares(app)
+const service = createAPIService({
+  name: Services.genai,
+  setupRoutes: async (app: any) => {
+    // Register translation plugin first
+    await app.register(translationPlugin)
+
+    // Then register your routes
+    await setupRoutes(app)
   },
-  setupRoutes: (app) => routes(app),
-  bindings: envVars,
 })
 
 const { app, startServer } = service
 
 startServer()
-
-const shutdown = async (signal: NodeJS.Signals) => {
-  console.log(`Received ${signal}. Shutting down gracefully...`)
-  try {
-    await worker.close()
-  } catch (e) {
-    console.error("Error closing worker:", e)
-  }
-  try {
-    await globalDb.destroy()
-  } catch (e) {
-    console.error("Error closing DB:", e)
-  }
-}
-
-process.on("SIGINT", shutdown)
-process.on("SIGTERM", shutdown)
 
 export default app

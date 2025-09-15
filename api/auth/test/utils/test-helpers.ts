@@ -11,9 +11,9 @@ import {
   createFastifyService,
   defaultSetupMiddleware as setupMiddleware,
 } from "@incmix-api/utils/fastify-bootstrap"
+import type { Session } from "@incmix-api/utils/types"
 import type { Kysely } from "kysely"
 import { expect } from "vitest"
-import type { Session } from "@/auth/types"
 import { envVars } from "@/env-vars"
 import { BASE_PATH } from "../../src/lib/constants"
 import { setupRoutes } from "../../src/routes"

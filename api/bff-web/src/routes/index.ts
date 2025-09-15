@@ -31,6 +31,10 @@ const MIGRATED_SERVICES = {
     prefix: "/api/email",
     upstream: envVars.EMAIL_API_URL?.replace("/api/email", "") ?? "",
   },
+  genai: {
+    prefix: "/api/genai",
+    upstream: envVars.GENAI_API_URL?.replace("/api/genai", "") ?? "",
+  },
 } as const
 
 export const setupRoutes = async (app: FastifyInstance) => {
