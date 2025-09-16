@@ -165,10 +165,17 @@ export const setupFilesRoutes = (app: FastifyInstance) => {
           }
           throw e
         }
-        reply.header("Content-Type", "application/octet-stream")
+        const safeName = fileName.replace(/[\r\n"]/g, "_").replace(/"/g, "'")
+        reply.header(
+          "Content-Type",
+          file.ContentType ?? "application/octet-stream"
+        )
+        if (file.ContentLength != null) {
+          reply.header("Content-Length", String(file.ContentLength))
+        }
         reply.header(
           "Content-Disposition",
-          `attachment; filename="${fileName}"`
+          `attachment; filename="${safeName}"`
         )
 
         // Convert AWS SDK v3 stream to Node.js Readable stream
