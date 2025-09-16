@@ -3,7 +3,7 @@ import type { FastifyInstance } from "fastify"
 import { envVars } from "@/env-vars"
 import { S3 } from "@/lib/s3"
 
-export const setupHealthcheckRoutes = async (app: FastifyInstance) => {
+export const setupHealthcheckRoutes = (app: FastifyInstance) => {
   app.get(
     "/healthcheck",
     {

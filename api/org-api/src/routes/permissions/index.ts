@@ -1,4 +1,6 @@
 import { createAuditMiddleware } from "@incmix-api/utils/audit"
+import type { Database } from "@incmix-api/utils/db-schema"
+import { getDb } from "@incmix-api/utils/fastify-bootstrap"
 import {
   createAuthMiddleware,
   createOptionalAuthMiddleware,
@@ -387,7 +389,7 @@ export const setupPermissionRoutes = async (app: FastifyInstance) => {
       const { name, permissions } = body
       await updateRoleWithPermissions(
         request,
-        roleId,
+        Number(roleId),
         name,
         "description",
         permissions
@@ -449,7 +451,7 @@ export const setupPermissionRoutes = async (app: FastifyInstance) => {
       // Log the mutation
       await auditLogger.logMutation(request, "DELETE", "Role", roleId, orgId)
 
-      await deleteRoleById(request, roleId)
+      await deleteRoleById(request, Number(roleId))
       return { message: "Role deleted successfully" }
     }
   )
@@ -524,7 +526,22 @@ export const setupPermissionRoutes = async (app: FastifyInstance) => {
         { action: "add", permission }
       )
 
-      await addPermissionToRole(request, roleId, permission.action)
+      // First find the permission by action and subject
+      const dbLookup = getDb<Database>(request)
+      const foundPermission = await dbLookup
+        .selectFrom("permissions")
+        .selectAll()
+        .where("action", "=", permission.action as any)
+        .where("resourceType", "=", permission.subject as any)
+        .executeTakeFirst()
+
+      if (!foundPermission) {
+        throw new Error(
+          `Permission not found for action: ${permission.action} and subject: ${permission.subject}`
+        )
+      }
+
+      await addPermissionToRole(request, Number(roleId), foundPermission.id)
       return { message: "Permission added to role successfully" }
     }
   )
@@ -599,7 +616,26 @@ export const setupPermissionRoutes = async (app: FastifyInstance) => {
         { action: "remove", permission }
       )
 
-      await removePermissionFromRole(request, roleId, permission.action)
+      // First find the permission by action and subject
+      const dbRemove = getDb<Database>(request)
+      const foundPermission = await dbRemove
+        .selectFrom("permissions")
+        .selectAll()
+        .where("action", "=", permission.action as any)
+        .where("resourceType", "=", permission.subject as any)
+        .executeTakeFirst()
+
+      if (!foundPermission) {
+        throw new Error(
+          `Permission not found for action: ${permission.action} and subject: ${permission.subject}`
+        )
+      }
+
+      await removePermissionFromRole(
+        request,
+        Number(roleId),
+        foundPermission.id
+      )
       return { message: "Permission removed from role successfully" }
     }
   )

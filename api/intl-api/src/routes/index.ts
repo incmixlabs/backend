@@ -13,7 +13,7 @@ export const setupRoutes = async (app: FastifyInstance) => {
   }
   // Register all routes with the base path prefix
   await app.register(
-    async (fastify) => {
+    (fastify) => {
       // Add a simple test route to verify routing works
       if (envVars.NODE_ENV === "test") {
         fastify.get("/test", (_request, _reply) => {

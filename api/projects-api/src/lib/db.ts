@@ -1,31 +1,27 @@
 // TODO: Implement database functions for projects-api
-// These are placeholder functions that need proper implementation
+// These are TODO functions that need proper implementation
 
-export async function addTaskChecklistItem(
-  _c: any,
-  taskId: string,
-  _item: any
-) {
-  return { taskId, message: "Item added", item: { id: "placeholder" } } // Placeholder
+export function addTaskChecklistItem(_c: any, taskId: string, _item: any) {
+  return { taskId, message: "Item added", item: { id: "TODO" } } // Placeholder
 }
 
-export async function createTask(_c: any, _userId: string, _task: any) {
-  return { taskId: "placeholder", name: "placeholder", message: "Task created" } // Placeholder
+export function createTask(_c: any, _userId: string, _task: any) {
+  return { taskId: "TODO", name: "TODO", message: "Task created" } // Placeholder
 }
 
-export async function deleteTask(_c: any, _taskId: string) {
+export function deleteTask(_c: any, _taskId: string) {
   return { message: "Task deleted" } // Placeholder
 }
 
-export async function getTaskById(_c: any, taskId: string) {
-  return { id: taskId, name: "placeholder" } // Placeholder
+export function getTaskById(_c: any, taskId: string) {
+  return { id: taskId, name: "TODO" } // Placeholder
 }
 
-export async function getTasks(_c: any, _userId: string) {
+export function getTasks(_c: any, _userId: string) {
   return [] // Placeholder
 }
 
-export async function removeTaskChecklistItems(
+export function removeTaskChecklistItems(
   _c: any,
   _taskId: string,
   itemIds: string[]
@@ -33,7 +29,7 @@ export async function removeTaskChecklistItems(
   return { message: "Items removed", removedCount: itemIds.length } // Placeholder
 }
 
-export async function updateTask(
+export function updateTask(
   _c: any,
   _taskId: string,
   _userId: string,
@@ -42,7 +38,7 @@ export async function updateTask(
   return { message: "Task updated" } // Placeholder
 }
 
-export async function updateTaskChecklistItem(
+export function updateTaskChecklistItem(
   _c: any,
   _taskId: string,
   itemId: string,

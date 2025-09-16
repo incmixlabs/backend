@@ -1,3 +1,5 @@
+import { errorStatuses } from "@incmix-api/utils/errors"
+import { errorResponseSchema } from "@incmix-api/utils/fastify-bootstrap"
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify"
 import { envVars } from "../../env-vars"
 import { getAddressFromLocation, getLocationFromIp } from "../../lib/helper"
@@ -77,18 +79,8 @@ export const setupWeatherRoutes = (app: FastifyInstance) => {
               },
             },
           },
-          400: {
-            type: "object",
-            properties: {
-              message: { type: "string" },
-            },
-          },
-          500: {
-            type: "object",
-            properties: {
-              message: { type: "string" },
-            },
-          },
+          400: { ...errorResponseSchema },
+          500: { ...errorResponseSchema },
         },
       },
     },
@@ -108,7 +100,13 @@ export const setupWeatherRoutes = (app: FastifyInstance) => {
         if (!lat || !lon) {
           // Get location from IP if coordinates not provided
           address = await getLocationFromIp(request)
-          searchParams.append("location", `${address?.lat},${address?.lon}`)
+          if (address?.lat && address?.lon) {
+            searchParams.append("location", `${address.lat},${address.lon}`)
+          } else {
+            return reply
+              .code(errorStatuses.BadRequest.code)
+              .send({ message: "Unable to determine location" })
+          }
         } else {
           // Get address from coordinates
           address = await getAddressFromLocation({ lat, lon })
@@ -120,7 +118,7 @@ export const setupWeatherRoutes = (app: FastifyInstance) => {
         const cache = await app.redis.get(cacheKey)
         if (cache) {
           console.log("weather:cache hit")
-          return reply.send(JSON.parse(cache) as WeatherForecast)
+          return reply.code(200).send(JSON.parse(cache) as WeatherForecast)
         }
 
         // Fetch weather data from API
@@ -135,8 +133,8 @@ export const setupWeatherRoutes = (app: FastifyInstance) => {
         if (!res.ok) {
           const errorData = await res.json()
           console.error("Weather API error:", errorData)
-          return reply.code(400).send({
-            message: errorData.message || "Failed to fetch weather data",
+          return reply.code(errorStatuses.BadRequest.code).send({
+            message: errorData.message || errorStatuses.BadRequest.message,
           })
         }
 
@@ -163,8 +161,8 @@ export const setupWeatherRoutes = (app: FastifyInstance) => {
         return reply.send(data)
       } catch (error) {
         console.error("Error fetching weather forecast:", error)
-        return reply.code(500).send({
-          message: "Failed to fetch weather forecast",
+        return reply.code(errorStatuses.ServerError.code).send({
+          message: errorStatuses.ServerError.message,
         })
       }
     }

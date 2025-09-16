@@ -439,7 +439,7 @@ export const setupAuthRoutes = (app: FastifyInstance) => {
     },
     async (request, reply) => {
       try {
-        const { fullName, email, password, firstName, lastName } =
+        const { fullName, email, password } =
           request.body as ExtendedRegisterRequest
 
         if (!request.context?.db) {

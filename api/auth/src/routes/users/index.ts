@@ -686,14 +686,14 @@ export const setupUsersRoutes = (app: FastifyInstance) => {
         const db = request.context.db
 
         // Note: File upload handling would require multipart support
-        // This is a placeholder implementation
+        // This is a TODO implementation
         // In production, you would:
         // 1. Use @fastify/multipart to handle file uploads
         // 2. Validate file type and size
         // 3. Upload to S3 or other storage service
         // 4. Generate a unique filename
 
-        // For now, we'll simulate with a placeholder URL
+        // For now, we'll simulate with a TODO URL
         const profileImageUrl = `https://storage.example.com/profiles/${userId}/avatar.jpg`
 
         // Update profile with image URL

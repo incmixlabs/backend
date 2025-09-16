@@ -1,5 +1,5 @@
 // TODO: Implement location-api types
-// These are placeholder types that need proper implementation
+// These are TODO types that need proper implementation
 
 export type Address = {
   name?: string

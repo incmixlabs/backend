@@ -11,7 +11,7 @@ import {
 } from "@incmix-api/utils/fastify-bootstrap"
 import { useTranslation } from "@incmix-api/utils/middleware"
 import type { FastifyInstance, FastifyRequest } from "fastify"
-import { FigmaService } from "@/lib/figma"
+import { FeatureRemovedError, FigmaService } from "@/lib/figma"
 import {
   generateMultipleUserStories as aiGenerateMultipleUserStories,
   generateProject as aiGenerateProject,
@@ -302,7 +302,18 @@ export const setupGenaiRoutes = (app: FastifyInstance) => {
 
         const { url, prompt, userTier, templateId } = request.body as any
         const figmaService = new FigmaService()
-        const figmaImage = await figmaService.getFigmaImage(url)
+        let figmaImage: string
+        try {
+          figmaImage = await figmaService.getFigmaImage(url)
+        } catch (error) {
+          if (error instanceof FeatureRemovedError) {
+            return reply.code(501).send({
+              message: "Figma image extraction feature is not implemented",
+              error: error.message,
+            })
+          }
+          throw error
+        }
 
         const template = await getDb(request)
           .selectFrom("storyTemplates")
@@ -399,11 +410,23 @@ export const setupGenaiRoutes = (app: FastifyInstance) => {
           componentLibrary,
         }
 
-        const result = await figmaService.generateReactFromFigma(
-          url,
-          userTier,
-          options
-        )
+        let result: { code: string; imageUrl: string }
+        try {
+          result = await figmaService.generateReactFromFigma(
+            url,
+            userTier,
+            options
+          )
+        } catch (error) {
+          if (error instanceof FeatureRemovedError) {
+            return reply.code(501).send({
+              message:
+                "Figma to React code generation feature is not implemented",
+              error: error.message,
+            })
+          }
+          throw error
+        }
 
         return streamSSE(reply, async (stream) => {
           try {
@@ -469,8 +492,18 @@ export const setupGenaiRoutes = (app: FastifyInstance) => {
 
         const { url } = request.body as any
         const figmaService = new FigmaService()
-        const figmaImage = await figmaService.getFigmaImage(url)
-        return reply.code(200).send({ image: figmaImage })
+        try {
+          const figmaImage = await figmaService.getFigmaImage(url)
+          return reply.code(200).send({ image: figmaImage })
+        } catch (error) {
+          if (error instanceof FeatureRemovedError) {
+            return reply.code(501).send({
+              message: "Figma image extraction feature is not implemented",
+              error: error.message,
+            })
+          }
+          throw error
+        }
       } catch (error) {
         return await sendProcessError(request, reply, error, [
           "{{ default }}",

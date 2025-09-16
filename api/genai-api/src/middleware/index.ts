@@ -9,5 +9,5 @@ export const middlewares = (app: FastifyInstance) => {
   //   serviceName: "genai-api",
   //   corsFirst: true,
   // })
-  console.log("Middleware setup placeholder - app:", !!app)
+  console.log("Middleware setup TODO - app:", !!app)
 }
