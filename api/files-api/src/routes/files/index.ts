@@ -98,12 +98,18 @@ export const setupFilesRoutes = (app: FastifyInstance) => {
       } catch (error) {
         console.log("aws error", error)
         if (error instanceof BadRequestError) {
-          return reply.code(400).send({ message: error.message })
+          return reply
+            .code(errorStatuses.BadRequest.code)
+            .send({ message: error.message })
         }
         if (error instanceof ServerError) {
-          return reply.code(501).send({ message: error.message })
+          return reply
+            .code(errorStatuses.ServerError.code)
+            .send({ message: error.message })
         }
-        return reply.code(500).send({ message: "Internal Server Error" })
+        return reply
+          .code(errorStatuses.ServerError.code)
+          .send({ message: "Internal Server Error" })
       }
     }
   )
@@ -171,15 +177,23 @@ export const setupFilesRoutes = (app: FastifyInstance) => {
       } catch (error) {
         const _t = await useFastifyTranslation(request as any)
         if (error instanceof BadRequestError) {
-          return reply.code(400).send({ message: error.message })
+          return reply
+            .code(errorStatuses.BadRequest.code)
+            .send({ message: error.message })
         }
         if (error instanceof NotFoundError) {
-          return reply.code(404).send({ message: error.message })
+          return reply
+            .code(errorStatuses.NotFound.code)
+            .send({ message: error.message })
         }
         if (error instanceof ServerError) {
-          return reply.code(500).send({ message: error.message })
+          return reply
+            .code(errorStatuses.ServerError.code)
+            .send({ message: error.message })
         }
-        return reply.code(500).send({ message: "Internal Server Error" })
+        return reply
+          .code(errorStatuses.ServerError.code)
+          .send({ message: "Internal Server Error" })
       }
     }
   )
@@ -256,18 +270,28 @@ export const setupFilesRoutes = (app: FastifyInstance) => {
       } catch (error) {
         const _t = await useFastifyTranslation(request as any)
         if (error instanceof BadRequestError) {
-          return reply.code(400).send({ message: error.message })
+          return reply
+            .code(errorStatuses.BadRequest.code)
+            .send({ message: error.message })
         }
         if (error instanceof UnauthorizedError) {
-          return reply.code(401).send({ message: error.message })
+          return reply
+            .code(errorStatuses.Unauthorized.code)
+            .send({ message: error.message })
         }
         if (error instanceof NotFoundError) {
-          return reply.code(404).send({ message: error.message })
+          return reply
+            .code(errorStatuses.NotFound.code)
+            .send({ message: error.message })
         }
         if (error instanceof ServerError) {
-          return reply.code(500).send({ message: error.message })
+          return reply
+            .code(errorStatuses.ServerError.code)
+            .send({ message: error.message })
         }
-        return reply.code(500).send({ message: "Internal Server Error" })
+        return reply
+          .code(errorStatuses.ServerError.code)
+          .send({ message: "Internal Server Error" })
       }
     }
   )
@@ -318,15 +342,23 @@ export const setupFilesRoutes = (app: FastifyInstance) => {
       } catch (error) {
         const _t = await useFastifyTranslation(request as any)
         if (error instanceof BadRequestError) {
-          return reply.code(400).send({ message: error.message })
+          return reply
+            .code(errorStatuses.BadRequest.code)
+            .send({ message: error.message })
         }
         if (error instanceof UnauthorizedError) {
-          return reply.code(401).send({ message: error.message })
+          return reply
+            .code(errorStatuses.Unauthorized.code)
+            .send({ message: error.message })
         }
         if (error instanceof ServerError) {
-          return reply.code(500).send({ message: error.message })
+          return reply
+            .code(errorStatuses.ServerError.code)
+            .send({ message: error.message })
         }
-        return reply.code(500).send({ message: "Internal Server Error" })
+        return reply
+          .code(errorStatuses.ServerError.code)
+          .send({ message: "Internal Server Error" })
       }
     }
   )
@@ -373,12 +405,18 @@ export const setupFilesRoutes = (app: FastifyInstance) => {
       } catch (error) {
         const _t = await useFastifyTranslation(request as any)
         if (error instanceof BadRequestError) {
-          return reply.code(400).send({ message: error.message })
+          return reply
+            .code(errorStatuses.BadRequest.code)
+            .send({ message: error.message })
         }
         if (error instanceof UnauthorizedError) {
-          return reply.code(401).send({ message: error.message })
+          return reply
+            .code(errorStatuses.Unauthorized.code)
+            .send({ message: error.message })
         }
-        return reply.code(500).send({ message: "Internal Server Error" })
+        return reply
+          .code(errorStatuses.ServerError.code)
+          .send({ message: "Internal Server Error" })
       }
     }
   )
@@ -425,14 +463,16 @@ export const setupFilesRoutes = (app: FastifyInstance) => {
       } catch (error) {
         const _t = await useFastifyTranslation(request as any)
         if (error instanceof BadRequestError) {
-          return reply.code(400).send({ message: error.message })
+          return reply
+            .code(errorStatuses.BadRequest.code)
+            .send({ message: error.message })
         }
         if (error instanceof UnauthorizedError) {
-          return reply.code(401).send({ message: error.message })
+          return reply
+            .code(errorStatuses.Unauthorized.code)
+            .send({ message: error.message })
         }
-        return reply
-          .code(500)
-          .send({ message: errorStatuses.ServerError.message })
+        return reply.code(500).send({ message: "Internal Server Error" })
       }
     }
   )
@@ -487,14 +527,18 @@ export const setupFilesRoutes = (app: FastifyInstance) => {
       } catch (error) {
         const _t = await useFastifyTranslation(request as any)
         if (error instanceof BadRequestError) {
-          return reply.code(400).send({ message: error.message })
+          return reply
+            .code(errorStatuses.BadRequest.code)
+            .send({ message: error.message })
         }
         if (error instanceof UnauthorizedError) {
-          return reply.code(401).send({ message: error.message })
+          return reply
+            .code(errorStatuses.Unauthorized.code)
+            .send({ message: error.message })
         }
         return reply
-          .code(500)
-          .send({ message: errorStatuses.ServerError.message })
+          .code(errorStatuses.ServerError.code)
+          .send({ message: "Internal Server Error" })
       }
     }
   )
