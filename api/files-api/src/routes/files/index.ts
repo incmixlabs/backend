@@ -1,3 +1,4 @@
+import type { Readable } from "node:stream"
 import {
   DeleteObjectCommand,
   GetObjectCommand,
@@ -7,18 +8,20 @@ import {
 } from "@aws-sdk/client-s3"
 import { Upload } from "@aws-sdk/lib-storage"
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner"
-import { OpenAPIHono } from "@hono/zod-openapi"
 import { ERROR_NOT_IMPL, ERROR_UNAUTHORIZED } from "@incmix-api/utils"
 import {
   BadRequestError,
+  ErrorConstants,
+  errorStatuses,
   NotFoundError,
-  processError,
   ServerError,
   UnauthorizedError,
-  zodError,
 } from "@incmix-api/utils/errors"
-import { useTranslation } from "@incmix-api/utils/middleware"
-import { stream } from "hono/streaming"
+import { useFastifyTranslation } from "@incmix-api/utils/fastify-bootstrap"
+
+const _errorConstants = new ErrorConstants()
+
+import type { FastifyInstance } from "fastify"
 import { envVars } from "@/env-vars"
 import {
   ERROR_FILE_DELETE_FAIL,
@@ -29,325 +32,522 @@ import {
 } from "@/lib/constants"
 import { S3 } from "@/lib/s3"
 import {
-  deleteFile,
-  downloadFile,
-  listFiles,
-  presignedDelete,
-  presignedDownload,
-  presignedUpload,
-  uploadFile,
-} from "@/routes/files/openapi"
-import type { HonoApp } from "@/types"
+  ListFilesResponseSchema,
+  MessageResponseSchema,
+  PresignedUrlResponseSchema,
+  QueryFileNameSchema,
+} from "./schema"
 
-const filesRoutes = new OpenAPIHono<HonoApp>({
-  defaultHook: zodError,
-})
-filesRoutes.openapi(uploadFile, async (c) => {
-  try {
-    const t = await useTranslation(c)
-    if (!envVars.PORT) {
-      const msg = await t.text(ERROR_NOT_IMPL)
-      throw new ServerError(msg)
-    }
-
-    const fileName = c.req.query("fileName")
-    if (!fileName) {
-      const msg = await t.text(ERROR_FILENAME_REQ)
-      throw new BadRequestError(msg)
-    }
-
-    const contentType =
-      c.req.header("Content-Type") || "application/octet-stream"
-
-    const body = await c.req.raw.arrayBuffer()
-
-    const upload = new Upload({
-      client: S3,
-      params: {
-        Bucket: envVars.BUCKET_NAME,
-        Key: fileName,
-        Body: new Blob([body]),
-        ContentType: contentType,
+export const setupFilesRoutes = (app: FastifyInstance) => {
+  // Upload file endpoint
+  app.put(
+    "/upload",
+    {
+      schema: {
+        description: "Upload File (Local Development Only)",
+        tags: ["files"],
+        querystring: QueryFileNameSchema,
+        response: {
+          200: MessageResponseSchema,
+          400: MessageResponseSchema,
+          500: MessageResponseSchema,
+          501: MessageResponseSchema,
+        },
       },
-      queueSize: 4,
-      partSize: 10 * 1024 * 1024,
-      leavePartsOnError: false,
-    })
+    },
+    async (request, reply) => {
+      try {
+        const t = await useFastifyTranslation(request as any)
+        if (!envVars.PORT) {
+          const msg = await t.text(ERROR_NOT_IMPL)
+          throw new ServerError(msg)
+        }
 
-    upload.on("httpUploadProgress", (progress) => {
-      console.log(progress.loaded, progress.total)
-    })
+        const { fileName } = request.query as { fileName: string }
+        if (!fileName) {
+          const msg = await t.text(ERROR_FILENAME_REQ)
+          throw new BadRequestError(msg)
+        }
 
-    await upload.done()
+        const contentType =
+          request.headers["content-type"] || "application/octet-stream"
 
-    const msg = await t.text(FILE_UPLOAD_SUCCESS)
-    return c.json({ message: msg }, 200)
-  } catch (error) {
-    console.log("aws error", error)
-    return await processError<typeof uploadFile>(c, error, [
-      "{{ default }}",
-      "upload-file",
-    ])
-  }
-})
+        const _body = await request.raw.read()
 
-//@ts-expect-error
-filesRoutes.openapi(downloadFile, async (c) => {
-  try {
-    const t = await useTranslation(c)
-    if (!envVars.PORT) {
-      const msg = await t.text(ERROR_NOT_IMPL)
-      throw new ServerError(msg)
-    }
+        const upload = new Upload({
+          client: S3,
+          params: {
+            Bucket: envVars.BUCKET_NAME,
+            Key: fileName,
+            Body: request.raw,
+            ContentType: contentType,
+          },
+          queueSize: 4,
+          partSize: 10 * 1024 * 1024,
+          leavePartsOnError: false,
+        })
 
-    const { fileName } = c.req.valid("query")
+        upload.on("httpUploadProgress", (progress) => {
+          console.log(progress.loaded, progress.total)
+        })
 
-    if (!fileName) {
-      const msg = await t.text(ERROR_FILENAME_REQ)
-      throw new BadRequestError(msg)
-    }
+        await upload.done()
 
-    const command = new GetObjectCommand({
-      Bucket: envVars.BUCKET_NAME,
-      Key: fileName,
-    })
-
-    const file = await S3.send(command)
-
-    c.res.headers.set("Content-Type", "application/octet-stream")
-    c.res.headers.set(
-      "Content-Disposition",
-      `attachment; filename="${fileName}"`
-    )
-    c.status(200)
-
-    return stream(c, async (stream) => {
-      stream.onAbort(() => {
-        console.log("Stream aborted")
-      })
-
-      if (!file.Body) {
-        const msg = await t.text(ERROR_FILE_NOT_FOUND)
-        throw new NotFoundError(msg)
+        const msg = await t.text(FILE_UPLOAD_SUCCESS)
+        return reply.code(200).send({ message: msg })
+      } catch (error) {
+        console.log("aws error", error)
+        if (error instanceof BadRequestError) {
+          return reply
+            .code(errorStatuses.BadRequest.code)
+            .send({ message: error.message })
+        }
+        if (error instanceof ServerError) {
+          return reply
+            .code(errorStatuses.ServerError.code)
+            .send({ message: error.message })
+        }
+        return reply
+          .code(errorStatuses.ServerError.code)
+          .send({ message: "Internal Server Error" })
       }
-      await stream.pipe(file.Body.transformToWebStream())
-    })
-  } catch (error) {
-    return await processError<typeof downloadFile>(c, error, [
-      "{{ default }}",
-      "download-file",
-    ])
-  }
-})
-
-filesRoutes.openapi(deleteFile, async (c) => {
-  try {
-    const t = await useTranslation(c)
-    if (!envVars.PORT) {
-      const msg = await t.text(ERROR_NOT_IMPL)
-      throw new ServerError(msg)
     }
+  )
 
-    const user = c.get("user")
-    if (!user) {
-      const msg = await t.text(ERROR_UNAUTHORIZED)
-      throw new UnauthorizedError(msg)
+  // Download file endpoint
+  app.get(
+    "/download",
+    {
+      schema: {
+        description: "Download File (Local Development Only)",
+        tags: ["files"],
+        querystring: QueryFileNameSchema,
+        response: {
+          400: MessageResponseSchema,
+          401: MessageResponseSchema,
+          404: MessageResponseSchema,
+          500: MessageResponseSchema,
+          501: MessageResponseSchema,
+        },
+      },
+    },
+    async (request, reply) => {
+      try {
+        const t = await useFastifyTranslation(request as any)
+        if (!envVars.PORT) {
+          const msg = await t.text(ERROR_NOT_IMPL)
+          throw new ServerError(msg)
+        }
+
+        const { fileName } = request.query as { fileName: string }
+
+        if (!fileName) {
+          const msg = await t.text(ERROR_FILENAME_REQ)
+          throw new BadRequestError(msg)
+        }
+
+        const command = new GetObjectCommand({
+          Bucket: envVars.BUCKET_NAME,
+          Key: fileName,
+        })
+
+        let file: any
+        try {
+          file = await S3.send(command)
+        } catch (e: any) {
+          const notFound =
+            e?.$metadata?.httpStatusCode === errorStatuses.NotFound.code ||
+            e?.name === "NoSuchKey" ||
+            e?.Code === "NoSuchKey"
+          if (notFound) {
+            const msg = await t.text(ERROR_FILE_NOT_FOUND)
+            throw new NotFoundError(msg)
+          }
+          throw e
+        }
+        const safeName = fileName.replace(/[\r\n"]/g, "_").replace(/"/g, "'")
+        reply.header(
+          "Content-Type",
+          file.ContentType ?? "application/octet-stream"
+        )
+        if (file.ContentLength != null) {
+          reply.header("Content-Length", String(file.ContentLength))
+        }
+        reply.header(
+          "Content-Disposition",
+          `attachment; filename="${safeName}"`
+        )
+
+        // Convert AWS SDK v3 stream to Node.js Readable stream
+        const stream = file.Body as Readable
+        return reply.send(stream)
+      } catch (error) {
+        const _t = await useFastifyTranslation(request as any)
+        if (error instanceof BadRequestError) {
+          return reply
+            .code(errorStatuses.BadRequest.code)
+            .send({ message: error.message })
+        }
+        if (error instanceof NotFoundError) {
+          return reply
+            .code(errorStatuses.NotFound.code)
+            .send({ message: error.message })
+        }
+        if (error instanceof ServerError) {
+          return reply
+            .code(errorStatuses.ServerError.code)
+            .send({ message: error.message })
+        }
+        return reply
+          .code(errorStatuses.ServerError.code)
+          .send({ message: "Internal Server Error" })
+      }
     }
-    const { fileName } = c.req.valid("query")
+  )
 
-    if (!fileName) {
-      const msg = await t.text(ERROR_FILENAME_REQ)
-      throw new BadRequestError(msg)
+  // Delete file endpoint
+  app.delete(
+    "/delete",
+    {
+      schema: {
+        description: "Delete File (Local Development Only)",
+        tags: ["files"],
+        querystring: QueryFileNameSchema,
+        response: {
+          200: MessageResponseSchema,
+          400: MessageResponseSchema,
+          401: MessageResponseSchema,
+          404: MessageResponseSchema,
+          500: MessageResponseSchema,
+          501: MessageResponseSchema,
+        },
+      },
+    },
+    async (request, reply) => {
+      try {
+        const t = await useFastifyTranslation(request as any)
+        if (!envVars.PORT) {
+          const msg = await t.text(ERROR_NOT_IMPL)
+          throw new ServerError(msg)
+        }
+
+        const user = (request as any).user
+        if (!user) {
+          const msg = await t.text(ERROR_UNAUTHORIZED)
+          throw new UnauthorizedError(msg)
+        }
+
+        const { fileName } = request.query as { fileName: string }
+
+        if (!fileName) {
+          const msg = await t.text(ERROR_FILENAME_REQ)
+          throw new BadRequestError(msg)
+        }
+
+        const command = new HeadObjectCommand({
+          Bucket: envVars.BUCKET_NAME,
+          Key: fileName,
+        })
+        try {
+          await S3.send(command)
+        } catch (e: any) {
+          const notFound =
+            e?.$metadata?.httpStatusCode === errorStatuses.NotFound.code ||
+            e?.name === "NoSuchKey" ||
+            e?.Code === "NoSuchKey"
+          if (notFound) {
+            const msg = await t.text(ERROR_FILE_NOT_FOUND)
+            throw new NotFoundError(msg)
+          }
+          throw e
+        }
+
+        const deletedFile = await S3.send(
+          new DeleteObjectCommand({
+            Bucket: envVars.BUCKET_NAME,
+            Key: fileName,
+          })
+        )
+        const status = deletedFile.$metadata?.httpStatusCode
+        if (status !== 204 && status !== 200) {
+          const msg = await t.text(ERROR_FILE_DELETE_FAIL)
+          throw new ServerError(msg)
+        }
+        const msg = await t.text(FILE_DELETE_SUCCESS)
+        return reply.code(200).send({ message: msg })
+      } catch (error) {
+        const _t = await useFastifyTranslation(request as any)
+        if (error instanceof BadRequestError) {
+          return reply
+            .code(errorStatuses.BadRequest.code)
+            .send({ message: error.message })
+        }
+        if (error instanceof UnauthorizedError) {
+          return reply
+            .code(errorStatuses.Unauthorized.code)
+            .send({ message: error.message })
+        }
+        if (error instanceof NotFoundError) {
+          return reply
+            .code(errorStatuses.NotFound.code)
+            .send({ message: error.message })
+        }
+        if (error instanceof ServerError) {
+          return reply
+            .code(errorStatuses.ServerError.code)
+            .send({ message: error.message })
+        }
+        return reply
+          .code(errorStatuses.ServerError.code)
+          .send({ message: "Internal Server Error" })
+      }
     }
+  )
 
-    const command = new HeadObjectCommand({
-      Bucket: envVars.BUCKET_NAME,
-      Key: fileName,
-    })
+  // List files endpoint
+  app.get(
+    "/list",
+    {
+      schema: {
+        description: "List Files (Local Development Only)",
+        tags: ["files"],
+        response: {
+          200: ListFilesResponseSchema,
+          400: MessageResponseSchema,
+          401: MessageResponseSchema,
+          500: MessageResponseSchema,
+          501: MessageResponseSchema,
+        },
+      },
+    },
+    async (request, reply) => {
+      try {
+        const t = await useFastifyTranslation(request as any)
+        if (!envVars.PORT) {
+          const msg = await t.text(ERROR_NOT_IMPL)
+          throw new ServerError(msg)
+        }
 
-    const file = await S3.send(command)
-    if (!file.ContentLength) {
-      const msg = await t.text(ERROR_FILE_NOT_FOUND)
-      throw new NotFoundError(msg)
+        const user = (request as any).user
+        if (!user) {
+          const msg = await t.text(ERROR_UNAUTHORIZED)
+          throw new UnauthorizedError(msg)
+        }
+
+        const command = new ListObjectsCommand({
+          Bucket: envVars.BUCKET_NAME,
+        })
+        const objects = await S3.send(command)
+
+        const files =
+          objects.Contents?.map((obj) => ({
+            name: obj.Key ?? "",
+            size: obj.Size ?? 0,
+            uploaded: obj.LastModified?.toISOString() ?? "",
+          })) ?? []
+
+        return reply.code(200).send({ files })
+      } catch (error) {
+        const _t = await useFastifyTranslation(request as any)
+        if (error instanceof BadRequestError) {
+          return reply
+            .code(errorStatuses.BadRequest.code)
+            .send({ message: error.message })
+        }
+        if (error instanceof UnauthorizedError) {
+          return reply
+            .code(errorStatuses.Unauthorized.code)
+            .send({ message: error.message })
+        }
+        if (error instanceof ServerError) {
+          return reply
+            .code(errorStatuses.ServerError.code)
+            .send({ message: error.message })
+        }
+        return reply
+          .code(errorStatuses.ServerError.code)
+          .send({ message: "Internal Server Error" })
+      }
     }
+  )
 
-    const deletedFile = await S3.send(
-      new DeleteObjectCommand({
-        Bucket: envVars.BUCKET_NAME,
-        Key: fileName,
-      })
-    )
-    if (!deletedFile.DeleteMarker) {
-      const msg = await t.text(ERROR_FILE_DELETE_FAIL)
-      throw new ServerError(msg)
+  // Presigned upload URL endpoint
+  app.get(
+    "/presigned-upload",
+    {
+      schema: {
+        description: "Get Presigned URL for Upload",
+        tags: ["files"],
+        querystring: QueryFileNameSchema,
+        response: {
+          200: PresignedUrlResponseSchema,
+          400: MessageResponseSchema,
+          401: MessageResponseSchema,
+          500: MessageResponseSchema,
+        },
+      },
+    },
+    async (request, reply) => {
+      try {
+        const user = (request as any).user
+        const t = await useFastifyTranslation(request as any)
+        if (!user) {
+          const msg = await t.text(ERROR_UNAUTHORIZED)
+          throw new UnauthorizedError(msg)
+        }
+
+        const { fileName } = request.query as { fileName: string }
+
+        if (!fileName) {
+          const msg = await t.text(ERROR_FILENAME_REQ)
+          throw new BadRequestError(msg)
+        }
+
+        const command = new PutObjectCommand({
+          Bucket: envVars.BUCKET_NAME,
+          Key: fileName,
+        })
+        const url = await getSignedUrl(S3, command, { expiresIn: 3600 })
+
+        return reply.code(200).send({ url })
+      } catch (error) {
+        const _t = await useFastifyTranslation(request as any)
+        if (error instanceof BadRequestError) {
+          return reply
+            .code(errorStatuses.BadRequest.code)
+            .send({ message: error.message })
+        }
+        if (error instanceof UnauthorizedError) {
+          return reply
+            .code(errorStatuses.Unauthorized.code)
+            .send({ message: error.message })
+        }
+        return reply
+          .code(errorStatuses.ServerError.code)
+          .send({ message: "Internal Server Error" })
+      }
     }
-    const msg = await t.text(FILE_DELETE_SUCCESS)
-    return c.json({ message: msg }, 200)
-  } catch (error) {
-    return await processError<typeof deleteFile>(c, error, [
-      "{{ default }}",
-      "delete-file",
-    ])
-  }
-})
+  )
 
-filesRoutes.openapi(listFiles, async (c) => {
-  try {
-    const t = await useTranslation(c)
-    if (!envVars.PORT) {
-      const msg = await t.text(ERROR_NOT_IMPL)
-      throw new ServerError(msg)
+  // Presigned download URL endpoint
+  app.get(
+    "/presigned-download",
+    {
+      schema: {
+        description: "Get Presigned URL for Download",
+        tags: ["files"],
+        querystring: QueryFileNameSchema,
+        response: {
+          200: PresignedUrlResponseSchema,
+          400: MessageResponseSchema,
+          401: MessageResponseSchema,
+          500: MessageResponseSchema,
+        },
+      },
+    },
+    async (request, reply) => {
+      try {
+        const user = (request as any).user
+        const t = await useFastifyTranslation(request as any)
+        if (!user) {
+          const msg = await t.text(ERROR_UNAUTHORIZED)
+          throw new UnauthorizedError(msg)
+        }
+
+        const { fileName } = request.query as { fileName: string }
+
+        if (!fileName) {
+          const msg = await t.text(ERROR_FILENAME_REQ)
+          throw new BadRequestError(msg)
+        }
+
+        const command = new GetObjectCommand({
+          Bucket: envVars.BUCKET_NAME,
+          Key: fileName,
+        })
+        const url = await getSignedUrl(S3, command, { expiresIn: 3600 })
+
+        return reply.code(200).send({ url })
+      } catch (error) {
+        const _t = await useFastifyTranslation(request as any)
+        if (error instanceof BadRequestError) {
+          return reply
+            .code(errorStatuses.BadRequest.code)
+            .send({ message: error.message })
+        }
+        if (error instanceof UnauthorizedError) {
+          return reply
+            .code(errorStatuses.Unauthorized.code)
+            .send({ message: error.message })
+        }
+        return reply.code(500).send({ message: "Internal Server Error" })
+      }
     }
+  )
 
-    const user = c.get("user")
-    if (!user) {
-      const msg = await t.text(ERROR_UNAUTHORIZED)
-      throw new UnauthorizedError(msg)
+  // Presigned delete URL endpoint
+  app.get(
+    "/presigned-delete",
+    {
+      schema: {
+        description: "Get Presigned URL for Delete",
+        tags: ["files"],
+        querystring: QueryFileNameSchema,
+        response: {
+          200: PresignedUrlResponseSchema,
+          400: MessageResponseSchema,
+          401: MessageResponseSchema,
+          500: MessageResponseSchema,
+        },
+      },
+    },
+    async (request, reply) => {
+      try {
+        const user = (request as any).user
+        const t = await useFastifyTranslation(request as any)
+        if (!user) {
+          const msg = await t.text(ERROR_UNAUTHORIZED)
+          throw new UnauthorizedError(msg)
+        }
+
+        const { fileName } = request.query as { fileName: string }
+
+        if (!fileName) {
+          const msg = await t.text(ERROR_FILENAME_REQ)
+          throw new BadRequestError(msg)
+        }
+
+        if (envVars.PORT) {
+          // For local development, return a local URL
+          const localUrl = `http://127.0.0.1:${
+            envVars.PORT
+          }/api/files/delete?fileName=${encodeURIComponent(fileName)}`
+          return reply.code(200).send({ url: localUrl })
+        }
+
+        const command = new DeleteObjectCommand({
+          Bucket: envVars.BUCKET_NAME,
+          Key: fileName,
+        })
+        const url = await getSignedUrl(S3, command, { expiresIn: 3600 })
+
+        return reply.code(200).send({ url })
+      } catch (error) {
+        const _t = await useFastifyTranslation(request as any)
+        if (error instanceof BadRequestError) {
+          return reply
+            .code(errorStatuses.BadRequest.code)
+            .send({ message: error.message })
+        }
+        if (error instanceof UnauthorizedError) {
+          return reply
+            .code(errorStatuses.Unauthorized.code)
+            .send({ message: error.message })
+        }
+        return reply
+          .code(errorStatuses.ServerError.code)
+          .send({ message: "Internal Server Error" })
+      }
     }
-
-    const command = new ListObjectsCommand({
-      Bucket: envVars.BUCKET_NAME,
-    })
-    const objects = await S3.send(command)
-
-    const files =
-      objects.Contents?.map((obj) => ({
-        name: obj.Key ?? "",
-        size: obj.Size ?? 0,
-        uploaded: obj.LastModified?.toISOString() ?? "",
-      })) ?? []
-
-    return c.json({ files }, 200)
-  } catch (error) {
-    return await processError<typeof listFiles>(c, error, [
-      "{{ default }}",
-      "list-files",
-    ])
-  }
-})
-
-filesRoutes.openapi(presignedUpload, async (c) => {
-  try {
-    const user = c.get("user")
-
-    const t = await useTranslation(c)
-    if (!user) {
-      const msg = await t.text(ERROR_UNAUTHORIZED)
-      throw new UnauthorizedError(msg)
-    }
-
-    const { fileName } = c.req.valid("query")
-
-    if (!fileName) {
-      const msg = await t.text(ERROR_FILENAME_REQ)
-      throw new BadRequestError(msg)
-    }
-
-    // if (envVars.PORT) {
-    //   // For local development, return a local URL
-    //   const localUrl = `http://127.0.0.1:${
-    //     envVars.PORT
-    //   }/api/files/upload?fileName=${encodeURIComponent(fileName)}`
-    //   return c.json({ url: localUrl }, 200)
-    // }
-
-    const command = new PutObjectCommand({
-      Bucket: envVars.BUCKET_NAME,
-      Key: fileName,
-    })
-    const url = await getSignedUrl(S3, command, { expiresIn: 3600 })
-
-    return c.json({ url }, 200)
-  } catch (error) {
-    return await processError<typeof presignedUpload>(c, error, [
-      "{{ default }}",
-      "presigned-upload",
-    ])
-  }
-})
-
-filesRoutes.openapi(presignedDownload, async (c) => {
-  try {
-    const user = c.get("user")
-    const t = await useTranslation(c)
-    if (!user) {
-      const msg = await t.text(ERROR_UNAUTHORIZED)
-      throw new UnauthorizedError(msg)
-    }
-
-    const { fileName } = c.req.valid("query")
-
-    if (!fileName) {
-      const msg = await t.text(ERROR_FILENAME_REQ)
-
-      throw new BadRequestError(msg)
-    }
-
-    // if (envVars.PORT) {
-    //   // The date is used to invalidate the cache after the file has been updated.
-    //   const date = new Date().toISOString()
-    //   // For local development, return a local URL
-    //   const localUrl = `http://127.0.0.1:${
-    //     envVars.PORT
-    //   }/api/files/download?fileName=${encodeURIComponent(
-    //     fileName
-    //   )}&date=${date}`
-    //   return c.json({ url: localUrl }, 200)
-    // }
-
-    const command = new GetObjectCommand({
-      Bucket: envVars.BUCKET_NAME,
-      Key: fileName,
-    })
-    const url = await getSignedUrl(S3, command, { expiresIn: 3600 })
-
-    return c.json({ url }, 200)
-  } catch (error) {
-    return await processError<typeof presignedDownload>(c, error, [
-      "{{ default }}",
-      "presigned-download",
-    ])
-  }
-})
-
-filesRoutes.openapi(presignedDelete, async (c) => {
-  try {
-    const user = c.get("user")
-    const t = await useTranslation(c)
-    if (!user) {
-      const msg = await t.text(ERROR_UNAUTHORIZED)
-      throw new UnauthorizedError(msg)
-    }
-
-    const { fileName } = c.req.valid("query")
-
-    if (!fileName) {
-      const msg = await t.text(ERROR_FILENAME_REQ)
-
-      throw new BadRequestError(msg)
-    }
-
-    if (envVars.PORT) {
-      // For local development, return a local URL
-      const localUrl = `http://127.0.0.1:${
-        envVars.PORT
-      }/api/files/delete?fileName=${encodeURIComponent(fileName)}`
-      return c.json({ url: localUrl }, 200)
-    }
-
-    const command = new DeleteObjectCommand({
-      Bucket: envVars.BUCKET_NAME,
-      Key: fileName,
-    })
-    const url = await getSignedUrl(S3, command, { expiresIn: 3600 })
-
-    return c.json({ url }, 200)
-  } catch (error) {
-    return await processError<typeof presignedDelete>(c, error, [
-      "{{ default }}",
-      "presigned-delete",
-    ])
-  }
-})
-
-export default filesRoutes
+  )
+}
