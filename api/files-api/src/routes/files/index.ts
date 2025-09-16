@@ -261,7 +261,8 @@ export const setupFilesRoutes = (app: FastifyInstance) => {
             Key: fileName,
           })
         )
-        if (!deletedFile.DeleteMarker) {
+        const status = deletedFile.$metadata?.httpStatusCode
+        if (status !== 204 && status !== 200) {
           const msg = await t.text(ERROR_FILE_DELETE_FAIL)
           throw new ServerError(msg)
         }
