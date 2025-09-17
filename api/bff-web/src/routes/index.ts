@@ -43,6 +43,10 @@ const MIGRATED_SERVICES = {
     prefix: "/api/files",
     upstream: envVars.FILES_API_URL?.replace("/api/files", "") ?? "",
   },
+  files: {
+    prefix: "/api/files",
+    upstream: envVars.FILES_API_URL?.replace("/api/files", "") ?? "",
+  },
 } as const
 
 export const setupRoutes = async (app: FastifyInstance) => {
