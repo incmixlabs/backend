@@ -5,6 +5,7 @@ import { setupRoutes } from "@/routes"
 const service = await createAPIService({
   name: Services.bff,
   setupRoutes,
+  needDb: false,
 })
 
 const { app, startServer } = service

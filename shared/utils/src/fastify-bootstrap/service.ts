@@ -18,6 +18,7 @@ export interface APIServices {
   name: Service
   setupRoutes?: (app: FastifyInstance) => Promise<void>
   setupMiddleware?: (app: FastifyInstance) => Promise<void>
+  needDb?: boolean
 }
 
 export const getDb = <DB = unknown>(request: FastifyRequest): Kysely<DB> => {
@@ -97,6 +98,7 @@ export async function createAPIService({
   name,
   setupRoutes,
   setupMiddleware,
+  needDb,
 }: APIServices) {
   const service = services[name]
   const envVars = createEnvConfig(name)
@@ -108,6 +110,7 @@ export async function createAPIService({
     setupMiddleware: setupMiddleware ?? defaultSetupMiddleware,
     basePath: `/api/${name}`,
     bindings: envVars,
+    needDb,
   }
   const config: FastifyServiceConfig = { ...defaults, ...conf }
   return await createFastifyService(config)
