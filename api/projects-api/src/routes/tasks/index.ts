@@ -137,8 +137,8 @@ export const setupTasksRoutes = (app: FastifyInstance) => {
         // Create the task
         const result = await createTask(
           request as any,
-          taskData,
-          request.user.id
+          request.user.id,
+          taskData
         )
 
         return reply.code(201).send({
@@ -279,8 +279,8 @@ export const setupTasksRoutes = (app: FastifyInstance) => {
         const result = await updateTask(
           request as any,
           taskId,
-          updateData,
-          request.user.id
+          request.user.id,
+          updateData
         )
 
         return { message: result.message }

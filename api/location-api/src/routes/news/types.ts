@@ -1,5 +1,5 @@
 // TODO: Implement news types
-// These are placeholder types that need proper implementation
+// These are TODO types that need proper implementation
 
 export type NewsApiResponse = {
   news_results: Array<{

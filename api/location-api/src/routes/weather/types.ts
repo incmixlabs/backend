@@ -1,5 +1,5 @@
 // TODO: Implement weather types
-// These are placeholder types that need proper implementation
+// These are TODO types that need proper implementation
 
 export type WeatherApiResponse = {
   temperature: number
@@ -41,4 +41,10 @@ export const WeatherCodes: Record<string, any> = {
   CLOUDY: 1,
   RAINY: 2,
   STORMY: 3,
+}
+export const WeatherLookupCodes: Record<number, string> = {
+  [0]: "CLEAR",
+  [1]: "CLOUDY",
+  [2]: "RAINY",
+  [3]: "STORMY",
 }

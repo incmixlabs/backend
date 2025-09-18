@@ -126,7 +126,7 @@ export const setupOrgRoutes = async (app: FastifyInstance) => {
       }
 
       // Check if org with same name already exists for this user
-      const orgExists = await doesOrgExist(request, name, user.id)
+      const orgExists = await doesOrgExist(request, name)
       if (orgExists) {
         return reply
           .status(409)
@@ -477,7 +477,9 @@ export const setupOrgRoutes = async (app: FastifyInstance) => {
         const org = await findOrgByHandle(request, handle)
 
         // Ensure at least one owner remains
-        await ensureAtLeastOneOwner(request, org.id, userIds, "remove")
+        userIds.forEach(async (userId) => {
+          await ensureAtLeastOneOwner(request, org.id, userId, "remove")
+        })
 
         const updatedOrg = await findOrgByHandle(request, handle)
         return {
@@ -529,7 +531,7 @@ export const setupOrgRoutes = async (app: FastifyInstance) => {
         const org = await findOrgByHandle(request, handle)
 
         // Ensure at least one owner remains
-        await ensureAtLeastOneOwner(request, org.id, [userId], "update")
+        await ensureAtLeastOneOwner(request, org.id, userId, "update")
 
         const updatedOrg = await findOrgByHandle(request, handle)
         return {
@@ -613,7 +615,7 @@ export const setupOrgRoutes = async (app: FastifyInstance) => {
         permissions.push({ action: "read" as const, subject: "Org" as const })
 
         // Only owners can update, delete, and manage members
-        if (member.role === UserRoles.ROLE_OWNER) {
+        if (member.role.name === UserRoles.ROLE_OWNER) {
           permissions.push({
             action: "update" as const,
             subject: "Org" as const,
