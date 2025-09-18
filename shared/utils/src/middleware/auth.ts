@@ -27,7 +27,7 @@ export function createAuthMiddleware(): MiddlewareHandler {
       return next()
     }
 
-    const authUrl = `${authApiUrl}/validate-session`
+    const authUrl = `${authApiUrl}/me`
     const sentryHeaders = generateSentryHeaders(c)
     const res = await fetch(authUrl, {
       method: "get",

@@ -46,8 +46,7 @@ export const LoginRequestSchema: AjvSchema<LoginRequest> = {
 export interface RegisterRequest {
   email: string
   password: string
-  firstName: string
-  lastName: string
+  fullName: string
 }
 
 export const RegisterRequestSchema: AjvSchema<RegisterRequest> = {
@@ -55,18 +54,13 @@ export const RegisterRequestSchema: AjvSchema<RegisterRequest> = {
   properties: {
     email: CommonSchemas.email,
     password: CommonSchemas.password,
-    firstName: {
-      type: "string",
-      minLength: 1,
-      maxLength: 50,
-    },
-    lastName: {
+    fullName: {
       type: "string",
       minLength: 1,
       maxLength: 50,
     },
   },
-  required: ["email", "password", "firstName", "lastName"],
+  required: ["email", "password", "fullName"],
   additionalProperties: false,
 }
 

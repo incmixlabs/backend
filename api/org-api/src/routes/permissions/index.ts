@@ -25,8 +25,8 @@ export const setupPermissionRoutes = async (app: FastifyInstance) => {
     {
       preHandler: [optionalAuth],
       schema: {
-        description: "Get permissions reference data",
-        tags: ["permissions"],
+        summary: "Get permissions reference data",
+        tags: ["Permissions"],
         response: {
           200: {
             type: "object",
@@ -81,7 +81,7 @@ export const setupPermissionRoutes = async (app: FastifyInstance) => {
     async (_request, _reply) => {
       // Import the actual permission constants from the utils package
       const { actions, subjects } = await import("@incmix/utils/types")
-      const { UserRoles, USER_ROLES } = await import("@incmix/utils/types")
+      const { USER_ROLES } = await import("@incmix/utils/types")
 
       // Build comprehensive reference data from the actual system constants
       const referenceData = {
@@ -171,8 +171,8 @@ export const setupPermissionRoutes = async (app: FastifyInstance) => {
     {
       preHandler: [requireAuth],
       schema: {
-        description: "Get roles for an org",
-        tags: ["permissions"],
+        summary: "Get roles for an org",
+        tags: ["Permissions"],
         params: {
           type: "object",
           properties: {
@@ -225,8 +225,8 @@ export const setupPermissionRoutes = async (app: FastifyInstance) => {
         },
       ],
       schema: {
-        description: "Create a new role",
-        tags: ["permissions"],
+        summary: "Create a new role",
+        tags: ["Permissions"],
         params: {
           type: "object",
           properties: {
@@ -271,8 +271,12 @@ export const setupPermissionRoutes = async (app: FastifyInstance) => {
         name: string
         permissions: any[]
       }
-      const _user = request.user!
+      const user = request.user
       const db = request.context?.db
+
+      if (!user) {
+        throw new Error("User not authenticated")
+      }
 
       if (!db) {
         throw new Error("Database not initialized")
@@ -293,8 +297,8 @@ export const setupPermissionRoutes = async (app: FastifyInstance) => {
 
       const newRole = await createRoleWithPermissions(
         request,
+        orgId,
         name,
-        "description",
         permissions
       )
       return {
@@ -320,8 +324,8 @@ export const setupPermissionRoutes = async (app: FastifyInstance) => {
         },
       ],
       schema: {
-        description: "Update a role",
-        tags: ["permissions"],
+        summary: "Update a role",
+        tags: ["Permissions"],
         params: {
           type: "object",
           properties: {
@@ -364,8 +368,12 @@ export const setupPermissionRoutes = async (app: FastifyInstance) => {
         roleId: string
       }
       const body = request.body as any
-      const _user = request.user!
+      const user = request.user
       const db = request.context?.db
+
+      if (!user) {
+        throw new Error("User not authenticated")
+      }
 
       if (!db) {
         throw new Error("Database not initialized")
@@ -387,9 +395,8 @@ export const setupPermissionRoutes = async (app: FastifyInstance) => {
       const { name, permissions } = body
       await updateRoleWithPermissions(
         request,
-        roleId,
+        Number.parseInt(roleId, 10),
         name,
-        "description",
         permissions
       )
       return { message: "Role updated successfully" }
@@ -411,8 +418,8 @@ export const setupPermissionRoutes = async (app: FastifyInstance) => {
         },
       ],
       schema: {
-        description: "Delete a role",
-        tags: ["permissions"],
+        summary: "Delete a role",
+        tags: ["Permissions"],
         params: {
           type: "object",
           properties: {
@@ -436,8 +443,12 @@ export const setupPermissionRoutes = async (app: FastifyInstance) => {
         orgId: string
         roleId: string
       }
-      const _user = request.user!
+      const user = request.user
       const db = request.context?.db
+
+      if (!user) {
+        throw new Error("User not authenticated")
+      }
 
       if (!db) {
         throw new Error("Database not initialized")
@@ -449,7 +460,7 @@ export const setupPermissionRoutes = async (app: FastifyInstance) => {
       // Log the mutation
       await auditLogger.logMutation(request, "DELETE", "Role", roleId, orgId)
 
-      await deleteRoleById(request, roleId)
+      await deleteRoleById(request, parseInt(roleId, 10))
       return { message: "Role deleted successfully" }
     }
   )
@@ -469,8 +480,8 @@ export const setupPermissionRoutes = async (app: FastifyInstance) => {
         },
       ],
       schema: {
-        description: "Add permission to role",
-        tags: ["permissions"],
+        summary: "Add permission to role",
+        tags: ["Permissions"],
         params: {
           type: "object",
           properties: {
@@ -504,8 +515,12 @@ export const setupPermissionRoutes = async (app: FastifyInstance) => {
         roleId: string
       }
       const permission = request.body as { action: string; subject: string }
-      const _user = request.user!
+      const user = request.user
       const db = request.context?.db
+
+      if (!user) {
+        throw new Error("User not authenticated")
+      }
 
       if (!db) {
         throw new Error("Database not initialized")
@@ -524,7 +539,12 @@ export const setupPermissionRoutes = async (app: FastifyInstance) => {
         { action: "add", permission }
       )
 
-      await addPermissionToRole(request, roleId, permission.action)
+      await addPermissionToRole(
+        request,
+        parseInt(roleId, 10),
+        permission.action,
+        permission.subject
+      )
       return { message: "Permission added to role successfully" }
     }
   )
@@ -544,8 +564,8 @@ export const setupPermissionRoutes = async (app: FastifyInstance) => {
         },
       ],
       schema: {
-        description: "Remove permission from role",
-        tags: ["permissions"],
+        summary: "Remove permission from role",
+        tags: ["Permissions"],
         params: {
           type: "object",
           properties: {
@@ -579,8 +599,12 @@ export const setupPermissionRoutes = async (app: FastifyInstance) => {
         roleId: string
       }
       const permission = request.body as { action: string; subject: string }
-      const _user = request.user!
+      const user = request.user
       const db = request.context?.db
+
+      if (!user) {
+        throw new Error("User not authenticated")
+      }
 
       if (!db) {
         throw new Error("Database not initialized")
@@ -599,7 +623,12 @@ export const setupPermissionRoutes = async (app: FastifyInstance) => {
         { action: "remove", permission }
       )
 
-      await removePermissionFromRole(request, roleId, permission.action)
+      await removePermissionFromRole(
+        request,
+        parseInt(roleId, 10),
+        permission.action,
+        permission.subject
+      )
       return { message: "Permission removed from role successfully" }
     }
   )

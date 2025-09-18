@@ -6,8 +6,8 @@ export const setupHealthcheckRoutes = async (app: FastifyInstance) => {
     "/healthcheck",
     {
       schema: {
-        description: "Health check endpoint",
-        tags: ["healthcheck"],
+        summary: "Health check endpoint",
+        tags: ["Healthcheck"],
         response: {
           200: {
             type: "object",

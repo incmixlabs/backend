@@ -3,7 +3,7 @@ import { envVars } from "./env-vars"
 import { setupMiddleware } from "./middleware"
 import { setupRoutes } from "./routes"
 
-const service = createFastifyService({
+const service = await createFastifyService({
   name: "bff-web",
   port: envVars.PORT,
   basePath: "/api",

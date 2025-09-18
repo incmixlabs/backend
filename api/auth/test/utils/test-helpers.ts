@@ -38,7 +38,7 @@ export async function createTestClient() {
     NODE_ENV: "test" as const,
   }
 
-  const service = createFastifyService({
+  const service = await createFastifyService({
     name: "auth-api-test",
     port: 0, // Use random available port for testing
     basePath: BASE_PATH,

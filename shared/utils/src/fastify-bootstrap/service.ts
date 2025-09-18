@@ -10,7 +10,7 @@ import {
   services,
 } from "../env-config"
 import { processError } from "../errors"
-import { createCorsMiddleware, createErrorHandler } from "../fastify-middleware"
+import { createErrorHandler, registerCorsPlugin } from "../fastify-middleware"
 import type { FastifyServiceConfig } from "./types"
 import { defaults } from "./types"
 
@@ -93,7 +93,7 @@ export const defaultSetupMiddleware = (app: FastifyInstance) => {
     done()
   })
 }
-export function createAPIService({
+export async function createAPIService({
   name,
   setupRoutes,
   setupMiddleware,
@@ -110,13 +110,13 @@ export function createAPIService({
     bindings: envVars,
   }
   const config: FastifyServiceConfig = { ...defaults, ...conf }
-  return createFastifyService(config)
+  return await createFastifyService(config)
 }
-export function createFastifyService(conf: FastifyServiceConfig) {
+export async function createFastifyService(conf: FastifyServiceConfig) {
   const config: FastifyServiceConfig = { ...defaults, ...conf }
   const app: FastifyInstance = fastify({
     logger: {
-      level: process.env.NODE_ENV === NodeEnvs.prod ? "info" : "debug",
+      level: process.env.NODE_ENV === NodeEnvs.production ? "info" : "debug",
     },
     ajv: {
       customOptions: {
@@ -136,7 +136,7 @@ export function createFastifyService(conf: FastifyServiceConfig) {
 
   // Setup CORS if configured
   if (config.cors) {
-    app.addHook("onRequest", createCorsMiddleware(config.cors))
+    await registerCorsPlugin(app, config.cors)
   }
 
   // Setup database if needed

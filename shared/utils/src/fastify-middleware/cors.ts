@@ -1,99 +1,61 @@
-import type { FastifyReply, FastifyRequest } from "fastify"
+import type { FastifyCorsOptions } from "@fastify/cors"
+import cors from "@fastify/cors"
+import type { FastifyInstance } from "fastify"
+import { envVars } from "@/env-config"
 
-export interface CorsOptions {
-  origin?: string | string[] | boolean
-  originAllowList?: string[]
-  credentials?: boolean
-  methods?: string[]
-  allowedHeaders?: string[]
-  exposedHeaders?: string[]
-  maxAge?: number
-}
+export type CorsOptions = FastifyCorsOptions
 
-export function createCorsMiddleware(options: CorsOptions = {}) {
+const allowedOrigins = [
+  "http://localhost:1420",
+  "http://localhost:5500",
+  "http://localhost:6006",
+  "http://localhost:1421",
+  "http://localhost:8282",
+]
+
+const frontendDomain = "turbo-mix.pages.dev"
+const storybookDomain = "turbo-mix-ui.pages.dev"
+
+export async function registerCorsPlugin(
+  fastify: FastifyInstance,
+  options: CorsOptions = {}
+) {
   const {
-    origin = "*",
-    originAllowList = [],
-    credentials = false,
+    origin = (origin, cb) => {
+      const DOMAIN = envVars.DOMAIN
+      if (!DOMAIN || !origin) {
+        return cb(null, false)
+      }
+      if (DOMAIN === "localhost") {
+        return cb(null, true)
+      }
+      if (
+        allowedOrigins.includes(origin) ||
+        origin.endsWith(DOMAIN) ||
+        origin.endsWith(frontendDomain) ||
+        origin.endsWith(storybookDomain)
+      )
+        return cb(null, true)
+
+      return cb(null, false)
+    },
+    credentials = true,
     methods = ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowedHeaders = ["Content-Type", "Authorization"],
     exposedHeaders = [],
     maxAge = 86400,
+    preflightContinue = false,
+    optionsSuccessStatus = 204,
   } = options
-  if (credentials && origin === "*") {
-    throw new Error(
-      'CORS: credentials=true cannot be used with wildcard origin "*". Use a specific origin or an allowlist.'
-    )
-  }
-  return async (request: FastifyRequest, reply: FastifyReply) => {
-    const requestOrigin = request.headers.origin
 
-    // Handle preflight requests
-    if (request.method === "OPTIONS") {
-      reply.header("Access-Control-Allow-Methods", methods.join(", "))
-      reply.header("Access-Control-Allow-Headers", allowedHeaders.join(", "))
-      reply.header("Access-Control-Max-Age", maxAge.toString())
-
-      if (credentials) {
-        reply.header("Access-Control-Allow-Credentials", "true")
-      }
-
-      if (typeof origin === "string") {
-        reply.header("Access-Control-Allow-Origin", origin)
-      } else if (Array.isArray(origin)) {
-        if (requestOrigin && origin.includes(requestOrigin)) {
-          reply.header("Access-Control-Allow-Origin", requestOrigin)
-        }
-      } else if (origin === true) {
-        if (credentials) {
-          // When credentials are enabled, we cannot use wildcard origin.
-          // Only set the origin if there's a request origin, and that origin is on an allowlist.
-          // Never allow "null" origin.
-          if (
-            requestOrigin &&
-            requestOrigin !== "null" &&
-            originAllowList.includes(requestOrigin)
-          ) {
-            reply.header("Access-Control-Allow-Origin", requestOrigin)
-          }
-        } else {
-          reply.header("Access-Control-Allow-Origin", "*")
-        }
-      }
-
-      return reply.status(204).send()
-    }
-
-    // Handle actual requests
-    if (typeof origin === "string") {
-      reply.header("Access-Control-Allow-Origin", origin)
-    } else if (Array.isArray(origin)) {
-      if (requestOrigin && origin.includes(requestOrigin)) {
-        reply.header("Access-Control-Allow-Origin", requestOrigin)
-      }
-    } else if (origin === true) {
-      if (credentials) {
-        // When credentials are enabled, we cannot use wildcard origin.
-        // Only set the origin if there's a request origin, and that origin is on an allowlist.
-        // Never allow "null" origin.
-        if (
-          requestOrigin &&
-          requestOrigin !== "null" &&
-          originAllowList.includes(requestOrigin)
-        ) {
-          reply.header("Access-Control-Allow-Origin", requestOrigin)
-        }
-      } else {
-        reply.header("Access-Control-Allow-Origin", "*")
-      }
-    }
-
-    if (credentials) {
-      reply.header("Access-Control-Allow-Credentials", "true")
-    }
-
-    if (exposedHeaders.length > 0) {
-      reply.header("Access-Control-Expose-Headers", exposedHeaders.join(", "))
-    }
-  }
+  await fastify.register(cors, {
+    origin,
+    credentials,
+    methods,
+    allowedHeaders,
+    exposedHeaders,
+    maxAge,
+    preflightContinue,
+    optionsSuccessStatus,
+  })
 }

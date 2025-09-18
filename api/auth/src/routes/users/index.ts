@@ -1,8 +1,143 @@
+import { useFastifyTranslation } from "@incmix-api/utils/fastify-bootstrap"
 import type { FastifyInstance } from "fastify"
 import { invalidateAllSessions } from "@/auth/session"
+import { envVars } from "@/env-vars"
+import {
+  ERROR_PRESIGNED_URL,
+  ERROR_UPLOAD_FAIL,
+  ERROR_USER_NOT_FOUND,
+} from "@/lib/constants"
 import { authMiddleware } from "@/middleware/auth"
 
 export const setupUsersRoutes = (app: FastifyInstance) => {
+  // Get user by ID or email
+  app.get(
+    "/users",
+    {
+      schema: {
+        description: "Get user by ID or email",
+        tags: ["users"],
+        querystring: {
+          type: "object",
+          properties: {
+            id: {
+              type: "string",
+              description: "User's unique identifier",
+            },
+            email: {
+              type: "string",
+              format: "email",
+              description: "User's email address",
+            },
+          },
+        },
+        response: {
+          200: {
+            description: "Successfully retrieved user information",
+            type: "object",
+            properties: {
+              id: {
+                type: "string",
+                description: "User's unique identifier",
+              },
+              fullName: {
+                type: "string",
+                description: "User's full name",
+              },
+              email: {
+                type: "string",
+                format: "email",
+                description: "User's email address",
+              },
+              emailVerified: {
+                type: "boolean",
+                description: "Whether the user's email has been verified",
+              },
+              isSuperAdmin: {
+                type: "boolean",
+                description: "Whether the user has super admin privileges",
+              },
+            },
+          },
+          400: {
+            description: "Bad request - Missing required query parameter",
+            type: "object",
+            properties: {
+              message: {
+                type: "string",
+              },
+            },
+          },
+          404: {
+            description: "User not found",
+            type: "object",
+            properties: {
+              message: {
+                type: "string",
+              },
+            },
+          },
+        },
+      },
+    },
+    async (request, reply) => {
+      try {
+        const { id, email } = request.query as { id?: string; email?: string }
+
+        if (!request.context?.db) {
+          throw new Error("Database not available")
+        }
+
+        if (!id && !email) {
+          return reply
+            .status(400)
+            .send({ message: "Either id or email is required" })
+        }
+
+        let query = request.context.db
+          .selectFrom("users")
+          .innerJoin("userProfiles", "users.id", "userProfiles.id")
+          .select([
+            "users.id",
+            "users.email",
+            "users.isSuperAdmin",
+            "users.emailVerifiedAt",
+            "userProfiles.fullName",
+            "userProfiles.avatar",
+            "userProfiles.profileImage",
+            "userProfiles.localeId",
+            "userProfiles.onboardingCompleted",
+          ])
+
+        if (id) {
+          query = query.where("users.id", "=", id)
+        } else if (email) {
+          query = query.where("users.email", "=", email)
+        }
+
+        const searchedUser = await query.executeTakeFirst()
+
+        if (!searchedUser) {
+          return reply.code(404).send({ message: "User not found" })
+        }
+
+        return {
+          id: searchedUser.id,
+          fullName: searchedUser.fullName,
+          avatar: searchedUser.avatar,
+          profileImage: searchedUser.profileImage,
+          localeId: searchedUser.localeId,
+          onboardingCompleted: searchedUser.onboardingCompleted,
+          isSuperAdmin: searchedUser.isSuperAdmin,
+          email: searchedUser.email,
+          emailVerified: !!searchedUser.emailVerifiedAt,
+        }
+      } catch (error) {
+        console.error("Get user error:", error)
+        throw error
+      }
+    }
+  )
   // Get all users (admin only)
   app.get(
     "/users/list",
@@ -360,7 +495,7 @@ export const setupUsersRoutes = (app: FastifyInstance) => {
 
   // Set user verified status (superadmin only)
   app.put(
-    "/users/setVerified",
+    "/setVerified",
     {
       schema: {
         description: "Set user email verification status (superadmin only)",
@@ -458,7 +593,7 @@ export const setupUsersRoutes = (app: FastifyInstance) => {
 
   // Set user enabled/disabled status (superadmin only)
   app.put(
-    "/users/setEnabled",
+    "/setEnabled",
     {
       schema: {
         description: "Set user enabled/disabled status (superadmin only)",
@@ -556,7 +691,7 @@ export const setupUsersRoutes = (app: FastifyInstance) => {
 
   // Set user password (superadmin only)
   app.put(
-    "/users/setPassword",
+    "/setPassword",
     {
       schema: {
         description: "Set user password (superadmin only)",
@@ -653,18 +788,46 @@ export const setupUsersRoutes = (app: FastifyInstance) => {
   )
 
   // Add profile picture
+  // This route now accepts multipart form data for profile picture upload.
+  // Make sure @fastify/multipart is registered in your Fastify instance.
   app.put(
     "/users/profile-picture",
     {
       schema: {
-        description: "Add or update profile picture",
+        description: "Add or update profile picture (multipart/form-data)",
         tags: ["users"],
+        consumes: ["multipart/form-data"],
+        // Remove body schema for multipart requests as Fastify handles this differently
         response: {
           200: {
             type: "object",
             properties: {
+              id: { type: "string" },
+              fullName: { type: "string" },
+              email: { type: "string" },
+              emailVerified: { type: "boolean" },
+              isSuperAdmin: { type: "boolean" },
+              profileImage: { type: "string" },
+              localeId: { type: "number" },
+              name: { type: "string" },
+            },
+          },
+          401: {
+            type: "object",
+            properties: {
               message: { type: "string" },
-              profileImageUrl: { type: "string" },
+            },
+          },
+          404: {
+            type: "object",
+            properties: {
+              message: { type: "string" },
+            },
+          },
+          500: {
+            type: "object",
+            properties: {
+              message: { type: "string" },
             },
           },
         },
@@ -685,36 +848,120 @@ export const setupUsersRoutes = (app: FastifyInstance) => {
         const userId = request.user.id
         const db = request.context.db
 
-        // Note: File upload handling would require multipart support
-        // This is a placeholder implementation
-        // In production, you would:
-        // 1. Use @fastify/multipart to handle file uploads
-        // 2. Validate file type and size
-        // 3. Upload to S3 or other storage service
-        // 4. Generate a unique filename
-
-        // For now, we'll simulate with a placeholder URL
-        const profileImageUrl = `https://storage.example.com/profiles/${userId}/avatar.jpg`
-
-        // Update profile with image URL
-        const result = await db
-          .updateTable("userProfiles")
-          .set({
-            profileImage: profileImageUrl,
-          })
+        // Get user profile first
+        const profile = await db
+          .selectFrom("userProfiles")
+          .selectAll()
           .where("id", "=", userId)
           .executeTakeFirst()
 
-        if (!result || result.numUpdatedRows === 0n) {
-          return reply
-            .status(500)
-            .send({ message: "Failed to update profile picture" })
+        if (!profile) {
+          const t = await useFastifyTranslation(request)
+          const msg = await t.text(ERROR_USER_NOT_FOUND)
+          return reply.status(404).send({ message: msg })
         }
 
-        return {
-          message: "Profile picture updated successfully",
-          profileImageUrl,
+        // Get the file from multipart form data
+        const file = await request.file()
+
+        if (!file) {
+          return reply.status(400).send({ message: "No file uploaded" })
         }
+
+        // Generate filename
+        const fileName = `profile_image/${userId}.jpg`
+
+        // Get presigned URL from files API
+        const filesApiUrl = envVars.FILES_API_URL
+        if (!filesApiUrl) {
+          return reply
+            .status(500)
+            .send({ message: "Files API URL not configured" })
+        }
+
+        const presignedUrlResponse = await fetch(
+          `${filesApiUrl}/presigned-upload?fileName=${encodeURIComponent(fileName)}`,
+          {
+            method: "GET",
+            headers: request.headers,
+          }
+        )
+
+        if (!presignedUrlResponse.ok) {
+          const errorText = await presignedUrlResponse.text()
+          console.error(
+            "Presigned URL error:",
+            presignedUrlResponse.status,
+            errorText
+          )
+          const t = await useFastifyTranslation(request)
+          const msg = await t.text(ERROR_PRESIGNED_URL, {
+            status: presignedUrlResponse.status,
+            text: errorText,
+          })
+          return reply.status(500).send({ message: msg })
+        }
+
+        const presignedData = (await presignedUrlResponse.json()) as {
+          url: string
+        }
+        const presignedUrl = presignedData.url
+
+        // Get file size for Content-Length header
+        const fileBuffer = await file.toBuffer()
+
+        // Upload file to presigned URL
+        const uploadResponse = await fetch(presignedUrl, {
+          method: "PUT",
+          headers: {
+            "Content-Type": file.mimetype || "image/jpeg",
+            "Content-Length": fileBuffer.length.toString(),
+            Cookie: request.headers.cookie || "",
+          },
+          body: fileBuffer,
+          duplex: "half",
+        } as RequestInit & { duplex: "half" })
+
+        if (!uploadResponse.ok) {
+          console.error(
+            "Upload failed:",
+            uploadResponse.status,
+            await uploadResponse.text()
+          )
+          const t = await useFastifyTranslation(request)
+          const msg = await t.text(ERROR_UPLOAD_FAIL)
+          return reply.status(500).send({ message: msg })
+        }
+
+        // Update profile with image filename
+        const updatedProfile = await db
+          .updateTable("userProfiles")
+          .set({ profileImage: fileName })
+          .where("id", "=", profile.id)
+          .returningAll()
+          .executeTakeFirst()
+
+        if (!updatedProfile) {
+          const t = await useFastifyTranslation(request)
+          const msg = await t.text(ERROR_UPLOAD_FAIL)
+          return reply.status(500).send({ message: msg })
+        }
+
+        // Get user data for response
+        const user = await db
+          .selectFrom("users")
+          .select(["email", "emailVerifiedAt", "isSuperAdmin"])
+          .where("id", "=", userId)
+          .executeTakeFirst()
+
+        return reply.status(200).send({
+          ...updatedProfile,
+          name: updatedProfile.fullName,
+          localeId: updatedProfile.localeId || 1,
+          email: user?.email || "",
+          emailVerified: !!user?.emailVerifiedAt,
+          isSuperAdmin: user?.isSuperAdmin || false,
+        })
       } catch (error) {
         console.error("Upload profile picture error:", error)
         return reply.status(500).send({ message: "Internal server error" })

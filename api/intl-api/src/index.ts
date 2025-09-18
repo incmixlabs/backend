@@ -4,7 +4,7 @@ import { setupMiddleware } from "@/middleware"
 import { setupRoutes } from "@/routes"
 import "./types"
 
-const service = createAPIService({
+const service = await createAPIService({
   name: Services.intl,
   setupMiddleware,
   setupRoutes,

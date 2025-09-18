@@ -15,6 +15,7 @@ export const setupRoutes = async (app: FastifyInstance) => {
   await app.register(
     async (fastify) => {
       // Add a simple test route to verify routing works
+      console.log("envVars.NODE_ENV", envVars.NODE_ENV)
       if (envVars.NODE_ENV === "test") {
         fastify.get("/test", async (_request, _reply) => {
           return { message: "Test route works!" }
@@ -23,7 +24,7 @@ export const setupRoutes = async (app: FastifyInstance) => {
 
       await setupHealthcheckRoutes(fastify)
       await fastify.register(setupPermissionRoutes, { prefix: "/permissions" })
-      await fastify.register(setupOrgRoutes, { prefix: "/orgs" })
+      await fastify.register(setupOrgRoutes, { prefix: "" })
     },
     { prefix: "/api/org" }
   )
