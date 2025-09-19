@@ -11,7 +11,7 @@ export const setupRoutes = async (app: FastifyInstance) => {
     })
   }
   // Register all routes with the base path prefix
-  app.register(
+  await app.register(
     async (fastify) => {
       // Add a simple test route to verify routing works
       if (envVars.NODE_ENV === "test") {
@@ -20,8 +20,8 @@ export const setupRoutes = async (app: FastifyInstance) => {
         })
       }
 
-      setupHealthcheckRoutes(fastify)
-      setupCommentsRoutes(fastify)
+      await setupHealthcheckRoutes(fastify)
+      await setupCommentsRoutes(fastify)
     },
     { prefix: "/api/comments" }
   )

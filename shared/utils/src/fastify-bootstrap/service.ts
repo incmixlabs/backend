@@ -10,7 +10,7 @@ import {
   services,
 } from "../env-config"
 import { processError } from "../errors"
-import { createCorsMiddleware, createErrorHandler } from "../fastify-middleware"
+import { createErrorHandler, registerCorsPlugin } from "../fastify-middleware"
 import type { FastifyServiceConfig } from "./types"
 import { defaults } from "./types"
 
@@ -18,6 +18,7 @@ export interface APIServices {
   name: Service
   setupRoutes?: (app: FastifyInstance) => Promise<void>
   setupMiddleware?: (app: FastifyInstance) => Promise<void>
+  needDb?: boolean
 }
 
 export const getDb = <DB = unknown>(request: FastifyRequest): Kysely<DB> => {
@@ -93,10 +94,11 @@ export const defaultSetupMiddleware = (app: FastifyInstance) => {
     done()
   })
 }
-export function createAPIService({
+export async function createAPIService({
   name,
   setupRoutes,
   setupMiddleware,
+  needDb,
 }: APIServices) {
   const service = services[name]
   const envVars = createEnvConfig(name)
@@ -108,15 +110,16 @@ export function createAPIService({
     setupMiddleware: setupMiddleware ?? defaultSetupMiddleware,
     basePath: `/api/${name}`,
     bindings: envVars,
+    needDb,
   }
   const config: FastifyServiceConfig = { ...defaults, ...conf }
-  return createFastifyService(config)
+  return await createFastifyService(config)
 }
-export function createFastifyService(conf: FastifyServiceConfig) {
+export async function createFastifyService(conf: FastifyServiceConfig) {
   const config: FastifyServiceConfig = { ...defaults, ...conf }
   const app: FastifyInstance = fastify({
     logger: {
-      level: process.env.NODE_ENV === NodeEnvs.prod ? "info" : "debug",
+      level: process.env.NODE_ENV === NodeEnvs.production ? "info" : "debug",
     },
     ajv: {
       customOptions: {
@@ -136,7 +139,7 @@ export function createFastifyService(conf: FastifyServiceConfig) {
 
   // Setup CORS if configured
   if (config.cors) {
-    app.addHook("onRequest", createCorsMiddleware(config.cors))
+    await registerCorsPlugin(app, config.cors)
   }
 
   // Setup database if needed

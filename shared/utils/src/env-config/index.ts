@@ -5,10 +5,10 @@ import { config as dotenvConfig } from "dotenv"
 import { z } from "zod"
 
 export const NodeEnvs = {
-  dev: "dev",
+  development: "development",
   qa: "qa",
   uat: "uat",
-  prod: "prod",
+  production: "production",
   test: "test",
 } as const
 export const Services = {
@@ -84,31 +84,32 @@ function buildApiUrl(port: number, path: string, domain?: string): string {
   return `${fullDomain}:${port}${path}`
 }
 
+const envs = Object.keys(NodeEnvs)
 // Base environment schema shared across all services
 const baseEnvSchema = z.object({
-  NODE_ENV: z.enum(["dev", "qa", "uat", "prod", "test"]).default("test"),
-  DATABASE_URL: z.string().url(),
-  SENTRY_DSN: z.string().url().optional(),
-  FRONTEND_URL: z.string().url(),
+  NODE_ENV: z.enum(envs).default("test"),
+  DATABASE_URL: z.url(),
+  SENTRY_DSN: z.url().optional(),
+  FRONTEND_URL: z.url(),
   DOMAIN: z.string().default("http://localhost"),
   COOKIE_NAME: z.string().default("incmix_session"),
   MOCK_DATA: z.coerce.boolean().default(false),
-  INTL_API_URL: z.string().url().optional(),
+  INTL_API_URL: z.url().optional(),
   TIMEOUT_MS: z.coerce.number().default(5000),
-  AUTH_API_URL: z.string().url().optional(),
-  REDIS_URL: z.string().url(),
+  AUTH_API_URL: z.url().optional(),
+  REDIS_URL: z.url(),
 })
 
 // Service-specific schema extensions
 const serviceSchemas = {
   auth: baseEnvSchema.extend({
-    GOOGLE_REDIRECT_URL: z.string().url().optional(),
+    GOOGLE_REDIRECT_URL: z.url().optional(),
     GOOGLE_CLIENT_ID: z.string(),
     GOOGLE_CLIENT_SECRET: z.string(),
     PORT: z.coerce.number().default(services.auth.port),
     // API URLs
-    EMAIL_API_URL: z.string().url().optional(),
-    FILES_API_URL: z.string().url().optional(),
+    EMAIL_API_URL: z.url().optional(),
+    FILES_API_URL: z.url().optional(),
   }),
   email: baseEnvSchema.extend({
     EMAIL_FROM: z.string().email(),
@@ -122,8 +123,8 @@ const serviceSchemas = {
     ANTHROPIC_API_KEY: z.string().optional(),
     GOOGLE_AI_API_KEY: z.string().optional(),
     PORT: z.coerce.number().default(services.genai.port),
-    REDIS_URL: z.string().url().optional(),
-    ORG_API_URL: z.string().url().optional(),
+    REDIS_URL: z.url().optional(),
+    ORG_API_URL: z.url().optional(),
   }),
   files: baseEnvSchema.extend({
     STORAGE_TYPE: z.enum(["local", "s3"]).default("s3"),
@@ -142,27 +143,27 @@ const serviceSchemas = {
     WEATHER_URL: z.string(),
     SERP_API_KEY: z.string(),
     SERP_NEWS_URL: z.string(),
-    REDIS_URL: z.string().url().optional(),
+    REDIS_URL: z.url().optional(),
     PORT: z.coerce.number().default(services.location.port),
   }),
   bff: baseEnvSchema.omit({ DATABASE_URL: true, SENTRY_DSN: true }).extend({
     PORT: z.coerce.number().default(services.bff.port),
-    ORG_API_URL: z.string().url().optional(),
-    GENAI_API_URL: z.string().url().optional(),
-    PROJECTS_API_URL: z.string().url().optional(),
-    COMMENTS_API_URL: z.string().url().optional(),
-    FILES_API_URL: z.string().url().optional(),
-    EMAIL_API_URL: z.string().url().optional(),
-    LOCATION_API_URL: z.string().url().optional(),
-    RXDB_API_URL: z.string().url().optional(),
+    ORG_API_URL: z.url().optional(),
+    GENAI_API_URL: z.url().optional(),
+    PROJECTS_API_URL: z.url().optional(),
+    COMMENTS_API_URL: z.url().optional(),
+    FILES_API_URL: z.url().optional(),
+    EMAIL_API_URL: z.url().optional(),
+    LOCATION_API_URL: z.url().optional(),
+    RXDB_API_URL: z.url().optional(),
   }),
   comments: baseEnvSchema.extend({
     PORT: z.coerce.number().default(services.comments.port),
-    ORG_API_URL: z.string().url().optional(),
+    ORG_API_URL: z.url().optional(),
   }),
   intl: baseEnvSchema.extend({
     PORT: z.coerce.number().default(services.intl.port),
-    AUTH_API_URL: z.string().url().optional(),
+    AUTH_API_URL: z.url().optional(),
   }),
   org: baseEnvSchema.extend({
     PORT: z.coerce.number().default(services.org.port),
@@ -170,9 +171,9 @@ const serviceSchemas = {
 
   projects: baseEnvSchema.extend({
     PORT: z.coerce.number().default(services.projects.port),
-    ORG_API_URL: z.string().url().optional(),
-    REDIS_URL: z.string().url().optional(),
-    FILES_API_URL: z.string().url().optional(),
+    ORG_API_URL: z.url().optional(),
+    REDIS_URL: z.url().optional(),
+    FILES_API_URL: z.url().optional(),
   }),
   rxdb: baseEnvSchema.extend({
     PORT: z.coerce.number().default(services.rxdb.port),
@@ -183,11 +184,16 @@ export type ServiceName = keyof typeof serviceSchemas
 export function createEnvConfig<T extends ServiceName>(
   serviceName?: T,
   customSchema?: z.ZodObject<any>,
-  envOverride?: "dev" | "qa" | "uat" | "prod" | "test"
+  envOverride:
+    | "development"
+    | "qa"
+    | "uat"
+    | "production"
+    | "test" = "development"
 ) {
   // Load environment variables using dotenv-mono
   // This will merge root .env with service-specific .env and NODE_ENV specific files
-  const nodeEnv = envOverride || process.env.NODE_ENV || "test"
+  const nodeEnv = envOverride || process.env.NODE_ENV
 
   // Get the directory of the current module
   const __dirname = path.dirname(fileURLToPath(import.meta.url))
@@ -265,9 +271,7 @@ export function createEnvConfig<T extends ServiceName>(
 
   // Add service-specific schema if provided
   if (serviceName && serviceSchemas[serviceName]) {
-    schema = baseEnvSchema.extend(
-      serviceSchemas[serviceName].shape
-    ) as z.ZodObject<any>
+    schema = serviceSchemas[serviceName]
   }
 
   // Add custom schema if provided

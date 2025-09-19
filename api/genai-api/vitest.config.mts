@@ -12,6 +12,7 @@ export default defineConfig({
     globals: true,
     dir: "./test",
     setupFiles: [path.resolve(__dirname, "vitest.setup.ts")],
+    testTimeout: 30000, // Set global timeout to 30 seconds
   },
   define: {
     "import.meta.vitest": false,

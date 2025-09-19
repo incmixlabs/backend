@@ -3,15 +3,11 @@
   "version": "0.0.0",
   "license": "MIT",
   "type": "module",
-  "scripts": {
-    "dev": "tsc && (concurrently \"tsc -w\" \"tsc-alias -w\")",
-    "build": "tsc && tsc-alias",
-    "clean": "rm -rf dist"
-  },
+
   "exports": {
     ".": {
-      "types": "./dist/src/index.d.ts",
-      "default": "./dist/src/index.js"
+      "types": "./src/index.ts",
+      "default": "./src/index.ts"
     }
   },
 

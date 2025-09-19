@@ -36,8 +36,8 @@ const MIGRATED_SERVICES = {
     upstream: envVars.GENAI_API_URL?.replace("/api/genai", "") ?? "",
   },
   rxdb: {
-    prefix: "/api/rxdb",
-    upstream: envVars.RXDB_API_URL?.replace("/api/rxdb", "") ?? "",
+    prefix: "/api/rxdb-sync",
+    upstream: envVars.RXDB_API_URL?.replace("/api/rxdb-sync", "") ?? "",
   },
   files: {
     prefix: "/api/files",

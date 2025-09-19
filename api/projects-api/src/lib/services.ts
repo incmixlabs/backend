@@ -1,8 +1,7 @@
 import type { Context } from "@/types"
 
 export function getOrgById(c: Context, id: string) {
-  return c
-    .get("db")
+  return c.db
     .selectFrom("organisations")
     .selectAll()
     .where("id", "=", id)

@@ -105,6 +105,7 @@
     "dotenv-mono": "catalog:",
     "fastify": "catalog:",
     "fastify-plugin": "catalog:",
+    "@fastify/cors": "catalog:",
     "hono": "catalog:",
     "kysely": "catalog:",
     "pg": "catalog:",

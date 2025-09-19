@@ -13,5 +13,18 @@
   "tsc-alias": {
     "resolveFullPaths": true
   },
-  "exclude": ["dist/**", "**/node_modules/**"]
+  "exclude": [
+    "**/*.test.ts",
+    "**/*.test.tsx",
+    "**/*.spec.ts",
+    "**/*.spec.tsx",
+    "**/test/**",
+    "**/tests/**",
+    "**/__tests__/**",
+    "**/e2e/**",
+    "**/vitest.config.*",
+    "**/playwright.config.*",
+    "dist/**",
+    "**/node_modules/**"
+  ]
 }

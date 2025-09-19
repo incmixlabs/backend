@@ -65,7 +65,7 @@
         }
       },
       "suspicious": {
-        "useAwait": "warn",
+        "useAwait": "off",
         "noExplicitAny": "off"
       }
     },

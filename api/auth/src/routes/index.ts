@@ -13,26 +13,26 @@ export const setupRoutes = async (app: FastifyInstance) => {
 
   // Add a direct test route to verify routing works at all
   if (nodeEnv === "test") {
-    app.get("/api/auth/test-direct", async (_request, _reply) => {
+    app.get("/api/auth/test-direct", (_request, _reply) => {
       return { message: "Direct route works!" }
     })
   }
   // Register all routes with the base path prefix
   await app.register(
-    async (fastify) => {
+    (fastify) => {
       // Add a simple test route to verify routing works
       if (nodeEnv === "test") {
-        fastify.get("/test", async (_request, _reply) => {
+        fastify.get("/test", (_request, _reply) => {
           return { message: "Test route works!" }
         })
       }
 
-      await setupAuthRoutes(fastify)
-      await setupHealthcheckRoutes(fastify)
-      await setupResetPasswordRoutes(fastify)
-      await setupEmailVerificationRoutes(fastify)
-      await fastify.register(setupOAuthRoutes, { prefix: "/oauth" })
-      await setupUsersRoutes(fastify)
+      setupAuthRoutes(fastify)
+      setupHealthcheckRoutes(fastify)
+      setupResetPasswordRoutes(fastify)
+      setupEmailVerificationRoutes(fastify)
+      fastify.register(setupOAuthRoutes, { prefix: "/oauth" })
+      setupUsersRoutes(fastify)
     },
     { prefix: "/api/auth" }
   )

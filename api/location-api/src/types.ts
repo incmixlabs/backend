@@ -1,35 +1,14 @@
-import type { KyselyDb } from "@incmix-api/utils/db-schema"
-import type { Context as HonoContext } from "hono"
-import type { Env } from "./env-vars"
-
-type EnvVariables = Env
-
-export type Bindings = EnvVariables
+// TODO: Implement location-api types
+// These are TODO types that need proper implementation
 
 export type Address = {
-  name: string
+  name?: string
+  street?: string
   city: string
-  state: string
+  state?: string
   country: string
-  country_code: string
-  lat: string
-  lon: string
+  country_code?: string
+  postalCode?: string
+  lat?: string | number
+  lon?: string | number
 }
-
-export type Variables = {
-  defaultLocation: Address
-  db: KyselyDb
-  redis?: any
-  requestId?: string
-  user?: {
-    id: string
-    email: string
-    [key: string]: any
-  }
-  locale?: string
-  i18n?: any
-  kvStore?: any
-}
-
-export type HonoApp = { Bindings: Bindings; Variables: Variables }
-export type Context = HonoContext<HonoApp>

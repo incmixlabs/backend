@@ -8,7 +8,10 @@ export async function throwUnlessUserCan(
   subject: SubjectTuple,
   orgId?: string
 ) {
-  const rbac = c.get("rbac")
+  const rbac = c.rbac
+  if (!rbac) {
+    throw new UnauthorizedError("RBAC not available")
+  }
   const can = await rbac.hasOrgPermission(action, subject, orgId)
   if (!can) {
     throw new UnauthorizedError("You are not authorized to perform this action")

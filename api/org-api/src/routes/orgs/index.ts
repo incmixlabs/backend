@@ -29,11 +29,17 @@ export const setupOrgRoutes = async (app: FastifyInstance) => {
     {
       preHandler: [requireAuth],
       schema: {
+        summary: "Get user's organisations",
         tags: ["Orgs"],
       } as any,
     },
-    async (request, _reply) => {
-      const user = request.user!
+    async (request, reply) => {
+      const user = request.user
+
+      if (!user) {
+        return reply.status(401).send({ error: "Unauthorized" })
+      }
+
       const userOrgs = await findOrgByUserId(request, user.id)
       return userOrgs
     }
@@ -46,6 +52,7 @@ export const setupOrgRoutes = async (app: FastifyInstance) => {
       preHandler: [requireAuth],
       schema: {
         tags: ["Orgs"],
+        summary: "Validate handle availability",
         body: {
           type: "object",
           properties: {
@@ -70,6 +77,7 @@ export const setupOrgRoutes = async (app: FastifyInstance) => {
       preHandler: [requireAuth],
       schema: {
         tags: ["Orgs"],
+        summary: "Create organisation",
         body: {
           type: "object",
           properties: {
@@ -94,7 +102,7 @@ export const setupOrgRoutes = async (app: FastifyInstance) => {
       } as any,
     },
     async (request, reply) => {
-      const user = request.user!
+      const user = request.user
       const {
         name,
         handle,
@@ -103,6 +111,10 @@ export const setupOrgRoutes = async (app: FastifyInstance) => {
         name: string
         handle: string
         members?: { userId: string; role: string }[]
+      }
+
+      if (!user) {
+        return reply.status(401).send({ error: "Unauthorized" })
       }
 
       // Check handle availability
@@ -114,7 +126,7 @@ export const setupOrgRoutes = async (app: FastifyInstance) => {
       }
 
       // Check if org with same name already exists for this user
-      const orgExists = await doesOrgExist(request, name, user.id)
+      const orgExists = await doesOrgExist(request, name)
       if (orgExists) {
         return reply
           .status(409)
@@ -202,6 +214,7 @@ export const setupOrgRoutes = async (app: FastifyInstance) => {
       preHandler: [requireAuth],
       schema: {
         tags: ["Orgs"],
+        summary: "Get organisation by handle",
         params: {
           type: "object",
           properties: {
@@ -239,6 +252,7 @@ export const setupOrgRoutes = async (app: FastifyInstance) => {
       preHandler: [requireAuth],
       schema: {
         tags: ["Orgs"],
+        summary: "Get organisation by ID",
         params: {
           type: "object",
           properties: {
@@ -276,6 +290,7 @@ export const setupOrgRoutes = async (app: FastifyInstance) => {
       preHandler: [requireAuth],
       schema: {
         tags: ["Orgs"],
+        summary: "Update organisation",
         params: {
           type: "object",
           properties: {
@@ -304,7 +319,10 @@ export const setupOrgRoutes = async (app: FastifyInstance) => {
           id: org.id,
           name: body.name || org.name,
           handle: org.handle,
-          members: members.map((m) => ({ userId: m.userId, role: m.role })),
+          members: members.map((m: any) => ({
+            userId: m.userId,
+            role: m.role,
+          })),
         }
       } catch (_error) {
         return reply.status(404).send({ error: "Organization not found" })
@@ -319,6 +337,7 @@ export const setupOrgRoutes = async (app: FastifyInstance) => {
       preHandler: [requireAuth],
       schema: {
         tags: ["Orgs"],
+        summary: "Delete organisation",
         params: {
           type: "object",
           properties: {
@@ -347,6 +366,7 @@ export const setupOrgRoutes = async (app: FastifyInstance) => {
       preHandler: [requireAuth],
       schema: {
         tags: ["Orgs"],
+        summary: "Add member to organisation",
         params: {
           type: "object",
           properties: {
@@ -390,7 +410,7 @@ export const setupOrgRoutes = async (app: FastifyInstance) => {
         }
 
         // Find role
-        const roleRecord = await findRoleByName(request, role, org.id)
+        const roleRecord = await findRoleByName(request, role)
         if (!roleRecord) {
           return reply.status(404).send({ error: "Role not found" })
         }
@@ -427,6 +447,7 @@ export const setupOrgRoutes = async (app: FastifyInstance) => {
       preHandler: [requireAuth],
       schema: {
         tags: ["Orgs"],
+        summary: "Remove members from organisation",
         params: {
           type: "object",
           properties: {
@@ -456,7 +477,9 @@ export const setupOrgRoutes = async (app: FastifyInstance) => {
         const org = await findOrgByHandle(request, handle)
 
         // Ensure at least one owner remains
-        await ensureAtLeastOneOwner(request, org.id, userIds, "remove")
+        userIds.forEach(async (userId) => {
+          await ensureAtLeastOneOwner(request, org.id, userId, "remove")
+        })
 
         const updatedOrg = await findOrgByHandle(request, handle)
         return {
@@ -481,6 +504,7 @@ export const setupOrgRoutes = async (app: FastifyInstance) => {
       preHandler: [requireAuth],
       schema: {
         tags: ["Orgs"],
+        summary: "Update member role",
         params: {
           type: "object",
           properties: {
@@ -501,13 +525,13 @@ export const setupOrgRoutes = async (app: FastifyInstance) => {
     },
     async (request, reply) => {
       const { handle } = request.params as { handle: string }
-      const { userId, role } = request.body as { userId: string; role: string }
+      const { userId } = request.body as { userId: string; role: string }
 
       try {
         const org = await findOrgByHandle(request, handle)
 
         // Ensure at least one owner remains
-        await ensureAtLeastOneOwner(request, org.id, [userId], "update")
+        await ensureAtLeastOneOwner(request, org.id, userId, "update")
 
         const updatedOrg = await findOrgByHandle(request, handle)
         return {
@@ -532,6 +556,7 @@ export const setupOrgRoutes = async (app: FastifyInstance) => {
       preHandler: [requireAuth],
       schema: {
         tags: ["Orgs"],
+        summary: "Get organisation members",
         params: {
           type: "object",
           properties: {
@@ -561,6 +586,7 @@ export const setupOrgRoutes = async (app: FastifyInstance) => {
       preHandler: [requireAuth],
       schema: {
         tags: ["Orgs"],
+        summary: "Get organisation permissions",
         params: {
           type: "object",
           properties: {
@@ -571,15 +597,17 @@ export const setupOrgRoutes = async (app: FastifyInstance) => {
       } as any,
     },
     async (request, reply) => {
-      const user = request.user!
+      const user = request.user
       const { handle } = request.params as { handle: string }
+
+      if (!user) {
+        return reply.status(401).send({ error: "Unauthorized" })
+      }
 
       try {
         const org = await findOrgByHandle(request, handle)
-
         // Get user's member info
         const member = await findOrgMemberById(request, user.id, org.id)
-
         // Build permissions array based on role
         const permissions = []
 
@@ -587,7 +615,7 @@ export const setupOrgRoutes = async (app: FastifyInstance) => {
         permissions.push({ action: "read" as const, subject: "Org" as const })
 
         // Only owners can update, delete, and manage members
-        if (member.role === UserRoles.ROLE_OWNER) {
+        if (member.role.name === UserRoles.ROLE_OWNER) {
           permissions.push({
             action: "update" as const,
             subject: "Org" as const,
@@ -604,92 +632,11 @@ export const setupOrgRoutes = async (app: FastifyInstance) => {
 
         return permissions
       } catch (_error) {
+        console.log("error", _error)
         return reply.status(404).send({ error: "Organization not found" })
       }
     }
   )
-
-  // Additional routes to match legacy test expectations
-  // Check handle availability (public endpoint)
-  app.get(
-    "/check-handle/:handle",
-    {
-      schema: {
-        tags: ["Orgs"],
-        params: {
-          type: "object",
-          properties: {
-            handle: { type: "string" },
-          },
-          required: ["handle"],
-        },
-      } as any,
-    },
-    async (request, _reply) => {
-      const { handle } = request.params as { handle: string }
-      try {
-        const isAvailable = await checkHandleAvailability(request, handle)
-        return { available: isAvailable }
-      } catch (_error) {
-        // For test compatibility, if DB is not available, return true
-        return { available: true }
-      }
-    }
-  )
-
-  // Legacy route patterns for tests - DELETE /orgs/:orgId/members/:memberId
-  app.delete(
-    "/:orgId/members/:memberId",
-    {
-      schema: {
-        tags: ["Orgs"],
-        params: {
-          type: "object",
-          properties: {
-            orgId: { type: "string" },
-            memberId: { type: "string" },
-          },
-          required: ["orgId", "memberId"],
-        },
-      } as any,
-    },
-    async (_request, reply) => {
-      return reply.status(401).send({ error: "Unauthorized" })
-    }
-  )
-
-  // Legacy route patterns for tests - PUT /orgs/:orgId/members/:memberId (role update)
-  app.put(
-    "/:orgId/members/:memberId",
-    {
-      schema: {
-        tags: ["Orgs"],
-        params: {
-          type: "object",
-          properties: {
-            orgId: { type: "string" },
-            memberId: { type: "string" },
-          },
-          required: ["orgId", "memberId"],
-        },
-      } as any,
-    },
-    async (_request, reply) => {
-      return reply.status(401).send({ error: "Unauthorized" })
-    }
-  )
-}
-
-// Fastify compatibility wrapper for tests (keeping existing functionality)
-export const setupOrgRoutes_Legacy = async (app: any) => {
-  // Mock protected endpoints - all should return 401 Unauthorized
-  app.post("", {}, async (_request: any, reply: any) => {
-    return reply.status(401).send({ error: "Unauthorized" })
-  })
-
-  app.put("/:id", {}, async (_request: any, reply: any) => {
-    return reply.status(401).send({ error: "Unauthorized" })
-  })
 }
 
 export default setupOrgRoutes

@@ -1,4 +1,6 @@
 import { createAuditMiddleware } from "@incmix-api/utils/audit"
+import type { Database } from "@incmix-api/utils/db-schema"
+import { getDb } from "@incmix-api/utils/fastify-bootstrap"
 import {
   createAuthMiddleware,
   createOptionalAuthMiddleware,
@@ -25,8 +27,8 @@ export const setupPermissionRoutes = async (app: FastifyInstance) => {
     {
       preHandler: [optionalAuth],
       schema: {
-        description: "Get permissions reference data",
-        tags: ["permissions"],
+        summary: "Get permissions reference data",
+        tags: ["Permissions"],
         response: {
           200: {
             type: "object",
@@ -81,7 +83,7 @@ export const setupPermissionRoutes = async (app: FastifyInstance) => {
     async (_request, _reply) => {
       // Import the actual permission constants from the utils package
       const { actions, subjects } = await import("@incmix/utils/types")
-      const { UserRoles, USER_ROLES } = await import("@incmix/utils/types")
+      const { USER_ROLES } = await import("@incmix/utils/types")
 
       // Build comprehensive reference data from the actual system constants
       const referenceData = {
@@ -171,8 +173,8 @@ export const setupPermissionRoutes = async (app: FastifyInstance) => {
     {
       preHandler: [requireAuth],
       schema: {
-        description: "Get roles for an org",
-        tags: ["permissions"],
+        summary: "Get roles for an org",
+        tags: ["Permissions"],
         params: {
           type: "object",
           properties: {
@@ -225,8 +227,8 @@ export const setupPermissionRoutes = async (app: FastifyInstance) => {
         },
       ],
       schema: {
-        description: "Create a new role",
-        tags: ["permissions"],
+        summary: "Create a new role",
+        tags: ["Permissions"],
         params: {
           type: "object",
           properties: {
@@ -271,8 +273,12 @@ export const setupPermissionRoutes = async (app: FastifyInstance) => {
         name: string
         permissions: any[]
       }
-      const _user = request.user!
+      const user = request.user
       const db = request.context?.db
+
+      if (!user) {
+        throw new Error("User not authenticated")
+      }
 
       if (!db) {
         throw new Error("Database not initialized")
@@ -320,8 +326,8 @@ export const setupPermissionRoutes = async (app: FastifyInstance) => {
         },
       ],
       schema: {
-        description: "Update a role",
-        tags: ["permissions"],
+        summary: "Update a role",
+        tags: ["Permissions"],
         params: {
           type: "object",
           properties: {
@@ -364,8 +370,12 @@ export const setupPermissionRoutes = async (app: FastifyInstance) => {
         roleId: string
       }
       const body = request.body as any
-      const _user = request.user!
+      const user = request.user
       const db = request.context?.db
+
+      if (!user) {
+        throw new Error("User not authenticated")
+      }
 
       if (!db) {
         throw new Error("Database not initialized")
@@ -387,8 +397,9 @@ export const setupPermissionRoutes = async (app: FastifyInstance) => {
       const { name, permissions } = body
       await updateRoleWithPermissions(
         request,
-        parseInt(roleId, 10),
+        Number(roleId),
         name,
+        body.description,
         permissions
       )
       return { message: "Role updated successfully" }
@@ -410,8 +421,8 @@ export const setupPermissionRoutes = async (app: FastifyInstance) => {
         },
       ],
       schema: {
-        description: "Delete a role",
-        tags: ["permissions"],
+        summary: "Delete a role",
+        tags: ["Permissions"],
         params: {
           type: "object",
           properties: {
@@ -435,8 +446,12 @@ export const setupPermissionRoutes = async (app: FastifyInstance) => {
         orgId: string
         roleId: string
       }
-      const _user = request.user!
+      const user = request.user
       const db = request.context?.db
+
+      if (!user) {
+        throw new Error("User not authenticated")
+      }
 
       if (!db) {
         throw new Error("Database not initialized")
@@ -448,7 +463,7 @@ export const setupPermissionRoutes = async (app: FastifyInstance) => {
       // Log the mutation
       await auditLogger.logMutation(request, "DELETE", "Role", roleId, orgId)
 
-      await deleteRoleById(request, parseInt(roleId, 10))
+      await deleteRoleById(request, Number(roleId))
       return { message: "Role deleted successfully" }
     }
   )
@@ -468,8 +483,8 @@ export const setupPermissionRoutes = async (app: FastifyInstance) => {
         },
       ],
       schema: {
-        description: "Add permission to role",
-        tags: ["permissions"],
+        summary: "Add permission to role",
+        tags: ["Permissions"],
         params: {
           type: "object",
           properties: {
@@ -503,8 +518,12 @@ export const setupPermissionRoutes = async (app: FastifyInstance) => {
         roleId: string
       }
       const permission = request.body as { action: string; subject: string }
-      const _user = request.user!
+      const user = request.user
       const db = request.context?.db
+
+      if (!user) {
+        throw new Error("User not authenticated")
+      }
 
       if (!db) {
         throw new Error("Database not initialized")
@@ -523,12 +542,22 @@ export const setupPermissionRoutes = async (app: FastifyInstance) => {
         { action: "add", permission }
       )
 
-      await addPermissionToRole(
-        request,
-        parseInt(roleId, 10),
-        permission.action,
-        permission.subject
-      )
+      // First find the permission by action and subject
+      const dbLookup = getDb<Database>(request)
+      const foundPermission = await dbLookup
+        .selectFrom("permissions")
+        .selectAll()
+        .where("action", "=", permission.action as any)
+        .where("resourceType", "=", permission.subject as any)
+        .executeTakeFirst()
+
+      if (!foundPermission) {
+        throw new Error(
+          `Permission not found for action: ${permission.action} and subject: ${permission.subject}`
+        )
+      }
+
+      await addPermissionToRole(request, Number(roleId), foundPermission.id)
       return { message: "Permission added to role successfully" }
     }
   )
@@ -548,8 +577,8 @@ export const setupPermissionRoutes = async (app: FastifyInstance) => {
         },
       ],
       schema: {
-        description: "Remove permission from role",
-        tags: ["permissions"],
+        summary: "Remove permission from role",
+        tags: ["Permissions"],
         params: {
           type: "object",
           properties: {
@@ -583,8 +612,12 @@ export const setupPermissionRoutes = async (app: FastifyInstance) => {
         roleId: string
       }
       const permission = request.body as { action: string; subject: string }
-      const _user = request.user!
+      const user = request.user
       const db = request.context?.db
+
+      if (!user) {
+        throw new Error("User not authenticated")
+      }
 
       if (!db) {
         throw new Error("Database not initialized")
@@ -603,11 +636,25 @@ export const setupPermissionRoutes = async (app: FastifyInstance) => {
         { action: "remove", permission }
       )
 
+      // First find the permission by action and subject
+      const dbRemove = getDb<Database>(request)
+      const foundPermission = await dbRemove
+        .selectFrom("permissions")
+        .selectAll()
+        .where("action", "=", permission.action as any)
+        .where("resourceType", "=", permission.subject as any)
+        .executeTakeFirst()
+
+      if (!foundPermission) {
+        throw new Error(
+          `Permission not found for action: ${permission.action} and subject: ${permission.subject}`
+        )
+      }
+
       await removePermissionFromRole(
         request,
-        parseInt(roleId, 10),
-        permission.action,
-        permission.subject
+        Number(roleId),
+        foundPermission.id
       )
       return { message: "Permission removed from role successfully" }
     }

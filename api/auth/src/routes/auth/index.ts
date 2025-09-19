@@ -32,8 +32,6 @@ function deleteSessionCookie(
 interface ExtendedRegisterRequest {
   email: string
   password: string
-  firstName: string
-  lastName: string
   fullName: string
 }
 
@@ -56,18 +54,6 @@ const ExtendedRegisterRequestSchema = {
       maxLength: 128,
       description: "User's password (minimum 8 characters)",
     },
-    firstName: {
-      type: "string",
-      minLength: 1,
-      maxLength: 50,
-      description: "User's first name",
-    },
-    lastName: {
-      type: "string",
-      minLength: 1,
-      maxLength: 50,
-      description: "User's last name",
-    },
     fullName: {
       type: "string",
       minLength: 1,
@@ -75,14 +61,12 @@ const ExtendedRegisterRequestSchema = {
       description: "User's full name (first and last name combined)",
     },
   },
-  required: ["email", "password", "firstName", "lastName", "fullName"],
+  required: ["email", "password", "fullName"],
   additionalProperties: false,
   examples: [
     {
       email: "john.doe@example.com",
       password: "StrongP@ssw0rd123",
-      firstName: "John",
-      lastName: "Doe",
       fullName: "John Doe",
     },
   ],
@@ -102,7 +86,7 @@ export const setupAuthRoutes = (app: FastifyInstance) => {
     {
       schema: {
         description: "Get current authenticated user information",
-        tags: ["Authentication"],
+        tags: ["authentication"],
         response: {
           200: {
             description: "Successfully retrieved user information",
@@ -165,7 +149,7 @@ export const setupAuthRoutes = (app: FastifyInstance) => {
     {
       schema: {
         description: "Validate current user session",
-        tags: ["Authentication"],
+        tags: ["authentication"],
         response: {
           200: {
             description: "Session is valid",
@@ -252,142 +236,13 @@ export const setupAuthRoutes = (app: FastifyInstance) => {
     }
   )
 
-  // Get user by ID or email
-  app.get(
-    "/user",
-    {
-      schema: {
-        description: "Get user by ID or email",
-        tags: ["Users"],
-        querystring: {
-          type: "object",
-          properties: {
-            id: {
-              type: "string",
-              description: "User's unique identifier",
-            },
-            email: {
-              type: "string",
-              format: "email",
-              description: "User's email address",
-            },
-          },
-        },
-        response: {
-          200: {
-            description: "Successfully retrieved user information",
-            type: "object",
-            properties: {
-              id: {
-                type: "string",
-                description: "User's unique identifier",
-              },
-              fullName: {
-                type: "string",
-                description: "User's full name",
-              },
-              email: {
-                type: "string",
-                format: "email",
-                description: "User's email address",
-              },
-              emailVerified: {
-                type: "boolean",
-                description: "Whether the user's email has been verified",
-              },
-              isSuperAdmin: {
-                type: "boolean",
-                description: "Whether the user has super admin privileges",
-              },
-            },
-          },
-          400: {
-            description: "Bad request - Missing required query parameter",
-            type: "object",
-            properties: {
-              message: {
-                type: "string",
-              },
-            },
-          },
-          404: {
-            description: "User not found",
-            type: "object",
-            properties: {
-              message: {
-                type: "string",
-              },
-            },
-          },
-        },
-      },
-    },
-    async (request, reply) => {
-      try {
-        const { id, email } = request.query as { id?: string; email?: string }
-
-        if (!request.context?.db) {
-          throw new Error("Database not available")
-        }
-
-        if (!id && !email) {
-          return reply
-            .status(400)
-            .send({ message: "Either id or email is required" })
-        }
-
-        let query = request.context.db
-          .selectFrom("users")
-          .innerJoin("userProfiles", "users.id", "userProfiles.id")
-          .select([
-            "users.id",
-            "users.email",
-            "users.isSuperAdmin",
-            "users.emailVerifiedAt",
-            "userProfiles.fullName",
-            "userProfiles.avatar",
-            "userProfiles.profileImage",
-            "userProfiles.localeId",
-            "userProfiles.onboardingCompleted",
-          ])
-
-        if (id) {
-          query = query.where("users.id", "=", id)
-        } else if (email) {
-          query = query.where("users.email", "=", email)
-        }
-
-        const searchedUser = await query.executeTakeFirst()
-
-        if (!searchedUser) {
-          return reply.code(404).send({ message: "User not found" })
-        }
-
-        return {
-          id: searchedUser.id,
-          fullName: searchedUser.fullName,
-          avatar: searchedUser.avatar,
-          profileImage: searchedUser.profileImage,
-          localeId: searchedUser.localeId,
-          onboardingCompleted: searchedUser.onboardingCompleted,
-          isSuperAdmin: searchedUser.isSuperAdmin,
-          email: searchedUser.email,
-          emailVerified: !!searchedUser.emailVerifiedAt,
-        }
-      } catch (error) {
-        console.error("Get user error:", error)
-        throw error
-      }
-    }
-  )
-
   // Signup endpoint
   app.post(
     "/signup",
     {
       schema: {
         description: "Register a new user account",
-        tags: ["Authentication"],
+        tags: ["authentication"],
         body: ExtendedRegisterRequestSchema,
         response: {
           201: {
@@ -439,7 +294,7 @@ export const setupAuthRoutes = (app: FastifyInstance) => {
     },
     async (request, reply) => {
       try {
-        const { fullName, email, password, firstName, lastName } =
+        const { fullName, email, password } =
           request.body as ExtendedRegisterRequest
 
         if (!request.context?.db) {
@@ -539,7 +394,7 @@ export const setupAuthRoutes = (app: FastifyInstance) => {
     {
       schema: {
         description: "Authenticate user with email and password",
-        tags: ["Authentication"],
+        tags: ["authentication"],
         body: {
           type: "object",
           properties: {
@@ -715,7 +570,7 @@ export const setupAuthRoutes = (app: FastifyInstance) => {
     {
       schema: {
         description: "Logout current authenticated user",
-        tags: ["Authentication"],
+        tags: ["authentication"],
         response: {
           200: {
             description: "Successfully logged out",
@@ -777,7 +632,7 @@ export const setupAuthRoutes = (app: FastifyInstance) => {
     {
       schema: {
         description: "Delete current user account permanently",
-        tags: ["Authentication"],
+        tags: ["authentication"],
         response: {
           200: {
             description: "User account successfully deleted",
@@ -857,7 +712,7 @@ export const setupAuthRoutes = (app: FastifyInstance) => {
     {
       schema: {
         description: "Check if user email is verified",
-        tags: ["Users"],
+        tags: ["authentication"],
         body: {
           type: "object",
           properties: {

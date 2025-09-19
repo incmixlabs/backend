@@ -258,7 +258,7 @@ describe.skipIf(SKIP_INTEGRATION)(
         const cacheKey = "news:topics:engine=google_news&hl=en&gl=us"
         const cachedData = await testRedisClient.get(cacheKey)
         expect(cachedData).toBeTruthy()
-        const parsedCache = JSON.parse(cachedData!)
+        const parsedCache = JSON.parse(cachedData ?? "")
         expect(parsedCache).toHaveLength(2)
         expect(parsedCache[0].title).toBe("Business")
 
