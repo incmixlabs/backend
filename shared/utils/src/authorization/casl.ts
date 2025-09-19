@@ -5,13 +5,17 @@ import type {
   SubjectTuple,
   AuthUser as User,
 } from "@incmix/utils/types"
-import type { Context } from "hono"
+import type { FastifyRequest } from "fastify"
 import type { KyselyDb, PermissionAction, RoleScope } from "../db-schema"
 import { UnauthorizedError } from "../errors"
 
-declare module "hono" {
-  interface ContextVariableMap {
-    rbac: PermissionService
+declare module "fastify" {
+  interface FastifyRequest {
+    user?: User | null
+  }
+  interface FastifyServiceContext {
+    rbac?: PermissionService
+    db?: KyselyDb
   }
 }
 
@@ -37,13 +41,17 @@ export class PermissionService {
   private user: User
   private memberPermissions: Promise<MemberPermissions>
 
-  constructor(context: Context) {
-    const user = context.get("user")
+  constructor(request: FastifyRequest) {
+    const user = request.user
 
     if (!user) {
-      throw new UnauthorizedError()
+      throw new UnauthorizedError("User not authenticated")
     }
-    this.db = context.get("db")
+    const db = request.context?.db
+    if (!db) {
+      throw new Error("Database not available")
+    }
+    this.db = db
     this.user = user
     this.memberPermissions = this.getUserPermissionsFromDb()
   }

@@ -6,8 +6,8 @@ import { setupHealthcheckRoutes } from "./healthcheck"
 export const setupRoutes = async (app: FastifyInstance) => {
   await app.register(
     async (fastify) => {
-      await setupEmailRoutes(fastify)
-      await setupHealthcheckRoutes(fastify)
+      setupEmailRoutes(fastify)
+      setupHealthcheckRoutes(fastify)
       // await setupWebhookRoutes(fastify)
     },
     { prefix: "/api/email" }

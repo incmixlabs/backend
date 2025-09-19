@@ -41,7 +41,7 @@ export const setupOrgRoutes = async (app: FastifyInstance) => {
       }
 
       const userOrgs = await findOrgByUserId(request, user.id)
-      return userOrgs
+      return reply.status(200).send(userOrgs)
     }
   )
 

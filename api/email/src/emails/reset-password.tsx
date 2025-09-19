@@ -1,4 +1,6 @@
 import { config } from "@incmix/utils/env"
+// biome-ignore lint/correctness/noUnusedImports: False positive
+import React from "react"
 import { contents } from "@/emails/contents"
 import {
   Body,

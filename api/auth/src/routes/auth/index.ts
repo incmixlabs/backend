@@ -22,7 +22,7 @@ function deleteSessionCookie(
   const isIp = domain ? /^\d{1,3}(\.\d{1,3}){3}$/.test(domain) : false
   const domainPart =
     domain && !/localhost/i.test(domain) && !isIp ? `; Domain=${domain}` : ""
-  const secure = envVars.NODE_ENV === "prod" ? "; Secure" : ""
+  const secure = envVars.NODE_ENV === "production" ? "; Secure" : ""
 
   const cookieValue = `${envVars.COOKIE_NAME}=; Path=/; HttpOnly; SameSite=None; Max-Age=0; Expires=Thu, 01 Jan 1970 00:00:00 GMT${secure}${domainPart}`
   reply.header("Set-Cookie", cookieValue)
@@ -76,7 +76,7 @@ export const setupAuthRoutes = (app: FastifyInstance) => {
   type AuthEnvBindings = {
     COOKIE_NAME: string
     DOMAIN?: string
-    NODE_ENV?: "dev" | "prod" | "test"
+    NODE_ENV?: "development" | "production" | "test"
   }
   const envVars = (app as any).bindings as AuthEnvBindings
 
@@ -85,6 +85,7 @@ export const setupAuthRoutes = (app: FastifyInstance) => {
     "/me",
     {
       schema: {
+        summary: "Get current user",
         description: "Get current authenticated user information",
         tags: ["authentication"],
         response: {
@@ -148,6 +149,7 @@ export const setupAuthRoutes = (app: FastifyInstance) => {
     "/validate",
     {
       schema: {
+        summary: "Validate session",
         description: "Validate current user session",
         tags: ["authentication"],
         response: {
@@ -241,6 +243,7 @@ export const setupAuthRoutes = (app: FastifyInstance) => {
     "/signup",
     {
       schema: {
+        summary: "Register User",
         description: "Register a new user account",
         tags: ["authentication"],
         body: ExtendedRegisterRequestSchema,
@@ -393,6 +396,7 @@ export const setupAuthRoutes = (app: FastifyInstance) => {
     "/login",
     {
       schema: {
+        summary: "Login",
         description: "Authenticate user with email and password",
         tags: ["authentication"],
         body: {
@@ -543,7 +547,7 @@ export const setupAuthRoutes = (app: FastifyInstance) => {
 
         // Set session cookie
         const cookieName = envVars.COOKIE_NAME
-        const cookieValue = `${cookieName}=${sessionId}; Domain=${envVars.DOMAIN}; Path=/; HttpOnly; SameSite=None; Max-Age=${30 * 24 * 60 * 60}; Secure=${envVars.NODE_ENV === "prod"}; Expires=${expiresAt.toUTCString()}`
+        const cookieValue = `${cookieName}=${sessionId}; Domain=${envVars.DOMAIN}; Path=/; HttpOnly; SameSite=None; Max-Age=${30 * 24 * 60 * 60}; Secure=${envVars.NODE_ENV === "production"}; Expires=${expiresAt.toUTCString()}`
         reply.header("Set-Cookie", cookieValue)
 
         return reply.code(200).send({
@@ -569,6 +573,7 @@ export const setupAuthRoutes = (app: FastifyInstance) => {
     "/logout",
     {
       schema: {
+        summary: "Logout",
         description: "Logout current authenticated user",
         tags: ["authentication"],
         response: {
@@ -631,6 +636,7 @@ export const setupAuthRoutes = (app: FastifyInstance) => {
     "/delete",
     {
       schema: {
+        summary: "Delete user",
         description: "Delete current user account permanently",
         tags: ["authentication"],
         response: {
@@ -711,6 +717,7 @@ export const setupAuthRoutes = (app: FastifyInstance) => {
     "/check-email-verification",
     {
       schema: {
+        summary: "Check email verification",
         description: "Check if user email is verified",
         tags: ["authentication"],
         body: {
@@ -751,12 +758,12 @@ export const setupAuthRoutes = (app: FastifyInstance) => {
     async (request, reply) => {
       try {
         const { email } = request.body as { email: string }
-
+        console.log("email", email)
         if (!request.context?.db) {
           throw new Error("Database not available")
         }
 
-        const user = await findUserByEmail(request as any, email)
+        const user = await findUserByEmail(request.context, email)
         return { isEmailVerified: !!user.emailVerifiedAt }
       } catch (error) {
         console.error("Check email verification error:", error)

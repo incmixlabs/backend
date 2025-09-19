@@ -1,16 +1,24 @@
+import { actions, subjects } from "@incmix/utils/types"
+import { ERROR_UNAUTHORIZED } from "@incmix-api/utils"
 import { createAuditMiddleware } from "@incmix-api/utils/audit"
 import type { Database } from "@incmix-api/utils/db-schema"
-import { getDb } from "@incmix-api/utils/fastify-bootstrap"
+import { UnauthorizedError } from "@incmix-api/utils/errors"
+import {
+  getDb,
+  useFastifyTranslation,
+} from "@incmix-api/utils/fastify-bootstrap"
+import { createRBACMiddleware } from "@incmix-api/utils/fastify-middleware"
 import {
   createAuthMiddleware,
   createOptionalAuthMiddleware,
 } from "@incmix-api/utils/fastify-middleware/auth"
-import { requireOrgPermission } from "@incmix-api/utils/fastify-middleware/rbac"
 import type { FastifyInstance } from "fastify"
+import { throwUnlessUserCan } from "@/lib/helper"
 import {
   addPermissionToRole,
   createRoleWithPermissions,
   deleteRoleById,
+  findAllRoles,
   getRolesWithPermissions,
   removePermissionFromRole,
   updateRoleWithPermissions,
@@ -20,12 +28,12 @@ export const setupPermissionRoutes = async (app: FastifyInstance) => {
   // Setup authentication middleware
   const requireAuth = createAuthMiddleware()
   const optionalAuth = createOptionalAuthMiddleware()
-
+  const requireRBAC = createRBACMiddleware()
   // Get all available permissions reference data (public endpoint)
   app.get(
     "/reference",
     {
-      preHandler: [optionalAuth],
+      preHandler: [optionalAuth, requireRBAC],
       schema: {
         summary: "Get permissions reference data",
         tags: ["Permissions"],
@@ -171,7 +179,7 @@ export const setupPermissionRoutes = async (app: FastifyInstance) => {
   app.get(
     "/orgs/:orgId/roles",
     {
-      preHandler: [requireAuth],
+      preHandler: [requireAuth, requireRBAC],
       schema: {
         summary: "Get roles for an org",
         tags: ["Permissions"],
@@ -218,12 +226,14 @@ export const setupPermissionRoutes = async (app: FastifyInstance) => {
     {
       preHandler: [
         requireAuth,
-        async (request, reply) => {
+        requireRBAC,
+        async (request, _reply) => {
+          const { orgId } = request.params as { orgId: string }
           const db = request.context?.db
           if (!db) {
             throw new Error("Database not initialized")
           }
-          await requireOrgPermission(db, "create", "Role")(request, reply)
+          await throwUnlessUserCan(request, "create", "Role", orgId)
         },
       ],
       schema: {
@@ -317,12 +327,14 @@ export const setupPermissionRoutes = async (app: FastifyInstance) => {
     {
       preHandler: [
         requireAuth,
-        async (request, reply) => {
+        requireRBAC,
+        async (request, _reply) => {
+          const { orgId } = request.params as { orgId: string }
           const db = request.context?.db
           if (!db) {
             throw new Error("Database not initialized")
           }
-          await requireOrgPermission(db, "update", "Role")(request, reply)
+          await throwUnlessUserCan(request, "update", "Role", orgId)
         },
       ],
       schema: {
@@ -412,12 +424,14 @@ export const setupPermissionRoutes = async (app: FastifyInstance) => {
     {
       preHandler: [
         requireAuth,
-        async (request, reply) => {
+        requireRBAC,
+        async (request, _reply) => {
+          const { orgId } = request.params as { orgId: string }
           const db = request.context?.db
           if (!db) {
             throw new Error("Database not initialized")
           }
-          await requireOrgPermission(db, "delete", "Role")(request, reply)
+          await throwUnlessUserCan(request, "delete", "Role", orgId)
         },
       ],
       schema: {
@@ -474,12 +488,14 @@ export const setupPermissionRoutes = async (app: FastifyInstance) => {
     {
       preHandler: [
         requireAuth,
-        async (request, reply) => {
+        requireRBAC,
+        async (request, _reply) => {
+          const { orgId } = request.params as { orgId: string }
           const db = request.context?.db
           if (!db) {
             throw new Error("Database not initialized")
           }
-          await requireOrgPermission(db, "update", "Role")(request, reply)
+          await throwUnlessUserCan(request, "update", "Role", orgId)
         },
       ],
       schema: {
@@ -568,12 +584,15 @@ export const setupPermissionRoutes = async (app: FastifyInstance) => {
     {
       preHandler: [
         requireAuth,
-        async (request, reply) => {
+        requireRBAC,
+        async (request, _reply) => {
+          const { orgId } = request.params as { orgId: string }
           const db = request.context?.db
           if (!db) {
             throw new Error("Database not initialized")
           }
-          await requireOrgPermission(db, "update", "Role")(request, reply)
+          await throwUnlessUserCan(request, "update", "Role", orgId)
+          await throwUnlessUserCan(request, "delete", "Permission", orgId)
         },
       ],
       schema: {
@@ -657,6 +676,325 @@ export const setupPermissionRoutes = async (app: FastifyInstance) => {
         foundPermission.id
       )
       return { message: "Permission removed from role successfully" }
+    }
+  )
+
+  app.get(
+    "/",
+    {
+      preHandler: [
+        requireAuth,
+        requireRBAC,
+        async (request, _reply) => {
+          const { orgId } = request.query as { orgId?: string }
+          const db = request.context?.db
+          if (!db) {
+            throw new Error("Database not initialized")
+          }
+          await throwUnlessUserCan(request, "read", "Permission", orgId)
+          await throwUnlessUserCan(request, "read", "Role", orgId)
+        },
+      ],
+      schema: {
+        query: {
+          type: "object",
+          properties: {
+            orgId: { type: "string" },
+          },
+        },
+        response: {
+          200: {
+            type: "object",
+            properties: {
+              roles: {
+                type: "array",
+                items: {
+                  type: "object",
+                  properties: {
+                    id: { type: "string" },
+                    name: { type: "string" },
+                    description: { type: "string", nullable: true },
+                    orgId: { type: "string", nullable: true },
+                    createdAt: { type: "string", format: "date-time" },
+                    updatedAt: { type: "string", format: "date-time" },
+                  },
+                  required: ["id", "name", "createdAt", "updatedAt"],
+                },
+              },
+              permissions: {
+                type: "array",
+                items: {
+                  type: "object",
+                  properties: {
+                    subject: {
+                      type: "string",
+                      enum: [
+                        "Organisation",
+                        "Member",
+                        "Project",
+                        "Task",
+                        "Comment",
+                        "Document",
+                        "Folder",
+                        "File",
+                        "ProjectMember",
+                        "Role",
+                        "Permission",
+                      ],
+                    },
+                    action: {
+                      type: "string",
+                      enum: ["manage", "create", "read", "update", "delete"],
+                    },
+                  },
+                  required: ["subject", "action"],
+                  additionalProperties: {
+                    type: "boolean",
+                    description:
+                      "Boolean flags for each role indicating if the role has this permission",
+                  },
+                },
+              },
+            },
+            required: ["roles", "permissions"],
+          },
+          401: {
+            type: "object",
+            properties: {
+              message: { type: "string" },
+            },
+            required: ["message"],
+          },
+          403: {
+            type: "object",
+            properties: {
+              message: { type: "string" },
+            },
+            required: ["message"],
+          },
+          500: {
+            type: "object",
+            properties: {
+              message: { type: "string" },
+            },
+            required: ["message"],
+          },
+        },
+      },
+    },
+    async (request, reply) => {
+      try {
+        const user = request.user
+        const t = await useFastifyTranslation(request as any)
+        if (!user) {
+          const msg = await t.text(ERROR_UNAUTHORIZED)
+          throw new UnauthorizedError(msg)
+        }
+
+        const { orgId } = request.query as { orgId?: string }
+
+        await throwUnlessUserCan(request, "update", "Role", orgId)
+
+        const roles = await findAllRoles(request, orgId)
+
+        const rbac = request.context?.rbac
+
+        if (!rbac) {
+          throw new UnauthorizedError("RBAC not available")
+        }
+
+        const permissions = await rbac.getAllPermissions(orgId)
+        const subjectActionCombinations = []
+        for (const subject of subjects) {
+          for (const action of actions) {
+            subjectActionCombinations.push({
+              subject,
+              action,
+            })
+          }
+        }
+        // Create a map of role IDs to their names for easier lookup
+        const roleMap = new Map(roles.map((role) => [role.id, role.name]))
+
+        // Create a map to track which permissions are assigned to which roles
+        const rolePermissionsMap = new Map()
+
+        // Initialize the map with all subject-action combinations for each role
+        for (const role of roles) {
+          rolePermissionsMap.set(role.id, new Set())
+        }
+
+        // Populate the map with actual permissions
+        for (const permission of permissions) {
+          if (permission.role.id) {
+            const permissionSet = rolePermissionsMap.get(permission.role.id)
+            if (permissionSet) {
+              const key = `${permission.subject}:${permission.action}`
+              permissionSet.add(key)
+            }
+          }
+        }
+        // console.log(rolePermissionsMap)
+        // Create a flat array of all permissions with role information
+        const enhancedPermissions: Record<
+          string,
+          (typeof subjects)[number] | (typeof actions)[number] | boolean
+        >[] = []
+
+        // Process all subject-action combinations
+        subjectActionCombinations.forEach(({ subject, action }) => {
+          if (subject === "all") {
+            return
+          }
+
+          const permissionObj: Record<
+            string,
+            (typeof subjects)[number] | (typeof actions)[number] | boolean
+          > = {
+            subject,
+            action,
+            ...Object.fromEntries(roles.map((role) => [role.name, false])),
+          }
+
+          // Add a boolean flag for each role
+          for (const role of roles) {
+            const roleName = roleMap.get(role.id) || role.name
+            const permissionKey = `${subject}:${action}`
+            // Check if this role has this specific permission
+            const hasPermission =
+              rolePermissionsMap.get(role.id)?.has(permissionKey) || false
+
+            permissionObj[roleName] = hasPermission
+          }
+
+          enhancedPermissions.push(permissionObj)
+        })
+
+        return reply.code(200).send({
+          roles,
+          permissions: enhancedPermissions,
+        })
+      } catch (_error) {
+        return reply.code(500).send({
+          message: "Internal server error",
+        })
+      }
+    }
+  )
+
+  // Get current user's permissions
+  app.get(
+    "/user",
+    {
+      preHandler: [requireAuth, requireRBAC],
+      schema: {
+        query: {
+          type: "object",
+          properties: {
+            orgId: { type: "string" },
+          },
+        },
+        response: {
+          200: {
+            type: "object",
+            properties: {
+              permissions: {
+                type: "array",
+                items: {
+                  type: "object",
+                  properties: {
+                    subject: {
+                      type: "string",
+                      enum: [
+                        "all",
+                        "Organisation",
+                        "Member",
+                        "Project",
+                        "Task",
+                        "Comment",
+                        "Document",
+                        "Folder",
+                        "File",
+                        "ProjectMember",
+                        "Role",
+                        "Permission",
+                      ],
+                    },
+                    action: {
+                      type: "string",
+                      enum: ["manage", "create", "read", "update", "delete"],
+                    },
+                  },
+                  required: ["subject", "action"],
+                },
+              },
+            },
+            required: ["permissions"],
+          },
+          401: {
+            type: "object",
+            properties: {
+              message: { type: "string" },
+            },
+            required: ["message"],
+          },
+          500: {
+            type: "object",
+            properties: {
+              message: { type: "string" },
+            },
+            required: ["message"],
+          },
+        },
+      },
+    },
+    async (request, reply) => {
+      try {
+        const user = request.user
+        const t = await useFastifyTranslation(request as any)
+        if (!user) {
+          const msg = await t.text(ERROR_UNAUTHORIZED)
+          throw new UnauthorizedError(msg)
+        }
+
+        const { orgId } = request.query as { orgId?: string }
+
+        // If orgId is provided, get user's permissions within that org
+        if (orgId) {
+          const rbac = request.context?.rbac
+          if (!rbac) {
+            throw new UnauthorizedError("RBAC not available")
+          }
+
+          const orgPermissions = await rbac.getOrgPermissions(orgId)
+          const permissions = orgPermissions?.permissions || []
+
+          return reply.code(200).send({
+            permissions,
+          })
+        }
+
+        // If no orgId provided, check if user is super admin
+        if (user.isSuperAdmin) {
+          return reply.code(200).send({
+            permissions: [
+              {
+                subject: "all",
+                action: "manage",
+              },
+            ],
+          })
+        }
+
+        // If not super admin and no orgId, return empty permissions
+        return reply.code(200).send({
+          permissions: [],
+        })
+      } catch (_error) {
+        return reply.code(500).send({
+          message: "Internal server error",
+        })
+      }
     }
   )
 }

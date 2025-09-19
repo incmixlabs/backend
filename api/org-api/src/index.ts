@@ -6,6 +6,8 @@ import "./types"
 const service = await createAPIService({
   name: Services.org,
   setupRoutes,
+  needRBAC: true,
+  // setupMiddleware,
 })
 
 const { app, startServer } = service

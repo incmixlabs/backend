@@ -1,6 +1,7 @@
 import type { Database } from "@incmix-api/utils/db-schema"
 import { getDb } from "@incmix-api/utils/fastify-bootstrap"
 import type { FastifyRequest } from "fastify"
+import { jsonArrayFrom } from "kysely/helpers/postgres"
 
 export async function checkHandleAvailability(
   request: FastifyRequest,
@@ -85,12 +86,16 @@ export async function ensureAtLeastOneOwner(
   return true
 }
 
-export async function findAllRoles(request: FastifyRequest) {
-  const db = getDb<Database>(request)
+export function findAllRoles(r: FastifyRequest, orgId?: string) {
+  let query = getDb<Database>(r).selectFrom("roles").selectAll()
 
-  const roles = await db.selectFrom("roles").selectAll().execute()
+  if (orgId) {
+    query = query.where((eb) =>
+      eb.or([eb("orgId", "=", orgId), eb("orgId", "is", null)])
+    )
+  }
 
-  return roles
+  return query.execute()
 }
 
 export async function findOrgByHandle(request: FastifyRequest, handle: string) {
@@ -158,29 +163,23 @@ export async function findOrgById(request: FastifyRequest, id: string) {
 export async function findOrgByUserId(request: FastifyRequest, userId: string) {
   const db = getDb<Database>(request)
 
-  const orgs = await db
-    .selectFrom("members")
-    .innerJoin("organisations", "members.orgId", "organisations.id")
-    .innerJoin("roles", "members.roleId", "roles.id")
-    .select([
+  return await db
+    .selectFrom("organisations")
+    .innerJoin("members", "members.orgId", "organisations.id")
+    .select((eb) => [
       "organisations.id",
       "organisations.name",
       "organisations.handle",
-      "organisations.createdAt",
-      "organisations.updatedAt",
-      "roles.name as roleName",
+      jsonArrayFrom(
+        eb
+          .selectFrom("members")
+          .innerJoin("roles", "roles.id", "members.roleId")
+          .select(["members.userId as userId", "roles.name as role"])
+          .whereRef("members.orgId", "=", "organisations.id")
+      ).as("members"),
     ])
     .where("members.userId", "=", userId)
     .execute()
-
-  return orgs.map((org) => ({
-    id: org.id,
-    name: org.name,
-    handle: org.handle,
-    role: org.roleName,
-    createdAt: org.createdAt,
-    updatedAt: org.updatedAt,
-  }))
 }
 
 export async function findOrgMemberById(

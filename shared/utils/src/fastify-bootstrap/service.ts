@@ -10,7 +10,11 @@ import {
   services,
 } from "../env-config"
 import { processError } from "../errors"
-import { createErrorHandler, registerCorsPlugin } from "../fastify-middleware"
+import {
+  createErrorHandler,
+  createRBACMiddleware,
+  registerCorsPlugin,
+} from "../fastify-middleware"
 import type { FastifyServiceConfig } from "./types"
 import { defaults } from "./types"
 
@@ -19,6 +23,7 @@ export interface APIServices {
   setupRoutes?: (app: FastifyInstance) => Promise<void>
   setupMiddleware?: (app: FastifyInstance) => Promise<void>
   needDb?: boolean
+  needRBAC?: boolean
 }
 
 export const getDb = <DB = unknown>(request: FastifyRequest): Kysely<DB> => {
@@ -99,6 +104,7 @@ export async function createAPIService({
   setupRoutes,
   setupMiddleware,
   needDb,
+  needRBAC,
 }: APIServices) {
   const service = services[name]
   const envVars = createEnvConfig(name)
@@ -111,6 +117,7 @@ export async function createAPIService({
     basePath: `/api/${name}`,
     bindings: envVars,
     needDb,
+    needRBAC,
   }
   const config: FastifyServiceConfig = { ...defaults, ...conf }
   return await createFastifyService(config)
@@ -161,6 +168,12 @@ export async function createFastifyService(conf: FastifyServiceConfig) {
     // Close DB pool gracefully
     app.addHook("onClose", async () => {
       await db.destroy()
+    })
+  }
+
+  if (config.needRBAC) {
+    app.register(() => createRBACMiddleware(), {
+      basePath: config.basePath,
     })
   }
 

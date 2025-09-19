@@ -41,6 +41,7 @@ export const setupOAuthRoutes = (app: FastifyInstance) => {
     "/google/login",
     {
       schema: {
+        summary: "Google OAuth login",
         description: "Initiate Google OAuth login",
         tags: ["oauth"],
         response: {
@@ -78,6 +79,7 @@ export const setupOAuthRoutes = (app: FastifyInstance) => {
     "/google/callback",
     {
       schema: {
+        summary: "Google OAuth callback",
         description: "Handle Google OAuth callback",
         tags: ["oauth"],
         querystring: {

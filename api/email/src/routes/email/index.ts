@@ -1,8 +1,11 @@
 import type { Status } from "@incmix-api/utils/db-schema"
 import type { FastifyInstance } from "fastify"
-import { envVars } from "@/env-vars"
 import { sendEmail } from "@/lib/helper"
-import { MessageResponseSchema, RequestSchema } from "./types"
+import {
+  type EmailRequest,
+  MessageResponseSchema,
+  RequestSchema,
+} from "./types"
 
 export const setupEmailRoutes = (app: FastifyInstance) => {
   app.post(
@@ -21,9 +24,13 @@ export const setupEmailRoutes = (app: FastifyInstance) => {
     },
     async (request, reply) => {
       try {
-        const params = request.body as any
+        const { recipient, requestedBy, body } = request.body as EmailRequest
 
-        const res = await sendEmail(envVars.RESEND_API_KEY as string, params)
+        const res = await sendEmail({
+          recipient,
+          requestedBy,
+          body,
+        })
 
         let status: Status = "pending"
         let shouldRetry = false
@@ -37,17 +44,17 @@ export const setupEmailRoutes = (app: FastifyInstance) => {
             await request.context.db
               .insertInto("emailQueue")
               .values({
-                recipient: params.recipient,
-                template: params.body.template,
-                payload: JSON.stringify(params.body.payload),
+                recipient: recipient,
+                template: body.template,
+                payload: JSON.stringify(body.payload),
                 status,
-                userId: params.requestedBy,
+                userId: requestedBy,
                 resendId: res.id ?? null,
                 shouldRetry,
                 createdAt: new Date().toISOString(),
                 updatedAt: new Date().toISOString(),
               })
-              .execute()
+              .executeTakeFirstOrThrow()
           } catch (dbErr) {
             request.log?.error?.({ err: dbErr }, "emailQueue insert failed")
             // proceed without failing the original request
@@ -56,11 +63,15 @@ export const setupEmailRoutes = (app: FastifyInstance) => {
 
         const statusCode =
           res.status === 200 ? 200 : res.status >= 500 ? 500 : 400
-        return reply.code(statusCode).send({ message: res.message })
+        return reply.code(statusCode).send({
+          message: res.message,
+          status: res.status,
+        })
       } catch (error) {
         console.error("Email sending error:", error)
         return reply.code(500).send({
           message: "Internal server error while sending email",
+          status: 500,
         })
       }
     }

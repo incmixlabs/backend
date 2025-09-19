@@ -21,6 +21,7 @@ import { useFastifyTranslation } from "@incmix-api/utils/fastify-bootstrap"
 
 const _errorConstants = new ErrorConstants()
 
+import { createAuthMiddleware } from "@incmix-api/utils/fastify-middleware"
 import type { FastifyInstance } from "fastify"
 import { envVars } from "@/env-vars"
 import {
@@ -39,10 +40,12 @@ import {
 } from "./schema"
 
 export const setupFilesRoutes = (app: FastifyInstance) => {
+  const requireAuth = createAuthMiddleware()
   // Upload file endpoint
   app.put(
     "/upload",
     {
+      preHandler: [requireAuth],
       schema: {
         description: "Upload File (Local Development Only)",
         tags: ["files"],
@@ -118,6 +121,7 @@ export const setupFilesRoutes = (app: FastifyInstance) => {
   app.get(
     "/download",
     {
+      preHandler: [requireAuth],
       schema: {
         description: "Download File (Local Development Only)",
         tags: ["files"],
@@ -209,6 +213,7 @@ export const setupFilesRoutes = (app: FastifyInstance) => {
   app.delete(
     "/delete",
     {
+      preHandler: [requireAuth],
       schema: {
         description: "Delete File (Local Development Only)",
         tags: ["files"],
@@ -308,6 +313,7 @@ export const setupFilesRoutes = (app: FastifyInstance) => {
   app.get(
     "/list",
     {
+      preHandler: [requireAuth],
       schema: {
         description: "List Files (Local Development Only)",
         tags: ["files"],
@@ -375,6 +381,7 @@ export const setupFilesRoutes = (app: FastifyInstance) => {
   app.get(
     "/presigned-upload",
     {
+      preHandler: [requireAuth],
       schema: {
         description: "Get Presigned URL for Upload",
         tags: ["files"],
@@ -433,6 +440,7 @@ export const setupFilesRoutes = (app: FastifyInstance) => {
   app.get(
     "/presigned-download",
     {
+      preHandler: [requireAuth],
       schema: {
         description: "Get Presigned URL for Download",
         tags: ["files"],
@@ -489,6 +497,7 @@ export const setupFilesRoutes = (app: FastifyInstance) => {
   app.get(
     "/presigned-delete",
     {
+      preHandler: [requireAuth],
       schema: {
         description: "Get Presigned URL for Delete",
         tags: ["files"],

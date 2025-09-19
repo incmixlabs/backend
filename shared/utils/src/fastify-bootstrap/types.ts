@@ -26,6 +26,7 @@ export interface FastifyServiceConfig {
   setupMiddleware?: (app: FastifyInstance) => void
   setupRoutes?: (app: FastifyInstance) => Promise<void>
   needDb?: boolean
+  needRBAC?: boolean
   needSwagger?: boolean
   onBeforeStart?: () => Promise<void>
   onAfterStart?: () => Promise<void>
@@ -38,6 +39,7 @@ export interface FastifyServiceConfig {
 
 export const defaults: Partial<FastifyServiceConfig> = {
   needDb: true,
+  needRBAC: false,
   needSwagger: true,
   version: "1.0.0",
   cors:

@@ -110,6 +110,7 @@ const serviceSchemas = {
     // API URLs
     EMAIL_API_URL: z.url().optional(),
     FILES_API_URL: z.url().optional(),
+    S3_FILE_URL: z.url(),
   }),
   email: baseEnvSchema.extend({
     EMAIL_FROM: z.string().email(),
