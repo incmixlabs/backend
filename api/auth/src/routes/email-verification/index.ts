@@ -14,6 +14,7 @@ export const setupEmailVerificationRoutes = (app: FastifyInstance) => {
     "/verification-email/send",
     {
       schema: {
+        summary: "Send email verification",
         description: "Send email verification",
         tags: ["email-verification"],
         body: {
@@ -83,6 +84,7 @@ export const setupEmailVerificationRoutes = (app: FastifyInstance) => {
     "/verification-email/verify",
     {
       schema: {
+        summary: "Verify email",
         description: "Verify email with code",
         tags: ["email-verification"],
         body: {

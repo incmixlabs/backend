@@ -1,4 +1,3 @@
-import { render } from "@react-email/render"
 import { emailTemplateMap } from "@/types"
 import { emailSender } from "./utils"
 
@@ -25,41 +24,38 @@ type EmailParams = {
 }
 
 export async function sendEmail(
-  RESEND_API_KEY: string,
   params: EmailParams
 ): Promise<SendEmailResponse> {
   const { recipient, body } = params
 
   const type = body.template
   let title = ""
-  let template = ""
+  let Template: React.ReactNode | null = null
   switch (type) {
     case "VerificationEmail": {
       const { verificationLink } = body.payload
 
-      template = await render(
-        emailTemplateMap.VerificationEmail({
-          verificationLink,
-        })
-      )
+      Template = emailTemplateMap.VerificationEmail({
+        verificationLink,
+      })
+
       title = "Verify Email"
       break
     }
     case "ResetPasswordEmail": {
       const { resetPasswordLink, username } = body.payload
-      template = await render(
-        emailTemplateMap.ResetPasswordEmail({
-          resetPasswordLink,
-          username,
-        })
-      )
+      Template = emailTemplateMap.ResetPasswordEmail({
+        resetPasswordLink,
+        username,
+      })
+
       title = "Reset Password"
       break
     }
     default:
       break
   }
-  if (!template) {
+  if (!Template) {
     return {
       message: "Invalid template",
       status: 400,
@@ -72,10 +68,9 @@ export async function sendEmail(
   subject: string
   html: string*/
   const res = await emailSender.send({
-    apiKey: RESEND_API_KEY,
     to: recipient,
     subject: title,
-    html: template,
+    react: Template,
   })
 
   if (res.status !== 200 || !res.id) {

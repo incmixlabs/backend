@@ -37,9 +37,7 @@ export function createAuthMiddleware() {
   return async (request: FastifyRequest, reply: FastifyReply) => {
     // Check for session cookie first
     const cookieName = (envVars.COOKIE_NAME ?? "session") as string
-    const sessionId =
-      (request as any).cookies?.[cookieName] ||
-      getCookieFromHeader(request, cookieName)
+    const sessionId = getCookieFromHeader(request, cookieName)
 
     if (sessionId) {
       try {
@@ -136,7 +134,6 @@ async function validateSession(sessionId: string): Promise<AuthUser | null> {
 
   const cookieName = (envVars.COOKIE_NAME ?? "session") as string
   const authUrl = `${authApiUrl}/me`
-
   try {
     const res = await fetch(authUrl, {
       method: "GET",

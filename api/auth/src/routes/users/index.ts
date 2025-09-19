@@ -15,6 +15,7 @@ export const setupUsersRoutes = (app: FastifyInstance) => {
     "/users",
     {
       schema: {
+        summary: "Get user",
         description: "Get user by ID or email",
         tags: ["users"],
         querystring: {
@@ -143,13 +144,14 @@ export const setupUsersRoutes = (app: FastifyInstance) => {
     "/users/list",
     {
       schema: {
+        summary: "Get all users",
         description: "Get all users (superadmin only)",
         tags: ["users"],
         response: {
           200: {
             type: "object",
             properties: {
-              data: {
+              results: {
                 type: "array",
                 items: {
                   type: "object",
@@ -160,6 +162,15 @@ export const setupUsersRoutes = (app: FastifyInstance) => {
                     verified: { type: "boolean" },
                     enabled: { type: "boolean" },
                   },
+                },
+              },
+              pagination: {
+                type: "object",
+                properties: {
+                  page: { type: "number" },
+                  limit: { type: "number" },
+                  total: { type: "number" },
+                  totalPages: { type: "number" },
                 },
               },
             },
@@ -270,15 +281,15 @@ export const setupUsersRoutes = (app: FastifyInstance) => {
           isSuperAdmin: user.isSuperAdmin,
         }))
 
-        return {
-          data,
+        return reply.status(200).send({
+          results: data,
           pagination: {
             page,
             limit,
             total,
             totalPages: Math.ceil(total / limit),
           },
-        }
+        })
       } catch (error) {
         console.error("Get users error:", error)
         return reply.status(500).send({ message: "Internal server error" })
@@ -291,6 +302,7 @@ export const setupUsersRoutes = (app: FastifyInstance) => {
     "/users/update",
     {
       schema: {
+        summary: "Update user profile",
         description: "Update user profile",
         tags: ["users"],
         body: {
@@ -694,6 +706,7 @@ export const setupUsersRoutes = (app: FastifyInstance) => {
     "/setPassword",
     {
       schema: {
+        summary: "Set user password",
         description: "Set user password (superadmin only)",
         tags: ["users"],
         body: {
@@ -794,6 +807,7 @@ export const setupUsersRoutes = (app: FastifyInstance) => {
     "/users/profile-picture",
     {
       schema: {
+        summary: "Add or update profile picture",
         description: "Add or update profile picture (multipart/form-data)",
         tags: ["users"],
         consumes: ["multipart/form-data"],
@@ -906,7 +920,6 @@ export const setupUsersRoutes = (app: FastifyInstance) => {
           url: string
         }
         const presignedUrl = presignedData.url
-
         // Get file size for Content-Length header
         const fileBuffer = await file.toBuffer()
 
@@ -974,6 +987,7 @@ export const setupUsersRoutes = (app: FastifyInstance) => {
     "/users/profile-picture",
     {
       schema: {
+        summary: "Get profile picture URL",
         description: "Get profile picture URL",
         tags: ["users"],
         response: {
@@ -1014,7 +1028,8 @@ export const setupUsersRoutes = (app: FastifyInstance) => {
 
         // In production, you would generate a presigned URL here
         // if using private S3 buckets or similar
-        const profileImageUrl = profile.profileImage || null
+        const profileImageUrl =
+          `${envVars.S3_FILE_URL}/${profile.profileImage}` || null
 
         return { profileImageUrl }
       } catch (error) {
@@ -1029,6 +1044,7 @@ export const setupUsersRoutes = (app: FastifyInstance) => {
     "/users/profile-picture",
     {
       schema: {
+        summary: "Delete profile picture",
         description: "Delete profile picture",
         tags: ["users"],
         response: {

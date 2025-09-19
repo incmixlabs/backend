@@ -3,7 +3,6 @@ import { OpenAPIHono } from "@hono/zod-openapi"
 import type { Context } from "hono"
 import { logger } from "hono/logger"
 import type { Kysely } from "kysely"
-import { setupRbac } from "../authorization"
 import { type Database, initDb } from "../db-schema"
 import { KVStore } from "../kv-store"
 import { setupKvStore } from "../middleware"
@@ -69,11 +68,6 @@ export function createService<
   // Setup middleware if provided
   if (config.setupMiddleware) {
     config.setupMiddleware(app)
-  }
-
-  // Setup RBAC if provided
-  if (config.needRBAC) {
-    setupRbac(app, config.basePath)
   }
 
   setupOpenApi(

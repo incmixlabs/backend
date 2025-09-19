@@ -2,42 +2,42 @@
 #   Refer for explanation to following link:
 #   https://github.com/evilmartians/lefthook/blob/master/docs/configuration.md
 
-# pre-commit:
-#   parallel: false
-#   commands:
-#     install:
-#       run: pnpm install
-#     lint:
-#       run: pnpm run lint:fix
-#       stage_fixed: true
-#     build:
-#       run: pnpm run build
-#     test:
-#       run: CI=true pnpm run test
-#     codeql-scan:
-#       run: |
-#         echo "Running CodeQL security analysis..."
-#         if command -v codeql >/dev/null 2>&1; then
-#           # Create database and analyze if CodeQL CLI is available
-#           codeql database create temp-db --language=javascript,typescript --source-root=. --overwrite || echo "CodeQL scan failed - continuing with commit"
-#           codeql database analyze temp-db --format=text --output=codeql-results.txt || echo "CodeQL analysis failed - continuing with commit"
-#           rm -rf temp-db
-#           if [ -f codeql-results.txt ]; then
-#             if [ -s codeql-results.txt ]; then
-#               echo "⚠️  CodeQL found potential security issues:"
-#               cat codeql-results.txt
-#               echo "Results retained in codeql-results.txt for review."
-#             else
-#               echo "✅ CodeQL scan completed - no issues found"
-#               rm -f codeql-results.txt
-#             fi
-#           else
-#             echo "ℹ️  CodeQL did not produce a results file (create/analyze may have failed). See messages above."
-#           fi
-#         else
-#           echo "ℹ️  CodeQL CLI not installed - skipping local scan (will run in CI)"
-#         fi
-#       stage_fixed: true
+pre-commit:
+  parallel: false
+  commands:
+    install:
+      run: pnpm install
+    lint:
+      run: pnpm run lint:fix
+      stage_fixed: true
+    build:
+      run: pnpm run build
+    # test:
+    #   run: CI=true pnpm run test
+    codeql-scan:
+      run: |
+        echo "Running CodeQL security analysis..."
+        if command -v codeql >/dev/null 2>&1; then
+          # Create database and analyze if CodeQL CLI is available
+          codeql database create temp-db --language=javascript,typescript --source-root=. --overwrite || echo "CodeQL scan failed - continuing with commit"
+          codeql database analyze temp-db --format=text --output=codeql-results.txt || echo "CodeQL analysis failed - continuing with commit"
+          rm -rf temp-db
+          if [ -f codeql-results.txt ]; then
+            if [ -s codeql-results.txt ]; then
+              echo "⚠️  CodeQL found potential security issues:"
+              cat codeql-results.txt
+              echo "Results retained in codeql-results.txt for review."
+            else
+              echo "✅ CodeQL scan completed - no issues found"
+              rm -f codeql-results.txt
+            fi
+          else
+            echo "ℹ️  CodeQL did not produce a results file (create/analyze may have failed). See messages above."
+          fi
+        else
+          echo "ℹ️  CodeQL CLI not installed - skipping local scan (will run in CI)"
+        fi
+      stage_fixed: true
 
 commit-msg:
   parallel: true

@@ -9,6 +9,7 @@ export const setupResetPasswordRoutes = (app: FastifyInstance) => {
     "/reset-password/request",
     {
       schema: {
+        summary: "Send forget password email",
         description: "Send forget password email",
         tags: ["password-reset"],
         body: {
@@ -119,6 +120,7 @@ export const setupResetPasswordRoutes = (app: FastifyInstance) => {
     "/reset-password/confirm",
     {
       schema: {
+        summary: "Reset password",
         description: "Forget password confirmation with token",
         tags: ["password-reset"],
         body: {
@@ -183,13 +185,15 @@ export const setupResetPasswordRoutes = (app: FastifyInstance) => {
           .selectFrom("verificationCodes")
           .selectAll()
           .where((eb) =>
-            eb.or([
-              eb("codeHash", "=", tokenHash),
-              eb("code", "=", token), // Fallback for existing tokens without hash
+            eb.and([
+              eb.or([
+                eb("codeHash", "=", tokenHash),
+                eb("code", "=", token), // Fallback for existing tokens without hash
+              ]),
+              eb("codeType", "=", "reset_password"),
+              eb("expiresAt", ">", new Date()),
             ])
           )
-          .where("codeType", "=", "reset_password")
-          .where("expiresAt", ">", new Date())
           .executeTakeFirst()
 
         if (!verificationCode) {
@@ -202,8 +206,12 @@ export const setupResetPasswordRoutes = (app: FastifyInstance) => {
         const user = await db
           .selectFrom("users")
           .selectAll()
-          .where("id", "=", verificationCode.userId)
-          .where("isActive", "=", true)
+          .where((eb) =>
+            eb.and([
+              eb("id", "=", verificationCode.userId),
+              eb("isActive", "=", true),
+            ])
+          )
           .executeTakeFirst()
 
         if (!user) {
@@ -251,7 +259,8 @@ export const setupResetPasswordRoutes = (app: FastifyInstance) => {
     "/reset-password/",
     {
       schema: {
-        description: "Reset password for authenticated user",
+        summary: "Change password",
+        description: "Change password for authenticated user",
         tags: ["password-reset"],
         body: {
           type: "object",

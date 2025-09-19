@@ -4,31 +4,41 @@ import type {
   NewUserProfile,
 } from "@incmix-api/utils/db-schema"
 import { NotFoundError, ServerError } from "@incmix-api/utils/errors"
-import { useTranslation } from "@incmix-api/utils/middleware"
-import type { Context, TXN } from "@incmix-api/utils/types"
+import type { FastifyServiceContext as Context } from "@incmix-api/utils/fastify-bootstrap"
+import type { TXN } from "@incmix-api/utils/types"
 import { hashPassword } from "@/auth/utils"
-import { ERROR_USER_NOT_FOUND } from "@/lib/constants"
+
+const getDb = (c: Context) => {
+  const db = c.db
+  if (!db) {
+    throw new ServerError()
+  }
+  return db
+}
 
 export async function findUserByEmail(c: Context, email: string) {
-  const user = await c
-    .get("db")
+  const db = getDb(c)
+  if (!db) {
+    throw new ServerError()
+  }
+  const user = await db
     .selectFrom("users")
     .selectAll()
     .where("email", "=", email)
     .executeTakeFirst()
-  const t = await useTranslation(c)
+  // const t = await useTranslation(c)
 
   if (!user) {
-    const msg = await t.text(ERROR_USER_NOT_FOUND)
-    throw new NotFoundError(msg)
+    // const msg = await t.text(ERROR_USER_NOT_FOUND)
+    throw new NotFoundError("User not found")
   }
 
   return user
 }
 
 export async function findUserById(c: Context, id: string) {
-  const user = await c
-    .get("db")
+  const db = getDb(c)
+  const user = await db
     .selectFrom("users")
     .innerJoin("userProfiles", "users.id", "userProfiles.id")
     .select([
@@ -45,10 +55,10 @@ export async function findUserById(c: Context, id: string) {
     ])
     .where("users.id", "=", id)
     .executeTakeFirst()
-  const t = await useTranslation(c)
+  // const t = await useFastifyTranslation(c)
   if (!user) {
-    const msg = await t.text(ERROR_USER_NOT_FOUND)
-    throw new NotFoundError(msg)
+    // const msg = await t.text(ERROR_USER_NOT_FOUND)
+    throw new NotFoundError("User not found")
   }
 
   return user
@@ -59,7 +69,7 @@ async function createUserProfile(
   newUserProfile: NewUserProfile,
   dbInstance?: KyselyDb
 ) {
-  const db = dbInstance ?? c.get("db")
+  const db = dbInstance ?? getDb(c)
   const userProfile = await db
     .insertInto("userProfiles")
     .values(newUserProfile)
@@ -76,7 +86,7 @@ export async function insertUser(
   password?: string,
   dbInstance?: KyselyDb
 ) {
-  const db = dbInstance ?? c.get("db")
+  const db = dbInstance ?? getDb(c)
 
   const locale = await db
     .selectFrom("locales")
@@ -111,7 +121,7 @@ export async function insertUser(
 
 export async function deleteUserById(c: Context, id: string) {
   const deletedUser = await c
-    .get("db")
+    .getDb(c)
     .transaction()
     .execute(async (tx: TXN) => {
       await tx.deleteFrom("userProfiles").where("id", "=", id).execute()

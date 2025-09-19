@@ -6,8 +6,8 @@ export const setupRoutes = async (app: FastifyInstance) => {
   // Register all routes with the base path prefix
   await app.register(
     async (fastify) => {
-      await setupHealthcheckRoutes(fastify)
-      await setupFilesRoutes(fastify)
+      setupHealthcheckRoutes(fastify)
+      setupFilesRoutes(fastify)
     },
     { prefix: "/api/files" }
   )
